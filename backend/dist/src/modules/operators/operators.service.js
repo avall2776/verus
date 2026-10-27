@@ -172,11 +172,14 @@ let OperatorsService = OperatorsService_1 = class OperatorsService {
         };
     }
     async createOperator(dto, inviterName) {
-        const existing = await this.prisma.user.findUnique({
-            where: { email: dto.email.trim().toLowerCase() },
+        const existing = await this.prisma.user.findFirst({
+            where: {
+                tenantId: this.MASTER_TENANT_ID,
+                email: { equals: dto.email.trim().toLowerCase(), mode: 'insensitive' },
+            },
         });
         if (existing) {
-            throw new common_1.BadRequestException('Já existe um usuário cadastrado com este e-mail.');
+            throw new common_1.BadRequestException('Já existe um operador cadastrado com este e-mail nesta empresa.');
         }
         const rawPass = dto.password?.trim() || `Versus@${Math.floor(100000 + Math.random() * 900000)}`;
         const hashedPassword = await bcrypt.hash(rawPass, 10);

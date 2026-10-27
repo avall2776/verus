@@ -155,6 +155,8 @@ export default function LoginPage() {
 
   // Fluxo de estados: 'form' -> 'evaporating' (fade-out do card) -> 'booting' (preloader cinematográfico)
   const [cardState, setCardState] = useState<"form" | "evaporating" | "booting">("form");
+  const [availableTenants, setAvailableTenants] = useState<any[]>([]);
+  const [isSelectingTenant, setIsSelectingTenant] = useState(false);
 
   // A tela de login é SEMPRE no azul clássico corporativo (dark)
   useEffect(() => {
@@ -166,14 +168,26 @@ export default function LoginPage() {
     }
   }, []);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogin = async (e?: React.FormEvent, selectedTenantId?: string) => {
+    if (e) e.preventDefault();
     setError("");
     setLoading(true);
 
     try {
       const { default: api } = await import("@/lib/api");
-      const { data } = await api.post("/auth/login", { email, password });
+      const { data } = await api.post("/auth/login", { 
+        email, 
+        password,
+        tenantId: selectedTenantId 
+      });
+
+      // Se o usuário possui contas em múltiplas empresas e precisa escolher uma
+      if (data.requiresTenantSelection) {
+        setAvailableTenants(data.tenants || []);
+        setIsSelectingTenant(true);
+        setLoading(false);
+        return;
+      }
 
       localStorage.setItem("versus_auth_token", data.access_token);
       localStorage.setItem("versus_user", JSON.stringify(data.user));
@@ -283,67 +297,126 @@ export default function LoginPage() {
               </p>
             </div>
 
-            <form onSubmit={handleLogin} className="w-full flex flex-col gap-5 text-left relative z-10">
-              {error && (
-                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm text-center">
-                  {error}
+            {isSelectingTenant ? (
+              <div className="w-full flex flex-col gap-4 text-left relative z-10">
+                <div className="text-center mb-1">
+                  <h4 className="text-white font-bold text-base">Selecione a Empresa</h4>
+                  <p className="text-slate-400 text-xs mt-1 leading-relaxed">
+                    Este e-mail está habilitado em múltiplas empresas. Escolha qual deseja acessar agora:
+                  </p>
                 </div>
-              )}
 
-              <div className="flex flex-col gap-2">
-                <label className="text-[0.75rem] font-semibold text-slate-300 uppercase tracking-wider">
-                  E-MAIL CORPORATIVO
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-slate-950/60 border border-slate-800 text-white rounded-[10px] px-4 py-[0.85rem] text-[0.95rem] outline-none transition-all focus:border-blue-500 focus:shadow-[0_0_15px_rgba(59,130,246,0.25)] focus:bg-slate-950/90 login-input-field"
-                  required
-                />
+                {error && (
+                  <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs text-center">
+                    {error}
+                  </div>
+                )}
+
+                <div className="flex flex-col gap-2.5 max-h-[260px] overflow-y-auto pr-1">
+                  {availableTenants.map((t: any) => (
+                    <button
+                      key={t.tenantId}
+                      type="button"
+                      onClick={() => handleLogin(undefined, t.tenantId)}
+                      disabled={loading}
+                      className="w-full flex items-center justify-between p-3.5 bg-slate-900/90 hover:bg-slate-800/95 border border-slate-700/70 hover:border-blue-500/80 rounded-xl transition-all cursor-pointer group text-left"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-9 h-9 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 font-bold text-sm shrink-0">
+                          {t.tenantLogo ? (
+                            <img src={t.tenantLogo} alt={t.tenantName} className="w-full h-full object-cover rounded-lg" />
+                          ) : (
+                            t.tenantName ? t.tenantName.charAt(0).toUpperCase() : "E"
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-white text-sm font-semibold truncate group-hover:text-blue-400 transition-colors">
+                            {t.tenantName}
+                          </p>
+                          <span className="text-[10px] text-slate-400 uppercase tracking-wider">
+                            {t.role === "ADMIN" ? "Administrador" : "Operador"}
+                          </span>
+                        </div>
+                      </div>
+                      <ArrowRight size={16} className="text-slate-500 group-hover:text-blue-400 group-hover:translate-x-1 transition-all shrink-0" />
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSelectingTenant(false);
+                    setError("");
+                  }}
+                  className="text-center text-xs text-slate-400 hover:text-white transition-colors mt-2 cursor-pointer"
+                >
+                  ← Voltar para digitar credenciais
+                </button>
               </div>
+            ) : (
+              <form onSubmit={handleLogin} className="w-full flex flex-col gap-5 text-left relative z-10">
+                {error && (
+                  <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm text-center">
+                    {error}
+                  </div>
+                )}
 
-              <div className="flex flex-col gap-2">
-                <label className="text-[0.75rem] font-semibold text-slate-300 uppercase tracking-wider">
-                  CHAVE DE ACESSO / SENHA
-                </label>
-                <div className="relative">
+                <div className="flex flex-col gap-2">
+                  <label className="text-[0.75rem] font-semibold text-slate-300 uppercase tracking-wider">
+                    E-MAIL CORPORATIVO
+                  </label>
                   <input
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-slate-950/60 border border-slate-800 text-white rounded-[10px] pl-4 pr-12 py-[0.85rem] text-[0.95rem] outline-none transition-all focus:border-blue-500 focus:shadow-[0_0_15px_rgba(59,130,246,0.25)] focus:bg-slate-950/90 login-input-field"
-                    placeholder="••••••••••••"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full bg-slate-950/60 border border-slate-800 text-white rounded-[10px] px-4 py-[0.85rem] text-[0.95rem] outline-none transition-all focus:border-blue-500 focus:shadow-[0_0_15px_rgba(59,130,246,0.25)] focus:bg-slate-950/90 login-input-field"
                     required
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 hover:text-white transition-colors"
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
                 </div>
-              </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold py-[0.95rem] rounded-[10px] mt-4 text-[0.88rem] tracking-wider uppercase transition-all hover:shadow-[0_0_20px_rgba(37,99,235,0.4)] flex items-center justify-center gap-2 disabled:opacity-70 cursor-pointer login-submit-btn"
-                style={{ backgroundColor: "#2563eb", color: "#ffffff" }}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 size={18} className="animate-spin" />
-                    Autenticando...
-                  </>
-                ) : (
-                  <>
-                    ENTRAR NA PLATAFORMA <ArrowRight size={16} />
-                  </>
-                )}
-              </button>
-            </form>
+                <div className="flex flex-col gap-2">
+                  <label className="text-[0.75rem] font-semibold text-slate-300 uppercase tracking-wider">
+                    CHAVE DE ACESSO / SENHA
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full bg-slate-950/60 border border-slate-800 text-white rounded-[10px] pl-4 pr-12 py-[0.85rem] text-[0.95rem] outline-none transition-all focus:border-blue-500 focus:shadow-[0_0_15px_rgba(59,130,246,0.25)] focus:bg-slate-950/90 login-input-field"
+                      placeholder="••••••••••••"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 hover:text-white transition-colors"
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold py-[0.95rem] rounded-[10px] mt-4 text-[0.88rem] tracking-wider uppercase transition-all hover:shadow-[0_0_20px_rgba(37,99,235,0.4)] flex items-center justify-center gap-2 disabled:opacity-70 cursor-pointer login-submit-btn"
+                  style={{ backgroundColor: "#2563eb", color: "#ffffff" }}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" />
+                      Autenticando...
+                    </>
+                  ) : (
+                    <>
+                      ENTRAR NA PLATAFORMA <ArrowRight size={16} />
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
 
             <div className="flex justify-between items-center text-xs text-slate-500 mt-8 relative z-10">
               <span>Painel Restrito</span>

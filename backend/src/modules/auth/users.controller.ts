@@ -400,9 +400,14 @@ export class UsersController {
       throw new BadRequestException('Nome e e-mail são obrigatórios.');
     }
 
-    const existing = await this.prisma.user.findUnique({ where: { email } });
+    const existing = await this.prisma.user.findFirst({
+      where: {
+        tenantId,
+        email: { equals: email, mode: 'insensitive' },
+      },
+    });
     if (existing) {
-      throw new BadRequestException('Este e-mail já está cadastrado no sistema.');
+      throw new BadRequestException('Este e-mail já está cadastrado nesta empresa.');
     }
 
     const rawPass = body.password?.trim() || 'Versus@123';

@@ -112,7 +112,7 @@ model Tenant {
 model User {
   id                   String             @id @default(uuid())
   name                 String
-  email                String             @unique
+  email                String
   password             String
   rawPasswordEncrypted String? // Senha reversível (criptografada AES-256) para visualização e testes pelo Super Admin
   role                 String // ADMIN, AGENT, SUPER_ADMIN
@@ -137,6 +137,10 @@ model User {
   marketingTimeLogs    MarketingTimeLog[]
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
+
+  @@unique([tenantId, email])
+  @@index([email])
+  @@index([tenantId])
 }
 
 // ------------------------------------------------------

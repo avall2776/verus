@@ -352,9 +352,14 @@ let UsersController = class UsersController {
         if (!name || !email) {
             throw new common_1.BadRequestException('Nome e e-mail são obrigatórios.');
         }
-        const existing = await this.prisma.user.findUnique({ where: { email } });
+        const existing = await this.prisma.user.findFirst({
+            where: {
+                tenantId,
+                email: { equals: email, mode: 'insensitive' },
+            },
+        });
         if (existing) {
-            throw new common_1.BadRequestException('Este e-mail já está cadastrado no sistema.');
+            throw new common_1.BadRequestException('Este e-mail já está cadastrado nesta empresa.');
         }
         const rawPass = body.password?.trim() || 'Versus@123';
         const bcrypt = await Promise.resolve().then(() => require('bcrypt'));

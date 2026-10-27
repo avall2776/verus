@@ -1656,14 +1656,14 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
       let contacts = this.evoContactsCache.get(targetInstanceName)?.contacts;
       const cacheTimestamp = this.evoContactsCache.get(targetInstanceName)?.timestamp || 0;
 
-      if (!contacts || (now - cacheTimestamp > 90 * 1000)) {
+      if (!contacts || (now - cacheTimestamp > 10 * 60 * 1000)) {
         try {
           const res = await axios.post(
             `${serverUrl}/chat/findContacts/${targetInstanceName}`,
             {},
             {
               headers: { apikey: apiKey, 'Content-Type': 'application/json' },
-              timeout: 5000,
+              timeout: 25000,
             }
           );
           if (Array.isArray(res.data) && res.data.length > 0) {
@@ -1675,9 +1675,7 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
         }
       }
 
-      if (!contacts || !contacts.length) {
-        return { realPhone: null, realName: pushName || null, avatarUrl: profilePictureUrl || null };
-      }
+      const safeContacts = contacts || [];
 
       // 4.1 Se o contato direto na lista da Evolution API tem o mesmo LID, extrai nome e avatar imediatamente
       if (remoteJid && isLid) {

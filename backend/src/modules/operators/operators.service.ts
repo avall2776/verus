@@ -199,12 +199,15 @@ export class OperatorsService {
    * Cadastro de Novo Operador com isolamento estrito de privilégios e disparo via SMTP.
    */
   async createOperator(dto: CreateOperatorDto, inviterName: string) {
-    const existing = await this.prisma.user.findUnique({
-      where: { email: dto.email.trim().toLowerCase() },
+    const existing = await this.prisma.user.findFirst({
+      where: {
+        tenantId: this.MASTER_TENANT_ID,
+        email: { equals: dto.email.trim().toLowerCase(), mode: 'insensitive' },
+      },
     });
 
     if (existing) {
-      throw new BadRequestException('Já existe um usuário cadastrado com este e-mail.');
+      throw new BadRequestException('Já existe um operador cadastrado com este e-mail nesta empresa.');
     }
 
     // Gerar senha inicial forte caso não informada

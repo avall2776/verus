@@ -781,15 +781,12 @@ let TenantsService = TenantsService_1 = class TenantsService {
                 throw new common_1.BadRequestException('Nenhum plano disponível.');
             planId = firstPlan.id;
         }
-        const existingUser = await this.prisma.user.findUnique({
+        const existingUser = await this.prisma.user.findFirst({
             where: { email: dto.adminEmail.toLowerCase().trim() },
         });
-        if (existingUser) {
-            throw new common_1.BadRequestException('Já existe um usuário cadastrado com este e-mail.');
-        }
         const rawAdminPass = dto.adminPassword?.trim() || 'Versus@123456';
-        const hashedPassword = await bcrypt.hash(rawAdminPass, 10);
-        const rawPasswordEncrypted = (0, crypto_util_1.encryptApiKey)(rawAdminPass);
+        const hashedPassword = existingUser && !dto.adminPassword ? existingUser.password : await bcrypt.hash(rawAdminPass, 10);
+        const rawPasswordEncrypted = existingUser && !dto.adminPassword && existingUser.rawPasswordEncrypted ? existingUser.rawPasswordEncrypted : (0, crypto_util_1.encryptApiKey)(rawAdminPass);
         const result = await this.prisma.$transaction(async (tx) => {
             const tenant = await tx.tenant.create({
                 data: {
@@ -897,10 +894,10 @@ let TenantsService = TenantsService_1 = class TenantsService {
                 throw new common_1.BadRequestException('E-mail informado é inválido.');
             }
             const existing = await this.prisma.user.findFirst({
-                where: { email, id: { not: userId } },
+                where: { tenantId, email, id: { not: userId } },
             });
             if (existing) {
-                throw new common_1.BadRequestException('Este e-mail já está sendo utilizado por outro usuário no sistema.');
+                throw new common_1.BadRequestException('Este e-mail já está sendo utilizado por outro usuário nesta empresa.');
             }
             data.email = email;
         }
@@ -953,9 +950,14 @@ let TenantsService = TenantsService_1 = class TenantsService {
         if (!email || !email.includes('@')) {
             throw new common_1.BadRequestException('E-mail informado é inválido.');
         }
-        const existing = await this.prisma.user.findUnique({ where: { email } });
+        const existing = await this.prisma.user.findFirst({
+            where: {
+                tenantId,
+                email: { equals: email, mode: 'insensitive' },
+            },
+        });
         if (existing) {
-            throw new common_1.BadRequestException('Já existe um usuário cadastrado com este e-mail no sistema.');
+            throw new common_1.BadRequestException('Já existe um usuário cadastrado com este e-mail nesta empresa.');
         }
         const rawRole = (dto.role || 'AGENT').toUpperCase();
         const role = rawRole === 'ADMIN' ? 'ADMIN' : 'AGENT';
