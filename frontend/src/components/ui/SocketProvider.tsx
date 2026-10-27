@@ -12,6 +12,7 @@ import {
   getSoundSettings, 
   isSoundChannelMuted, 
   getChannelVolumeMultiplier, 
+  isVisualNotificationEnabled,
   SOUND_SETTINGS_EVENT,
   SoundSettings,
   DEFAULT_SOUND_SETTINGS
@@ -463,8 +464,8 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
           window.location.pathname.startsWith('/inbox') && 
           (window.location.search.includes(`chat=${convId}`) || window.location.search.includes(`conversationId=${convId}`));
 
-        // Se o operador não estiver com este chat aberto na tela, dispara o Toast flutuante
-        if (!isCurrentChatOpen && convId) {
+        // Se o operador não estiver com este chat aberto na tela e as notificações visuais estiverem ativas, dispara o Toast flutuante
+        if (!isCurrentChatOpen && convId && isVisualNotificationEnabled('whatsapp')) {
           showLeadMessageToast({
             conversationId: convId,
             contactName,

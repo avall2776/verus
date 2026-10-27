@@ -11,6 +11,11 @@ export const metadata: Metadata = {
   title: "Vallor - Motor Omnichannel",
   description: "Plataforma de IA e Atendimento",
   manifest: "/vallor/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Vallor",
+  },
   icons: {
     icon: [
       { url: "/vallor/Favicon_vallor.svg?v=4", type: "image/svg+xml" },
@@ -39,9 +44,19 @@ export default function RootLayout({
         <link rel="icon" href="/vallor/Favicon_vallor.svg?v=4" type="image/svg+xml" />
         <link rel="alternate icon" href="/vallor/favicon.ico?v=4" />
         <link rel="apple-touch-icon" href="/vallor/Favicon_vallor.svg?v=4" />
+        <link rel="manifest" href="/vallor/manifest.json" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="Vallor" />
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var p=window.location.pathname;if(p.indexOf("login")!==-1){document.documentElement.classList.add("dark");document.documentElement.classList.remove("light","theme-whatsapp");document.documentElement.setAttribute("data-theme","dark");return;}var t=localStorage.getItem("versus_theme")||localStorage.getItem("theme");if(t==="light"){document.documentElement.classList.remove("dark","theme-whatsapp");document.documentElement.classList.add("light");document.documentElement.setAttribute("data-theme","light");}else if(t==="whatsapp"){document.documentElement.classList.add("dark","theme-whatsapp");document.documentElement.classList.remove("light");document.documentElement.setAttribute("data-theme","whatsapp");}else{document.documentElement.classList.add("dark");document.documentElement.classList.remove("light","theme-whatsapp");document.documentElement.setAttribute("data-theme","dark");}}catch(e){}})();`,
+          }}
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/vallor/sw.js',{scope:'/vallor/'}).catch(function(){});});}})();`,
           }}
         />
       </head>

@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import api, { getStoredToken } from "@/lib/api";
 import { useTheme } from "@/contexts/ThemeContext";
+import { isVisualNotificationEnabled } from "@/lib/soundSettings";
 
 // Hook seguro para obter contexto de tema sem quebrar caso renderizado isoladamente
 function useNotificationTheme() {
@@ -83,8 +84,8 @@ export const LeadMessageToast: React.FC<LeadMessageToastProps> = ({
   onOpen,
   onClose
 }) => {
-  // Isolamento estrito: NUNCA renderizar notificações operacionais no console Super Admin ou em telas deslogadas/login
-  if (isBlockedNotificationContext()) {
+  // Isolamento estrito: NUNCA renderizar notificações operacionais no console Super Admin, telas deslogadas/login ou se o usuário desativou avisos visuais
+  if (isBlockedNotificationContext() || !isVisualNotificationEnabled("whatsapp")) {
     return null;
   }
 
@@ -453,8 +454,8 @@ export function showLeadMessageToast(
   },
   router: any
 ) {
-  // Isolamento estrito: Se o usuário estiver na tela de login, deslogado ou no console Super Admin, silencia imediatamente
-  if (isBlockedNotificationContext()) {
+  // Isolamento estrito: Se deslogado, tela de login, super-admin ou se notificações visuais do WhatsApp estiverem desativadas, silencia
+  if (isBlockedNotificationContext() || !isVisualNotificationEnabled("whatsapp")) {
     return;
   }
 
@@ -507,8 +508,8 @@ export function showTransferAlertToast(
   router: any,
   onTakeoverSuccess?: (conversationId: string) => void
 ) {
-  // Isolamento estrito: Se o usuário estiver na tela de login, deslogado ou no console Super Admin, silencia imediatamente
-  if (isBlockedNotificationContext()) {
+  // Isolamento estrito: Se deslogado, tela de login, super-admin ou se notificações visuais de transferências estiverem desativadas, silencia
+  if (isBlockedNotificationContext() || !isVisualNotificationEnabled("transfers")) {
     return;
   }
 
@@ -698,7 +699,7 @@ export function showLeadQualifiedToast(
   },
   router: any
 ) {
-  if (isBlockedNotificationContext()) return;
+  if (isBlockedNotificationContext() || !isVisualNotificationEnabled("leadQualified")) return;
 
   const stableKey = data.conversationId || data.dealId || data.contactPhone || 'lead_qual';
   const toastId = `lead_qual_${stableKey}`;

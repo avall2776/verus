@@ -3,12 +3,19 @@ export interface SoundChannelConfig {
   volume: number; // 0 to 100
 }
 
+export interface VisualNotificationConfig {
+  whatsapp: boolean; // Popups flutuantes na tela para mensagens recebidas do WhatsApp
+  transfers: boolean; // Popups flutuantes para transferências de chamados
+  leadQualified: boolean; // Popups flutuantes para leads qualificados pela IA
+}
+
 export interface SoundSettings {
   masterMute: boolean;
   whatsapp: SoundChannelConfig;
   instagram: SoundChannelConfig;
   support: SoundChannelConfig;
   system: SoundChannelConfig;
+  visualNotifications: VisualNotificationConfig;
 }
 
 export const DEFAULT_SOUND_SETTINGS: SoundSettings = {
@@ -17,6 +24,11 @@ export const DEFAULT_SOUND_SETTINGS: SoundSettings = {
   instagram: { enabled: true, volume: 75 },
   support: { enabled: true, volume: 90 },
   system: { enabled: true, volume: 70 },
+  visualNotifications: {
+    whatsapp: true,
+    transfers: true,
+    leadQualified: true,
+  },
 };
 
 export const SOUND_SETTINGS_STORAGE_KEY = "versus_sound_settings";
@@ -49,6 +61,11 @@ export function getSoundSettings(): SoundSettings {
           enabled: parsed.system?.enabled ?? DEFAULT_SOUND_SETTINGS.system.enabled,
           volume: Number.isFinite(parsed.system?.volume) ? parsed.system.volume : DEFAULT_SOUND_SETTINGS.system.volume,
         },
+        visualNotifications: {
+          whatsapp: parsed.visualNotifications?.whatsapp ?? DEFAULT_SOUND_SETTINGS.visualNotifications.whatsapp,
+          transfers: parsed.visualNotifications?.transfers ?? DEFAULT_SOUND_SETTINGS.visualNotifications.transfers,
+          leadQualified: parsed.visualNotifications?.leadQualified ?? DEFAULT_SOUND_SETTINGS.visualNotifications.leadQualified,
+        },
       };
     }
   } catch (err) {
@@ -70,10 +87,13 @@ export function saveSoundSettings(settings: SoundSettings): void {
   }
 }
 
+export type AudioChannel = "whatsapp" | "instagram" | "support" | "system";
+export type VisualChannel = "whatsapp" | "transfers" | "leadQualified";
+
 /**
  * Verifica se um canal específico ou o áudio geral está silenciado
  */
-export function isSoundChannelMuted(channel: keyof Omit<SoundSettings, "masterMute"> = "whatsapp"): boolean {
+export function isSoundChannelMuted(channel: AudioChannel = "whatsapp"): boolean {
   const current = getSoundSettings();
   if (current.masterMute) return true;
   const cfg = current[channel];
@@ -84,10 +104,37 @@ export function isSoundChannelMuted(channel: keyof Omit<SoundSettings, "masterMu
 /**
  * Obtém o multiplicador de ganho de volume (0.0 a 1.0) para um canal
  */
-export function getChannelVolumeMultiplier(channel: keyof Omit<SoundSettings, "masterMute"> = "whatsapp"): number {
+export function getChannelVolumeMultiplier(channel: AudioChannel = "whatsapp"): number {
   const current = getSoundSettings();
   if (current.masterMute) return 0;
   const cfg = current[channel];
   if (!cfg || !cfg.enabled) return 0;
   return Math.max(0, Math.min(1, cfg.volume / 100));
 }
+
+/**
+ * Verifica se as notificações visuais (popups flutuantes na tela) estão ativadas para o canal
+ */
+export function isVisualNotificationEnabled(type: VisualChannel = "whatsapp"): boolean {
+  const current = getSoundSettings();
+  if (!current.visualNotifications) return true;
+  return current.visualNotifications[type] ?? true;
+}
+
+/**
+ * Atualiza o status de notificação visual com persistência imediata e disparo de evento reativo
+ */
+export function setVisualNotification(type: "whatsapp" | "transfers" | "leadQualified", enabled: boolean): void {
+  const current = getSoundSettings();
+  const updated: SoundSettings = {
+    ...current,
+    visualNotifications: {
+      whatsapp: current.visualNotifications?.whatsapp ?? DEFAULT_SOUND_SETTINGS.visualNotifications.whatsapp,
+      transfers: current.visualNotifications?.transfers ?? DEFAULT_SOUND_SETTINGS.visualNotifications.transfers,
+      leadQualified: current.visualNotifications?.leadQualified ?? DEFAULT_SOUND_SETTINGS.visualNotifications.leadQualified,
+      [type]: enabled,
+    },
+  };
+  saveSoundSettings(updated);
+}
+

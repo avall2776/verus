@@ -23,6 +23,7 @@ import * as THREE from "three";
 import { AnimatePresence } from "framer-motion";
 import VersusPreloader from "@/components/ui/VersusPreloader";
 import { useTheme } from "@/contexts/ThemeContext";
+import MobileAppInstallBanner, { MobileInstallQuickButton } from "@/components/pwa/MobileAppInstallBanner";
 
 interface WelcomeDashboardProps {
   onViewMetrics?: () => void;
@@ -365,10 +366,16 @@ export default function WelcomeDashboard({ onViewMetrics, hasMetrics = true }: W
               <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 max-w-2xl leading-relaxed">
                 {greetingData.subText} na mais avançada plataforma corporativa de inteligência em vendas, atendimento omnichannel e automações empresariais para <strong className="text-slate-900 dark:text-white font-bold">{companyName}</strong>.
               </p>
+
+              {/* Banner Interativo de Instalação do App (Exclusivo Mobile no Navegador) */}
+              <MobileAppInstallBanner isWhatsApp={isWhatsApp} />
             </div>
 
             {/* Ações de Topo: Boot e Métricas */}
             <div className="shrink-0 flex flex-wrap md:flex-col gap-2.5">
+              {/* Botão Rápido de Download Mobile */}
+              <MobileInstallQuickButton isWhatsApp={isWhatsApp} />
+
               <button
                 onClick={() => {
                   setForcePlayPreloader(true);

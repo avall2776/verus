@@ -58,6 +58,7 @@ import { isAvatarUrlValid } from "@/lib/avatarUtils";
 import { useMobileMenu } from "@/contexts/MobileMenuContext";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import { useTheme } from "@/contexts/ThemeContext";
+import { MobileDrawerInstallButton } from "@/components/pwa/MobileAppInstallBanner";
 
 function WhatsAppIcon({ size = 18, className = "" }: { size?: number; className?: string }) {
   return (
@@ -1320,6 +1321,9 @@ export default function Sidebar() {
 
             {/* Itens de Navegação Mobile */}
             <div className="flex-1 overflow-y-auto custom-scrollbar p-3 pb-28 flex flex-col gap-1">
+              {/* Botão de Instalação Mobile no Menu */}
+              <MobileDrawerInstallButton isWhatsApp={isWhatsApp} />
+
               {visibleGroups.map((group) => (
                 <div key={group.title} className="mb-4">
                   <div className="px-2 py-1 mb-1 text-[10px] font-bold text-slate-500 dark:text-gray-400 tracking-wider uppercase">
