@@ -697,60 +697,61 @@ export default function RadarStoriesPage() {
       {/* ======================================================================= */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-blue-600/10 border border-blue-600/30 flex items-center justify-center text-blue-500">
+          <div className="flex items-start gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-blue-600/10 border border-blue-600/30 flex items-center justify-center text-blue-500 shrink-0 mt-0.5 sm:mt-0">
               <Radio className="w-5 h-5 animate-pulse" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-wide">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-wide">
                   Radar de Stories & Status
                 </h1>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center gap-1">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center gap-1 shrink-0">
                   <ShieldCheck className="w-3 h-3" />
                   WhatsApp Conectado
                 </span>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
                 Rastreamento e inteligência comercial sobre visualizadores silenciosos de WhatsApp para o Agronegócio. Dados 100% auditáveis com rastreio de data, horário e post.
               </p>
             </div>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        {/* Ações do Topo: Grid limpo e responsivo no mobile */}
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full sm:w-auto shrink-0">
           <button
             onClick={() => setIsTutorialOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-xs font-semibold text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/60 transition-colors shadow-sm cursor-pointer"
+            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-xs font-semibold text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/60 transition-colors shadow-sm cursor-pointer"
             title="Como Funciona o Radar de Stories"
           >
-            <GraduationCap className="w-3.5 h-3.5 text-blue-500" />
-            <span>Como Funciona / Tutorial</span>
+            <GraduationCap className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+            <span className="truncate">Tutorial</span>
           </button>
 
           <button
             onClick={() => setIsTestModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors shadow-sm cursor-pointer"
+            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors shadow-sm cursor-pointer"
           >
-            <PlayCircle className="w-3.5 h-3.5 text-blue-500" />
-            <span>Testar Reconhecimento</span>
+            <PlayCircle className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+            <span className="truncate">Testar</span>
           </button>
 
           <button
             onClick={handleSyncWithWhatsApp}
             disabled={isSyncingWhatsApp || loadingMetrics || loadingViewers}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:border-slate-400 dark:hover:border-slate-700 transition-colors shadow-sm cursor-pointer disabled:opacity-50"
+            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:border-slate-400 dark:hover:border-slate-700 transition-colors shadow-sm cursor-pointer disabled:opacity-50"
             title="Sincronizar Stories e Visualizações ativamente com o WhatsApp"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isSyncingWhatsApp ? "animate-spin text-blue-500" : ""}`} />
-            <span>{isSyncingWhatsApp ? "Sincronizando..." : "Sincronizar"}</span>
+            <RefreshCw className={`w-3.5 h-3.5 ${isSyncingWhatsApp ? "animate-spin text-blue-500" : ""} shrink-0`} />
+            <span className="truncate">{isSyncingWhatsApp ? "Sincronizando..." : "Sincronizar"}</span>
           </button>
 
           <button
             onClick={() => setIsPublishModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors shadow-sm cursor-pointer"
+            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors shadow-sm cursor-pointer col-span-2 sm:col-span-1"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-3.5 h-3.5 shrink-0" />
             <span>Novo Story / Postar</span>
           </button>
         </div>
@@ -759,9 +760,9 @@ export default function RadarStoriesPage() {
       {/* ======================================================================= */}
       {/* 2. KPIS EXECUTIVOS BASEADOS NO BANCO REAL                              */}
       {/* ======================================================================= */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Card 1: Visualizações Hoje */}
-        <div className="p-5 rounded-2xl border bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col gap-3">
+        <div className="p-4 sm:p-5 rounded-2xl border bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Visualizações Confirmadas (Hoje)
@@ -781,7 +782,7 @@ export default function RadarStoriesPage() {
         </div>
 
         {/* Card 2: Contatos Rastreados no Tenant */}
-        <div className="p-5 rounded-2xl border bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col gap-3">
+        <div className="p-4 sm:p-5 rounded-2xl border bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Base de Contatos na Linha
@@ -801,7 +802,7 @@ export default function RadarStoriesPage() {
         </div>
 
         {/* Card 3: Inativos Reaquecidos */}
-        <div className="p-5 rounded-2xl border bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col gap-3">
+        <div className="p-4 sm:p-5 rounded-2xl border bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Interações de Status Recentes
@@ -821,7 +822,7 @@ export default function RadarStoriesPage() {
         </div>
 
         {/* Card 4: Oportunidades em Aberto no Funil */}
-        <div className="p-5 rounded-2xl border bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col gap-3">
+        <div className="p-4 sm:p-5 rounded-2xl border bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Oportunidades no CRM
@@ -844,7 +845,7 @@ export default function RadarStoriesPage() {
       {/* ======================================================================= */}
       {/* 2.5 VITRINE DE STORIES ATIVOS (ÚLTIMAS 24H)                            */}
       {/* ======================================================================= */}
-      <div className="p-6 rounded-2xl border bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col gap-4">
+      <div className="p-4 sm:p-6 rounded-2xl border bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500">
@@ -970,11 +971,11 @@ export default function RadarStoriesPage() {
                         e.stopPropagation();
                         handleOpenPhotoModal(post);
                       }}
-                      className="flex-1 flex items-center justify-center gap-1 py-1 px-2 rounded-lg bg-slate-100 hover:bg-blue-50 dark:bg-slate-800 dark:hover:bg-blue-900/30 text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 text-[10px] font-semibold transition-all border border-slate-200/80 dark:border-slate-700/80"
+                      className="flex-1 min-w-0 flex items-center justify-center gap-1 py-1 px-1.5 rounded-lg bg-slate-100 hover:bg-blue-50 dark:bg-slate-800 dark:hover:bg-blue-900/30 text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 text-[10px] font-semibold transition-all border border-slate-200/80 dark:border-slate-700/80 truncate cursor-pointer"
                       title="Substituir imagem ou foto do Story"
                     >
-                      <Camera className="w-3 h-3" />
-                      <span>Alterar Foto</span>
+                      <Camera className="w-3 h-3 shrink-0" />
+                      <span className="truncate">Foto</span>
                     </button>
                     <button
                       type="button"
@@ -982,11 +983,11 @@ export default function RadarStoriesPage() {
                         e.stopPropagation();
                         handleOpenEditTimeModal(post);
                       }}
-                      className="flex-1 flex items-center justify-center gap-1 py-1 px-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-[10px] font-semibold transition-all border border-slate-200/80 dark:border-slate-700/80"
+                      className="flex-1 min-w-0 flex items-center justify-center gap-1 py-1 px-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-[10px] font-semibold transition-all border border-slate-200/80 dark:border-slate-700/80 truncate cursor-pointer"
                       title="Editar o horário da postagem"
                     >
-                      <Clock className="w-3 h-3" />
-                      <span>Ajustar Horário</span>
+                      <Clock className="w-3 h-3 shrink-0" />
+                      <span className="truncate">Horário</span>
                     </button>
                   </div>
                 </div>
@@ -999,33 +1000,33 @@ export default function RadarStoriesPage() {
       {/* ======================================================================= */}
       {/* 3. GRÁFICO EXECUTIVO DE AUDIÊNCIA DE STORIES POR CATEGORIA              */}
       {/* ======================================================================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 p-6 rounded-2xl border bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col gap-4">
-          <div className="flex items-center justify-between">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="lg:col-span-2 p-4 sm:p-6 rounded-2xl border bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h2 className="text-sm font-bold text-slate-900 dark:text-white">
                 Fluxo de Visualizações de Status (Últimos 7 dias)
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Segmentação diária baseada em eventos reais do WhatsApp conectado.
               </p>
             </div>
-            <div className="flex items-center gap-3 text-xs font-semibold">
-              <span className="flex items-center gap-1.5 text-blue-500">
-                <span className="w-2.5 h-2.5 rounded-sm bg-blue-500"></span> Maquinários
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[11px] sm:text-xs font-semibold">
+              <span className="flex items-center gap-1 text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded-md border border-blue-500/20">
+                <span className="w-2 h-2 rounded-sm bg-blue-500"></span> Maquinários
               </span>
-              <span className="flex items-center gap-1.5 text-emerald-500">
-                <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500"></span> Insumos
+              <span className="flex items-center gap-1 text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                <span className="w-2 h-2 rounded-sm bg-emerald-500"></span> Insumos
               </span>
-              <span className="flex items-center gap-1.5 text-amber-500">
-                <span className="w-2.5 h-2.5 rounded-sm bg-amber-500"></span> Cotações
+              <span className="flex items-center gap-1 text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
+                <span className="w-2 h-2 rounded-sm bg-amber-500"></span> Cotações
               </span>
             </div>
           </div>
 
-          <div className="h-[260px] w-full pt-4">
+          <div className="h-[210px] sm:h-[260px] w-full pt-2 sm:pt-4">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={metrics?.chartData || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <AreaChart data={metrics?.chartData || []} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorMaq" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#2563EB" stopOpacity={0.3} />
@@ -1037,14 +1038,14 @@ export default function RadarStoriesPage() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={theme === "light" ? "#E2E8F0" : "#1E293B"} vertical={false} />
-                <XAxis dataKey="date" stroke="#64748B" fontSize={11} tickLine={false} />
-                <YAxis stroke="#64748B" fontSize={11} tickLine={false} allowDecimals={false} />
+                <XAxis dataKey="date" stroke="#64748B" fontSize={10} tickLine={false} />
+                <YAxis stroke="#64748B" fontSize={10} tickLine={false} allowDecimals={false} />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: theme === "light" ? "#FFFFFF" : "#070D1B",
                     borderColor: theme === "light" ? "#CBD5E1" : "#334155",
                     borderRadius: "8px",
-                    fontSize: "12px",
+                    fontSize: "11px",
                   }}
                 />
                 <Area type="monotone" dataKey="Maquinarios" stroke="#2563EB" strokeWidth={2} fillOpacity={1} fill="url(#colorMaq)" name="Maquinários" />
@@ -1056,7 +1057,7 @@ export default function RadarStoriesPage() {
         </div>
 
         {/* Distribuição por Categoria */}
-        <div className="p-6 rounded-2xl border bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
+        <div className="p-4 sm:p-6 rounded-2xl border bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
           <div>
             <h2 className="text-sm font-bold text-slate-900 dark:text-white">
               Interesse por Segmento
@@ -1065,7 +1066,7 @@ export default function RadarStoriesPage() {
               Distribuição percentual de visualizações por categoria técnica.
             </p>
 
-            <div className="space-y-4 mt-6">
+            <div className="space-y-3.5 sm:space-y-4 mt-4 sm:mt-6">
               {(metrics?.categoryDistribution || []).map((cat, idx) => (
                 <div key={idx} className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs font-semibold">
@@ -1085,8 +1086,8 @@ export default function RadarStoriesPage() {
             </div>
           </div>
 
-          <div className="p-3.5 rounded-xl border border-blue-500/20 bg-blue-500/5 mt-6 text-xs text-slate-600 dark:text-slate-300">
-            <span className="font-bold text-blue-500 block mb-1">Certeza e Rastreabilidade Total:</span>
+          <div className="p-3 sm:p-3.5 rounded-xl border border-blue-500/20 bg-blue-500/5 mt-4 sm:mt-6 text-xs text-slate-600 dark:text-slate-300">
+            <span className="font-bold text-blue-500 block mb-0.5 sm:mb-1">Certeza e Rastreabilidade Total:</span>
             Cada visualizador é associado ao número do WhatsApp, data, hora exata e post no catálogo.
           </div>
         </div>
@@ -1095,10 +1096,10 @@ export default function RadarStoriesPage() {
       {/* ======================================================================= */}
       {/* 4. FEED DE PROSPECTOS E VISUALIZADORES SILENCIOSOS                      */}
       {/* ======================================================================= */}
-      <div className="p-6 rounded-2xl border bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col gap-5">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="p-4 sm:p-6 rounded-2xl border bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col gap-4 sm:gap-5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
           <div>
-            <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <Users className="w-4 h-4 text-blue-500" />
               <span>Contatos & Visualizadores Identificados</span>
             </h2>
@@ -1108,63 +1109,65 @@ export default function RadarStoriesPage() {
           </div>
 
           {/* Barra de Filtros e Busca */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            <div className="relative">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full md:w-auto">
+            <div className="relative w-full sm:w-56">
               <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Buscar cliente, telefone, cidade..."
-                className="pl-8 pr-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B] text-xs text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-blue-500 w-56 transition-colors"
+                className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B] text-xs text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-blue-500 transition-colors"
               />
             </div>
 
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="py-1.5 px-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B] text-xs text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
-            >
-              <option value="all">Todos os Status no CRM</option>
-              <option value="active_client">Clientes Ativos (Compradores)</option>
-              <option value="open_deal">Em Negociação</option>
-              <option value="prospect">Potenciais Compradores</option>
-              <option value="inactive_client">Reativação de Carteira</option>
-              <option value="internal_team">Equipe Interna (Verto)</option>
-            </select>
+            <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto">
+              <select
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                className="w-full sm:w-auto py-1.5 px-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B] text-xs text-slate-700 dark:text-slate-200 outline-none cursor-pointer truncate"
+              >
+                <option value="all">Status no CRM</option>
+                <option value="active_client">Clientes Ativos</option>
+                <option value="open_deal">Em Negociação</option>
+                <option value="prospect">Potenciais Compradores</option>
+                <option value="inactive_client">Reativação</option>
+                <option value="internal_team">Equipe Interna</option>
+              </select>
 
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="py-1.5 px-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B] text-xs text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
-            >
-              <option value="all">Todas as Categorias</option>
-              <option value="Maquinários">Maquinários & Implementos</option>
-              <option value="Insumos">Insumos & Defensivos</option>
-              <option value="Cotações">Cotações de Safra</option>
-              <option value="Peças & Serviços">Peças & Serviços</option>
-              <option value="Geral">Geral</option>
-            </select>
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="w-full sm:w-auto py-1.5 px-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B] text-xs text-slate-700 dark:text-slate-200 outline-none cursor-pointer truncate"
+              >
+                <option value="all">Categorias</option>
+                <option value="Maquinários">Maquinários & Implementos</option>
+                <option value="Insumos">Insumos & Defensivos</option>
+                <option value="Cotações">Cotações de Safra</option>
+                <option value="Peças & Serviços">Peças & Serviços</option>
+                <option value="Geral">Geral</option>
+              </select>
+            </div>
           </div>
         </div>
 
         {/* Abas de Filtragem Rápida por Classificação Comercial IA */}
-        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/80">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1">
-            Filtro Comercial IA:
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-2 pt-2 border-t border-slate-100 dark:border-slate-800/80 no-scrollbar">
+          <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1 shrink-0">
+            Filtro IA:
           </span>
           {[
-            { id: "all", label: "Todos os Visualizadores", count: viewers.length },
-            { id: "active_client", label: "Clientes Compradores", count: viewers.filter((v) => v.crmStatus === "active_client").length, color: "text-emerald-500" },
-            { id: "open_deal", label: "Em Negociação", count: viewers.filter((v) => v.crmStatus === "open_deal").length, color: "text-amber-500" },
-            { id: "prospect", label: "Potenciais Compradores", count: viewers.filter((v) => v.crmStatus === "prospect").length, color: "text-blue-500" },
+            { id: "all", label: "Todos", count: viewers.length },
+            { id: "active_client", label: "Compradores", count: viewers.filter((v) => v.crmStatus === "active_client").length, color: "text-emerald-500" },
+            { id: "open_deal", label: "Negociação", count: viewers.filter((v) => v.crmStatus === "open_deal").length, color: "text-amber-500" },
+            { id: "prospect", label: "Potenciais", count: viewers.filter((v) => v.crmStatus === "prospect").length, color: "text-blue-500" },
             { id: "inactive_client", label: "Reativação", count: viewers.filter((v) => v.crmStatus === "inactive_client").length, color: "text-purple-400" },
-            { id: "internal_team", label: "Equipe Interna (Verto)", count: viewers.filter((v) => v.crmStatus === "internal_team").length, color: "text-slate-400" },
+            { id: "internal_team", label: "Equipe", count: viewers.filter((v) => v.crmStatus === "internal_team").length, color: "text-slate-400" },
           ].map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveFilterTab(tab.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
                 activeFilterTab === tab.id
                   ? "bg-blue-600 text-white shadow-sm shadow-blue-500/20"
                   : "bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800"
@@ -1227,8 +1230,8 @@ export default function RadarStoriesPage() {
           </div>
         )}
 
-        {/* Tabela Executiva com Rastreabilidade de Data, Horário e Post */}
-        <div className="overflow-x-auto">
+        {/* Tabela Executiva com Rastreabilidade de Data, Horário e Post (Desktop / Tablet) */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
@@ -1516,6 +1519,282 @@ export default function RadarStoriesPage() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* ======================================================================= */}
+        {/* LISTA EM CARDS DEDICADA PARA MOBILE (md:hidden)                         */}
+        {/* ======================================================================= */}
+        <div className="md:hidden">
+          {/* Quick Select All bar on mobile */}
+          <div className="flex items-center justify-between px-1 py-2 text-xs text-slate-400 border-b border-slate-100 dark:border-slate-800/80 mb-3">
+            <button
+              onClick={handleToggleSelectAll}
+              className="flex items-center gap-2 text-xs text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
+            >
+              {filteredViewers.length > 0 && selectedViewerIds.size === filteredViewers.length ? (
+                <CheckSquare className="w-4 h-4 text-blue-500" />
+              ) : (
+                <Square className="w-4 h-4" />
+              )}
+              <span className="font-medium">Selecionar Todos ({filteredViewers.length})</span>
+            </button>
+            <span className="text-[11px] text-slate-500 font-mono">
+              {selectedViewerIds.size} selecionado(s)
+            </span>
+          </div>
+
+          {loadingViewers ? (
+            <div className="py-12 text-center text-slate-400">
+              <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-blue-500" />
+              <span className="text-xs">Carregando contatos reais e visualizações...</span>
+            </div>
+          ) : filteredViewers.length === 0 ? (
+            <div className="py-12 text-center text-slate-400 text-xs">
+              Nenhum contato encontrado com os filtros selecionados.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {filteredViewers.map((viewer) => {
+                const isSelected = selectedViewerIds.has(viewer.id);
+                return (
+                  <div
+                    key={viewer.id}
+                    className={`p-3.5 rounded-xl border transition-all ${
+                      isSelected
+                        ? "bg-blue-500/10 border-blue-500/40 dark:bg-blue-500/15"
+                        : "bg-slate-50/70 dark:bg-slate-900/60 border-slate-200/80 dark:border-slate-800"
+                    }`}
+                  >
+                    {/* Header do Card Mobile: Checkbox, Nome, Status CRM */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-start gap-2.5 min-w-0">
+                        <button
+                          onClick={() => handleToggleSelect(viewer.id)}
+                          className="p-0.5 mt-0.5 rounded text-slate-400 hover:text-blue-500 transition-colors cursor-pointer shrink-0"
+                        >
+                          {isSelected ? (
+                            <CheckSquare className="w-4 h-4 text-blue-500" />
+                          ) : (
+                            <Square className="w-4 h-4" />
+                          )}
+                        </button>
+
+                        <div className="min-w-0">
+                          <div className="font-bold text-slate-900 dark:text-white text-xs leading-snug flex items-center gap-1.5 flex-wrap">
+                            <span className="truncate">{viewer.name}</span>
+                            {viewer.hasRealView && (
+                              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping shrink-0" title="Visualização confirmada" />
+                            )}
+                          </div>
+                          {(viewer.companyOrFarm || viewer.city) && (
+                            <div className="text-[10.5px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5 flex-wrap">
+                              {viewer.companyOrFarm && (
+                                <span className="flex items-center gap-1 truncate max-w-[170px]">
+                                  <Building2 className="w-3 h-3 text-slate-400 shrink-0" />
+                                  <span className="truncate">{viewer.companyOrFarm}</span>
+                                </span>
+                              )}
+                              {viewer.city && (
+                                <span className="flex items-center gap-1 text-slate-400">
+                                  <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                                  <span>{viewer.city}{viewer.state ? ` - ${viewer.state}` : ""}</span>
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Badge Status CRM */}
+                      <span
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border shrink-0 ${
+                          viewer.crmStatus === "active_client"
+                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/25"
+                            : viewer.crmStatus === "open_deal"
+                            ? "bg-amber-500/10 text-amber-400 border-amber-500/25"
+                            : viewer.crmStatus === "internal_team"
+                            ? "bg-slate-500/15 text-slate-300 border-slate-500/30"
+                            : viewer.crmStatus === "inactive_client"
+                            ? "bg-purple-500/10 text-purple-400 border-purple-500/25"
+                            : "bg-blue-500/10 text-blue-400 border-blue-500/25"
+                        }`}
+                      >
+                        {viewer.crmStatus === "active_client" ? (
+                          <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
+                        ) : viewer.crmStatus === "open_deal" ? (
+                          <TrendingUp className="w-3 h-3 text-amber-400 shrink-0" />
+                        ) : viewer.crmStatus === "internal_team" ? (
+                          <ShieldCheck className="w-3 h-3 text-slate-400 shrink-0" />
+                        ) : viewer.crmStatus === "inactive_client" ? (
+                          <Clock className="w-3 h-3 text-purple-400 shrink-0" />
+                        ) : (
+                          <Sparkles className="w-3 h-3 text-blue-400 shrink-0" />
+                        )}
+                        <span>{viewer.crmStatusLabel}</span>
+                      </span>
+                    </div>
+
+                    {/* Linha Telefone / Responsável */}
+                    <div className="flex items-center justify-between text-xs mt-2.5 pt-2 border-t border-slate-200/60 dark:border-slate-800/60">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        {viewer.isLidOnly ? (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                            <span>WhatsApp Verificado</span>
+                          </span>
+                        ) : (
+                          <span className="font-mono text-xs font-semibold text-slate-800 dark:text-slate-200">
+                            {viewer.phoneFormatted || `+${viewer.phone}`}
+                          </span>
+                        )}
+
+                        <button
+                          onClick={() => handleOpenEditPhoneModal(viewer)}
+                          className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-blue-500 transition-colors"
+                          title="Editar telefone"
+                        >
+                          <Edit3 className="w-3 h-3" />
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            const cleanDigits = (viewer.phone || "").replace(/\D/g, "");
+                            navigator.clipboard.writeText(cleanDigits);
+                            toast.success("Número copiado!");
+                          }}
+                          className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                          title="Copiar número"
+                        >
+                          <Copy className="w-3 h-3" />
+                        </button>
+                      </div>
+
+                      {viewer.assignedSeller && (
+                        <span className="text-[10px] text-slate-400 truncate max-w-[120px]">
+                          Resp: {viewer.assignedSeller}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Story Identificado Mini Box */}
+                    <div className="mt-2.5 p-2 rounded-lg bg-slate-100/70 dark:bg-slate-800/40 border border-slate-200/50 dark:border-slate-700/50 flex items-center gap-2.5">
+                      <div
+                        onClick={() =>
+                          setLightboxMedia({
+                            title: viewer.storyMedia.title,
+                            category: viewer.storyMedia.category,
+                            mediaUrl: viewer.storyMedia.thumbnailUrl,
+                            exactDate: viewer.storyMedia.exactDate,
+                            exactTime: viewer.storyMedia.exactTime,
+                            viewsCount: viewer.storyMedia.viewsCountWeek,
+                            contactName: viewer.name,
+                          })
+                        }
+                        className="relative w-10 h-10 rounded-lg overflow-hidden bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 shrink-0 cursor-pointer shadow-sm group"
+                      >
+                        {viewer.storyMedia.thumbnailUrl ? (
+                          <img
+                            src={viewer.storyMedia.thumbnailUrl}
+                            alt={viewer.storyMedia.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            {getCategoryIcon(viewer.storyMedia.category)}
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Maximize2 className="w-3 h-3 text-white" />
+                        </div>
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div
+                          onClick={() =>
+                            setLightboxMedia({
+                              title: viewer.storyMedia.title,
+                              category: viewer.storyMedia.category,
+                              mediaUrl: viewer.storyMedia.thumbnailUrl,
+                              exactDate: viewer.storyMedia.exactDate,
+                              exactTime: viewer.storyMedia.exactTime,
+                              viewsCount: viewer.storyMedia.viewsCountWeek,
+                              contactName: viewer.name,
+                            })
+                          }
+                          className="font-semibold text-xs text-slate-800 dark:text-slate-200 truncate cursor-pointer hover:text-blue-400"
+                        >
+                          {viewer.storyMedia.title}
+                        </div>
+
+                        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-800">
+                            {getCategoryIcon(viewer.storyMedia.category)}
+                            <span>{viewer.storyMedia.category}</span>
+                          </span>
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono flex items-center gap-1">
+                            <Clock className="w-2.5 h-2.5 text-emerald-500" />
+                            <span>{viewer.storyMedia.exactTime}</span>
+                            <span>•</span>
+                            <span>{viewer.storyMedia.exactDate}</span>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Detalhe Comercial / Faturado ou Negociação */}
+                    {(viewer.totalPurchased > 0 || viewer.dealTitle) && (
+                      <div className="mt-2 text-xs flex items-center justify-between">
+                        {viewer.totalPurchased > 0 ? (
+                          <span className="text-[11px] text-emerald-400 font-mono font-bold flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
+                            <span>Faturado: {formatCurrency(viewer.totalPurchased)}</span>
+                          </span>
+                        ) : viewer.dealTitle ? (
+                          <span className="text-[11px] text-amber-400 font-semibold truncate flex items-center gap-1">
+                            <TrendingUp className="w-3 h-3 text-amber-400 shrink-0" />
+                            <span className="truncate">{viewer.dealValue ? `${formatCurrency(viewer.dealValue)} • ` : ""}{viewer.dealTitle}</span>
+                          </span>
+                        ) : null}
+
+                        <button
+                          onClick={() => {
+                            setSelectedViewerForDetails(viewer);
+                            setIsDetailsModalOpen(true);
+                          }}
+                          className="text-[10.5px] text-blue-400 hover:text-blue-300 font-semibold flex items-center gap-0.5 cursor-pointer"
+                        >
+                          <span>Ver Detalhes</span>
+                          <ChevronRight className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Ações Mobile */}
+                    <div className="mt-3 pt-2.5 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center gap-2">
+                      <button
+                        onClick={() => handleOpenAiModal(viewer)}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                        <span>Abordagem IA</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          const cleanPhone = (viewer.phone || "").replace(/\D/g, "");
+                          window.open(`https://wa.me/${cleanPhone}`, "_blank");
+                        }}
+                        className="flex items-center justify-center p-2 rounded-xl bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-500 border border-emerald-500/20 font-semibold text-xs transition-colors cursor-pointer"
+                        title="Abrir WhatsApp"
+                      >
+                        <MessageSquare className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 

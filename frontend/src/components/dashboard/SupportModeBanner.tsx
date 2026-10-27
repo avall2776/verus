@@ -58,11 +58,12 @@ export default function SupportModeBanner() {
       <button
         type="button"
         onClick={handleExitSupportMode}
-        className="bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-bold px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-md shadow-blue-600/20 cursor-pointer shrink-0 ml-2"
+        className="bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-bold px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-md shadow-blue-600/20 cursor-pointer shrink-0 ml-2"
         title="Encerrar visualização desta empresa e voltar para lista de empresas"
       >
-        <ArrowLeft size={14} />
-        <span>Voltar ao Super Admin</span>
+        <ArrowLeft size={13} />
+        <span className="hidden sm:inline">Voltar ao Super Admin</span>
+        <span className="sm:hidden text-[11px]">Sair</span>
       </button>
     </div>
   );

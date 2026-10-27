@@ -196,12 +196,11 @@ export default function Topbar() {
           <button
             type="button"
             onClick={handleExitSupportMode}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-sm shadow-blue-600/20 cursor-pointer active:scale-95"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-sm shadow-blue-600/20 cursor-pointer active:scale-95"
             title="Sair do Modo Suporte e retornar ao Console Super Admin"
           >
             <ArrowLeft size={13} className="shrink-0 text-white" />
-            <span className="hidden sm:inline">Voltar ao Super Admin</span>
-            <span className="sm:hidden text-[11px]">Super Admin</span>
+            <span>Voltar ao Super Admin</span>
           </button>
         ) : isSuperAdmin ? (
           <Link
