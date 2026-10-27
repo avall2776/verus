@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import * as maplibregl from "maplibre-gl";
+import { setWorkerUrl } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 import {
@@ -52,10 +53,17 @@ import { useTheme } from "@/contexts/ThemeContext";
 import ibgeMunicipalitiesData from "@/data/geo/ibge-municipalities.json";
 import brStatesData from "@/data/geo/br-states.json";
 
-// Configuração explícita do Web Worker do MapLibre GL JS para Next.js (evita erro de MIME text/html e viabiliza polígonos GeoJSON)
+// Configuração explícita do Web Worker do MapLibre GL JS para Next.js (mesmo domínio via basePath '/vallor', sem CORS e com suporte a polígonos GeoJSON)
 if (typeof window !== "undefined") {
   try {
-    (maplibregl as any).config.WORKER_URL = "https://unpkg.com/maplibre-gl@6.15.0/dist/maplibre-gl-worker.mjs";
+    const origin = window.location.origin;
+    const hasVallor = window.location.pathname.startsWith("/vallor");
+    const workerPath = hasVallor
+      ? "/vallor/vendor/maplibre/maplibre-gl-worker.mjs"
+      : "/vendor/maplibre/maplibre-gl-worker.mjs";
+    const fullWorkerUrl = `${origin}${workerPath}`;
+    setWorkerUrl(fullWorkerUrl);
+    (maplibregl as any).config.WORKER_URL = fullWorkerUrl;
   } catch (e) {
     console.warn("Aviso ao configurar WORKER_URL do MapLibre:", e);
   }
@@ -485,6 +493,21 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
       return;
     }
 
+    if (typeof window !== "undefined") {
+      try {
+        const origin = window.location.origin;
+        const hasVallor = window.location.pathname.startsWith("/vallor");
+        const workerPath = hasVallor
+          ? "/vallor/vendor/maplibre/maplibre-gl-worker.mjs"
+          : "/vendor/maplibre/maplibre-gl-worker.mjs";
+        const fullWorkerUrl = `${origin}${workerPath}`;
+        setWorkerUrl(fullWorkerUrl);
+        (maplibregl as any).config.WORKER_URL = fullWorkerUrl;
+      } catch (e) {
+        console.warn("Aviso ao inicializar worker:", e);
+      }
+    }
+
     const map = new maplibregl.Map({
       container: mapContainerRef.current,
       style: UNIFIED_ESRI_STYLE,
@@ -844,12 +867,37 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
         .replace(/[\u0300-\u036f]/g, "")
         .trim();
 
+    const stateAliases: Record<string, string> = {
+      "rio grande do sul": "RS",
+      "santa catarina": "SC",
+      "parana": "PR",
+      "sao paulo": "SP",
+      "goias": "GO",
+      "distrito federal": "DF",
+      "mato grosso": "MT",
+      "mato grosso do sul": "MS",
+      "minas gerais": "MG",
+      "bahia": "BA",
+      "paraguai": "PY",
+      "paraguay": "PY"
+    };
+
+    const toStateUf = (st: string) => {
+      const clean = normalize(st);
+      return stateAliases[clean] || (st || "").toUpperCase().trim();
+    };
+
     const pointByCityState = new Map<string, GeoCityPoint>();
+    const pointByCityOnly = new Map<string, GeoCityPoint>();
     const matchedPointIds = new Set<string>();
 
     filteredPoints.forEach((pt) => {
-      const key = `${normalize(pt.cityName)}|${pt.state.toUpperCase().trim()}`;
-      pointByCityState.set(key, pt);
+      const uf = toStateUf(pt.state);
+      const normCity = normalize(pt.cityName);
+      pointByCityState.set(`${normCity}|${uf}`, pt);
+      if (!pointByCityOnly.has(normCity)) {
+        pointByCityOnly.set(normCity, pt);
+      }
     });
 
     const features: any[] = [];
@@ -859,12 +907,14 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
       municipalitiesGeoJson.features.forEach((feat: any) => {
         const featCity = feat.properties?.cityName || "";
         const featState = (feat.properties?.state || "").toUpperCase().trim();
-        const key = `${normalize(featCity)}|${featState}`;
-        const pt = pointByCityState.get(key);
+        const normFeatCity = normalize(featCity);
+        const featUf = toStateUf(featState);
+        const key = `${normFeatCity}|${featUf}`;
+        const pt = pointByCityState.get(key) || pointByCityOnly.get(normFeatCity);
 
-        let color = "#334155";
-        let borderColor = "#475569";
-        let opacity = 0.22;
+        let color = isLightMode ? "#CBD5E1" : "#1E293B";
+        let borderColor = isLightMode ? "#94A3B8" : "#334155";
+        let opacity = isLightMode ? 0.22 : 0.20;
         let status = "unexplored";
         let salesCount = 0;
         let inAttendanceCount = 0;
@@ -883,19 +933,19 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
             // Território Dominado (Havendo pelo menos 1 venda ganha, a demarcação da terra fica 100% VERDE VÍVIDO estilo distrito de jogo)
             status = "closed";
             color = "#10B981";
-            borderColor = "#047857";
+            borderColor = "#059669";
             opacity = 0.75;
           } else if (inAttendanceCount > 0 || pt.status === "in_attendance") {
             // Território em Atendimento Ativo (Amarelo)
             status = "in_attendance";
             color = "#F59E0B";
-            borderColor = "#B45309";
+            borderColor = "#D97706";
             opacity = 0.65;
           } else if (lostCount > 0 || pt.status === "lost") {
             // Território com Oportunidades Perdidas (Vermelho)
             status = "lost";
             color = "#EF4444";
-            borderColor = "#B91C1C";
+            borderColor = "#DC2626";
             opacity = 0.65;
           }
         } else {
@@ -906,7 +956,7 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
           status = "unexplored";
           color = isLightMode ? "#CBD5E1" : "#1E293B";
           borderColor = isLightMode ? "#94A3B8" : "#334155";
-          opacity = isLightMode ? 0.22 : 0.18;
+          opacity = isLightMode ? 0.22 : 0.20;
         }
 
         features.push({
@@ -988,17 +1038,29 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
     if (!map) return;
 
     const setupTerritoryLayers = () => {
+      if (!map || !map.isStyleLoaded()) return;
+
+      const beforeLabelLayer = map.getLayer("esri-dark-labels-layer")
+        ? "esri-dark-labels-layer"
+        : map.getLayer("esri-light-labels-layer")
+        ? "esri-light-labels-layer"
+        : map.getLayer("esri-satellite-labels-layer")
+        ? "esri-satellite-labels-layer"
+        : undefined;
+
       // 1. Camada de Fundo dos Estados Brasileiros
       if (brStatesGeoJson) {
         const existingStates = map.getSource("brazil-states-base") as maplibregl.GeoJSONSource | undefined;
         if (existingStates) {
           existingStates.setData(brStatesGeoJson);
-        } else if (map.isStyleLoaded()) {
+        } else {
           map.addSource("brazil-states-base", {
             type: "geojson",
             data: brStatesGeoJson
           });
+        }
 
+        if (!map.getLayer("brazil-states-fill")) {
           map.addLayer(
             {
               id: "brazil-states-fill",
@@ -1012,9 +1074,11 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                 "fill-opacity": 0.35
               }
             },
-            map.getLayer("tactical-territory-fill") ? "tactical-territory-fill" : undefined
+            beforeLabelLayer
           );
+        }
 
+        if (!map.getLayer("brazil-states-line")) {
           map.addLayer(
             {
               id: "brazil-states-line",
@@ -1029,93 +1093,100 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                 "line-opacity": 0.6
               }
             },
-            map.getLayer("tactical-territory-line") ? "tactical-territory-line" : undefined
+            beforeLabelLayer
           );
         }
       }
 
-      // 2. Camada dos Polígonos Municipais
-      const existingSource = map.getSource("tactical-territory-zones") as maplibregl.GeoJSONSource | undefined;
-      if (existingSource) {
-        existingSource.setData(territoryGeoJson);
-        return;
+      // 2. Camada dos Polígonos Municipais Reais (IBGE 497 Cidades RS + Polos Brasil)
+      const existingTerritory = map.getSource("tactical-territory-zones") as maplibregl.GeoJSONSource | undefined;
+      if (existingTerritory) {
+        existingTerritory.setData(territoryGeoJson);
+      } else {
+        map.addSource("tactical-territory-zones", {
+          type: "geojson",
+          data: territoryGeoJson
+        });
       }
 
-      if (!map.isStyleLoaded()) return;
+      // Camada de Preenchimento da Delimitação Territorial (Distrito GTA / Névoa de Guerra)
+      if (!map.getLayer("tactical-territory-fill")) {
+        map.addLayer(
+          {
+            id: "tactical-territory-fill",
+            type: "fill",
+            source: "tactical-territory-zones",
+            layout: {
+              visibility: showTerritoryZones ? "visible" : "none"
+            },
+            paint: {
+              "fill-color": ["coalesce", ["get", "color"], theme === "light" ? "#CBD5E1" : "#1E293B"],
+              "fill-opacity": ["coalesce", ["get", "opacity"], 0.20]
+            }
+          },
+          beforeLabelLayer
+        );
 
-      map.addSource("tactical-territory-zones", {
-        type: "geojson",
-        data: territoryGeoJson
-      });
-
-      // Camada de Preenchimento da Delimitação Territorial
-      map.addLayer({
-        id: "tactical-territory-fill",
-        type: "fill",
-        source: "tactical-territory-zones",
-        layout: {
-          visibility: showTerritoryZones ? "visible" : "none"
-        },
-        paint: {
-          "fill-color": ["get", "color"],
-          "fill-opacity": ["get", "opacity"]
-        }
-      });
-
-      // Linha de Limite Territorial
-      map.addLayer({
-        id: "tactical-territory-line",
-        type: "line",
-        source: "tactical-territory-zones",
-        layout: {
-          visibility: showTerritoryZones ? "visible" : "none"
-        },
-        paint: {
-          "line-color": ["get", "borderColor"],
-          "line-width": [
-            "case",
-            ["==", ["get", "status"], "closed"],
-            3.5,
-            ["==", ["get", "status"], "in_attendance"],
-            2.5,
-            ["==", ["get", "status"], "lost"],
-            2.5,
-            1
-          ],
-          "line-opacity": 0.95
-        }
-      });
-
-      // Interatividade ao Clicar na Área Territorial
-      map.on("click", "tactical-territory-fill", (e) => {
-        if (e.features && e.features[0]) {
-          const featProps = e.features[0].properties;
-          const featId = featProps?.id;
-          let target = filteredPoints.find((p) => p.id === featId);
-          if (!target && featProps?.cityName) {
-            const norm = (s: string) => (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-            target = filteredPoints.find((p) => norm(p.cityName) === norm(featProps.cityName));
+        // Interatividade ao Clicar na Área Territorial
+        map.on("click", "tactical-territory-fill", (e) => {
+          if (e.features && e.features[0]) {
+            const featProps = e.features[0].properties;
+            const featId = featProps?.id;
+            let target = filteredPoints.find((p) => p.id === featId);
+            if (!target && featProps?.cityName) {
+              const norm = (s: string) => (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+              target = filteredPoints.find((p) => norm(p.cityName) === norm(featProps.cityName));
+            }
+            if (target) {
+              setSelectedPoint(target);
+              setSpyingDeal(null);
+              setDealModalFilter("all");
+              map.flyTo({
+                center: [target.lng, target.lat],
+                zoom: 8,
+                pitch: 0,
+                duration: 1200
+              });
+            }
           }
-          if (target) {
-            setSelectedPoint(target);
-            setSpyingDeal(null);
-            setDealModalFilter("all");
-            map.flyTo({
-              center: [target.lng, target.lat],
-              zoom: 8,
-              pitch: 0,
-              duration: 1200
-            });
-          }
-        }
-      });
+        });
 
-      map.on("mouseenter", "tactical-territory-fill", () => {
-        map.getCanvas().style.cursor = "pointer";
-      });
-      map.on("mouseleave", "tactical-territory-fill", () => {
-        map.getCanvas().style.cursor = "";
-      });
+        map.on("mouseenter", "tactical-territory-fill", () => {
+          map.getCanvas().style.cursor = "pointer";
+        });
+        map.on("mouseleave", "tactical-territory-fill", () => {
+          map.getCanvas().style.cursor = "";
+        });
+      }
+
+      // Linha de Limite Territorial (Borda Neon de Distrito)
+      if (!map.getLayer("tactical-territory-line")) {
+        map.addLayer(
+          {
+            id: "tactical-territory-line",
+            type: "line",
+            source: "tactical-territory-zones",
+            layout: {
+              visibility: showTerritoryZones ? "visible" : "none"
+            },
+            paint: {
+              "line-color": ["coalesce", ["get", "borderColor"], theme === "light" ? "#94A3B8" : "#334155"],
+              "line-width": [
+                "case",
+                ["==", ["get", "status"], "closed"],
+                3.5,
+                ["==", ["get", "status"], "in_attendance"],
+                2.5,
+                ["==", ["get", "status"], "lost"],
+                2.5,
+                1
+              ],
+              "line-opacity": 0.95
+            }
+          },
+          beforeLabelLayer
+        );
+      }
     };
 
     if (map.isStyleLoaded()) {
@@ -1123,7 +1194,7 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
     } else {
       map.once("load", setupTerritoryLayers);
     }
-  }, [territoryGeoJson, filteredPoints, brStatesGeoJson]);
+  }, [territoryGeoJson, filteredPoints, brStatesGeoJson, showTerritoryZones, theme]);
 
   // Alternância Dinâmica de Visibilidade dos Polígonos de Delimitação Territorial
   useEffect(() => {

@@ -137,6 +137,24 @@ const nextConfig = {
         permanent: false,
       },
       {
+        source: '/vendor/:path*',
+        destination: '/vallor/vendor/:path*',
+        basePath: false,
+        permanent: false,
+      },
+      {
+        source: '/maplibre-gl-worker.mjs',
+        destination: '/vallor/maplibre-gl-worker.mjs',
+        basePath: false,
+        permanent: false,
+      },
+      {
+        source: '/maplibre-gl-shared.mjs',
+        destination: '/vallor/maplibre-gl-shared.mjs',
+        basePath: false,
+        permanent: false,
+      },
+      {
         source: '/',
         destination: '/vallor',
         basePath: false,
