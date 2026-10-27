@@ -83,8 +83,8 @@ let AuthService = class AuthService {
                 avatarUrl: user.avatarUrl,
                 tenantId: user.tenantId,
                 tenantName: user.tenant?.name,
-                availableTenants: validUsers.length > 1
-                    ? validUsers.map((u) => ({
+                availableTenants: users.length > 1
+                    ? users.map((u) => ({
                         tenantId: u.tenantId,
                         tenantName: u.tenant?.name || 'Empresa',
                         tenantLogo: u.tenant?.logoUrl || null,
