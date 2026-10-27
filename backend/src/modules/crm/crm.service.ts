@@ -86,9 +86,38 @@ export class CrmService {
   }
 
   async findTenantUsers(tenantId: string) {
-    return this.prisma.user.findMany({
-      where: { tenantId },
-      select: { id: true, name: true, email: true, role: true }
+    const users = await this.prisma.user.findMany({
+      where: { tenantId, isActive: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        canAccessMarketing: true,
+        permissions: true,
+        departments: {
+          select: {
+            department: {
+              select: { id: true, name: true }
+            }
+          }
+        }
+      }
+    });
+
+    // Excluir usuários que pertencem exclusivamente à equipe de Marketing
+    return users.filter(u => {
+      const deptNames = (u.departments || []).map(d => (d.department?.name || '').toLowerCase());
+      const isMarketingDept = deptNames.some(n => n.includes('marketing'));
+      const isCommercialDept = deptNames.some(n => n.includes('comercial') || n.includes('venda') || n.includes('crm') || n.includes('atendimento'));
+      
+      // Se está em Marketing e NÃO está em Comercial/Vendas/Atendimento
+      if (isMarketingDept && !isCommercialDept) return false;
+      
+      // Se email é de marketing e não tem departamento comercial
+      if (u.email?.toLowerCase().includes('marketing@') && !isCommercialDept) return false;
+
+      return true;
     });
   }
 

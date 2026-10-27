@@ -22,8 +22,10 @@ export class GoalsController {
   async getSummary(
     @CurrentTenant() tenantId: string,
     @Query('channel') channel?: string,
+    @Query('month') month?: string,
+    @Query('year') year?: string,
   ) {
-    return this.goalsService.getSummary(tenantId, channel);
+    return this.goalsService.getSummary(tenantId, channel, month, year);
   }
 
   @Post()
@@ -52,16 +54,24 @@ export class GoalsController {
   }
 
   @Get('leaderboard')
-  async getLeaderboard(@CurrentTenant() tenantId: string) {
-    return this.goalsService.getLeaderboard(tenantId);
+  async getLeaderboard(
+    @CurrentTenant() tenantId: string,
+    @Query('period') period?: string,
+    @Query('month') month?: string,
+    @Query('year') year?: string,
+  ) {
+    return this.goalsService.getLeaderboard(tenantId, period, month, year);
   }
 
   @Get('leaderboard/:userId/details')
   async getSellerDetails(
     @CurrentTenant() tenantId: string,
     @Param('userId') userId: string,
+    @Query('period') period?: string,
+    @Query('month') month?: string,
+    @Query('year') year?: string,
   ) {
-    return this.goalsService.getSellerDetails(tenantId, userId);
+    return this.goalsService.getSellerDetails(tenantId, userId, period, month, year);
   }
 }
 

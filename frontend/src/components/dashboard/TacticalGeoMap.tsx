@@ -1513,23 +1513,45 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
 
           <div className="legend-content custom-scrollbar">
             {/* 0. PAINEL EXECUTIVO DE DOMINÂNCIA TERRITORIAL & IA (MULTI-TENANT AGRO) */}
-            <div className="p-3 mb-2 rounded-xl border border-slate-700/80 bg-slate-900/95 shadow-md backdrop-blur-md">
+            <div
+              className={`p-3 mb-2 rounded-xl border shadow-md backdrop-blur-md transition-colors ${
+                theme === "light"
+                  ? "border-slate-200 bg-slate-50/90 shadow-sm"
+                  : "border-slate-700/80 bg-slate-900/95"
+              }`}
+            >
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] uppercase font-extrabold tracking-wider text-slate-200 flex items-center gap-1.5">
+                <span
+                  className={`text-[10px] uppercase font-extrabold tracking-wider flex items-center gap-1.5 ${
+                    theme === "light" ? "text-slate-800" : "text-slate-200"
+                  }`}
+                >
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 border border-emerald-400/50 shadow-[0_0_6px_#10B981]" />
                   Dominância Comercial do Agro
                 </span>
-                <span className="text-[9px] font-bold text-slate-300 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">
+                <span
+                  className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${
+                    theme === "light"
+                      ? "text-slate-700 bg-white border-slate-300 shadow-2xs"
+                      : "text-slate-300 bg-slate-800 border-slate-700"
+                  }`}
+                >
                   Agro
                 </span>
               </div>
 
               {/* Barra de Progresso Multissegmentada de Território */}
-              <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden flex my-2 border border-slate-700/50">
+              <div
+                className={`w-full h-2 rounded-full overflow-hidden flex my-2 border ${
+                  theme === "light"
+                    ? "bg-slate-200 border-slate-300/60"
+                    : "bg-slate-800 border-slate-700/50"
+                }`}
+              >
                 <div style={{ width: `${dominancePercentage}%` }} className="bg-emerald-500 h-full transition-all" title={`Dominado com Vendas: ${dominancePercentage}%`} />
                 <div style={{ width: `${inAttendancePercentage}%` }} className="bg-amber-400 h-full transition-all" title={`Em Atendimento Ativo: ${inAttendancePercentage}%`} />
                 <div style={{ width: `${lostPercentage}%` }} className="bg-rose-500 h-full transition-all" title={`Perdidos / Repescagem: ${lostPercentage}%`} />
-                <div style={{ width: `${unexploredPercentage}%` }} className="bg-slate-600 h-full transition-all" title={`Mercado em Aberto: ${unexploredPercentage}%`} />
+                <div style={{ width: `${unexploredPercentage}%` }} className="bg-slate-500 h-full transition-all" title={`Mercado em Aberto: ${unexploredPercentage}%`} />
               </div>
 
               {/* Grid de Percentuais com Botões Clicáveis e Filtros Ativos */}
@@ -1540,12 +1562,28 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                   title="Filtrar polos com vendas fechadas (Dominado)"
                   className={`rounded-lg p-1.5 transition-all border flex flex-col items-center justify-center cursor-pointer ${
                     selectedStatus === "closed"
-                      ? "bg-emerald-950 border-emerald-400 ring-2 ring-emerald-400/70 shadow-md shadow-emerald-950"
+                      ? theme === "light"
+                        ? "bg-emerald-100 border-emerald-500 ring-2 ring-emerald-500/50 shadow-sm"
+                        : "bg-emerald-950 border-emerald-400 ring-2 ring-emerald-400/70 shadow-md shadow-emerald-950"
+                      : theme === "light"
+                      ? "bg-emerald-50/80 border-emerald-200/90 hover:bg-emerald-100/70"
                       : "bg-emerald-950/30 border-emerald-800/40 hover:bg-emerald-950/60"
                   }`}
                 >
-                  <div className="text-[8px] text-emerald-400 font-bold uppercase">Dominado</div>
-                  <div className="text-xs font-black text-emerald-300">{dominancePercentage}%</div>
+                  <div
+                    className={`text-[8px] font-bold uppercase ${
+                      theme === "light" ? "text-emerald-800" : "text-emerald-400"
+                    }`}
+                  >
+                    Dominado
+                  </div>
+                  <div
+                    className={`text-xs font-black ${
+                      theme === "light" ? "text-emerald-950" : "text-emerald-300"
+                    }`}
+                  >
+                    {dominancePercentage}%
+                  </div>
                 </button>
 
                 <button
@@ -1554,12 +1592,28 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                   title="Filtrar polos em atendimento ativo"
                   className={`rounded-lg p-1.5 transition-all border flex flex-col items-center justify-center cursor-pointer ${
                     selectedStatus === "in_attendance"
-                      ? "bg-amber-950 border-amber-400 ring-2 ring-amber-400/70 shadow-md shadow-amber-950"
+                      ? theme === "light"
+                        ? "bg-amber-100 border-amber-500 ring-2 ring-amber-500/50 shadow-sm"
+                        : "bg-amber-950 border-amber-400 ring-2 ring-amber-400/70 shadow-md shadow-amber-950"
+                      : theme === "light"
+                      ? "bg-amber-50/80 border-amber-200/90 hover:bg-amber-100/70"
                       : "bg-amber-950/30 border-amber-800/40 hover:bg-amber-950/60"
                   }`}
                 >
-                  <div className="text-[8px] text-amber-400 font-bold uppercase">Atendimento</div>
-                  <div className="text-xs font-black text-amber-300">{inAttendancePercentage}%</div>
+                  <div
+                    className={`text-[8px] font-bold uppercase ${
+                      theme === "light" ? "text-amber-800" : "text-amber-400"
+                    }`}
+                  >
+                    Atendimento
+                  </div>
+                  <div
+                    className={`text-xs font-black ${
+                      theme === "light" ? "text-amber-950" : "text-amber-300"
+                    }`}
+                  >
+                    {inAttendancePercentage}%
+                  </div>
                 </button>
 
                 <button
@@ -1568,12 +1622,28 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                   title="Filtrar polos de oportunidades perdidas (Repescagem)"
                   className={`rounded-lg p-1.5 transition-all border flex flex-col items-center justify-center cursor-pointer ${
                     selectedStatus === "lost"
-                      ? "bg-rose-950 border-rose-400 ring-2 ring-rose-400/70 shadow-md shadow-rose-950"
+                      ? theme === "light"
+                        ? "bg-rose-100 border-rose-500 ring-2 ring-rose-500/50 shadow-sm"
+                        : "bg-rose-950 border-rose-400 ring-2 ring-rose-400/70 shadow-md shadow-rose-950"
+                      : theme === "light"
+                      ? "bg-rose-50/80 border-rose-200/90 hover:bg-rose-100/70"
                       : "bg-rose-950/30 border-rose-800/40 hover:bg-rose-950/60"
                   }`}
                 >
-                  <div className="text-[8px] text-rose-400 font-bold uppercase">Perdas</div>
-                  <div className="text-xs font-black text-rose-300">{lostPercentage}%</div>
+                  <div
+                    className={`text-[8px] font-bold uppercase ${
+                      theme === "light" ? "text-rose-800" : "text-rose-400"
+                    }`}
+                  >
+                    Perdas
+                  </div>
+                  <div
+                    className={`text-xs font-black ${
+                      theme === "light" ? "text-rose-950" : "text-rose-300"
+                    }`}
+                  >
+                    {lostPercentage}%
+                  </div>
                 </button>
 
                 <button
@@ -1582,12 +1652,28 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                   title="Filtrar mercado em aberto (Névoa de Guerra)"
                   className={`rounded-lg p-1.5 transition-all border flex flex-col items-center justify-center cursor-pointer ${
                     selectedStatus === "unexplored"
-                      ? "bg-slate-800 border-slate-300 ring-2 ring-slate-400/70 shadow-md"
+                      ? theme === "light"
+                        ? "bg-slate-200 border-slate-400 ring-2 ring-slate-400/50 shadow-sm"
+                        : "bg-slate-800 border-slate-300 ring-2 ring-slate-400/70 shadow-md"
+                      : theme === "light"
+                      ? "bg-slate-100/90 border-slate-200 hover:bg-slate-200/80"
                       : "bg-slate-800/60 border-slate-700/60 hover:bg-slate-800"
                   }`}
                 >
-                  <div className="text-[8px] text-slate-400 font-bold uppercase">Névoa</div>
-                  <div className="text-xs font-black text-slate-200">{unexploredPercentage}%</div>
+                  <div
+                    className={`text-[8px] font-bold uppercase ${
+                      theme === "light" ? "text-slate-700" : "text-slate-400"
+                    }`}
+                  >
+                    Névoa
+                  </div>
+                  <div
+                    className={`text-xs font-black ${
+                      theme === "light" ? "text-slate-900" : "text-slate-200"
+                    }`}
+                  >
+                    {unexploredPercentage}%
+                  </div>
                 </button>
               </div>
 
@@ -1595,11 +1681,25 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
               <button
                 type="button"
                 onClick={fetchAiReport}
-                className="w-full mt-1.5 py-1.5 px-2.5 rounded-lg text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-600/40 flex items-center justify-center gap-1.5 transition-all shadow-sm group"
+                className={`w-full mt-1.5 py-1.5 px-2.5 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm group ${
+                  theme === "light"
+                    ? "bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-300 hover:border-emerald-400 shadow-2xs"
+                    : "bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-600/40"
+                }`}
               >
-                <Sparkles className="w-3.5 h-3.5 text-yellow-300 animate-spin-slow group-hover:scale-110 transition-transform" />
+                <Sparkles
+                  className={`w-3.5 h-3.5 animate-spin-slow group-hover:scale-110 transition-transform ${
+                    theme === "light" ? "text-amber-500" : "text-yellow-300"
+                  }`}
+                />
                 <span>Relatório Estratégico & IA</span>
-                <ArrowUpRight className="w-3 h-3 opacity-80" />
+                <ArrowUpRight
+                  className={`w-3 h-3 transition-colors ${
+                    theme === "light"
+                      ? "text-slate-500 group-hover:text-emerald-700"
+                      : "text-slate-400 group-hover:text-emerald-400"
+                  }`}
+                />
               </button>
             </div>
 
@@ -2628,7 +2728,11 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                         onClick={() => setDealModalFilter("all")}
                         className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap ${
                           dealModalFilter === "all"
-                            ? "bg-slate-700 text-white shadow"
+                            ? theme === "light"
+                              ? "bg-slate-800 text-white shadow-sm"
+                              : "bg-slate-700 text-white shadow"
+                            : theme === "light"
+                            ? "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
                             : "bg-slate-800/50 text-slate-400 hover:text-white"
                         }`}
                       >
@@ -2640,6 +2744,8 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                         className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap ${
                           dealModalFilter === "won"
                             ? "bg-emerald-600 text-white shadow"
+                            : theme === "light"
+                            ? "bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100"
                             : "bg-emerald-950/30 text-emerald-400 hover:bg-emerald-900/40"
                         }`}
                       >
@@ -2651,6 +2757,8 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                         className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap ${
                           dealModalFilter === "in_attendance"
                             ? "bg-amber-600 text-white shadow"
+                            : theme === "light"
+                            ? "bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100"
                             : "bg-amber-950/30 text-amber-400 hover:bg-amber-900/40"
                         }`}
                       >
@@ -2662,6 +2770,8 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                         className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap ${
                           dealModalFilter === "lost"
                             ? "bg-rose-600 text-white shadow"
+                            : theme === "light"
+                            ? "bg-rose-50 text-rose-800 border border-rose-200 hover:bg-rose-100"
                             : "bg-rose-950/30 text-rose-400 hover:bg-rose-900/40"
                         }`}
                       >
@@ -2706,11 +2816,15 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                                 onClick={() => handleSpyDeal(deal)}
                                 className={`p-3.5 rounded-xl border transition-all backdrop-blur-md cursor-pointer group hover:scale-[1.01] ${
                                   isLost
-                                    ? "bg-rose-950/20 hover:bg-rose-950/35 border-rose-800/40 text-rose-200"
+                                    ? theme === "light"
+                                      ? "bg-rose-50/70 hover:bg-rose-100/60 border-rose-200 text-slate-900 shadow-sm"
+                                      : "bg-rose-950/20 hover:bg-rose-950/35 border-rose-800/40 text-rose-200"
                                     : isWon
-                                    ? "bg-emerald-950/20 hover:bg-emerald-950/35 border-emerald-800/40 text-emerald-200"
+                                    ? theme === "light"
+                                      ? "bg-emerald-50/70 hover:bg-emerald-100/60 border-emerald-200 text-slate-900 shadow-sm"
+                                      : "bg-emerald-950/20 hover:bg-emerald-950/35 border-emerald-800/40 text-emerald-200"
                                     : theme === "light"
-                                    ? "bg-white hover:bg-amber-50/50 hover:border-amber-300 border-slate-200 text-slate-800 shadow-sm"
+                                    ? "bg-amber-50/50 hover:bg-amber-100/50 border-amber-200 text-slate-900 shadow-sm"
                                     : theme === "whatsapp"
                                     ? "bg-[#202C33]/95 hover:bg-[#202C33] hover:border-[#00A884]/60 border-[#2A3942] text-[#E9EDEF]"
                                     : "bg-[#0e1628]/95 hover:bg-[#131f37] hover:border-amber-500/50 border-slate-700/70 text-slate-200"
@@ -2720,12 +2834,12 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                                 <div className="flex items-start justify-between gap-2">
                                   <div
                                     className={`font-bold text-sm leading-snug break-words transition-colors ${
-                                      isLost
+                                      theme === "light"
+                                        ? "text-slate-900 group-hover:text-blue-600 font-extrabold"
+                                        : isLost
                                         ? "text-rose-200 group-hover:text-rose-300"
                                         : isWon
                                         ? "text-emerald-200 group-hover:text-emerald-300"
-                                        : theme === "light"
-                                        ? "text-slate-900 group-hover:text-amber-600"
                                         : "text-white group-hover:text-amber-400"
                                     }`}
                                   >
@@ -2733,7 +2847,13 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                                   </div>
                                   <div
                                     className={`text-sm font-extrabold shrink-0 ${
-                                      isLost
+                                      theme === "light"
+                                        ? isLost
+                                          ? "text-rose-700 font-black"
+                                          : isWon
+                                          ? "text-emerald-700 font-black"
+                                          : "text-amber-700 font-black"
+                                        : isLost
                                         ? "text-rose-400"
                                         : isWon
                                         ? "text-emerald-400"
@@ -2746,11 +2866,17 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
 
                                 {/* Linha 2: Vendedor Real atendendo este Cliente */}
                                 <div className="text-xs mt-1.5 flex items-center gap-1.5 font-medium">
-                                  <Users className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                                  <span className="text-slate-400">Atendente:</span>
+                                  <Users className={`w-3.5 h-3.5 shrink-0 ${theme === "light" ? "text-blue-600" : "text-blue-400"}`} />
+                                  <span className={theme === "light" ? "text-slate-600 font-medium" : "text-slate-400"}>Atendente:</span>
                                   <span
                                     className={`font-bold ${
-                                      isLost
+                                      theme === "light"
+                                        ? isLost
+                                          ? "text-rose-900"
+                                          : isWon
+                                          ? "text-emerald-900"
+                                          : "text-amber-900"
+                                        : isLost
                                         ? "text-rose-300"
                                         : isWon
                                         ? "text-emerald-400"
@@ -2763,18 +2889,26 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
 
                                 {/* Linha 3: Proposta / Título */}
                                 <div
-                                  className={`text-xs mt-1 break-words ${
-                                    theme === "light" ? "text-slate-600" : "text-slate-400"
+                                  className={`text-xs mt-1 break-words font-medium ${
+                                    theme === "light" ? "text-slate-700" : "text-slate-400"
                                   }`}
                                 >
                                   {deal.title}
                                 </div>
 
                                 {/* Linha 4: Badges de Estágio, Vendedor e Origem */}
-                                <div className="flex flex-wrap items-center gap-1.5 mt-2.5 pt-2 border-t border-slate-700/20">
+                                <div className={`flex flex-wrap items-center gap-1.5 mt-2.5 pt-2 border-t ${
+                                  theme === "light" ? "border-slate-200" : "border-slate-700/20"
+                                }`}>
                                   <span
                                     className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                                      isWon
+                                      theme === "light"
+                                        ? isWon
+                                          ? "bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold"
+                                          : isLost
+                                          ? "bg-rose-100 text-rose-800 border border-rose-300 font-bold"
+                                          : "bg-amber-100 text-amber-800 border border-amber-300 font-bold"
+                                        : isWon
                                         ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
                                         : isLost
                                         ? "bg-rose-500/20 text-rose-300 border border-rose-500/40"
@@ -2785,8 +2919,12 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                                   </span>
 
                                   {deal.isLive && (
-                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${
+                                      theme === "light"
+                                        ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                                        : "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                                    }`}>
+                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
                                       Ao Vivo Agora
                                     </span>
                                   )}
@@ -2794,30 +2932,38 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                                   {/* Status de Mensagens WhatsApp */}
                                   {(deal.hasActiveChat || (deal.messageCount && deal.messageCount > 0)) ? (
                                     <span
-                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${
+                                        theme === "light"
+                                          ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                                          : "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                                      }`}
                                       title={`${deal.messageCount || 0} mensagens trocadas`}
                                     >
-                                      <MessageSquare className="w-3 h-3 text-emerald-400" />
+                                      <MessageSquare className="w-3 h-3 text-emerald-600" />
                                       WhatsApp ({deal.messageCount})
                                     </span>
                                   ) : (
                                     <span
                                       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium border ${
                                         theme === "light"
-                                          ? "bg-slate-100 text-slate-500 border-slate-200"
+                                          ? "bg-slate-100 text-slate-700 border-slate-300"
                                           : "bg-slate-800/60 text-slate-400 border-slate-700/50"
                                       }`}
                                       title="Lead sem mensagens trocadas no WhatsApp até o momento"
                                     >
-                                      <Inbox className="w-3 h-3 text-slate-400" />
+                                      <Inbox className="w-3 h-3 text-slate-500" />
                                       <span>Sem Conversa</span>
                                     </span>
                                   )}
 
                                   <span
-                                    className={`text-[10px] px-1.5 py-0.5 rounded ml-auto font-medium ${
+                                    className={`text-[10px] px-1.5 py-0.5 rounded ml-auto font-bold ${
                                       deal.source === "paid"
-                                        ? "bg-blue-500/15 text-blue-400"
+                                        ? theme === "light"
+                                          ? "bg-blue-100 text-blue-700 border border-blue-200"
+                                          : "bg-blue-500/15 text-blue-400"
+                                        : theme === "light"
+                                        ? "bg-emerald-100 text-emerald-700 border border-emerald-200"
                                         : "bg-emerald-500/15 text-emerald-400"
                                     }`}
                                   >
@@ -2826,7 +2972,9 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                                 </div>
 
                                 {/* Linha 5: Botões de Ação do Negócio (Espiar + Auditoria IA) */}
-                                <div className="mt-2.5 pt-2 border-t border-slate-700/30 flex items-center justify-between gap-2">
+                                <div className={`mt-2.5 pt-2 border-t flex items-center justify-between gap-2 ${
+                                  theme === "light" ? "border-slate-200" : "border-slate-700/30"
+                                }`}>
                                   <button
                                     type="button"
                                     onClick={(e) => {
@@ -2834,7 +2982,13 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                                       handleSpyDeal(deal);
                                     }}
                                     className={`flex items-center gap-1 text-xs font-bold py-1 px-2 rounded-lg transition-colors ${
-                                      isLost
+                                      theme === "light"
+                                        ? isLost
+                                          ? "text-rose-700 hover:text-rose-900 hover:bg-rose-100"
+                                          : isWon
+                                          ? "text-emerald-700 hover:text-emerald-900 hover:bg-emerald-100"
+                                          : "text-amber-700 hover:text-amber-900 hover:bg-amber-100"
+                                        : isLost
                                         ? "text-rose-300 hover:text-rose-100 hover:bg-rose-950/40"
                                         : isWon
                                         ? "text-emerald-400 hover:text-emerald-200 hover:bg-emerald-950/40"
@@ -2867,7 +3021,7 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                                     }`}
                                     title="Auditar gargalos, falhas e recomendações com OpenAI"
                                   >
-                                    <BrainCircuit className="w-3.5 h-3.5 text-purple-400" />
+                                    <BrainCircuit className="w-3.5 h-3.5 text-purple-500" />
                                     <span>Auditoria IA</span>
                                   </button>
                                 </div>

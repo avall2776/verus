@@ -61,6 +61,41 @@ const MONTHS_LIST = [
   { value: 11, label: "Dezembro" },
 ];
 
+// Filtra estritamente equipe comercial e formata tags (remove sufixo "Geral")
+const cleanCommercialRanking = (data: SalesRepRanking[]): SalesRepRanking[] => {
+  if (!Array.isArray(data)) return [];
+  return data
+    .filter((rep) => {
+      const email = (rep.email || "").toLowerCase().trim();
+      const name = (rep.name || "").toLowerCase().trim();
+      const depts: string[] = Array.isArray((rep as any).departments) ? (rep as any).departments : [];
+      const deptNames = depts.map((d: any) => (typeof d === "string" ? d : d?.name || "").toLowerCase().trim());
+
+      // Bloqueio rigoroso de membros de Marketing ou Suporte
+      if (deptNames.some((d) => d.includes("marketing") || d === "mkt" || d.includes("suporte") || d.includes("financeiro"))) {
+        return false;
+      }
+      if (email.includes("marketing@") || email.includes(".marketing@") || (rep as any).canAccessMarketing) {
+        return false;
+      }
+      if (name === "maria" || name.startsWith("maria ") || name === "léo" || name === "leo" || name.startsWith("léo ") || name.startsWith("leo ")) {
+        return false;
+      }
+      return true;
+    })
+    .map((rep, idx) => {
+      const rawDepts: string[] = Array.isArray((rep as any).departments) ? (rep as any).departments : [];
+      const cleanDepts = rawDepts
+        .map((d: any) => (typeof d === "string" ? d : d?.name || "").replace(/geral/i, "").trim())
+        .filter(Boolean);
+      return {
+        ...rep,
+        rank: idx + 1,
+        departments: cleanDepts.length > 0 ? cleanDepts : ["Comercial"],
+      };
+    });
+};
+
 export default function GoalsPage() {
   const [goals, setGoals] = useState<CommercialGoal[]>([]);
   const [ranking, setRanking] = useState<SalesRepRanking[]>([]);
@@ -102,7 +137,7 @@ export default function GoalsPage() {
         },
       });
       if (Array.isArray(res?.data)) {
-        setRanking(res.data);
+        setRanking(cleanCommercialRanking(res.data));
       }
     } catch (err) {
       console.error("Erro ao carregar leaderboard:", err);
@@ -156,7 +191,7 @@ export default function GoalsPage() {
       }
 
       if (Array.isArray(rankingRes?.data)) {
-        setRanking(rankingRes.data);
+        setRanking(cleanCommercialRanking(rankingRes.data));
       }
     } catch (error) {
       console.error("Erro ao carregar dados de metas:", error);
@@ -846,10 +881,10 @@ export default function GoalsPage() {
         <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80 text-xs">
           <div className="flex items-center gap-2">
             <span className="font-semibold text-slate-700 dark:text-slate-300">
-              {rankingPeriod === "day" && "📅 Classificação de Hoje (Dia atual)"}
-              {rankingPeriod === "week" && "📆 Classificação desta Semana"}
-              {rankingPeriod === "month" && `🗓️ Classificação de ${MONTHS_LIST[selectedMonth]?.label} de ${selectedYear}`}
-              {rankingPeriod === "all" && "⚡ Classificação Geral Acumulada (Histórico de Todas as Vendas)"}
+              {rankingPeriod === "day" && "Classificação de Hoje (Dia atual)"}
+              {rankingPeriod === "week" && "Classificação desta Semana"}
+              {rankingPeriod === "month" && `Classificação de ${MONTHS_LIST[selectedMonth]?.label} de ${selectedYear}`}
+              {rankingPeriod === "all" && "Classificação Geral Acumulada (Histórico de Todas as Vendas)"}
             </span>
             {leaderboardLoading && (
               <RefreshCw className="w-3 h-3 animate-spin text-blue-500" />
@@ -1118,15 +1153,15 @@ export default function GoalsPage() {
                             {(rep as any).departments.map((dept: string) => (
                               <span
                                 key={dept}
-                                className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+                                className="whitespace-nowrap px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
                               >
-                                {dept}
+                                {dept.replace(/geral/i, "").trim() || dept}
                               </span>
                             ))}
                           </div>
                         ) : (
-                          <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                            Comercial Geral
+                          <span className="whitespace-nowrap px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                            Comercial
                           </span>
                         )}
                       </td>
@@ -1206,12 +1241,12 @@ export default function GoalsPage() {
                         <div className="text-[10.5px] text-slate-500 dark:text-slate-400 truncate">{rep.email || "Consultor"}</div>
                         <div className="mt-0.5">
                           {(rep as any).departments && (rep as any).departments.length > 0 ? (
-                            <span className="px-1.5 py-0.5 rounded text-[9.5px] font-semibold bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                              {(rep as any).departments.join(', ')}
+                            <span className="whitespace-nowrap px-1.5 py-0.5 rounded text-[9.5px] font-semibold bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                              {(rep as any).departments.map((d: string) => d.replace(/geral/i, "").trim() || d).join(', ')}
                             </span>
                           ) : (
-                            <span className="px-1.5 py-0.5 rounded text-[9.5px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
-                              Comercial Geral
+                            <span className="whitespace-nowrap px-1.5 py-0.5 rounded text-[9.5px] font-semibold bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                              Comercial
                             </span>
                           )}
                         </div>
