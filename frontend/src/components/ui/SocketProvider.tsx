@@ -17,6 +17,7 @@ import {
   SoundSettings,
   DEFAULT_SOUND_SETTINGS
 } from '@/lib/soundSettings';
+import { canUserAccessWhatsApp } from '@/lib/userCache';
 
 interface SocketContextType {
   socket: Socket | null;
@@ -448,8 +449,12 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Escuta global para novas mensagens recebidas de Leads (INBOUND)
     socketInstance.on('newMessage', (msg) => {
-      // Suprime absolutamente notificações em login, público, deslogado ou super-admin
+      // 1. Suprime absolutamente notificações em login, público, deslogado ou super-admin
       if (isUnauthenticatedOrPublic()) return;
+
+      // 2. ISOLAMENTO ESTRITO DE SEGURANÇA:
+      // Se o operador logado NÃO possui permissão para WhatsApp / Atendimento, aborta na raiz!
+      if (!canUserAccessWhatsApp()) return;
 
       if (msg.direction === 'INBOUND') {
         const convId = msg.conversationId || msg.contact?.conversationId || (msg.contactId ? `conv_${msg.contactId}` : null);
@@ -459,12 +464,23 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         const content = msg.content || msg.text || '';
         const msgType = msg.mediaType || msg.type || 'TEXT';
 
+        // Determina o canal (WhatsApp vs Instagram)
+        const isInstagram = 
+          msg.channel === 'INSTAGRAM' || 
+          msg.conversation?.channel === 'INSTAGRAM' || 
+          msg.source === 'INSTAGRAM' || 
+          msg.provider === 'INSTAGRAM';
+        const channelType: 'whatsapp' | 'instagram' = isInstagram ? 'instagram' : 'whatsapp';
+
         // Verifica se a conversa já está aberta e focada na tela do atendente
         const isCurrentChatOpen = typeof window !== 'undefined' && 
           window.location.pathname.startsWith('/inbox') && 
           (window.location.search.includes(`chat=${convId}`) || window.location.search.includes(`conversationId=${convId}`));
 
-        // Se o operador não estiver com este chat aberto na tela e as notificações visuais estiverem ativas, dispara o Toast flutuante
+        // -------------------------------------------------------------
+        // 1. NOTIFICAÇÃO VISUAL NA TELA (Independente do som)
+        // -------------------------------------------------------------
+        // Se o operador não estiver com este chat aberto na tela e os popups visuais estiverem ativados:
         if (!isCurrentChatOpen && convId && isVisualNotificationEnabled('whatsapp')) {
           showLeadMessageToast({
             conversationId: convId,
@@ -481,34 +497,38 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
           setHasGlobalUnread(true);
         }
 
-        // Determina o canal (WhatsApp vs Instagram)
-        const isInstagram = 
-          msg.channel === 'INSTAGRAM' || 
-          msg.conversation?.channel === 'INSTAGRAM' || 
-          msg.source === 'INSTAGRAM' || 
-          msg.provider === 'INSTAGRAM';
-        const channelType: 'whatsapp' | 'instagram' = isInstagram ? 'instagram' : 'whatsapp';
+        // -------------------------------------------------------------
+        // 2. ALERTA SONORO ACÚSTICO (Independente do visual)
+        // -------------------------------------------------------------
+        // Toca SE E SOMENTE SE o som geral NÃO estiver silenciado e o canal de áudio estiver habilitado
+        const currentSoundSettings = getSoundSettings();
+        const isAudioSilenced = currentSoundSettings.masterMute || isSoundChannelMuted(channelType);
 
-        // Debounce acústico inteligente: Toca o chime e vibra apenas 1 vez por contato a cada 3.5 segundos
-        const now = Date.now();
-        const soundKey = convId || contactPhone || 'global_inbound';
-        const lastPlayed = lastSoundTriggeredRef.current[soundKey] || 0;
+        if (!isAudioSilenced) {
+          const now = Date.now();
+          const soundKey = convId || contactPhone || 'global_inbound';
+          const lastPlayed = lastSoundTriggeredRef.current[soundKey] || 0;
 
-        if (now - lastPlayed > 3500) {
-          playNotificationSound(false, channelType);
-          triggerVibration(false);
-          lastSoundTriggeredRef.current[soundKey] = now;
+          if (now - lastPlayed > 3500) {
+            playNotificationSound(false, channelType);
+            triggerVibration(false);
+            lastSoundTriggeredRef.current[soundKey] = now;
+          }
         }
 
-        // Se aba em background / minimizada, dispara Web Push Notification e pisca a aba
-        if (typeof document !== 'undefined' && (document.hidden || !document.hasFocus())) {
-          triggerTabBlink(`💬 [1] ${contactName}`);
-          dispatchDesktopNotification(`Vallor · ${contactName}`, {
-            body: content.length > 80 ? `${content.substring(0, 80)}...` : content || 'Enviou uma nova mensagem',
-            tag: `msg_${convId || 'general'}`,
-            url: convId ? `/inbox?conversationId=${convId}` : '/inbox',
-            channel: channelType
-          });
+        // -------------------------------------------------------------
+        // 3. NOTIFICAÇÃO DESKTOP / PUSH (Respeita modo foco)
+        // -------------------------------------------------------------
+        if (isVisualNotificationEnabled('whatsapp')) {
+          if (typeof document !== 'undefined' && (document.hidden || !document.hasFocus())) {
+            triggerTabBlink(`💬 [1] ${contactName}`);
+            dispatchDesktopNotification(`Vallor · ${contactName}`, {
+              body: content.length > 80 ? `${content.substring(0, 80)}...` : content || 'Enviou uma nova mensagem',
+              tag: `msg_${convId || 'general'}`,
+              url: convId ? `/inbox?conversationId=${convId}` : '/inbox',
+              channel: channelType
+            });
+          }
         }
       }
     });
@@ -518,6 +538,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       // Suprime absolutamente notificações em login, público, deslogado ou super-admin
       if (isUnauthenticatedOrPublic()) return;
 
+      // Isolamento de segurança: se não tem permissão para WhatsApp, ignora transferências
+      if (!canUserAccessWhatsApp()) return;
+
       console.log('⚡ [WebSockets] Atendimento transferido recebido:', data);
       const convId = data.conversationId;
       const contactName = data.contact?.name || 'Lead';
@@ -525,7 +548,8 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       const departmentName = data.department?.name || 'Seu Setor';
       const transferredBy = data.transferredBy || 'Um colega de equipe';
 
-      if (convId) {
+      // 1. Popup visual na tela (independente de som)
+      if (convId && isVisualNotificationEnabled('transfers')) {
         showTransferAlertToast({
           conversationId: convId,
           contactName,
@@ -535,19 +559,24 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         }, router);
       }
 
-      // Alerta sonoro de alta prioridade e vibração
-      playNotificationSound(true, 'system');
-      triggerVibration(true);
+      // 2. Alerta sonoro de alta prioridade (respeita silenciamento)
+      const currentSoundSettings = getSoundSettings();
+      if (!currentSoundSettings.masterMute && !isSoundChannelMuted('support')) {
+        playNotificationSound(true, 'support');
+        triggerVibration(true);
+      }
       triggerTabBlink(`⚡ [TRANSFERÊNCIA] ${contactName}`);
 
-      // Web Push Notification se em segundo plano
-      if (typeof document !== 'undefined' && (document.hidden || !document.hasFocus())) {
-        dispatchDesktopNotification(`⚡ Vallor · Lead Transferido para Você!`, {
-          body: `${contactName} foi transferido para ${departmentName} por ${transferredBy}. Clique para assumir.`,
-          tag: `transfer_${convId || 'general'}`,
-          url: convId ? `/inbox?conversationId=${convId}` : '/inbox',
-          channel: 'system'
-        });
+      // 3. Web Push Notification se em segundo plano e com visual ativo
+      if (isVisualNotificationEnabled('transfers')) {
+        if (typeof document !== 'undefined' && (document.hidden || !document.hasFocus())) {
+          dispatchDesktopNotification(`⚡ Vallor · Lead Transferido para Você!`, {
+            body: `${contactName} foi transferido para ${departmentName} por ${transferredBy}. Clique para assumir.`,
+            tag: `transfer_${convId || 'general'}`,
+            url: convId ? `/inbox?conversationId=${convId}` : '/inbox',
+            channel: 'support'
+          });
+        }
       }
     });
 

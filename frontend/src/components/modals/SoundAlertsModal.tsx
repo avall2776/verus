@@ -46,13 +46,13 @@ export default function SoundAlertsModal({ isOpen, onClose }: SoundAlertsModalPr
   // Gerador de áudio sintético via Web Audio API para preview real no navegador
   const playPreviewTone = (channel: "whatsapp" | "instagram" | "support" | "system") => {
     if (settings.masterMute) {
-      toast("O áudio mestre está silenciado");
+      toast("O som geral está silenciado. Desative 'Silenciar Todos os Sons' acima para ouvir.");
       return;
     }
 
     const cfg = settings[channel];
     if (!cfg.enabled) {
-      toast("Este canal de áudio está desativado");
+      toast("Este canal de áudio está desativado. Ative a caixa de seleção ao lado.");
       return;
     }
 
@@ -126,14 +126,16 @@ export default function SoundAlertsModal({ isOpen, onClose }: SoundAlertsModalPr
   };
 
   const handleToggleMasterMute = () => {
-    const updated: SoundSettings = { ...settings, masterMute: !settings.masterMute };
-    setSettings(updated);
-    saveSoundSettings(updated); // Persiste imediatamente em tempo real
-    if (updated.masterMute) {
-      toast("Todos os avisos sonoros foram silenciados instantaneamente.");
-    } else {
-      toast.success("Avisos sonoros reativados.");
-    }
+    setSettings((prev) => {
+      const updated: SoundSettings = { ...prev, masterMute: !prev.masterMute };
+      saveSoundSettings(updated);
+      if (updated.masterMute) {
+        toast("Todos os avisos sonoros foram silenciados.");
+      } else {
+        toast.success("Avisos sonoros reativados.");
+      }
+      return updated;
+    });
   };
 
   const handleToggleChannel = (channel: "whatsapp" | "instagram" | "support" | "system") => {
@@ -319,7 +321,16 @@ export default function SoundAlertsModal({ isOpen, onClose }: SoundAlertsModalPr
                 <Bell className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               )}
               <div>
-                <span className="text-xs font-bold text-slate-900 dark:text-white block">Silenciar Todos os Sons</span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-bold text-slate-900 dark:text-white block">Silenciar Todos os Sons</span>
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                    settings.masterMute
+                      ? "bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300 border-rose-300 dark:border-rose-800"
+                      : "bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300 border-blue-300 dark:border-blue-800"
+                  }`}>
+                    {settings.masterMute ? "Todos os Sons Mudos" : "Avisos Sonoros Ativos"}
+                  </span>
+                </div>
                 <span className="text-[10px] text-slate-500 dark:text-slate-400">Desativa instantaneamente avisos sonoros de todas as fontes</span>
               </div>
             </div>
@@ -360,7 +371,7 @@ export default function SoundAlertsModal({ isOpen, onClose }: SoundAlertsModalPr
                   <button
                     type="button"
                     onClick={() => playPreviewTone("whatsapp")}
-                    disabled={playingChannel === "whatsapp" || !settings.whatsapp.enabled || settings.masterMute}
+                    disabled={playingChannel === "whatsapp" || !settings.whatsapp.enabled}
                     className="px-2 py-1 rounded-md bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-[10px] font-semibold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center gap-1 transition-colors disabled:opacity-40 cursor-pointer"
                   >
                     <Play className="w-2.5 h-2.5" /> Testar
@@ -405,7 +416,7 @@ export default function SoundAlertsModal({ isOpen, onClose }: SoundAlertsModalPr
                   <button
                     type="button"
                     onClick={() => playPreviewTone("instagram")}
-                    disabled={playingChannel === "instagram" || !settings.instagram.enabled || settings.masterMute}
+                    disabled={playingChannel === "instagram" || !settings.instagram.enabled}
                     className="px-2 py-1 rounded-md bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-[10px] font-semibold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center gap-1 transition-colors disabled:opacity-40 cursor-pointer"
                   >
                     <Play className="w-2.5 h-2.5" /> Testar
@@ -450,7 +461,7 @@ export default function SoundAlertsModal({ isOpen, onClose }: SoundAlertsModalPr
                   <button
                     type="button"
                     onClick={() => playPreviewTone("support")}
-                    disabled={playingChannel === "support" || !settings.support.enabled || settings.masterMute}
+                    disabled={playingChannel === "support" || !settings.support.enabled}
                     className="px-2 py-1 rounded-md bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-[10px] font-semibold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center gap-1 transition-colors disabled:opacity-40 cursor-pointer"
                   >
                     <Play className="w-2.5 h-2.5" /> Testar
@@ -495,7 +506,7 @@ export default function SoundAlertsModal({ isOpen, onClose }: SoundAlertsModalPr
                   <button
                     type="button"
                     onClick={() => playPreviewTone("system")}
-                    disabled={playingChannel === "system" || !settings.system.enabled || settings.masterMute}
+                    disabled={playingChannel === "system" || !settings.system.enabled}
                     className="px-2 py-1 rounded-md bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-[10px] font-semibold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center gap-1 transition-colors disabled:opacity-40 cursor-pointer"
                   >
                     <Play className="w-2.5 h-2.5" /> Testar

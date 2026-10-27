@@ -9,7 +9,6 @@ const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos de cache em memória
  * Recuperação síncrona instantânea (0ms) do usuário logado na memória ou localStorage.
  */
 export function getStoredUserSync(): any {
-  if (cachedUser) return cachedUser;
   if (typeof window !== "undefined") {
     try {
       const stored = localStorage.getItem("versus_user");
@@ -19,7 +18,7 @@ export function getStoredUserSync(): any {
       }
     } catch {}
   }
-  return null;
+  return cachedUser;
 }
 
 /**
@@ -100,4 +99,46 @@ export function clearUserCache() {
   cachedUser = null;
   lastFetchTime = 0;
   inFlightPromise = null;
+}
+
+/**
+ * Validação rigorosa de permissão de acesso ao WhatsApp e Atendimento.
+ * Garante que usuários sem acesso ao canal (ex: operadores de CRM ou estoque) não recebam notificações ou áudios.
+ */
+export function canUserAccessWhatsApp(customUser?: any): boolean {
+  const user = customUser || getStoredUserSync();
+  if (!user) return true;
+
+  // Super Admin global ou Admin da empresa têm acesso total
+  const isSuperAdmin = Boolean(
+    user.isSuperAdmin === true ||
+    user.role === 'SUPER_ADMIN' ||
+    user.role === 'SUPERADMIN'
+  );
+  if (isSuperAdmin) return true;
+  if (user.role === 'ADMIN') return true;
+
+  // Governança de Plano do Tenant
+  const plan = user.tenant?.plan;
+  if (plan) {
+    const planModules = (plan.modules as Record<string, boolean>) || {};
+    const waAllowedByPlan = Boolean(planModules.whatsapp ?? plan.hasWhatsApp ?? true);
+    if (!waAllowedByPlan) return false;
+  }
+
+  // Matriz de permissões individuais do operador
+  const perms = user.permissions;
+  if (!perms) return true;
+
+  // Padrão novo com matriz de menus
+  if (perms.menus && typeof perms.menus.whatsapp === 'boolean') {
+    return perms.menus.whatsapp;
+  }
+
+  // Fallback retrocompatível
+  if (typeof perms.inbox === 'boolean') {
+    return perms.inbox;
+  }
+
+  return true;
 }

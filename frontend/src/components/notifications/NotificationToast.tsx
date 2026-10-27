@@ -10,6 +10,7 @@ import {
 import api, { getStoredToken } from "@/lib/api";
 import { useTheme } from "@/contexts/ThemeContext";
 import { isVisualNotificationEnabled } from "@/lib/soundSettings";
+import { canUserAccessWhatsApp } from "@/lib/userCache";
 
 // Hook seguro para obter contexto de tema sem quebrar caso renderizado isoladamente
 function useNotificationTheme() {
@@ -84,8 +85,8 @@ export const LeadMessageToast: React.FC<LeadMessageToastProps> = ({
   onOpen,
   onClose
 }) => {
-  // Isolamento estrito: NUNCA renderizar notificações operacionais no console Super Admin, telas deslogadas/login ou se o usuário desativou avisos visuais
-  if (isBlockedNotificationContext() || !isVisualNotificationEnabled("whatsapp")) {
+  // Isolamento estrito: NUNCA renderizar notificações operacionais no console Super Admin, telas deslogadas/login, se o usuário desativou avisos visuais ou se não tem permissão para o WhatsApp
+  if (isBlockedNotificationContext() || !isVisualNotificationEnabled("whatsapp") || !canUserAccessWhatsApp()) {
     return null;
   }
 
@@ -454,8 +455,8 @@ export function showLeadMessageToast(
   },
   router: any
 ) {
-  // Isolamento estrito: Se deslogado, tela de login, super-admin ou se notificações visuais do WhatsApp estiverem desativadas, silencia
-  if (isBlockedNotificationContext() || !isVisualNotificationEnabled("whatsapp")) {
+  // Isolamento estrito: Se deslogado, tela de login, super-admin, sem permissão ou se notificações visuais do WhatsApp estiverem desativadas, silencia
+  if (isBlockedNotificationContext() || !isVisualNotificationEnabled("whatsapp") || !canUserAccessWhatsApp()) {
     return;
   }
 
