@@ -102,29 +102,29 @@ function MetricKpiCardWithComparison({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className={`bg-white dark:bg-[#0B1224] p-4 rounded-xl border border-slate-200 dark:border-slate-800/80 ${borderHoverClass} transition-all flex flex-col justify-between cursor-pointer h-full group shadow-sm`}>
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200 transition-colors">
+      <div className={`bg-white dark:bg-[#0B1224] p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-slate-800/80 ${borderHoverClass} transition-all flex flex-col justify-between cursor-pointer h-full group shadow-sm`}>
+        <div className="flex items-center justify-between gap-1">
+          <span className="text-[11px] sm:text-xs font-semibold text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200 transition-colors line-clamp-1">
             {title}
           </span>
-          <div className="w-5 h-5 rounded flex items-center justify-center text-slate-400 dark:text-slate-500 hover:text-blue-500">
-            <Info size={13} />
+          <div className="w-4 h-4 sm:w-5 sm:h-5 rounded flex items-center justify-center text-slate-400 dark:text-slate-500 hover:text-blue-500 shrink-0">
+            <Info size={12} />
           </div>
         </div>
 
-        <div className="my-2">
-          <span className={`text-2xl font-bold ${colorClass}`}>{value}</span>
+        <div className="my-1.5 sm:my-2">
+          <span className={`text-lg sm:text-2xl font-bold truncate block ${colorClass}`}>{value}</span>
         </div>
 
-        <div className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
-          <Icon size={12} className={colorClass} />
+        <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400">
+          <Icon size={11} className={`shrink-0 ${colorClass}`} />
           <span className="truncate">{subtitle}</span>
         </div>
       </div>
 
       {/* POPUP / HOVERCARD SUSPENSO */}
       {isHovered && (
-        <div className="absolute top-full left-0 mt-2 z-50 w-72 bg-white dark:bg-[#161b26] border border-slate-200 dark:border-slate-700 rounded-xl p-3.5 shadow-2xl animate-in fade-in zoom-in-95 duration-150 pointer-events-none">
+        <div className="absolute top-full right-0 sm:right-auto sm:left-0 mt-2 z-50 w-64 sm:w-72 bg-white dark:bg-[#161b26] border border-slate-200 dark:border-slate-700 rounded-xl p-3 sm:p-3.5 shadow-2xl animate-in fade-in zoom-in-95 duration-150 pointer-events-none">
           <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800 mb-2.5">
             <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
               <Icon size={13} className={colorClass} />
@@ -757,18 +757,18 @@ export default function AtendimentoAnalyticsDashboard() {
   return (
     <div className="flex-1 flex flex-col min-h-screen bg-slate-100 dark:bg-[#050A15] text-slate-800 dark:text-slate-200 overflow-y-auto">
       {/* TOP HEADER */}
-      <div className="border-b border-slate-200 dark:border-slate-800/80 bg-white/95 dark:bg-[#0B1224]/70 backdrop-blur px-6 py-5 sticky top-0 z-30">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="border-b border-slate-200 dark:border-slate-800/80 bg-white/95 dark:bg-[#0B1224]/90 backdrop-blur px-3.5 sm:px-6 py-3.5 sm:py-5 sticky top-0 z-30">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
           <div>
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-blue-600/15 border border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
-                <Headphones size={20} />
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-blue-600/15 border border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+                <Headphones className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+              <div className="min-w-0">
+                <h1 className="text-base sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2 truncate">
                   Suíte de Análises & Inteligência Operacional
                 </h1>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 truncate sm:whitespace-normal">
                   Auditoria de SLA, fluxos de conversação e controle financeiro de IA em tempo real.
                 </p>
               </div>
@@ -776,88 +776,101 @@ export default function AtendimentoAnalyticsDashboard() {
           </div>
 
           {/* MAIN TABS */}
-          <div className="flex items-center gap-1 bg-slate-100 dark:bg-[#141C30] p-1 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div className="flex items-center gap-1 bg-slate-100 dark:bg-[#141C30] p-1 rounded-xl border border-slate-200 dark:border-slate-800 overflow-x-auto no-scrollbar w-full sm:w-auto shrink-0">
             <button
               onClick={() => setActiveTab('atendimento')}
-              className={`px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+              className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 sm:gap-2 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                 activeTab === 'atendimento'
                   ? 'bg-blue-600 text-white shadow-md'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/50'
               }`}
             >
-              <Headphones size={15} />
+              <Headphones size={14} />
               <span>Atendimento</span>
             </button>
 
             <button
               onClick={() => setActiveTab('csat')}
-              className={`px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+              className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 sm:gap-2 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                 activeTab === 'csat'
                   ? 'bg-blue-600 text-white shadow-md'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/50'
               }`}
             >
-              <Star size={15} className="text-amber-500 dark:text-amber-400" />
+              <Star size={14} className="text-amber-500 dark:text-amber-400" />
               <span>Pesquisas (CSAT)</span>
             </button>
 
             <button
               onClick={() => setActiveTab('ai_costs')}
-              className={`px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+              className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 sm:gap-2 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                 activeTab === 'ai_costs'
                   ? 'bg-blue-600 text-white shadow-md'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/50'
               }`}
             >
-              <Sparkles size={15} className="text-purple-500 dark:text-purple-400" />
+              <Sparkles size={14} className="text-purple-500 dark:text-purple-400" />
               <span>Custos de IA</span>
             </button>
           </div>
         </div>
 
         {/* SUB-BAR / FILTERS */}
-        <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800/60 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-2">
-            {/* View Mode Switcher (Only in Atendimento) */}
-            {activeTab === 'atendimento' && (
-              <div className="flex items-center bg-slate-100 dark:bg-[#11192A] p-1 rounded-lg border border-slate-200 dark:border-slate-800 mr-2">
-                <button
-                  onClick={() => setViewMode('charts')}
-                  className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-                    viewMode === 'charts'
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'text-slate-600 hover:text-blue-600 hover:bg-slate-200/60 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/50'
-                  }`}
-                >
-                  <TrendingUp size={14} />
-                  <span>Gráficos</span>
-                </button>
-                <button
-                  onClick={() => setViewMode('reports')}
-                  className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-                    viewMode === 'reports'
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'text-slate-600 hover:text-blue-600 hover:bg-slate-200/60 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/50'
-                  }`}
-                >
-                  <Layers size={14} />
-                  <span>Relatórios Detalhados</span>
-                </button>
-              </div>
-            )}
+        <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-slate-200 dark:border-slate-800/60 flex flex-col md:flex-row md:items-center justify-between gap-2.5 sm:gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-2.5 w-full md:w-auto">
+            {/* View Mode Switcher + Dias Úteis + Recarregar (Mobile) */}
+            <div className="flex items-center justify-between sm:justify-start gap-1.5 sm:gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar">
+              {/* View Mode Switcher (Only in Atendimento) */}
+              {activeTab === 'atendimento' && (
+                <div className="flex items-center bg-slate-100 dark:bg-[#11192A] p-0.5 sm:p-1 rounded-lg border border-slate-200 dark:border-slate-800 shrink-0">
+                  <button
+                    onClick={() => setViewMode('charts')}
+                    className={`px-2.5 sm:px-3 py-1.5 rounded-md text-[11px] sm:text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer ${
+                      viewMode === 'charts'
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'text-slate-600 hover:text-blue-600 hover:bg-slate-200/60 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/50'
+                    }`}
+                  >
+                    <TrendingUp size={13} />
+                    <span>Gráficos</span>
+                  </button>
+                  <button
+                    onClick={() => setViewMode('reports')}
+                    className={`px-2.5 sm:px-3 py-1.5 rounded-md text-[11px] sm:text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer ${
+                      viewMode === 'reports'
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'text-slate-600 hover:text-blue-600 hover:bg-slate-200/60 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/50'
+                    }`}
+                  >
+                    <Layers size={13} />
+                    <span>Relatórios</span>
+                  </button>
+                </div>
+              )}
 
-            {/* BOTÃO MODAL DIAS ÚTEIS */}
-            <button
-              onClick={() => setShowWorkingDaysModal(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 dark:bg-[#11192A] dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-200 font-semibold transition-all cursor-pointer mr-2 shadow-sm"
-              title="Configurar Dias de Operação e Feriados"
-            >
-              <CalendarDays size={14} className="text-blue-500 dark:text-blue-400" />
-              <span>Dias Úteis ({workingDays}d)</span>
-            </button>
+              {/* BOTÃO MODAL DIAS ÚTEIS */}
+              <button
+                onClick={() => setShowWorkingDaysModal(true)}
+                className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 dark:bg-[#11192A] dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-800 text-[11px] sm:text-xs text-slate-700 dark:text-slate-200 font-semibold transition-all cursor-pointer shadow-sm shrink-0 whitespace-nowrap"
+                title="Configurar Dias de Operação e Feriados"
+              >
+                <CalendarDays size={13} className="text-blue-500 dark:text-blue-400" />
+                <span>Dias Úteis ({workingDays}d)</span>
+              </button>
 
-            {/* Quick Period Buttons */}
-            <div className="flex items-center gap-1 bg-slate-100 dark:bg-[#11192A] p-1 rounded-lg border border-slate-200 dark:border-slate-800">
+              {/* BOTAO RECARREGAR (Mobile) */}
+              <button
+                onClick={() => fetchAllData(true)}
+                disabled={isRefreshing}
+                className="md:hidden flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 dark:bg-slate-800/80 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-[11px] font-semibold text-slate-700 dark:text-slate-200 shadow-sm transition-all cursor-pointer disabled:opacity-50 shrink-0"
+              >
+                <RefreshCw size={12} className={isRefreshing ? 'animate-spin text-blue-500 dark:text-blue-400' : ''} />
+                <span>{isRefreshing ? '...' : 'Recarregar'}</span>
+              </button>
+            </div>
+
+            {/* Quick Period Buttons: Scrollable bar on mobile */}
+            <div className="flex items-center gap-1 bg-slate-100 dark:bg-[#11192A] p-1 rounded-lg border border-slate-200 dark:border-slate-800 overflow-x-auto no-scrollbar w-full sm:w-auto">
               {(['today', '7d', '15d', '30d', '90d'] as const).map((p) => (
                 <button
                   key={p}
@@ -993,7 +1006,8 @@ export default function AtendimentoAnalyticsDashboard() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          {/* BOTAO RECARREGAR (Desktop) */}
+          <div className="hidden md:flex items-center gap-2">
             <button
               onClick={() => fetchAllData(true)}
               disabled={isRefreshing}
@@ -1007,7 +1021,7 @@ export default function AtendimentoAnalyticsDashboard() {
       </div>
 
       {/* CONTENT AREA */}
-      <div className="p-6 space-y-6">
+      <div className="p-3.5 sm:p-6 space-y-4 sm:space-y-6">
         {/* ========================================================= */}
         {/* TAB 1: ATENDIMENTO                                        */}
         {/* ========================================================= */}
@@ -1017,7 +1031,7 @@ export default function AtendimentoAnalyticsDashboard() {
             {viewMode === 'charts' ? (
               <>
                 {/* 1. SEVEN KPI CARDS WITH HOVER COMPARISON */}
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3.5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2.5 sm:gap-3.5">
                   <MetricKpiCardWithComparison
                     title="Total Atendimentos"
                     value={overview?.total || 0}
@@ -1113,54 +1127,54 @@ export default function AtendimentoAnalyticsDashboard() {
                 </div>
 
                 {/* 2. MAIN COMPOSED CHART */}
-                <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-xl p-6">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-6">
+                <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-6 shadow-sm">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5 sm:gap-2 mb-4 sm:mb-6">
                     <div>
-                      <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <TrendingUp size={18} className="text-blue-500 dark:text-blue-400" />
-                        Evolução Diária de Volume e Tempo Médio de Atendimento
+                      <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <TrendingUp size={16} className="text-blue-500 dark:text-blue-400 shrink-0" />
+                        <span>Evolução Diária de Volume e Tempo Médio</span>
                       </h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                         Barras: Volume de finalizados e em andamento | Linha: TMA médio diário em minutos
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-4 text-xs font-medium">
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-3 h-3 rounded bg-emerald-500"></div>
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-[11px] sm:text-xs font-medium">
+                      <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/60 px-2 py-0.5 rounded">
+                        <div className="w-2.5 h-2.5 rounded bg-emerald-500"></div>
                         <span className="text-slate-600 dark:text-slate-300">Finalizados</span>
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        <div className={`w-3 h-3 rounded ${isWhatsApp ? 'bg-[#00A884]' : 'bg-blue-500'}`}></div>
+                      <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/60 px-2 py-0.5 rounded">
+                        <div className={`w-2.5 h-2.5 rounded ${isWhatsApp ? 'bg-[#00A884]' : 'bg-blue-500'}`}></div>
                         <span className="text-slate-600 dark:text-slate-300">Em Andamento</span>
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-3 h-0.5 bg-amber-400"></div>
+                      <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/60 px-2 py-0.5 rounded">
+                        <div className="w-2.5 h-0.5 bg-amber-400"></div>
                         <span className="text-slate-600 dark:text-slate-300">TMA (min)</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="h-[320px] w-full">
+                  <div className="h-[250px] sm:h-[320px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                      <ComposedChart data={chartsData?.timeline || []}>
+                      <ComposedChart data={chartsData?.timeline || []} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#94A3B8" opacity={0.2} vertical={false} />
-                        <XAxis dataKey="label" stroke="#64748B" fontSize={12} tickLine={false} />
-                        <YAxis yAxisId="left" stroke="#64748B" fontSize={12} tickLine={false} axisLine={false} />
-                        <YAxis yAxisId="right" orientation="right" stroke="#F59E0B" fontSize={12} tickLine={false} axisLine={false} unit="m" />
+                        <XAxis dataKey="label" stroke="#64748B" fontSize={10} tickLine={false} />
+                        <YAxis yAxisId="left" stroke="#64748B" fontSize={10} tickLine={false} axisLine={false} />
+                        <YAxis yAxisId="right" orientation="right" stroke="#F59E0B" fontSize={10} tickLine={false} axisLine={false} unit="m" />
                         <Tooltip
                           contentStyle={{
                             backgroundColor: isWhatsApp ? "#111B21" : "#0B1224",
                             borderColor: isWhatsApp ? "#222D34" : "#334155",
                             borderRadius: "8px",
                             boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.5)",
-                            fontSize: "12px",
+                            fontSize: "11px",
                             color: "#fff"
                           }}
                         />
                         <Bar yAxisId="left" dataKey="finished" name="Finalizados" fill="#10B981" radius={[4, 4, 0, 0]} stackId="a" />
                         <Bar yAxisId="left" dataKey="inProgress" name="Em Andamento" fill={isWhatsApp ? "#00A884" : "#3B82F6"} radius={[4, 4, 0, 0]} stackId="a" />
-                        <Line yAxisId="right" type="monotone" dataKey="avgTmaMinutes" name="TMA Médio" stroke="#F59E0B" strokeWidth={3} dot={{ r: 4, fill: '#F59E0B' }} />
+                        <Line yAxisId="right" type="monotone" dataKey="avgTmaMinutes" name="TMA Médio" stroke="#F59E0B" strokeWidth={2.5} dot={{ r: 3, fill: '#F59E0B' }} />
                       </ComposedChart>
                     </ResponsiveContainer>
                   </div>
@@ -1362,21 +1376,21 @@ export default function AtendimentoAnalyticsDashboard() {
                 {/* 4. AGENT PERFORMANCE TABLE (PADRÃO LERO COM ORDENAÇÃO E EXPORTAÇÃO) */}
                 <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-md">
                   {/* CABEÇALHO DO CARD (LINHA 1: TÍTULO + BOTÃO EXPORTAR) */}
-                  <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0E1528] flex items-center justify-between gap-4">
+                  <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0E1528] flex items-center justify-between gap-3 sm:gap-4">
                     <div>
-                      <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <UserCheck size={16} className="text-emerald-500 dark:text-emerald-400" />
-                        Desempenho por Colaborador
+                      <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <UserCheck size={16} className="text-emerald-500 dark:text-emerald-400 shrink-0" />
+                        <span>Desempenho por Colaborador</span>
                       </h3>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                        Indicadores individuais de produtividade, SLA de primeira resposta e satisfação
+                      <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate sm:whitespace-normal">
+                        Produtividade individual, SLA de 1ª resposta e CSAT
                       </p>
                     </div>
 
                     {/* BOTÃO EXPORTAR NO CANTO SUPERIOR DIREITO */}
                     <button
                       onClick={handleExportAgentsCSV}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 dark:bg-[#11192A] dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 font-semibold text-xs transition-colors shadow-sm cursor-pointer"
+                      className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 dark:bg-[#11192A] dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 font-semibold text-xs transition-colors shadow-sm cursor-pointer shrink-0"
                       title="Exportar dados dos colaboradores em CSV"
                     >
                       <Download size={13} className="text-blue-500 dark:text-blue-400" />
@@ -1385,7 +1399,7 @@ export default function AtendimentoAnalyticsDashboard() {
                   </div>
 
                   {/* LINHA PRÓPRIA DEDICADA PARA O CAMPO DE BUSCA (LINHA 2) */}
-                  <div className="px-6 py-3 border-b border-slate-200 dark:border-slate-800/80 bg-white dark:bg-[#0B1224]">
+                  <div className="px-4 sm:px-6 py-2.5 sm:py-3 border-b border-slate-200 dark:border-slate-800/80 bg-white dark:bg-[#0B1224]">
                     <div className="relative w-full max-w-md">
                       <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
                       <input
@@ -1398,7 +1412,8 @@ export default function AtendimentoAnalyticsDashboard() {
                     </div>
                   </div>
 
-                  <div className="overflow-x-auto">
+                  {/* TABELA DESKTOP / TABLET */}
+                  <div className="hidden md:block overflow-x-auto">
                     <table className="w-full text-left text-xs">
                       <thead>
                         <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#11192A] text-slate-600 dark:text-slate-400 select-none">
@@ -1584,6 +1599,78 @@ export default function AtendimentoAnalyticsDashboard() {
                       </tbody>
                     </table>
                   </div>
+
+                  {/* CARDS DEDICADOS DE DESEMPENHO PARA MOBILE (md:hidden) */}
+                  <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800/60">
+                    {sortedAndFilteredAgents.length === 0 ? (
+                      <div className="py-8 text-center text-slate-500 text-xs">
+                        {agentSearchText ? 'Nenhum colaborador corresponde à busca.' : 'Nenhum colaborador com atendimentos registrados no período.'}
+                      </div>
+                    ) : (
+                      sortedAndFilteredAgents.map((ag) => (
+                        <div key={ag.id} className="p-3 space-y-2.5">
+                          {/* Linha 1: Avatar, Nome, Cargo, Status Online */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-full bg-blue-600/20 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs shrink-0">
+                                {ag.name.substring(0, 2).toUpperCase()}
+                              </div>
+                              <div>
+                                <div className="font-semibold text-slate-900 dark:text-white text-xs flex items-center gap-1.5">
+                                  <span>{ag.name}</span>
+                                  {ag.isOnline && (
+                                    <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" title="Online"></span>
+                                  )}
+                                </div>
+                                <span className="text-[10px] text-slate-400">
+                                  {ag.role === 'ADMIN' ? 'Administrador' : ag.role === 'SUPERVISOR' ? 'Supervisor' : 'Agente'}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Avaliação CSAT */}
+                            <div className="flex items-center gap-1 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full text-amber-500 text-xs font-bold">
+                              <Star size={11} fill="currentColor" />
+                              <span>{ag.csatAvg}</span>
+                              <span className="text-[9px] text-slate-400 font-normal">({Math.max(ag.finishedCount, 1)})</span>
+                            </div>
+                          </div>
+
+                          {/* Linha 2: Badges de Atendimentos */}
+                          <div className="grid grid-cols-4 gap-1.5 text-center text-[11px]">
+                            <div className="p-1.5 rounded-lg bg-red-500/10 border border-red-500/20">
+                              <span className="text-[9.5px] text-red-500 dark:text-red-400 block font-semibold">Pendentes</span>
+                              <span className="font-bold text-red-600 dark:text-red-400 text-xs">{ag.pendingCount}</span>
+                            </div>
+                            <div className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                              <span className="text-[9.5px] text-emerald-600 dark:text-emerald-400 block font-semibold">Atendendo</span>
+                              <span className="font-bold text-emerald-600 dark:text-emerald-400 text-xs">{ag.inProgressCount}</span>
+                            </div>
+                            <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60">
+                              <span className="text-[9.5px] text-slate-500 dark:text-slate-400 block font-semibold">Finalizados</span>
+                              <span className="font-bold text-slate-800 dark:text-slate-200 text-xs">{ag.finishedCount}</span>
+                            </div>
+                            <div className="p-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                              <span className="text-[9.5px] text-blue-600 dark:text-blue-400 block font-semibold">Total</span>
+                              <span className="font-bold text-blue-600 dark:text-blue-400 text-xs">{ag.total}</span>
+                            </div>
+                          </div>
+
+                          {/* Linha 3: Tempos Médios (1ª Resposta e TMA) */}
+                          <div className="flex items-center justify-between text-[10.5px] pt-1 text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-slate-800/40">
+                            <span className="flex items-center gap-1">
+                              <Clock size={11} className="text-blue-500" />
+                              <span>1ª Resp: <strong className="text-slate-800 dark:text-slate-200">{ag.avgFirstResponse}</strong></span>
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <TrendingUp size={11} className="text-amber-500" />
+                              <span>TMA: <strong className="text-slate-800 dark:text-slate-200">{ag.avgTma}</strong></span>
+                            </span>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
                 </div>
               </>
             ) : (
@@ -1619,19 +1706,19 @@ export default function AtendimentoAnalyticsDashboard() {
                   })}
                 </div>
 
-                <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="p-3.5 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                      <Layers size={16} className="text-blue-500 dark:text-blue-400" />
-                      Auditoria de {reportsSubTab.charAt(0).toUpperCase() + reportsSubTab.slice(1)}
+                    <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                      <Layers size={16} className="text-blue-500 dark:text-blue-400 shrink-0" />
+                      <span>Auditoria de {reportsSubTab.charAt(0).toUpperCase() + reportsSubTab.slice(1)}</span>
                     </h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Rastreabilidade e dados detalhados filtrados por {reportsSubTab}
+                    <p className="text-[10.5px] sm:text-xs text-slate-500 dark:text-slate-400">
+                      Rastreabilidade e dados filtrados por {reportsSubTab}
                     </p>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-3">
-                    <div className="relative">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 w-full md:w-auto">
+                    <div className="relative w-full sm:w-48">
                       <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
                       <input
                         type="text"
@@ -1641,36 +1728,39 @@ export default function AtendimentoAnalyticsDashboard() {
                           setTicketSearch(e.target.value);
                           setTicketPage(1);
                         }}
-                        className="bg-slate-50 dark:bg-[#11192A] border border-slate-200 dark:border-slate-800 text-xs pl-8 pr-3 py-1.5 rounded-lg text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-blue-500 w-48"
+                        className="bg-slate-50 dark:bg-[#11192A] border border-slate-200 dark:border-slate-800 text-xs pl-8 pr-3 py-1.5 rounded-lg text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-blue-500 w-full"
                       />
                     </div>
 
-                    <select
-                      value={ticketStatus}
-                      onChange={(e) => {
-                        setTicketStatus(e.target.value);
-                        setTicketPage(1);
-                      }}
-                      className="bg-slate-50 dark:bg-[#11192A] border border-slate-200 dark:border-slate-800 text-xs px-3 py-1.5 rounded-lg text-slate-800 dark:text-slate-300 focus:outline-none focus:border-blue-500 cursor-pointer"
-                    >
-                      <option value="all">Todos os Status</option>
-                      <option value="resolved">Resolvidos</option>
-                      <option value="in_progress">Em Atendimento</option>
-                      <option value="waiting">Aguardando</option>
-                      <option value="bot_active">IA Ativa</option>
-                    </select>
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                      <select
+                        value={ticketStatus}
+                        onChange={(e) => {
+                          setTicketStatus(e.target.value);
+                          setTicketPage(1);
+                        }}
+                        className="bg-slate-50 dark:bg-[#11192A] border border-slate-200 dark:border-slate-800 text-xs px-3 py-1.5 rounded-lg text-slate-800 dark:text-slate-300 focus:outline-none focus:border-blue-500 cursor-pointer flex-1 sm:flex-none"
+                      >
+                        <option value="all">Todos os Status</option>
+                        <option value="resolved">Resolvidos</option>
+                        <option value="in_progress">Em Atendimento</option>
+                        <option value="waiting">Aguardando</option>
+                        <option value="bot_active">IA Ativa</option>
+                      </select>
 
-                    <button
-                      onClick={handleExportCSV}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-colors shadow-sm cursor-pointer"
-                    >
-                      <Download size={13} />
-                      <span>Exportar CSV</span>
-                    </button>
+                      <button
+                        onClick={handleExportCSV}
+                        className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-colors shadow-sm cursor-pointer whitespace-nowrap"
+                      >
+                        <Download size={13} />
+                        <span>CSV</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
 
-                <div className="overflow-x-auto">
+                {/* TABELA AUDITORIA DESKTOP / TABLET */}
+                <div className="hidden md:block overflow-x-auto">
                   <table className="w-full text-left text-xs">
                     <thead>
                       <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#11192A] text-slate-600 dark:text-slate-400">
@@ -1734,6 +1824,53 @@ export default function AtendimentoAnalyticsDashboard() {
                   </table>
                 </div>
 
+                {/* CARDS DEDICADOS AUDITORIA PARA MOBILE (md:hidden) */}
+                <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800/60">
+                  {ticketsData.tickets.length === 0 ? (
+                    <div className="py-10 text-center text-slate-500 text-xs px-4">
+                      Nenhum registro encontrado para esta sub-aba com os filtros aplicados.
+                    </div>
+                  ) : (
+                    ticketsData.tickets.map((t: any) => (
+                      <div key={t.id} className="p-3 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-mono text-[11px] text-slate-400">#{t.id.substring(0, 8)}</span>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold ${
+                            t.status === 'resolved' 
+                              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' 
+                              : t.status === 'waiting'
+                              ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30'
+                              : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/30'
+                          }`}>
+                            {t.status === 'resolved' ? 'Resolvido' : t.status === 'waiting' ? 'Aguardando' : 'Atendimento'}
+                          </span>
+                        </div>
+
+                        <div>
+                          <span className="font-semibold text-slate-800 dark:text-slate-200 text-xs block">{t.contactName}</span>
+                          <span className="text-[11px] text-slate-400 font-mono">{t.phone}</span>
+                        </div>
+
+                        <div className="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-300 pt-1 border-t border-slate-100 dark:border-slate-800/40">
+                          <span>Atendente: <strong>{t.agentName}</strong></span>
+                          <span>Setor: <strong>{t.departmentName}</strong></span>
+                        </div>
+
+                        <div className="flex items-center justify-between text-[10.5px] text-slate-500 dark:text-slate-400">
+                          <span>Duração: <strong>{t.durationMinutes} min</strong></span>
+                          <span>{new Date(t.createdAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}</span>
+                        </div>
+
+                        {t.closeReason && (
+                          <div className="text-[10px] text-slate-400 bg-slate-50 dark:bg-slate-800/40 px-2 py-1 rounded">
+                            Motivo: {t.closeReason}
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+
                 {/* PAGINATION */}
                 <div className="p-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                   <span>
@@ -1766,12 +1903,12 @@ export default function AtendimentoAnalyticsDashboard() {
         {/* TAB 2: PESQUISAS (CSAT) - PADRÃO LERO                     */}
         {/* ========================================================= */}
         {activeTab === 'csat' && (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* 1. FILTROS DEDICADOS DA ABA PESQUISAS */}
-            <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
-              <div className="flex flex-1 flex-wrap items-center gap-3">
+            <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-xl p-3 sm:p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-sm">
+              <div className="flex flex-1 flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5 sm:gap-3">
                 {/* Input Buscar por nome, telefone... */}
-                <div className="relative flex-1 min-w-[240px] max-w-md">
+                <div className="relative flex-1 min-w-0 sm:min-w-[220px]">
                   <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
                   <input
                     type="text"
@@ -1783,11 +1920,11 @@ export default function AtendimentoAnalyticsDashboard() {
                 </div>
 
                 {/* Dropdown Todos os colaboradores */}
-                <div className="relative">
+                <div className="relative w-full sm:w-auto">
                   <select
                     value={surveyAgentFilter}
                     onChange={(e) => setSurveyAgentFilter(e.target.value)}
-                    className="bg-slate-50 dark:bg-[#11192A] border border-slate-200 dark:border-slate-800 text-xs px-3 py-2 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500 cursor-pointer appearance-none pr-8"
+                    className="w-full bg-slate-50 dark:bg-[#11192A] border border-slate-200 dark:border-slate-800 text-xs px-3 py-2 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500 cursor-pointer appearance-none pr-8"
                   >
                     <option value="all">Todos os colaboradores</option>
                     {agents.map((ag) => (
@@ -1802,7 +1939,7 @@ export default function AtendimentoAnalyticsDashboard() {
                 </div>
 
                 {/* Filtro de Data Visual */}
-                <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-[#11192A] px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300">
+                <div className="flex items-center justify-center sm:justify-start gap-1.5 bg-slate-50 dark:bg-[#11192A] px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300">
                   <Calendar size={13} className="text-blue-500 dark:text-blue-400 shrink-0" />
                   <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300">
                     {new Date(dateRange.startDate).toLocaleDateString('pt-BR')} até {new Date(dateRange.endDate).toLocaleDateString('pt-BR')}
@@ -1813,7 +1950,7 @@ export default function AtendimentoAnalyticsDashboard() {
               {/* Botão Exportar CSV */}
               <button
                 onClick={handleExportSurveysCSV}
-                className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-colors shadow-sm cursor-pointer whitespace-nowrap"
+                className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-colors shadow-sm cursor-pointer whitespace-nowrap w-full md:w-auto"
               >
                 <Download size={13} />
                 <span>Exportar CSV</span>
@@ -1821,104 +1958,106 @@ export default function AtendimentoAnalyticsDashboard() {
             </div>
 
             {/* 2. 4 CARDS KPI (DADOS 100% REAIS DO SUPABASE) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
               {/* Card 1: Média Geral */}
-              <div className="bg-white dark:bg-[#0B1224] p-5 rounded-xl border border-slate-200 dark:border-slate-800/80 flex flex-col justify-between shadow-sm">
+              <div className="bg-white dark:bg-[#0B1224] p-3.5 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800/80 flex flex-col justify-between shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Média Geral</span>
-                  <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 dark:text-amber-400 flex items-center justify-center">
-                    <Star size={16} fill="currentColor" />
+                  <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Média Geral</span>
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-amber-500/10 text-amber-500 dark:text-amber-400 flex items-center justify-center shrink-0">
+                    <Star size={15} fill="currentColor" />
                   </div>
                 </div>
-                <div className="my-3 flex items-baseline gap-2">
-                  <span className="text-3xl font-black text-slate-900 dark:text-white">
+                <div className="my-2 sm:my-3 flex items-baseline gap-1.5 sm:gap-2">
+                  <span className="text-xl sm:text-3xl font-black text-slate-900 dark:text-white">
                     {csatData?.csatScore !== undefined && csatData?.csatScore !== null
                       ? csatData.csatScore.toFixed(1)
                       : '0.0'}
                   </span>
-                  <span className="text-slate-400 dark:text-slate-500 font-bold text-sm">/ 5.0</span>
+                  <span className="text-slate-400 dark:text-slate-500 font-bold text-xs sm:text-sm">/ 5.0</span>
                 </div>
-                <div className="flex items-center gap-1 text-amber-500 dark:text-amber-400">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      size={13}
-                      fill={i < Math.round(csatData?.csatScore || 0) ? "currentColor" : "none"}
-                      className={i < Math.round(csatData?.csatScore || 0) ? "text-amber-500 dark:text-amber-400" : "text-slate-300 dark:text-slate-600"}
-                    />
-                  ))}
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400 ml-1.5 font-medium">
+                <div className="flex flex-wrap items-center gap-1 text-amber-500 dark:text-amber-400">
+                  <div className="flex items-center">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        size={11}
+                        fill={i < Math.round(csatData?.csatScore || 0) ? "currentColor" : "none"}
+                        className={i < Math.round(csatData?.csatScore || 0) ? "text-amber-500 dark:text-amber-400" : "text-slate-300 dark:text-slate-600"}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate w-full sm:w-auto">
                     {csatData?.csatScore >= 4.5
-                      ? 'Classificação Excelente'
+                      ? 'Excelente'
                       : csatData?.csatScore >= 3.5
-                      ? 'Classificação Boa'
+                      ? 'Boa'
                       : csatData?.csatScore > 0
-                      ? 'Classificação Regular'
-                      : 'Sem avaliações no período'}
+                      ? 'Regular'
+                      : 'Sem avaliações'}
                   </span>
                 </div>
               </div>
 
               {/* Card 2: Total de Pesquisas */}
-              <div className="bg-white dark:bg-[#0B1224] p-5 rounded-xl border border-slate-200 dark:border-slate-800/80 flex flex-col justify-between shadow-sm">
+              <div className="bg-white dark:bg-[#0B1224] p-3.5 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800/80 flex flex-col justify-between shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total de Pesquisas</span>
-                  <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500 dark:text-blue-400 flex items-center justify-center">
-                    <Send size={16} />
+                  <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Pesquisas</span>
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-500/10 text-blue-500 dark:text-blue-400 flex items-center justify-center shrink-0">
+                    <Send size={15} />
                   </div>
                 </div>
-                <div className="my-3">
-                  <span className="text-3xl font-black text-blue-600 dark:text-blue-400">
+                <div className="my-2 sm:my-3">
+                  <span className="text-xl sm:text-3xl font-black text-blue-600 dark:text-blue-400">
                     {csatData?.totalSurveys ?? 0}
                   </span>
                 </div>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                  Disparadas via WhatsApp após encerramento
+                <span className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                  Disparadas WhatsApp
                 </span>
               </div>
 
               {/* Card 3: Respostas */}
-              <div className="bg-white dark:bg-[#0B1224] p-5 rounded-xl border border-slate-200 dark:border-slate-800/80 flex flex-col justify-between shadow-sm">
+              <div className="bg-white dark:bg-[#0B1224] p-3.5 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800/80 flex flex-col justify-between shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Respostas</span>
-                  <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 flex items-center justify-center">
-                    <CheckCircle size={16} />
+                  <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Respostas</span>
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                    <CheckCircle size={15} />
                   </div>
                 </div>
-                <div className="my-3">
-                  <span className="text-3xl font-black text-emerald-600 dark:text-emerald-400">
+                <div className="my-2 sm:my-3">
+                  <span className="text-xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400">
                     {csatData?.responsesCount ?? (csatData?.totalSurveys ?? 0)}
                   </span>
                 </div>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                  Avaliações preenchidas pelos clientes
+                <span className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                  Preenchidas por clientes
                 </span>
               </div>
 
               {/* Card 4: Taxa de Resposta */}
-              <div className="bg-white dark:bg-[#0B1224] p-5 rounded-xl border border-slate-200 dark:border-slate-800/80 flex flex-col justify-between shadow-sm">
+              <div className="bg-white dark:bg-[#0B1224] p-3.5 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800/80 flex flex-col justify-between shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Taxa de Resposta</span>
-                  <div className="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-500 dark:text-cyan-400 flex items-center justify-center">
-                    <TrendingUp size={16} />
+                  <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Taxa Resposta</span>
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-cyan-500/10 text-cyan-500 dark:text-cyan-400 flex items-center justify-center shrink-0">
+                    <TrendingUp size={15} />
                   </div>
                 </div>
-                <div className="my-3">
-                  <span className="text-3xl font-black text-cyan-600 dark:text-cyan-400">
+                <div className="my-2 sm:my-3">
+                  <span className="text-xl sm:text-3xl font-black text-cyan-600 dark:text-cyan-400">
                     {csatData?.responseRate !== undefined ? `${csatData.responseRate}%` : '0%'}
                   </span>
                 </div>
-                <span className="text-[11px] text-emerald-600 dark:text-emerald-400/90 font-medium flex items-center gap-1">
-                  {csatData?.responseRate > 50 ? 'Alto engajamento no canal receptivo' : 'Taxa de resposta operacional'}
+                <span className="text-[10px] sm:text-[11px] text-emerald-600 dark:text-emerald-400/90 font-medium truncate">
+                  {csatData?.responseRate > 50 ? 'Alto engajamento' : 'Taxa de resposta'}
                 </span>
               </div>
             </div>
 
             {/* 3. TABELA / LISTA: TODAS AS PESQUISAS (PADRÃO LERO) */}
             <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-md">
-              <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0E1528] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0E1528] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <Star size={16} className="text-amber-500 dark:text-amber-400" />
                     Todas as Pesquisas
                   </h3>
@@ -1934,7 +2073,8 @@ export default function AtendimentoAnalyticsDashboard() {
                 </div>
               </div>
 
-              <div className="overflow-x-auto">
+              {/* DESKTOP TABLE */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left text-xs">
                   <thead>
                     <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#11192A] text-slate-600 dark:text-slate-400">
@@ -2009,6 +2149,59 @@ export default function AtendimentoAnalyticsDashboard() {
                   </tbody>
                 </table>
               </div>
+
+              {/* MOBILE CARDS (CSAT) */}
+              <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800/60">
+                {filteredSurveys.length === 0 ? (
+                  <div className="py-10 text-center text-slate-500 px-4">
+                    <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 mx-auto mb-2">
+                      <Star size={18} className="text-slate-400 dark:text-slate-500" />
+                    </div>
+                    <p className="font-semibold text-slate-800 dark:text-slate-200 text-xs">Nenhuma pesquisa encontrada</p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      {surveySearch || surveyAgentFilter !== 'all'
+                        ? 'Altere os filtros de pesquisa.'
+                        : 'Não foram encontradas pesquisas de satisfação.'}
+                    </p>
+                  </div>
+                ) : (
+                  filteredSurveys.map((s) => (
+                    <div key={s.id} className="p-3.5 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-7 h-7 rounded-full bg-amber-500/10 text-amber-500 dark:text-amber-400 flex items-center justify-center font-bold text-xs shrink-0">
+                            {s.contactName.substring(0, 2).toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <span className="font-semibold text-slate-800 dark:text-slate-100 text-xs block truncate">{s.contactName}</span>
+                            <span className="text-[11px] text-slate-400 font-mono">{s.phone}</span>
+                          </div>
+                        </div>
+                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 dark:text-amber-400 font-bold text-xs shrink-0">
+                          <Star size={11} fill="currentColor" />
+                          <span>{s.rating}.0</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-300 pt-1 border-t border-slate-100 dark:border-slate-800/40">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-slate-400">Atendente:</span>
+                          <span className="font-medium text-slate-800 dark:text-slate-200">{s.agentName}</span>
+                        </div>
+                        <span className="text-[10.5px] text-slate-400 font-mono">{s.createdAt}</span>
+                      </div>
+
+                      {s.comment ? (
+                        <div className="bg-slate-50 dark:bg-[#11192A] border border-slate-200/60 dark:border-slate-800/60 rounded-lg p-2 text-xs italic text-slate-700 dark:text-slate-300">
+                          "{s.comment}"
+                        </div>
+                      ) : (
+                        <span className="text-[10.5px] text-slate-400 italic block">Sem comentário adicional</span>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -2017,61 +2210,62 @@ export default function AtendimentoAnalyticsDashboard() {
         {/* TAB 3: CUSTOS DE IA                                       */}
         {/* ========================================================= */}
         {activeTab === 'ai_costs' && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="bg-white dark:bg-[#0B1224] p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Gasto 7 dias (USD)</span>
-                <div className="my-3">
-                  <span className="text-3xl font-black text-slate-900 dark:text-white">${aiCosts?.spent7d || '0.00'}</span>
+          <div className="space-y-4 sm:space-y-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4">
+              <div className="bg-white dark:bg-[#0B1224] p-3.5 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+                <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Gasto 7d (USD)</span>
+                <div className="my-2 sm:my-3">
+                  <span className="text-xl sm:text-3xl font-black text-slate-900 dark:text-white">${aiCosts?.spent7d || '0.00'}</span>
                 </div>
-                <span className="text-[11px] text-purple-600 dark:text-purple-400 flex items-center gap-1 font-medium">
-                  <Sparkles size={12} /> OpenAI API gpt-4o-mini
+                <span className="text-[10px] sm:text-[11px] text-purple-600 dark:text-purple-400 flex items-center gap-1 font-medium truncate">
+                  <Sparkles size={12} className="shrink-0" /> gpt-4o-mini
                 </span>
               </div>
 
-              <div className="bg-white dark:bg-[#0B1224] p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Gasto 15 dias (USD)</span>
-                <div className="my-3">
-                  <span className="text-3xl font-black text-purple-600 dark:text-purple-300">${aiCosts?.spent15d || '0.00'}</span>
+              <div className="bg-white dark:bg-[#0B1224] p-3.5 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+                <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Gasto 15d (USD)</span>
+                <div className="my-2 sm:my-3">
+                  <span className="text-xl sm:text-3xl font-black text-purple-600 dark:text-purple-300">${aiCosts?.spent15d || '0.00'}</span>
                 </div>
-                <span className="text-[11px] text-slate-500">Consumo acumulado</span>
+                <span className="text-[10px] sm:text-[11px] text-slate-500 truncate">Consumo acumulado</span>
               </div>
 
-              <div className="bg-white dark:bg-[#0B1224] p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Gasto 30 dias (USD)</span>
-                <div className="my-3">
-                  <span className="text-3xl font-black text-emerald-600 dark:text-emerald-400">${aiCosts?.spent30d || '0.00'}</span>
+              <div className="bg-white dark:bg-[#0B1224] p-3.5 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+                <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Gasto 30d (USD)</span>
+                <div className="my-2 sm:my-3">
+                  <span className="text-xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400">${aiCosts?.spent30d || '0.00'}</span>
                 </div>
-                <span className="text-[11px] text-emerald-600 dark:text-emerald-400/80 font-medium">Dentro do limite do plano</span>
+                <span className="text-[10px] sm:text-[11px] text-emerald-600 dark:text-emerald-400/80 font-medium truncate">Dentro do limite</span>
               </div>
 
-              <div className="bg-white dark:bg-[#0B1224] p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Projeção Mensal</span>
-                <div className="my-3">
-                  <span className="text-3xl font-black text-amber-500 dark:text-amber-400">${aiCosts?.projectionMonth || '0.00'}</span>
+              <div className="bg-white dark:bg-[#0B1224] p-3.5 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+                <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Projeção Mensal</span>
+                <div className="my-2 sm:my-3">
+                  <span className="text-xl sm:text-3xl font-black text-amber-500 dark:text-amber-400">${aiCosts?.projectionMonth || '0.00'}</span>
                 </div>
-                <span className="text-[11px] text-amber-600 dark:text-amber-400/80 font-medium">Estimativa com base no volume</span>
+                <span className="text-[10px] sm:text-[11px] text-amber-600 dark:text-amber-400/80 font-medium truncate">Estimativa por volume</span>
               </div>
             </div>
 
             {/* Daily Evolution Chart */}
-            <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm">
-              <h3 className="text-base font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
-                <DollarSign size={18} className="text-emerald-500 dark:text-emerald-400" />
-                Evolução Diária de Custo por Execução (USD $)
+            <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 sm:p-6 shadow-sm">
+              <h3 className="text-xs sm:text-base font-bold text-slate-900 dark:text-white mb-4 sm:mb-6 flex items-center gap-2">
+                <DollarSign size={16} className="text-emerald-500 dark:text-emerald-400 shrink-0" />
+                <span>Evolução Diária de Custo por Execução (USD $)</span>
               </h3>
-              <div className="h-[280px] w-full">
+              <div className="h-[220px] sm:h-[280px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={aiCosts?.dailyCostEvolution || []}>
+                  <BarChart data={aiCosts?.dailyCostEvolution || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#94A3B8" opacity={0.2} vertical={false} />
-                    <XAxis dataKey="label" stroke="#64748B" fontSize={12} tickLine={false} />
-                    <YAxis stroke="#64748B" fontSize={12} tickLine={false} axisLine={false} unit="$" />
+                    <XAxis dataKey="label" stroke="#64748B" fontSize={10} tickLine={false} />
+                    <YAxis stroke="#64748B" fontSize={10} tickLine={false} axisLine={false} unit="$" />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: "#0B1224",
                         borderColor: "#334155",
                         borderRadius: "8px",
-                        color: "#fff"
+                        color: "#fff",
+                        fontSize: "12px"
                       }}
                     />
                     <Bar dataKey="cost" name="Custo USD ($)" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
@@ -2082,10 +2276,12 @@ export default function AtendimentoAnalyticsDashboard() {
 
             {/* Executions Table */}
             <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
-              <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0E1528]">
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Últimas Execuções de Inteligência Artificial</h3>
+              <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0E1528]">
+                <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">Últimas Execuções de Inteligência Artificial</h3>
               </div>
-              <div className="overflow-x-auto">
+              
+              {/* DESKTOP TABLE */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left text-xs">
                   <thead>
                     <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#11192A] text-slate-600 dark:text-slate-400">
@@ -2113,6 +2309,40 @@ export default function AtendimentoAnalyticsDashboard() {
                   </tbody>
                 </table>
               </div>
+
+              {/* MOBILE CARDS */}
+              <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800/60">
+                {!aiCosts?.detailedExecutions?.length ? (
+                  <div className="p-8 text-center text-slate-500 text-xs">
+                    Nenhuma execução de IA registrada no período.
+                  </div>
+                ) : (
+                  aiCosts.detailedExecutions.map((ex: any) => (
+                    <div key={ex.id} className="p-3.5 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono text-[11px] text-slate-400">#{ex.id}</span>
+                          <span className="px-2 py-0.5 rounded text-[10.5px] font-semibold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                            {ex.model}
+                          </span>
+                        </div>
+                        <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 text-xs">
+                          ${ex.costUsd.toFixed(5)}
+                        </span>
+                      </div>
+
+                      <div className="text-xs font-medium text-slate-800 dark:text-slate-200">
+                        {ex.contactName || 'Execução Automática'}
+                      </div>
+
+                      <div className="flex items-center justify-between text-[10.5px] text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-100 dark:border-slate-800/40">
+                        <span>Prompt: <strong className="font-mono text-slate-700 dark:text-slate-300">{ex.promptTokens}</strong> tok</span>
+                        <span>Completion: <strong className="font-mono text-slate-700 dark:text-slate-300">{ex.completionTokens}</strong> tok</span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -2122,41 +2352,41 @@ export default function AtendimentoAnalyticsDashboard() {
       {/* MODAL: CONFIGURAÇÃO DE DIAS ÚTEIS DA EMPRESA (PADRÃO LERO) */}
       {/* ========================================================= */}
       {showWorkingDaysModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-3 sm:p-4 animate-in fade-in duration-150">
           <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-[#11192A]">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-blue-600/15 border border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+            <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-[#11192A]">
+              <div className="flex items-center gap-2 sm:gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-blue-600/15 border border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
                   <CalendarDays size={18} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-900 dark:text-white text-sm">Configuração de Dias Úteis & Expediente</h3>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Define os dias contabilizados para métricas de SLA e médias diárias</p>
+                  <h3 className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">Configuração de Dias Úteis & Expediente</h3>
+                  <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1">Define os dias contabilizados para métricas de SLA e médias diárias</p>
                 </div>
               </div>
               <button
                 onClick={() => setShowWorkingDaysModal(false)}
-                className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
               >
                 <X size={18} />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 overflow-y-auto space-y-6 custom-scrollbar text-xs">
+            <div className="p-4 sm:p-6 overflow-y-auto space-y-4 sm:space-y-6 custom-scrollbar text-xs">
               {/* Seção 1: Dias de Operação */}
               <div>
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center justify-between mb-2.5 sm:mb-3">
                   <h4 className="font-bold text-slate-700 dark:text-slate-300 text-xs uppercase tracking-wider">
                     1. Dias de Operação da Semana
                   </h4>
                   <span className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold">
-                    {operatingDays.length} dias selecionados
+                    {operatingDays.length} selecionados
                   </span>
                 </div>
 
-                <div className="grid grid-cols-7 gap-2">
+                <div className="grid grid-cols-7 gap-1 sm:gap-2">
                   {WEEKDAYS_NAMES.map((day) => {
                     const isSelected = operatingDays.includes(day.id);
                     return (
@@ -2174,14 +2404,14 @@ export default function AtendimentoAnalyticsDashboard() {
                             setOperatingDays([...operatingDays, day.id]);
                           }
                         }}
-                        className={`py-3 rounded-xl border flex flex-col items-center justify-center gap-1 font-semibold transition-all cursor-pointer ${
+                        className={`py-2 sm:py-3 rounded-lg sm:rounded-xl border flex flex-col items-center justify-center gap-0.5 sm:gap-1 text-[11px] sm:text-xs font-semibold transition-all cursor-pointer ${
                           isSelected
                             ? 'bg-blue-600 text-white border-blue-600 dark:bg-blue-600/20 dark:border-blue-500 dark:text-blue-300 shadow-sm'
                             : 'bg-slate-50 dark:bg-[#11192A] border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-slate-700'
                         }`}
                       >
                         <span>{day.short}</span>
-                        {isSelected && <Check size={12} className="text-white dark:text-blue-400" />}
+                        {isSelected && <Check size={11} className="text-white dark:text-blue-400" />}
                       </button>
                     );
                   })}
@@ -2190,31 +2420,31 @@ export default function AtendimentoAnalyticsDashboard() {
 
               {/* Seção 2: Feriados Nacionais */}
               <div>
-                <h4 className="font-bold text-slate-700 dark:text-slate-300 text-xs uppercase tracking-wider mb-3">
+                <h4 className="font-bold text-slate-700 dark:text-slate-300 text-xs uppercase tracking-wider mb-2.5 sm:mb-3">
                   2. Feriados Nacionais
                 </h4>
-                <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar pr-1">
+                <div className="space-y-1.5 sm:space-y-2 max-h-44 sm:max-h-48 overflow-y-auto custom-scrollbar pr-1">
                   {holidays.filter(h => !h.isCustom).map((holiday) => (
                     <div
                       key={holiday.id}
-                      className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 dark:bg-[#11192A] border border-slate-200 dark:border-slate-800/80"
+                      className="flex items-center justify-between p-2 sm:p-2.5 rounded-lg bg-slate-50 dark:bg-[#11192A] border border-slate-200 dark:border-slate-800/80"
                     >
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400 w-12">{holiday.date}</span>
-                        <span className="font-medium text-slate-800 dark:text-slate-200">{holiday.name}</span>
+                      <div className="flex items-center gap-2 min-w-0 pr-2">
+                        <span className="font-mono text-[10.5px] sm:text-[11px] text-slate-500 dark:text-slate-400 w-11 shrink-0">{holiday.date}</span>
+                        <span className="font-medium text-slate-800 dark:text-slate-200 truncate">{holiday.name}</span>
                       </div>
                       <button
                         type="button"
                         onClick={() => {
                           setHolidays(holidays.map(h => h.id === holiday.id ? { ...h, enabled: !h.enabled } : h));
                         }}
-                        className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-colors cursor-pointer ${
+                        className={`px-2 py-1 rounded text-[10.5px] sm:text-[11px] font-semibold transition-colors cursor-pointer shrink-0 ${
                           holiday.enabled
                             ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
                             : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-500 border border-slate-300 dark:border-slate-700'
                         }`}
                       >
-                        {holiday.enabled ? 'Pausa / Folga' : 'Trabalho Normal'}
+                        {holiday.enabled ? 'Pausa' : 'Normal'}
                       </button>
                     </div>
                   ))}
@@ -2223,11 +2453,11 @@ export default function AtendimentoAnalyticsDashboard() {
 
               {/* Seção 3: Feriados Customizados da Empresa */}
               <div>
-                <h4 className="font-bold text-slate-700 dark:text-slate-300 text-xs uppercase tracking-wider mb-3">
+                <h4 className="font-bold text-slate-700 dark:text-slate-300 text-xs uppercase tracking-wider mb-2.5 sm:mb-3">
                   3. Feriados Municipais / Empresa
                 </h4>
 
-                <div className="flex items-center gap-2 mb-3">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mb-3">
                   <input
                     type="text"
                     placeholder="Nome do feriado municipal..."
@@ -2235,36 +2465,38 @@ export default function AtendimentoAnalyticsDashboard() {
                     onChange={(e) => setNewHolidayName(e.target.value)}
                     className="flex-1 bg-slate-50 dark:bg-[#11192A] border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-blue-500"
                   />
-                  <input
-                    type="date"
-                    value={newHolidayDate}
-                    onChange={(e) => setNewHolidayDate(e.target.value)}
-                    className="bg-slate-50 dark:bg-[#11192A] border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!newHolidayName.trim() || !newHolidayDate) {
-                        toast.error("Preencha nome e data do feriado.");
-                        return;
-                      }
-                      const newH: Holiday = {
-                        id: `custom-${Date.now()}`,
-                        name: newHolidayName.trim(),
-                        date: newHolidayDate,
-                        enabled: true,
-                        isCustom: true
-                      };
-                      setHolidays([...holidays, newH]);
-                      setNewHolidayName('');
-                      setNewHolidayDate('');
-                      toast.success("Feriado adicionado!");
-                    }}
-                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg text-xs flex items-center gap-1 shadow-sm cursor-pointer"
-                  >
-                    <Plus size={14} />
-                    <span>Adicionar</span>
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="date"
+                      value={newHolidayDate}
+                      onChange={(e) => setNewHolidayDate(e.target.value)}
+                      className="flex-1 sm:w-auto bg-slate-50 dark:bg-[#11192A] border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!newHolidayName.trim() || !newHolidayDate) {
+                          toast.error("Preencha nome e data do feriado.");
+                          return;
+                        }
+                        const newH: Holiday = {
+                          id: `custom-${Date.now()}`,
+                          name: newHolidayName.trim(),
+                          date: newHolidayDate,
+                          enabled: true,
+                          isCustom: true
+                        };
+                        setHolidays([...holidays, newH]);
+                        setNewHolidayName('');
+                        setNewHolidayDate('');
+                        toast.success("Feriado adicionado!");
+                      }}
+                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg text-xs flex items-center justify-center gap-1 shadow-sm cursor-pointer shrink-0"
+                    >
+                      <Plus size={14} />
+                      <span>Adicionar</span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Lista de Feriados Customizados */}
@@ -2295,21 +2527,21 @@ export default function AtendimentoAnalyticsDashboard() {
             </div>
 
             {/* Modal Footer */}
-            <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#11192A] flex items-center justify-end gap-3">
+            <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#11192A] flex items-center justify-end gap-2.5 sm:gap-3">
               <button
                 type="button"
                 onClick={() => setShowWorkingDaysModal(false)}
-                className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium text-xs cursor-pointer"
+                className="flex-1 sm:flex-none px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium text-xs cursor-pointer text-center"
               >
                 Cancelar
               </button>
               <button
                 type="button"
                 onClick={saveWorkingDaysConfig}
-                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-md cursor-pointer flex items-center gap-1.5"
+                className="flex-1 sm:flex-none px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-md cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <Check size={14} />
-                <span>Salvar Configuração</span>
+                <span>Salvar</span>
               </button>
             </div>
           </div>
