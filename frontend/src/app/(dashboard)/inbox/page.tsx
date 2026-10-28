@@ -3680,7 +3680,11 @@ function InboxContent() {
                       )}
 
                       {/* Balão de Mensagem WhatsApp */}
-                      <div id={`msg-${msg.id}`} className={`flex flex-col max-w-[85%] sm:max-w-[70%] md:max-w-[65%] ${isMe ? 'self-end items-end' : 'self-start items-start'} relative group my-0.5`}>
+                      <div 
+                        id={`msg-${msg.id}`} 
+                        onClick={() => setSelectedMessageForAction(prev => prev === msg.id ? null : msg.id)}
+                        className={`flex flex-col max-w-[85%] sm:max-w-[70%] md:max-w-[65%] ${isMe ? 'self-end items-end' : 'self-start items-start'} relative group my-0.5 cursor-pointer sm:cursor-default`}
+                      >
                         <div className={`text-sm shadow-sm relative transition-all pt-1.5 pb-1.5 px-3 min-w-[85px] ${
                           msg.isInternal
                             ? 'bg-amber-50 text-amber-900 border border-amber-300 dark:bg-[#281b0a] dark:text-amber-100 dark:border-amber-500/30 rounded-lg rounded-tr-none'
@@ -3692,9 +3696,9 @@ function InboxContent() {
                                   ? 'bg-[#202C33] text-[#E9EDEF] shadow-sm border border-[#222D34] rounded-lg rounded-tl-none' 
                                   : 'bg-white text-slate-800 shadow-sm border border-slate-200/80 dark:bg-[#1E293B] dark:text-slate-100 dark:border-slate-700/50 rounded-lg rounded-tl-none')
                         }`}>
-                          {/* Barra de Ações no Hover (Padrão WhatsApp Web com Ícones Vetoriais de Alto Padrão) */}
+                          {/* Barra de Ações (Hover no desktop e toque no mobile) com Ícones Vetoriais de Alto Padrão */}
                           {!msg.isInternal && (
-                            <div className={`absolute -top-3 ${isMe ? 'right-2' : 'left-2'} z-20 hidden group-hover:flex items-center gap-0.5 bg-white/95 dark:bg-[#182229]/95 border border-slate-200 dark:border-slate-700/80 rounded-full px-1.5 py-0.5 shadow-lg backdrop-blur-md transition-all`}>
+                            <div className={`absolute -top-3.5 ${isMe ? 'right-2' : 'left-2'} z-20 ${selectedMessageForAction === msg.id ? 'flex' : 'hidden group-hover:flex'} items-center gap-0.5 bg-white dark:bg-[#182229] border border-slate-300 dark:border-slate-700/80 rounded-full px-1.5 py-0.5 shadow-lg backdrop-blur-md transition-all`}>
                               {/* Botão de Reagir */}
                               <button
                                 type="button"
@@ -3703,7 +3707,7 @@ function InboxContent() {
                                   setActiveReactionPickerMessageId(activeReactionPickerMessageId === msg.id ? null : msg.id);
                                 }}
                                 title="Reagir"
-                                className="p-1 rounded-full text-slate-500 hover:text-amber-500 dark:text-slate-400 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors cursor-pointer"
+                                className="p-1 rounded-full text-slate-700 hover:text-amber-500 dark:text-slate-300 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors cursor-pointer"
                               >
                                 <Smile size={13} />
                               </button>
@@ -3714,10 +3718,11 @@ function InboxContent() {
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setReplyingToMessage(msg);
+                                  setSelectedMessageForAction(null);
                                   if (textareaRef.current) textareaRef.current.focus();
                                 }}
                                 title="Responder"
-                                className="p-1 rounded-full text-slate-500 hover:text-emerald-500 dark:text-slate-400 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors cursor-pointer"
+                                className="p-1 rounded-full text-slate-700 hover:text-emerald-600 dark:text-slate-300 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors cursor-pointer"
                               >
                                 <Reply size={13} />
                               </button>
@@ -3727,10 +3732,11 @@ function InboxContent() {
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
+                                  setSelectedMessageForAction(null);
                                   handleDeleteMessage(msg.id);
                                 }}
                                 title={isMe ? "Apagar mensagem para todos no WhatsApp" : "Apagar mensagem do histórico"}
-                                className="p-1 rounded-full text-slate-500 hover:text-rose-500 dark:text-slate-400 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors cursor-pointer"
+                                className="p-1 rounded-full text-slate-700 hover:text-rose-600 dark:text-slate-300 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors cursor-pointer"
                               >
                                 <Trash2 size={13} />
                               </button>
@@ -3741,7 +3747,7 @@ function InboxContent() {
                           {activeReactionPickerMessageId === msg.id && (
                             <>
                               <div className="fixed inset-0 z-30" onClick={() => setActiveReactionPickerMessageId(null)} />
-                              <div className={`absolute -top-11 ${isMe ? 'right-0' : 'left-0'} z-40 flex items-center gap-1 bg-white dark:bg-[#182229] border border-slate-200 dark:border-slate-700 shadow-2xl rounded-full px-2 py-1 animate-in zoom-in-95 duration-150`}>
+                              <div className={`absolute -top-11 ${isMe ? 'right-0' : 'left-0'} z-40 flex items-center gap-1 bg-white dark:bg-[#182229] border border-slate-300 dark:border-slate-700 shadow-2xl rounded-full px-2 py-1 animate-in zoom-in-95 duration-150`}>
                                 {QUICK_REACTION_EMOJIS.map((emoji) => (
                                   <button
                                     key={emoji}
@@ -3793,15 +3799,30 @@ function InboxContent() {
                           {/* Mensagem Citada (Quoted / Reply Card estilo WhatsApp) */}
                           {msg.quotedMessage && (
                             <div 
-                              onClick={() => scrollToMessage(msg.quotedMessage.id)}
-                              className="mb-2 p-2 rounded-lg bg-black/10 dark:bg-black/30 border-l-4 border-emerald-500 text-xs cursor-pointer hover:bg-black/20 dark:hover:bg-black/40 transition-colors select-none"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                scrollToMessage(msg.quotedMessage.id);
+                              }}
+                              className={`mb-2 p-2 rounded-lg border-l-4 text-xs cursor-pointer select-none transition-all ${
+                                isMe 
+                                  ? 'bg-black/25 hover:bg-black/35 border-white text-white' 
+                                  : 'bg-slate-100/95 hover:bg-slate-200/90 border-emerald-600 text-slate-900 border border-slate-200/90 dark:bg-black/40 dark:hover:bg-black/50 dark:border-emerald-400 dark:text-slate-100 dark:border-transparent'
+                              }`}
                               title="Ir para a mensagem original"
                             >
-                              <div className="font-semibold text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mb-0.5">
-                                <Reply size={11} className="rotate-180" />
-                                <span>{msg.quotedMessage.senderName || (msg.quotedMessage.direction === 'OUTBOUND' ? 'Você' : (activeContactData?.name || 'Cliente'))}</span>
+                              <div className={`font-bold text-[11px] flex items-center gap-1 mb-0.5 ${
+                                isMe 
+                                  ? 'text-white' 
+                                  : 'text-emerald-800 dark:text-emerald-400'
+                              }`}>
+                                <Reply size={11} className="rotate-180 shrink-0" />
+                                <span className="truncate">{msg.quotedMessage.senderName || (msg.quotedMessage.direction === 'OUTBOUND' ? 'Você' : (activeContactData?.name || 'Cliente'))}</span>
                               </div>
-                              <div className="text-[11px] opacity-90 line-clamp-2">
+                              <div className={`text-[11px] font-medium line-clamp-2 ${
+                                isMe 
+                                  ? 'text-white/95' 
+                                  : 'text-slate-900 dark:text-slate-100'
+                              }`}>
                                 {msg.quotedMessage.content || (
                                   msg.quotedMessage.type === 'image' ? '📷 Foto' :
                                   msg.quotedMessage.type === 'video' ? '🎥 Vídeo' :
@@ -4114,13 +4135,13 @@ function InboxContent() {
                                 setActiveReactionPickerMessageId(activeReactionPickerMessageId === msg.id ? null : msg.id);
                               }}
                               title="Reações (clique para alternar reação)"
-                              className={`absolute -bottom-2.5 ${isMe ? 'right-2' : 'left-2'} z-10 flex items-center gap-1 bg-white dark:bg-[#182229] border border-slate-200 dark:border-slate-700/80 rounded-full px-1.5 py-0.5 shadow-md text-xs cursor-pointer select-none transition-transform hover:scale-105 backdrop-blur-md`}
+                              className={`absolute -bottom-2.5 ${isMe ? 'right-2' : 'left-2'} z-10 flex items-center gap-1 bg-white dark:bg-[#182229] border border-slate-300 dark:border-slate-700/80 rounded-full px-2 py-0.5 shadow-md text-xs cursor-pointer select-none transition-transform hover:scale-105 backdrop-blur-md`}
                             >
                               {Array.from(new Set(msg.reactions.map((r: any) => r.emoji))).slice(0, 3).map((emoji: any, idx) => (
                                 <span key={idx} className="text-xs leading-none">{emoji}</span>
                               ))}
                               {msg.reactions.length > 1 && (
-                                <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
+                                <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 ml-0.5">
                                   {msg.reactions.length}
                                 </span>
                               )}
@@ -4140,14 +4161,14 @@ function InboxContent() {
             <div className="border-t border-slate-200 dark:border-slate-800/90 bg-white dark:bg-[#0B1224] z-30 flex flex-col shrink-0">
               {/* Barra de Resposta / Citação Ativa (WhatsApp Quote Bar) */}
               {replyingToMessage && (
-                <div className="mx-3 mt-2.5 p-2 px-3 rounded-xl bg-slate-100 dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700/80 flex items-center justify-between shadow-lg animate-in slide-in-from-bottom-2">
-                  <div className="flex items-center gap-2.5 overflow-hidden border-l-4 border-emerald-500 pl-2.5 py-0.5">
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                        <Reply size={12} className="rotate-180" />
-                        Respondendo a {replyingToMessage.direction === 'OUTBOUND' ? 'Você' : (activeContactData?.name || 'Cliente')}
+                <div className="mx-2 sm:mx-3 mt-2 p-2.5 px-3 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-300 dark:border-slate-700/90 shadow-md flex items-center justify-between gap-2.5 animate-in slide-in-from-bottom-2">
+                  <div className="flex items-center gap-2.5 overflow-hidden border-l-4 border-emerald-600 dark:border-emerald-400 pl-2.5 py-0.5 flex-1 min-w-0">
+                    <div className="flex flex-col min-w-0 w-full">
+                      <span className="text-xs sm:text-sm font-bold text-emerald-800 dark:text-emerald-400 flex items-center gap-1.5 leading-tight">
+                        <Reply size={13} className="rotate-180 shrink-0" />
+                        <span>Respondendo a {replyingToMessage.direction === 'OUTBOUND' ? 'Você' : (activeContactData?.name || 'Cliente')}</span>
                       </span>
-                      <span className="text-xs text-slate-600 dark:text-slate-300 truncate max-w-[280px] sm:max-w-md">
+                      <span className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100 truncate block mt-0.5 leading-snug">
                         {replyingToMessage.content || (
                           replyingToMessage.type === 'image' ? '📷 Foto' :
                           replyingToMessage.type === 'video' ? '🎥 Vídeo' :
@@ -4160,7 +4181,7 @@ function InboxContent() {
                   <button
                     type="button"
                     onClick={() => setReplyingToMessage(null)}
-                    className="p-1 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                    className="p-1.5 rounded-full text-slate-700 hover:text-slate-950 bg-slate-100 hover:bg-slate-200 dark:text-slate-400 dark:hover:text-white dark:bg-slate-800/80 dark:hover:bg-slate-700 transition-colors cursor-pointer shrink-0"
                     title="Cancelar resposta"
                   >
                     <X size={15} />
