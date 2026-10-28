@@ -7,7 +7,6 @@ import {
   Kanban,
   Activity,
   LifeBuoy,
-  Sparkles,
   ArrowRight,
   BarChart3,
   Layers,
@@ -16,14 +15,13 @@ import {
   ChevronRight,
   Shield,
   Zap,
-  Terminal,
-  Cpu
+  Terminal
 } from "lucide-react";
 import * as THREE from "three";
 import { AnimatePresence } from "framer-motion";
 import VersusPreloader from "@/components/ui/VersusPreloader";
 import { useTheme } from "@/contexts/ThemeContext";
-import MobileAppInstallBanner, { MobileInstallQuickButton } from "@/components/pwa/MobileAppInstallBanner";
+import MobileAppInstallBanner from "@/components/pwa/MobileAppInstallBanner";
 
 interface WelcomeDashboardProps {
   onViewMetrics?: () => void;
@@ -336,23 +334,22 @@ export default function WelcomeDashboard({ onViewMetrics, hasMetrics = true }: W
             <div className="space-y-3.5">
               
               {/* Badges de Identidade e Sessão */}
-              <div className="flex flex-wrap items-center gap-2.5">
-                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wide border ${
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide border ${
                   isWhatsApp
                     ? "bg-emerald-500/10 border-emerald-500/25 text-emerald-400"
                     : "bg-blue-600/10 dark:bg-blue-600/15 border-blue-500/20 dark:border-blue-500/30 text-blue-600 dark:text-blue-400"
                 }`}>
-                  <Cpu className="w-3.5 h-3.5" />
-                  <span>VALLOR ENTERPRISE CORE</span>
+                  VALLOR ENTERPRISE CORE
                 </span>
                 
-                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
                   isWhatsApp
                     ? "bg-[#202c33] border-[#2a3942] text-slate-300"
                     : "bg-slate-100 dark:bg-[#070D1B] border-slate-200 dark:border-slate-700/80 text-slate-700 dark:text-slate-300"
                 }`}>
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-ping" />
-                  <span>Sessão Ativa: {userRole}</span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400" />
+                  <span>Sessão: {userRole}</span>
                 </span>
               </div>
 
@@ -371,40 +368,36 @@ export default function WelcomeDashboard({ onViewMetrics, hasMetrics = true }: W
               <MobileAppInstallBanner isWhatsApp={isWhatsApp} />
             </div>
 
-            {/* Ações de Topo: Boot e Métricas */}
-            <div className="shrink-0 flex flex-wrap md:flex-col gap-2.5">
-              {/* Botão Rápido de Download Mobile */}
-              <MobileInstallQuickButton isWhatsApp={isWhatsApp} />
+            {/* Ações de Topo: Métricas e Boot (sem duplicidade de download) */}
+            <div className="shrink-0 flex flex-col sm:flex-row md:flex-col gap-2 w-full md:w-auto pt-1 md:pt-0">
+              {hasMetrics && onViewMetrics && (
+                <button
+                  onClick={onViewMetrics}
+                  className={`w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all shadow-sm group cursor-pointer border ${
+                    isWhatsApp
+                      ? "bg-[#202c33] hover:bg-[#2a3942] text-slate-200 border-[#2a3942] hover:border-emerald-500/40"
+                      : "bg-slate-100 dark:bg-[#070D1B] hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-blue-500/40"
+                  }`}
+                >
+                  <BarChart3 className={`w-4 h-4 transition-transform group-hover:scale-105 ${isWhatsApp ? "text-emerald-400" : "text-blue-600 dark:text-blue-400"}`} />
+                  <span>Ver Métricas do Dia</span>
+                </button>
+              )}
 
               <button
                 onClick={() => {
                   setForcePlayPreloader(true);
                   setShowPreloader(true);
                 }}
-                className={`flex items-center gap-2 px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all shadow-sm group cursor-pointer border ${
+                className={`w-full md:w-auto flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all group cursor-pointer border ${
                   isWhatsApp
-                    ? "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/30 hover:border-emerald-400"
-                    : "bg-cyan-50 dark:bg-cyan-500/10 hover:bg-cyan-100 dark:hover:bg-cyan-500/20 text-cyan-700 dark:text-cyan-400 border-cyan-200 dark:border-cyan-500/30 hover:border-cyan-400"
+                    ? "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/25"
+                    : "bg-cyan-50/60 dark:bg-cyan-500/10 hover:bg-cyan-100 dark:hover:bg-cyan-500/20 text-cyan-700 dark:text-cyan-400 border-cyan-200/80 dark:border-cyan-500/20"
                 }`}
-                title="Executar animação cinematográfica de boot do sistema"
+                title="Executar animação de boot do sistema"
               >
-                <Sparkles className={`w-4 h-4 group-hover:rotate-12 transition-transform ${isWhatsApp ? "text-emerald-400" : "text-cyan-600 dark:text-cyan-400"}`} />
                 <span>Boot do Sistema (Preloader)</span>
               </button>
-
-              {hasMetrics && onViewMetrics && (
-                <button
-                  onClick={onViewMetrics}
-                  className={`flex items-center gap-2 px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all shadow-sm group cursor-pointer border ${
-                    isWhatsApp
-                      ? "bg-[#202c33] hover:bg-[#2a3942] text-slate-200 border-[#2a3942] hover:border-emerald-500/40"
-                      : "bg-slate-100 dark:bg-[#070D1B] hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-blue-500/40"
-                  }`}
-                >
-                  <BarChart3 className={`w-4 h-4 group-hover:scale-110 transition-transform ${isWhatsApp ? "text-emerald-400" : "text-blue-600 dark:text-blue-400"}`} />
-                  <span>Ver Métricas do Dia</span>
-                </button>
-              )}
             </div>
           </div>
         </div>

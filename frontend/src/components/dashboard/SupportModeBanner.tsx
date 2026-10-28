@@ -45,9 +45,8 @@ export default function SupportModeBanner() {
         </span>
         <div className="flex items-center gap-1.5 md:gap-2 truncate text-xs md:text-sm">
           <span className="font-bold text-blue-900 dark:text-blue-200 shrink-0">Modo Suporte:</span>
-          <span className="text-slate-900 dark:text-white font-bold truncate flex items-center gap-1">
-            <Building2 size={13} className="text-blue-600 dark:text-blue-400 shrink-0 inline" />
-            <span className="truncate">{targetTenantName || "Empresa Cliente"}</span>
+          <span className="text-slate-900 dark:text-white font-bold truncate">
+            {targetTenantName || "Empresa Cliente"}
           </span>
           <span className="hidden md:inline text-[11px] text-blue-700 dark:text-blue-300/80 font-mono font-medium">
             (Auditoria Super Admin)
