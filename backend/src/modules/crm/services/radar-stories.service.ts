@@ -1533,7 +1533,11 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
 
         const lastMsg = rawMessages.find((m) => m.direction === 'INBOUND') || rawMessages[0] || null;
         const lastChatPreview = lastMsg?.content
-          ? String(lastMsg.content).replace(/\s+/g, ' ').trim().slice(0, 110)
+          ? String(lastMsg.content)
+              .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '')
+              .replace(/\s+/g, ' ')
+              .trim()
+              .slice(0, 110)
           : undefined;
         const lastChatDateStr = lastMsg?.createdAt
           ? new Intl.DateTimeFormat('pt-BR', {

@@ -443,7 +443,11 @@ export default function RadarStoriesPage() {
     const handleStoryView = (data: any) => {
       toast.info(
         `Visualização Detectada: ${data.contactName || data.phone} viu "${data.storyTitle}"`,
-        { description: `Data & Horário gravados com precisão no sistema.` }
+        {
+          description: `Data & Horário gravados com precisão no sistema.`,
+          position: "bottom-left",
+          duration: 3500,
+        }
       );
       fetchMetrics();
       fetchViewers();
@@ -452,6 +456,8 @@ export default function RadarStoriesPage() {
     const handleStoryPosted = (data: any) => {
       toast.success(`Novo Story postado no WhatsApp: "${data.title}"`, {
         description: `Categoria identificada: ${data.category}. Monitoramento de visualizações ativado.`,
+        position: "bottom-left",
+        duration: 3500,
       });
       fetchMetrics();
       fetchViewers();

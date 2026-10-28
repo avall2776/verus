@@ -37,7 +37,7 @@ export default function DashboardLayout({
         <BottomNav />
       </main>
       <FloatingSupportWidget />
-      <Toaster />
+      <Toaster position="bottom-left" />
     </div>
   );
 }
