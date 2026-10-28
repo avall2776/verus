@@ -5,7 +5,7 @@ import {
   X, Plus, Trash2, FileText, DollarSign, Calendar, User, 
   Building2, Mail, Phone, ShieldCheck, Sparkles, CheckCircle2, 
   Edit3, Upload, Image as ImageIcon, MapPin, Package, Cloud,
-  ExternalLink, Search, Folder, Check, Loader2
+  ExternalLink, Search, Folder, Check, Loader2, Percent
 } from "lucide-react";
 import { Proposal, ProposalItem, CompanyIssuer, ProposalStatus, ProposalProduct } from "@/types/commercial";
 import api from "@/lib/api";
@@ -1043,249 +1043,25 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit, initial
               {items.map((item, index) => (
                 <div
                   key={item.id}
-                  className="p-3.5 rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 grid grid-cols-1 md:grid-cols-12 gap-3 items-center shadow-sm"
+                  className="p-4 rounded-2xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 shadow-xs hover:border-slate-300 dark:hover:border-slate-700/80 transition-all space-y-3"
                 >
-                  <div className="md:col-span-4">
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                  {/* Cabeçalho do Card: Identificação, Badges e Exclusão */}
+                  <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-slate-800/70">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200 tracking-wide">
                         Item / Serviço #{index + 1}
-                      </label>
+                      </span>
                       {item.imageUrl && (
-                        <span className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-500/20">
                           <Cloud className="w-3 h-3" /> Foto do Drive
                         </span>
                       )}
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      {/* Slot da Foto do Google Drive */}
-                      <div className="relative shrink-0">
-                        {item.imageUrl ? (
-                          <div className="relative w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 overflow-hidden shadow-xs group">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={getDriveThumbnailUrl(item.imageUrl, 200) || item.imageUrl}
-                              alt={item.name || "Foto"}
-                              className="w-full h-full object-cover"
-                            />
-                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
-                              <button
-                                type="button"
-                                onClick={() => openPhotoModal(item.id, item.imageUrl)}
-                                className="p-1 text-white hover:text-blue-300"
-                                title="Alterar foto do Drive"
-                              >
-                                <Edit3 className="w-3 h-3" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => updateItem(item.id, "imageUrl", undefined)}
-                                className="p-1 text-white hover:text-rose-400"
-                                title="Remover foto"
-                              >
-                                <X className="w-3 h-3" />
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => openPhotoModal(item.id)}
-                            className="w-9 h-9 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 text-slate-400 hover:text-blue-500 flex flex-col items-center justify-center transition-colors bg-slate-50 dark:bg-slate-900/50 cursor-pointer"
-                            title="Vincular foto do Google Drive ou catálogo"
-                          >
-                            <Cloud className="w-3.5 h-3.5 text-blue-500" />
-                          </button>
-                        )}
-                      </div>
-
-                      {/* Input com Autocomplete inteligente do Catálogo */}
-                      <div 
-                        className="relative flex-1"
-                        onBlur={(e) => {
-                          if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-                            setTimeout(() => {
-                              setActiveSuggestionItemId((curr) => (curr === item.id ? null : curr));
-                            }, 200);
-                          }
-                        }}
-                      >
-                        <input
-                          type="text"
-                          name={`quote_item_name_${item.id}`}
-                          id={`quote_item_name_${item.id}`}
-                          autoComplete="off"
-                          autoCorrect="off"
-                          spellCheck={false}
-                          role="combobox"
-                          aria-autocomplete="list"
-                          aria-expanded={activeSuggestionItemId === item.id}
-                          data-lpignore="true"
-                          data-1p-ignore="true"
-                          data-form-type="other"
-                          value={item.name}
-                          onChange={(e) => {
-                            updateItem(item.id, "name", e.target.value);
-                            setActiveSuggestionItemId(item.id);
-                          }}
-                          onFocus={() => setActiveSuggestionItemId(item.id)}
-                          placeholder="Nome do produto ou serviço"
-                          className="w-full px-2.5 py-1.5 text-sm rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-blue-500"
-                        />
-
-                        {/* Indicador de Modelo/Especificação se preenchido */}
-                        {item.description && (
-                          <div className="mt-1 flex items-center gap-1.5 text-[10px]">
-                            <span className="text-slate-400 font-medium">Modelo:</span>
-                            <span className="font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-200 dark:border-blue-500/20 truncate">
-                              {item.description}
-                            </span>
-                          </div>
-                        )}
-
-                        {/* Dropdown de sugestão do Catálogo */}
-                        {activeSuggestionItemId === item.id && catalogProducts.length > 0 && (
-                          (() => {
-                            const query = (item.name || "").toLowerCase().trim();
-                            const matches = catalogProducts.filter((p) => {
-                              if (!query) return true;
-                              const matchName = (p.name || "").toLowerCase().includes(query);
-                              const matchFolder = (p.folderName || "").toLowerCase().includes(query);
-                              const matchDesc = (p.description || "").toLowerCase().includes(query);
-                              const matchCombined = `${p.name} ${p.description || ""}`.toLowerCase().includes(query);
-                              return matchName || matchFolder || matchDesc || matchCombined;
-                            }).slice(0, 10);
-
-                            if (matches.length === 0) return null;
-
-                            return (
-                              <div 
-                                onMouseDown={(e) => e.preventDefault()}
-                                className="absolute left-0 right-0 top-full mt-1 z-30 rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden py-1 max-h-64 overflow-y-auto"
-                              >
-                                <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                                  <span className="flex items-center gap-1">
-                                    <Package className="w-3 h-3 text-blue-500" /> Catálogo de Produtos ({matches.length})
-                                  </span>
-                                  <button
-                                    type="button"
-                                    onClick={() => setActiveSuggestionItemId(null)}
-                                    className="text-slate-400 hover:text-slate-600 dark:hover:text-white"
-                                  >
-                                    <X className="w-3 h-3" />
-                                  </button>
-                                </div>
-                                {matches.map((product) => {
-                                  const thumb = getDriveThumbnailUrl(product.driveUrl, 120);
-                                  return (
-                                    <div
-                                      key={product.id}
-                                      onClick={() => selectCatalogProductForItem(item.id, product)}
-                                      className="px-2.5 py-2 hover:bg-blue-50 dark:hover:bg-blue-900/30 cursor-pointer flex items-center gap-2.5 transition-colors border-b border-slate-100 dark:border-slate-800/50 last:border-0"
-                                    >
-                                      <div className="w-8 h-8 rounded bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 flex items-center justify-center border border-slate-200 dark:border-slate-700/80">
-                                        {thumb ? (
-                                          // eslint-disable-next-line @next/next/no-img-element
-                                          <img src={thumb} alt={product.name} className="w-full h-full object-cover" />
-                                        ) : (
-                                          <ImageIcon className="w-3.5 h-3.5 text-slate-400" />
-                                        )}
-                                      </div>
-                                      <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-1.5 flex-wrap">
-                                          <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                                            {product.name}
-                                          </span>
-                                          {product.description && (
-                                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30 shrink-0">
-                                              {product.description}
-                                            </span>
-                                          )}
-                                        </div>
-                                        <div className="text-[10px] text-slate-400 flex items-center gap-1.5 mt-0.5">
-                                          <span>{product.folderName || "Geral"}</span>
-                                          {product.description && (
-                                            <span className="text-slate-500 dark:text-slate-400 font-medium truncate">
-                                              • Modelo: <strong className="text-slate-700 dark:text-slate-300 font-semibold">{product.description}</strong>
-                                            </span>
-                                          )}
-                                          {product.driveUrl && <span className="text-emerald-500 font-semibold shrink-0">• Foto Drive</span>}
-                                        </div>
-                                      </div>
-                                      {Number(product.price || 0) > 0 && (
-                                        <div className="text-xs font-mono font-bold text-blue-600 dark:text-blue-400 shrink-0">
-                                          R$ {Number(product.price).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                                        </div>
-                                      )}
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            );
-                          })()
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                      Quantidade
-                    </label>
-                    <input
-                      type="number"
-                      name={`quote_item_qty_${item.id}`}
-                      id={`quote_item_qty_${item.id}`}
-                      autoComplete="off"
-                      data-form-type="other"
-                      min={1}
-                      value={item.quantity}
-                      onChange={(e) => updateItem(item.id, "quantity", e.target.value)}
-                      className="w-full px-2.5 py-1.5 text-sm rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"
-                    />
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                      Preço Unit. (R$)
-                    </label>
-                    <input
-                      type="number"
-                      name={`quote_item_price_${item.id}`}
-                      id={`quote_item_price_${item.id}`}
-                      autoComplete="off"
-                      data-form-type="other"
-                      min={0}
-                      value={item.unitPrice}
-                      onChange={(e) => updateItem(item.id, "unitPrice", e.target.value)}
-                      className="w-full px-2.5 py-1.5 text-sm rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"
-                    />
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                      Desc. (%)
-                    </label>
-                    <input
-                      type="number"
-                      name={`quote_item_discount_${item.id}`}
-                      id={`quote_item_discount_${item.id}`}
-                      autoComplete="off"
-                      data-form-type="other"
-                      min={0}
-                      max={100}
-                      value={item.discountPercent || 0}
-                      onChange={(e) => updateItem(item.id, "discountPercent", e.target.value)}
-                      className="w-full px-2.5 py-1.5 text-sm rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"
-                    />
-                  </div>
-
-                  <div className="md:col-span-2 flex items-center justify-between gap-2 pt-4 md:pt-0">
-                    <div>
-                      <span className="block text-[10px] text-slate-500 dark:text-slate-400 uppercase font-semibold">Subtotal</span>
-                      <span className="text-sm font-bold text-blue-600 dark:text-blue-400 font-mono">
-                        R$ {item.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                      </span>
+                      {item.description && (
+                        <span className="inline-flex items-center gap-1.5 text-[10px] bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-md border border-blue-200 dark:border-blue-500/20 font-medium max-w-xs truncate">
+                          <span className="text-slate-400 font-normal">Modelo:</span>
+                          <strong className="font-semibold">{item.description}</strong>
+                        </span>
+                      )}
                     </div>
 
                     <button
@@ -1297,37 +1073,286 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit, initial
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
+
+                  {/* Linha de Inputs Perfeitamente Alinhados (Mesmo Baseline e Altura) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-3 items-end">
+                    {/* Produto / Serviço com Foto */}
+                    <div className="sm:col-span-2 md:col-span-4">
+                      <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
+                        Produto ou Serviço
+                      </label>
+                      <div className="flex items-center gap-2">
+                        {/* Slot da Foto do Google Drive */}
+                        <div className="relative shrink-0">
+                          {item.imageUrl ? (
+                            <div className="relative w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 overflow-hidden shadow-xs group">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={getDriveThumbnailUrl(item.imageUrl, 200) || item.imageUrl}
+                                alt={item.name || "Foto"}
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => openPhotoModal(item.id, item.imageUrl)}
+                                  className="p-1 text-white hover:text-blue-300"
+                                  title="Alterar foto do Drive"
+                                >
+                                  <Edit3 className="w-3 h-3" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => updateItem(item.id, "imageUrl", undefined)}
+                                  className="p-1 text-white hover:text-rose-400"
+                                  title="Remover foto"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => openPhotoModal(item.id)}
+                              className="w-9 h-9 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 text-slate-400 hover:text-blue-500 flex flex-col items-center justify-center transition-colors bg-slate-50 dark:bg-slate-900/50 cursor-pointer"
+                              title="Vincular foto do Google Drive ou catálogo"
+                            >
+                              <Cloud className="w-3.5 h-3.5 text-blue-500" />
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Input com Autocomplete inteligente do Catálogo */}
+                        <div 
+                          className="relative flex-1"
+                          onBlur={(e) => {
+                            if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                              setTimeout(() => {
+                                setActiveSuggestionItemId((curr) => (curr === item.id ? null : curr));
+                              }, 200);
+                            }
+                          }}
+                        >
+                          <input
+                            type="text"
+                            name={`quote_item_name_${item.id}`}
+                            id={`quote_item_name_${item.id}`}
+                            autoComplete="off"
+                            autoCorrect="off"
+                            spellCheck={false}
+                            role="combobox"
+                            aria-autocomplete="list"
+                            aria-expanded={activeSuggestionItemId === item.id}
+                            data-lpignore="true"
+                            data-1p-ignore="true"
+                            data-form-type="other"
+                            value={item.name}
+                            onChange={(e) => {
+                              updateItem(item.id, "name", e.target.value);
+                              setActiveSuggestionItemId(item.id);
+                            }}
+                            onFocus={() => setActiveSuggestionItemId(item.id)}
+                            placeholder="Nome do produto ou serviço"
+                            className="w-full h-9 px-2.5 text-sm rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
+                          />
+
+                          {/* Dropdown de sugestão do Catálogo */}
+                          {activeSuggestionItemId === item.id && catalogProducts.length > 0 && (
+                            (() => {
+                              const query = (item.name || "").toLowerCase().trim();
+                              const matches = catalogProducts.filter((p) => {
+                                if (!query) return true;
+                                const matchName = (p.name || "").toLowerCase().includes(query);
+                                const matchFolder = (p.folderName || "").toLowerCase().includes(query);
+                                const matchDesc = (p.description || "").toLowerCase().includes(query);
+                                const matchCombined = `${p.name} ${p.description || ""}`.toLowerCase().includes(query);
+                                return matchName || matchFolder || matchDesc || matchCombined;
+                              }).slice(0, 10);
+
+                              if (matches.length === 0) return null;
+
+                              return (
+                                <div 
+                                  onMouseDown={(e) => e.preventDefault()}
+                                  className="absolute left-0 right-0 top-full mt-1 z-30 rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden py-1 max-h-64 overflow-y-auto"
+                                >
+                                  <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                                    <span className="flex items-center gap-1">
+                                      <Package className="w-3 h-3 text-blue-500" /> Catálogo de Produtos ({matches.length})
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => setActiveSuggestionItemId(null)}
+                                      className="text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                                    >
+                                      <X className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                  {matches.map((product) => {
+                                    const thumb = getDriveThumbnailUrl(product.driveUrl, 120);
+                                    return (
+                                      <div
+                                        key={product.id}
+                                        onClick={() => selectCatalogProductForItem(item.id, product)}
+                                        className="px-2.5 py-2 hover:bg-blue-50 dark:hover:bg-blue-900/30 cursor-pointer flex items-center gap-2.5 transition-colors border-b border-slate-100 dark:border-slate-800/50 last:border-0"
+                                      >
+                                        <div className="w-8 h-8 rounded bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 flex items-center justify-center border border-slate-200 dark:border-slate-700/80">
+                                          {thumb ? (
+                                            // eslint-disable-next-line @next/next/no-img-element
+                                            <img src={thumb} alt={product.name} className="w-full h-full object-cover" />
+                                          ) : (
+                                            <ImageIcon className="w-3.5 h-3.5 text-slate-400" />
+                                          )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <div className="flex items-center gap-1.5 flex-wrap">
+                                            <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                                              {product.name}
+                                            </span>
+                                            {product.description && (
+                                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30 shrink-0">
+                                                {product.description}
+                                              </span>
+                                            )}
+                                          </div>
+                                          <div className="text-[10px] text-slate-400 flex items-center gap-1.5 mt-0.5">
+                                            <span>{product.folderName || "Geral"}</span>
+                                            {product.description && (
+                                              <span className="text-slate-500 dark:text-slate-400 font-medium truncate">
+                                                • Modelo: <strong className="text-slate-700 dark:text-slate-300 font-semibold">{product.description}</strong>
+                                              </span>
+                                            )}
+                                            {product.driveUrl && <span className="text-emerald-500 font-semibold shrink-0">• Foto Drive</span>}
+                                          </div>
+                                        </div>
+                                        {Number(product.price || 0) > 0 && (
+                                          <div className="text-xs font-mono font-bold text-blue-600 dark:text-blue-400 shrink-0">
+                                            R$ {Number(product.price).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              );
+                            })()
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Quantidade */}
+                    <div className="md:col-span-2">
+                      <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1.5 text-center">
+                        Quantidade
+                      </label>
+                      <input
+                        type="number"
+                        name={`quote_item_qty_${item.id}`}
+                        id={`quote_item_qty_${item.id}`}
+                        autoComplete="off"
+                        data-form-type="other"
+                        min={1}
+                        value={item.quantity}
+                        onChange={(e) => updateItem(item.id, "quantity", e.target.value)}
+                        className="w-full h-9 px-2 text-center text-sm font-semibold rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 transition-colors"
+                      />
+                    </div>
+
+                    {/* Preço Unitário */}
+                    <div className="md:col-span-2">
+                      <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1.5 text-right">
+                        Preço Unit. (R$)
+                      </label>
+                      <input
+                        type="number"
+                        name={`quote_item_price_${item.id}`}
+                        id={`quote_item_price_${item.id}`}
+                        autoComplete="off"
+                        data-form-type="other"
+                        min={0}
+                        value={item.unitPrice}
+                        onChange={(e) => updateItem(item.id, "unitPrice", e.target.value)}
+                        className="w-full h-9 px-2.5 text-right text-sm font-mono font-medium rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 transition-colors"
+                      />
+                    </div>
+
+                    {/* Desconto */}
+                    <div className="md:col-span-2">
+                      <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1.5 text-center">
+                        Desc. (%)
+                      </label>
+                      <input
+                        type="number"
+                        name={`quote_item_discount_${item.id}`}
+                        id={`quote_item_discount_${item.id}`}
+                        autoComplete="off"
+                        data-form-type="other"
+                        min={0}
+                        max={100}
+                        value={item.discountPercent || 0}
+                        onChange={(e) => updateItem(item.id, "discountPercent", e.target.value)}
+                        className="w-full h-9 px-2 text-center text-sm font-medium rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 transition-colors"
+                      />
+                    </div>
+
+                    {/* Subtotal */}
+                    <div className="md:col-span-2">
+                      <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1.5 text-right">
+                        Subtotal
+                      </label>
+                      <div className="w-full h-9 px-2.5 flex items-center justify-end rounded-lg bg-blue-50/60 dark:bg-blue-950/40 border border-blue-200/60 dark:border-blue-800/60">
+                        <span className="text-sm font-bold text-blue-600 dark:text-blue-400 font-mono truncate">
+                          R$ {item.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
 
             {/* Totais & Desconto Geral */}
-            <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div className="mt-5 pt-4 border-t border-slate-200 dark:border-slate-800/80 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 bg-slate-100/60 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-xs">
               <div className="flex items-center gap-3">
-                <label className="text-xs text-slate-700 dark:text-slate-300 font-semibold">
-                  Desconto Global (R$):
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  value={globalDiscount}
-                  onChange={(e) => setGlobalDiscount(Math.max(0, Number(e.target.value)))}
-                  className="w-28 px-3 py-1.5 text-sm rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 shadow-sm"
-                />
+                <div className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 shadow-xs shrink-0">
+                  <Percent className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <label className="block text-xs text-slate-700 dark:text-slate-300 font-semibold">
+                    Desconto Global Adicional
+                  </label>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                    Abate direto sobre o valor final
+                  </span>
+                </div>
+                <div className="relative">
+                  <span className="absolute left-2.5 top-2 text-xs font-semibold text-slate-400">R$</span>
+                  <input
+                    type="number"
+                    min={0}
+                    value={globalDiscount}
+                    onChange={(e) => setGlobalDiscount(Math.max(0, Number(e.target.value)))}
+                    className="w-28 h-9 pl-8 pr-2.5 text-sm font-mono font-semibold rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 shadow-xs"
+                  />
+                </div>
               </div>
 
-              <div className="flex items-center gap-6 self-end md:self-auto">
+              <div className="flex items-center justify-between md:justify-end gap-5">
                 <div className="text-right">
-                  <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Subtotal Bruto:</span>
+                  <span className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold">
+                    Subtotal Bruto:
+                  </span>
                   <p className="text-sm font-bold text-slate-800 dark:text-slate-200 font-mono">
                     R$ {subtotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                   </p>
                 </div>
-                <div className="text-right px-4 py-2 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 shadow-sm">
-                  <span className="text-[11px] uppercase tracking-wider text-blue-700 dark:text-blue-400 font-bold">
+                <div className="text-right px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/20">
+                  <span className="block text-[10px] uppercase tracking-wider text-blue-100 font-bold">
                     Valor Total da Proposta
                   </span>
-                  <p className="text-xl font-black text-blue-900 dark:text-white font-mono">
+                  <p className="text-xl font-black font-mono tracking-tight">
                     R$ {finalTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                   </p>
                 </div>
