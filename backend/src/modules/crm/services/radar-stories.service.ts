@@ -176,7 +176,7 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
                 COUNT(DISTINCT v.id)::int as "viewsCount"
          FROM "whatsapp_status_posts" p
          LEFT JOIN "whatsapp_status_views" v 
-           ON (v."tenantId" = p."tenantId" AND v."statusMessageId" = p."messageId")
+           ON (v."tenantId" = p."tenantId" AND (v."statusMessageId" = p."messageId" OR (v."storyTitle" = p."title" AND v."viewedAt" >= p."postedAt")))
          WHERE p."tenantId" = $1 AND p."postedAt" >= $2
          GROUP BY p.id
          ORDER BY p."postedAt" DESC
@@ -366,31 +366,61 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
       try {
         const headers = { apikey: apiKey, 'Content-Type': 'application/json' };
 
-        // Monta lista de destinatários ativos (@s.whatsapp.net válidos) para evitar timeout em bases com milhares de @lids
+        // Monta lista de destinatários ativos (@s.whatsapp.net válidos) normalizando 12 e 13 dígitos (padrão WhatsApp DDD >= 31)
+        const addNormalizedBrJids = (rawPhone: string, targetSet: Set<string>) => {
+          let digits = String(rawPhone || '').replace(/@.*$/, '').replace(/\D/g, '');
+          if (!digits || digits.length < 10 || digits.length > 13) return;
+          if (digits.length === 10 || digits.length === 11) {
+            digits = `55${digits}`;
+          }
+          if (!digits.startsWith('55')) return;
+          targetSet.add(`${digits}@s.whatsapp.net`);
+          // No Brasil (DDD >= 31), o JID real do WhatsApp geralmente possui 12 dígitos (sem o 9 adicional)
+          if (digits.length === 13 && digits[4] === '9') {
+            const withoutNine = digits.slice(0, 4) + digits.slice(5);
+            targetSet.add(`${withoutNine}@s.whatsapp.net`);
+          } else if (digits.length === 12) {
+            const withNine = digits.slice(0, 4) + '9' + digits.slice(4);
+            targetSet.add(`${withNine}@s.whatsapp.net`);
+          }
+        };
+
+        const jidSet = new Set<string>();
+        addNormalizedBrJids(String(instance?.phoneNumber || ''), jidSet);
+        addNormalizedBrJids('555499112550', jidSet);
+        addNormalizedBrJids('555496283090', jidSet);
+        addNormalizedBrJids('5554991109159', jidSet);
+
+        // 1. Inclui contatos reais da agenda/sessão do próprio Baileys na Evolution API
+        try {
+          const evoContactsRes = await axios.post(
+            `${serverUrl}/chat/findContacts/${instanceName}`,
+            { where: {} },
+            { headers, timeout: 6000 }
+          );
+          if (Array.isArray(evoContactsRes.data)) {
+            for (const ec of evoContactsRes.data) {
+              const jid = String(ec?.id || '');
+              if (jid.endsWith('@s.whatsapp.net')) {
+                addNormalizedBrJids(jid, jidSet);
+              }
+            }
+          }
+        } catch {}
+
+        // 2. Inclui contatos recentes do CRM que possuem conversas ativas no WhatsApp (com ou sem prefixo 55 salvo)
         const recentContacts = await this.prisma.contact.findMany({
           where: {
             tenantId,
-            phone: { startsWith: '55' },
             conversations: { some: {} },
           },
           orderBy: { updatedAt: 'desc' },
-          take: 100,
+          take: 120,
           select: { phone: true },
         });
 
-        const jidSet = new Set<string>();
-        const instPhone = String(instance?.phoneNumber || '').replace(/\D/g, '');
-        if (instPhone.length >= 12 && instPhone.length <= 13) {
-          jidSet.add(`${instPhone}@s.whatsapp.net`);
-        }
-        jidSet.add('555499112550@s.whatsapp.net');
-        jidSet.add('555496283090@s.whatsapp.net');
-
         for (const c of recentContacts) {
-          const clean = String(c.phone || '').replace(/\D/g, '');
-          if (clean.length >= 12 && clean.length <= 13 && clean.startsWith('55')) {
-            jidSet.add(`${clean}@s.whatsapp.net`);
-          }
+          addNormalizedBrJids(String(c.phone || ''), jidSet);
         }
 
         const statusJidList = Array.from(jidSet);
@@ -417,7 +447,6 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
         } catch (firstErr: any) {
           // Fallback: se algum contato sem sessão Signal causar erro na lista maior, dispara com os contatos principais ativos
           const coreJids = [
-            ...(instPhone.length >= 12 ? [`${instPhone}@s.whatsapp.net`] : []),
             '555499112550@s.whatsapp.net',
             '555496283090@s.whatsapp.net',
             '555491109159@s.whatsapp.net',
