@@ -6,6 +6,7 @@ exports.detectMediaType = detectMediaType;
 exports.getMimeType = getMimeType;
 exports.downloadDriveFileBuffer = downloadDriveFileBuffer;
 const axios_1 = require("axios");
+const google_oauth_helper_1 = require("./google-oauth.helper");
 function extractGoogleDriveId(urlOrId) {
     if (!urlOrId)
         return null;
@@ -85,6 +86,24 @@ function getMimeType(filenameOrExt, fallbackType = 'document') {
 }
 async function downloadDriveFileBuffer(driveFileId, apiKey) {
     const effectiveKey = apiKey || process.env.GOOGLE_DRIVE_API_KEY;
+    try {
+        const oauthToken = await (0, google_oauth_helper_1.getValidGoogleAccessToken)();
+        if (oauthToken) {
+            const apiUrl = `https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`;
+            const res = await axios_1.default.get(apiUrl, {
+                headers: { Authorization: `Bearer ${oauthToken}` },
+                responseType: 'arraybuffer',
+                timeout: 25000,
+            });
+            const mimeType = res.headers['content-type'] || 'application/octet-stream';
+            return {
+                buffer: Buffer.from(res.data),
+                mimeType,
+            };
+        }
+    }
+    catch (oauthErr) {
+    }
     if (effectiveKey) {
         try {
             const apiUrl = `https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media&key=${effectiveKey}`;

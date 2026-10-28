@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getValidGoogleAccessToken } from './google-oauth.helper';
 
 /**
  * Utilitário backend para integração, resolução e streaming de mídias do Google Drive
@@ -101,6 +102,27 @@ export async function downloadDriveFileBuffer(
   apiKey?: string,
 ): Promise<{ buffer: Buffer; mimeType: string } | null> {
   const effectiveKey = apiKey || process.env.GOOGLE_DRIVE_API_KEY;
+
+  // Tentativa 0: OAuth Access Token se a conta estiver conectada
+  try {
+    const oauthToken = await getValidGoogleAccessToken();
+    if (oauthToken) {
+      const apiUrl = `https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`;
+      const res = await axios.get(apiUrl, {
+        headers: { Authorization: `Bearer ${oauthToken}` },
+        responseType: 'arraybuffer',
+        timeout: 25000,
+      });
+
+      const mimeType = (res.headers['content-type'] as string) || 'application/octet-stream';
+      return {
+        buffer: Buffer.from(res.data),
+        mimeType,
+      };
+    }
+  } catch (oauthErr: any) {
+    // segue para as demais tentativas caso o token falhe
+  }
 
   // Tentativa 1: Google Drive API v3 oficial com API Key
   if (effectiveKey) {

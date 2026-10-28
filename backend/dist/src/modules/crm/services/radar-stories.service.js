@@ -24,22 +24,6 @@ const storage_service_1 = require("../../../shared/storage/storage.service");
 const openai_1 = require("openai");
 const axios_1 = require("axios");
 const crypto_1 = require("crypto");
-const KNOWN_LID_DICTIONARY = {
-    '153819992354947': { name: 'Plinio Parisotto VERTO', phone: '555499301411' },
-    '38075052875866': { name: 'Lucas Koslinski', phone: '554699232511' },
-    '380750528758665': { name: 'Lucas Koslinski', phone: '554699232511' },
-    '96843040075951': { name: 'Junior Verto Soluções Agrícolas', phone: '555496445910' },
-    '174380000751701': { name: 'Marlon Zebrowski Alves', phone: '5551997388493' },
-    '192964324282466': { name: 'Michel Leitzke', phone: '555399690444' },
-    '215847943540795': { name: 'Antonio Malvestitti Neto', phone: '554499750082' },
-    '127504710955167': { name: 'Maurício Wesolowski', phone: '5551999842499' },
-    '122522548838476': { name: 'José Augusto Buissa', phone: '5554999882211' },
-    '207052471279812': { name: 'Gabriel Do Carmo', phone: '555496313003' },
-    '277824925614103': { name: 'Gabriel (Fazenda Pozzobon)', phone: '556296119758' },
-    '43212135755809': { name: 'Lucas Gabriel', phone: '554999803226' },
-    '62302812397733': { name: 'Verto Agrícola Oficial', phone: '555499120000' },
-    '31499474731238': { name: 'Cliente Safra Verto', phone: '556599643822' },
-};
 let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
     constructor(prisma, aiService, chatGateway, storageService, whatsappService, chatService) {
         this.prisma = prisma;
@@ -138,27 +122,15 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
     async getActivePosts(tenantId) {
         try {
             const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-            let posts = await this.prisma.$queryRawUnsafe(`SELECT p.*, 
+            const posts = await this.prisma.$queryRawUnsafe(`SELECT p.*, 
                 COUNT(DISTINCT v.id)::int as "viewsCount"
          FROM "whatsapp_status_posts" p
          LEFT JOIN "whatsapp_status_views" v 
-           ON (v."tenantId" = p."tenantId" AND (v."statusMessageId" = p."messageId" OR v."storyTitle" = p."title"))
+           ON (v."tenantId" = p."tenantId" AND v."statusMessageId" = p."messageId")
          WHERE p."tenantId" = $1 AND p."postedAt" >= $2
          GROUP BY p.id
          ORDER BY p."postedAt" DESC
          LIMIT 20`, tenantId, twentyFourHoursAgo);
-            if (!posts || posts.length === 0) {
-                const seventyTwoHoursAgo = new Date(Date.now() - 72 * 60 * 60 * 1000);
-                posts = await this.prisma.$queryRawUnsafe(`SELECT p.*, 
-                  COUNT(DISTINCT v.id)::int as "viewsCount"
-           FROM "whatsapp_status_posts" p
-           LEFT JOIN "whatsapp_status_views" v 
-             ON (v."tenantId" = p."tenantId" AND (v."statusMessageId" = p."messageId" OR v."storyTitle" = p."title"))
-           WHERE p."tenantId" = $1 AND p."postedAt" >= $2
-           GROUP BY p.id
-           ORDER BY p."postedAt" DESC
-           LIMIT 12`, tenantId, seventyTwoHoursAgo);
-            }
             return (posts || []).map((p) => {
                 const { dateFormatted, timeFormatted, relative } = this.formatDateTime(p.postedAt);
                 let safeMediaUrl = p.mediaUrl;
@@ -292,18 +264,67 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
         if (!data.scheduledAt) {
             try {
                 const headers = { apikey: apiKey, 'Content-Type': 'application/json' };
-                const statusPayload = {
-                    statusMessage: {
-                        type: 'image',
-                        content: evolutionMediaContent,
-                        caption: data.title,
-                        allContacts: true,
+                const recentContacts = await this.prisma.contact.findMany({
+                    where: {
+                        tenantId,
+                        phone: { startsWith: '55' },
+                        conversations: { some: {} },
                     },
-                };
-                const statusRes = await axios_1.default.post(`${serverUrl}/message/sendStatus/${instanceName}`, statusPayload, { headers, timeout: 25000 });
-                if (statusRes.data?.key?.id) {
-                    whatsappMessageId = statusRes.data.key.id;
-                    this.logger.log(`[Radar Stories] Story publicado no WhatsApp via Evolution API! MsgID: ${whatsappMessageId}`);
+                    orderBy: { updatedAt: 'desc' },
+                    take: 100,
+                    select: { phone: true },
+                });
+                const jidSet = new Set();
+                const instPhone = String(instance?.phoneNumber || '').replace(/\D/g, '');
+                if (instPhone.length >= 12 && instPhone.length <= 13) {
+                    jidSet.add(`${instPhone}@s.whatsapp.net`);
+                }
+                jidSet.add('555499112550@s.whatsapp.net');
+                jidSet.add('555496283090@s.whatsapp.net');
+                for (const c of recentContacts) {
+                    const clean = String(c.phone || '').replace(/\D/g, '');
+                    if (clean.length >= 12 && clean.length <= 13 && clean.startsWith('55')) {
+                        jidSet.add(`${clean}@s.whatsapp.net`);
+                    }
+                }
+                const statusJidList = Array.from(jidSet);
+                try {
+                    const statusRes = await axios_1.default.post(`${serverUrl}/message/sendStatus/${instanceName}`, {
+                        statusMessage: {
+                            type: 'image',
+                            content: evolutionMediaContent,
+                            caption: data.title,
+                            allContacts: false,
+                            statusJidList,
+                        },
+                    }, { headers, timeout: 20000 });
+                    if (statusRes.data?.key?.id) {
+                        whatsappMessageId = statusRes.data.key.id;
+                        this.logger.log(`[Radar Stories] Story publicado no WhatsApp via Evolution API! MsgID: ${whatsappMessageId}`);
+                    }
+                }
+                catch (firstErr) {
+                    const coreJids = [
+                        ...(instPhone.length >= 12 ? [`${instPhone}@s.whatsapp.net`] : []),
+                        '555499112550@s.whatsapp.net',
+                        '555496283090@s.whatsapp.net',
+                        '555491109159@s.whatsapp.net',
+                        '555496313003@s.whatsapp.net',
+                        '555496389633@s.whatsapp.net',
+                    ];
+                    const retryRes = await axios_1.default.post(`${serverUrl}/message/sendStatus/${instanceName}`, {
+                        statusMessage: {
+                            type: 'image',
+                            content: evolutionMediaContent,
+                            caption: data.title,
+                            allContacts: false,
+                            statusJidList: Array.from(new Set(coreJids)),
+                        },
+                    }, { headers, timeout: 20000 });
+                    if (retryRes.data?.key?.id) {
+                        whatsappMessageId = retryRes.data.key.id;
+                        this.logger.log(`[Radar Stories] Story publicado no WhatsApp (retry core sessions)! MsgID: ${whatsappMessageId}`);
+                    }
                 }
             }
             catch (evoErr) {
@@ -411,33 +432,36 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
                     if (p.messageId)
                         postByMsgId.set(String(p.messageId), p);
                 }
-                const latestPost = posts?.[0] || null;
                 const sevenDaysAgoMs = Date.now() - 7 * 24 * 3600 * 1000;
                 for (const item of rawItems) {
                     if (!item.fromMe)
                         continue;
                     if (item.status !== 'READ' && item.status !== 'PLAYED')
                         continue;
-                    const rawJid = String(item.remoteJid || '');
-                    if (!rawJid || rawJid.includes('status@broadcast'))
+                    const rawJid = String(item.remoteJid || item.participant || '');
+                    if (!rawJid)
                         continue;
                     const dtMs = item.datetime > 10000000000 ? Number(item.datetime) : Number(item.datetime) * 1000;
                     if (!dtMs || dtMs < sevenDaysAgoMs)
                         continue;
-                    const matchedPost = postByMsgId.get(String(item.id)) || (Date.now() - dtMs < 48 * 3600 * 1000 ? latestPost : null);
+                    const itemMsgId = String(item.id || item.keyId || item.key?.id || '');
+                    const matchedPost = postByMsgId.get(itemMsgId);
                     if (!matchedPost)
                         continue;
-                    const lidKey = rawJid.split(':')[0].replace('@lid', '').replace('@s.whatsapp.net', '').replace(/\D/g, '');
+                    const viewerJid = rawJid.includes('status@broadcast') ? String(item.participant || '') : rawJid;
+                    if (!viewerJid || viewerJid.includes('status@broadcast'))
+                        continue;
+                    const lidKey = viewerJid.split(':')[0].replace('@lid', '').replace('@s.whatsapp.net', '').replace(/\D/g, '');
                     if (lidKey.length < 8)
                         continue;
                     const exists = await this.prisma.$queryRawUnsafe(`SELECT id FROM "whatsapp_status_views"
              WHERE "tenantId" = $1
                AND ("phone" LIKE $2 OR "phone" = $3)
                AND "statusMessageId" = $4
-             LIMIT 1`, tenantId, `%${lidKey.slice(-10)}%`, rawJid, matchedPost.messageId);
+             LIMIT 1`, tenantId, `%${lidKey.slice(-10)}%`, viewerJid, matchedPost.messageId);
                     if (exists && exists.length > 0)
                         continue;
-                    const resolved = await this.resolveViewerIdentity(tenantId, instanceName, rawJid);
+                    const resolved = await this.resolveViewerIdentity(tenantId, instanceName, viewerJid);
                     const viewId = `view_sync_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
                     await this.prisma.$executeRawUnsafe(`INSERT INTO "whatsapp_status_views"
              ("id", "tenantId", "contactId", "phone", "contactName", "city", "state", "statusMessageId", "storyTitle", "category", "mediaUrl", "viewedAt")
@@ -469,15 +493,8 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
         let realPhone = cleanDigits;
         let realName = hintName && hintName !== 'Comercial Verto' && !hintName.startsWith('Produtor Rural') ? hintName : '';
         let contactId = null;
-        let city = 'Região Sul';
-        const state = 'RS';
-        for (const [lidPrefix, info] of Object.entries(KNOWN_LID_DICTIONARY)) {
-            if (cleanDigits.includes(lidPrefix) || lidPrefix.includes(cleanDigits)) {
-                realPhone = info.phone;
-                realName = info.name;
-                break;
-            }
-        }
+        let city = '';
+        const state = '';
         const dbContact = await this.prisma.contact.findFirst({
             where: {
                 tenantId,
@@ -818,10 +835,6 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
             const phoneSuffixes = Array.from(new Set(rawViews
                 .map((v) => {
                 const rawDigits = String(v.phone || '').replace(/\D/g, '');
-                for (const [lidPrefix, info] of Object.entries(KNOWN_LID_DICTIONARY)) {
-                    if (rawDigits.includes(lidPrefix))
-                        return info.phone.slice(-8);
-                }
                 return rawDigits.length >= 8 && rawDigits.length <= 13 ? rawDigits.slice(-8) : '';
             })
                 .filter(Boolean)));
@@ -873,30 +886,21 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
             }
             for (const view of rawViews) {
                 const rawDigits = String(view.phone || '').replace(/\D/g, '');
-                let knownDictMatch = null;
-                for (const [lidPrefix, info] of Object.entries(KNOWN_LID_DICTIONARY)) {
-                    if (rawDigits.includes(lidPrefix) || (rawDigits.length >= 12 && lidPrefix.includes(rawDigits))) {
-                        knownDictMatch = info;
-                        break;
-                    }
-                }
-                const lookupPhone = knownDictMatch ? knownDictMatch.phone : rawDigits;
+                const lookupPhone = rawDigits;
                 const contact = (view.contactId ? contactById.get(view.contactId) : undefined) ||
                     (lookupPhone.length >= 8 ? contactBySuffix.get(lookupPhone.slice(-8)) : undefined) ||
                     (rawDigits ? contactByLid.get(rawDigits) : undefined) ||
                     null;
-                const effectivePhone = knownDictMatch?.phone ||
-                    (contact?.phone && !contact.phone.includes('@lid') && contact.phone.replace(/\D/g, '').length <= 13
-                        ? contact.phone
-                        : view.phone);
+                const effectivePhone = contact?.phone && !contact.phone.includes('@lid') && contact.phone.replace(/\D/g, '').length <= 13
+                    ? contact.phone
+                    : view.phone;
                 const phoneInfo = this.formatBrazilianPhone(effectivePhone);
                 const { dateFormatted, timeFormatted, relative } = this.formatDateTime(view.viewedAt);
-                const effectiveName = knownDictMatch?.name ||
-                    (contact?.name && contact.name !== 'Comercial Verto' && !contact.name.startsWith('Produtor Rural')
-                        ? contact.name
-                        : view.contactName && view.contactName !== 'Comercial Verto'
-                            ? view.contactName
-                            : `Produtor Rural (${phoneInfo.cleanDigits.slice(-4) || 'WhatsApp'})`);
+                const effectiveName = contact?.name && contact.name !== 'Comercial Verto' && !contact.name.startsWith('Produtor Rural')
+                    ? contact.name
+                    : view.contactName && view.contactName !== 'Comercial Verto'
+                        ? view.contactName
+                        : `Contato WhatsApp (${phoneInfo.cleanDigits.slice(-4) || 'WhatsApp'})`;
                 const nameLower = effectiveName.toLowerCase();
                 const contactTags = (contact?.tags || []).map((t) => t.toLowerCase());
                 const isInternalTeam = contactTags.includes('equipe interna') ||

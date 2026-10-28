@@ -11,9 +11,9 @@ export declare class QuickRepliesController {
         type: string;
         mediaUrl: string | null;
         title: string | null;
+        fileName: string | null;
         shortcut: string;
         mediaDriveId: string | null;
-        fileName: string | null;
     }[]>;
     getGoogleDriveStatus(tenantId: string): Promise<{
         connected: boolean;
@@ -42,9 +42,9 @@ export declare class QuickRepliesController {
         type: string;
         mediaUrl: string | null;
         title: string | null;
+        fileName: string | null;
         shortcut: string;
         mediaDriveId: string | null;
-        fileName: string | null;
     }>;
     updateQuickReply(tenantId: string, id: string, body: UpdateQuickReplyDto): Promise<{
         id: string;
@@ -55,9 +55,9 @@ export declare class QuickRepliesController {
         type: string;
         mediaUrl: string | null;
         title: string | null;
+        fileName: string | null;
         shortcut: string;
         mediaDriveId: string | null;
-        fileName: string | null;
     }>;
     deleteQuickReply(tenantId: string, id: string): Promise<{
         id: string;
@@ -68,8 +68,8 @@ export declare class QuickRepliesController {
         type: string;
         mediaUrl: string | null;
         title: string | null;
+        fileName: string | null;
         shortcut: string;
         mediaDriveId: string | null;
-        fileName: string | null;
     }>;
 }

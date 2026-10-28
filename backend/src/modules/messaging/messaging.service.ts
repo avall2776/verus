@@ -460,7 +460,11 @@ export class MessagingService {
         try {
           const driveData = await downloadDriveFileBuffer(driveId);
           if (driveData) {
-            base64Media = `data:${driveData.mimeType};base64,${driveData.buffer.toString('base64')}`;
+            // Apenas imagens leves (menores que 3.5MB) enviam em Base64 para rapidez.
+            // Vídeos e PDFs sempre usam streaming URL para não estourar a memória da Evolution API.
+            if (payload.type === 'image' && driveData.buffer.length < 3.5 * 1024 * 1024) {
+              base64Media = `data:${driveData.mimeType};base64,${driveData.buffer.toString('base64')}`;
+            }
           }
         } catch (err: any) {
           this.logger.warn(`Falha ao converter Drive em Base64 (${err.message}). Usando stream.`);

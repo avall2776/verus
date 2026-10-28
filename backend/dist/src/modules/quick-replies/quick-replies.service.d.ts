@@ -29,9 +29,9 @@ export declare class QuickRepliesService {
         type: string;
         mediaUrl: string | null;
         title: string | null;
+        fileName: string | null;
         shortcut: string;
         mediaDriveId: string | null;
-        fileName: string | null;
     }[]>;
     create(tenantId: string, data: CreateQuickReplyDto): Promise<{
         id: string;
@@ -42,9 +42,9 @@ export declare class QuickRepliesService {
         type: string;
         mediaUrl: string | null;
         title: string | null;
+        fileName: string | null;
         shortcut: string;
         mediaDriveId: string | null;
-        fileName: string | null;
     }>;
     update(tenantId: string, id: string, data: UpdateQuickReplyDto): Promise<{
         id: string;
@@ -55,9 +55,9 @@ export declare class QuickRepliesService {
         type: string;
         mediaUrl: string | null;
         title: string | null;
+        fileName: string | null;
         shortcut: string;
         mediaDriveId: string | null;
-        fileName: string | null;
     }>;
     delete(tenantId: string, id: string): Promise<{
         id: string;
@@ -68,8 +68,8 @@ export declare class QuickRepliesService {
         type: string;
         mediaUrl: string | null;
         title: string | null;
+        fileName: string | null;
         shortcut: string;
         mediaDriveId: string | null;
-        fileName: string | null;
     }>;
 }
