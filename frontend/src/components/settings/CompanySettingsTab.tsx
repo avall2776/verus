@@ -85,15 +85,15 @@ export default function CompanySettingsTab() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
+    <div className="space-y-5 sm:space-y-6 animate-in fade-in duration-200">
       {/* Header da Aba */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-4 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <Building2 className={`w-5 h-5 ${isWhatsApp ? "text-emerald-500" : "text-blue-600 dark:text-blue-400"}`} />
-            Dados Cadastrais da Empresa
+          <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <Building2 className={`w-4 h-4 sm:w-5 sm:h-5 shrink-0 ${isWhatsApp ? "text-emerald-500" : "text-blue-600 dark:text-blue-400"}`} />
+            <span>Dados Cadastrais da Empresa</span>
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Informações institucionais e fiscais utilizadas nos módulos operacionais e contratos.
           </p>
         </div>
@@ -102,50 +102,50 @@ export default function CompanySettingsTab() {
           <button
             type="button"
             onClick={() => router.push("/settings?tab=plan")}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl border text-xs font-semibold transition-all group ${
+            className={`self-start sm:self-auto flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all group shrink-0 ${
               isWhatsApp
                 ? "bg-emerald-50 dark:bg-emerald-600/10 hover:bg-emerald-100 dark:hover:bg-emerald-600/20 border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-300"
                 : "bg-blue-50 dark:bg-blue-600/10 hover:bg-blue-100 dark:hover:bg-blue-600/20 border-blue-200 dark:border-blue-500/20 text-blue-700 dark:text-blue-300"
             }`}
             title="Clique para ver os detalhes da assinatura e limites"
           >
-            <ShieldCheck className={`w-4 h-4 ${isWhatsApp ? "text-emerald-600 dark:text-emerald-400" : "text-blue-600 dark:text-blue-400"}`} />
+            <ShieldCheck className={`w-3.5 h-3.5 ${isWhatsApp ? "text-emerald-600 dark:text-emerald-400" : "text-blue-600 dark:text-blue-400"}`} />
             <span>Plano {company.plan.name}</span>
             <ChevronRight className={`w-3.5 h-3.5 opacity-60 group-hover:opacity-100 transition-opacity ${isWhatsApp ? "text-emerald-600 dark:text-emerald-400" : "text-blue-600 dark:text-blue-400"}`} />
           </button>
         )}
       </div>
 
-      {/* Métricas Rápidas */}
+      {/* Métricas Rápidas Otimizadas para Mobile */}
       {company?._count && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="p-3.5 rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80 shadow-sm">
-            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs mb-1">
-              <Users className={`w-3.5 h-3.5 ${isWhatsApp ? "text-emerald-500" : "text-blue-600 dark:text-blue-400"}`} />
-              <span>Membros</span>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+          <div className="p-3 sm:p-3.5 rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80 shadow-sm min-w-0">
+            <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-xs mb-1 truncate">
+              <Users className={`w-3.5 h-3.5 shrink-0 ${isWhatsApp ? "text-emerald-500" : "text-blue-600 dark:text-blue-400"}`} />
+              <span className="truncate">Membros</span>
             </div>
-            <span className="text-lg font-bold text-slate-900 dark:text-white font-mono">{company._count.users || 0}</span>
+            <span className="text-base sm:text-lg font-bold text-slate-900 dark:text-white font-mono">{company._count.users || 0}</span>
           </div>
-          <div className="p-3.5 rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80 shadow-sm">
-            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs mb-1">
-              <FileText className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              <span>Contratos</span>
+          <div className="p-3 sm:p-3.5 rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80 shadow-sm min-w-0">
+            <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-xs mb-1 truncate">
+              <FileText className="w-3.5 h-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+              <span className="truncate">Contratos</span>
             </div>
-            <span className="text-lg font-bold text-slate-900 dark:text-white font-mono">{company._count.contracts || 0}</span>
+            <span className="text-base sm:text-lg font-bold text-slate-900 dark:text-white font-mono">{company._count.contracts || 0}</span>
           </div>
-          <div className="p-3.5 rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80 shadow-sm">
-            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs mb-1">
-              <Users className={`w-3.5 h-3.5 ${isWhatsApp ? "text-emerald-500" : "text-indigo-600 dark:text-indigo-400"}`} />
-              <span>Contatos CRM</span>
+          <div className="p-3 sm:p-3.5 rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80 shadow-sm min-w-0">
+            <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-xs mb-1 truncate">
+              <Users className={`w-3.5 h-3.5 shrink-0 ${isWhatsApp ? "text-emerald-500" : "text-indigo-600 dark:text-indigo-400"}`} />
+              <span className="truncate">Contatos CRM</span>
             </div>
-            <span className="text-lg font-bold text-slate-900 dark:text-white font-mono">{company._count.contacts || 0}</span>
+            <span className="text-base sm:text-lg font-bold text-slate-900 dark:text-white font-mono">{company._count.contacts || 0}</span>
           </div>
-          <div className="p-3.5 rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80 shadow-sm">
-            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs mb-1">
-              <CreditCard className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-              <span>Chamados</span>
+          <div className="p-3 sm:p-3.5 rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80 shadow-sm min-w-0">
+            <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-xs mb-1 truncate">
+              <CreditCard className="w-3.5 h-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+              <span className="truncate">Chamados</span>
             </div>
-            <span className="text-lg font-bold text-slate-900 dark:text-white font-mono">{company._count.supportTickets || 0}</span>
+            <span className="text-base sm:text-lg font-bold text-slate-900 dark:text-white font-mono">{company._count.supportTickets || 0}</span>
           </div>
         </div>
       )}
@@ -290,11 +290,11 @@ export default function CompanySettingsTab() {
           />
         </div>
 
-        <div className="pt-3 flex justify-end">
+        <div className="pt-3 flex flex-col sm:flex-row justify-end">
           <button
             type="submit"
             disabled={saving}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs transition-colors shadow-sm disabled:opacity-50 cursor-pointer ${primaryBtnClass}`}
+            className={`w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs transition-colors shadow-sm disabled:opacity-50 cursor-pointer ${primaryBtnClass}`}
           >
             {saving ? (
               <>
@@ -312,16 +312,16 @@ export default function CompanySettingsTab() {
       </form>
 
       {/* Atalho Integrado: Catálogo & Google Drive de Produtos */}
-      <div className="p-5 rounded-2xl bg-gradient-to-r from-blue-500/10 via-slate-500/5 to-transparent border border-blue-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-blue-500/10 via-slate-500/5 to-transparent border border-blue-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+        <div className="flex items-start sm:items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/15 border border-blue-200 dark:border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
             <PackageCheck className="w-5 h-5" />
           </div>
-          <div>
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+          <div className="min-w-0">
+            <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
               Catálogo de Produtos & Fotos no Google Drive (Propostas)
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
               Configure a pasta do Drive e seus produtos para puxar as fotos automaticamente ao gerar orçamentos e propostas comerciais.
             </p>
           </div>
@@ -330,7 +330,7 @@ export default function CompanySettingsTab() {
         <button
           type="button"
           onClick={() => router.push("/settings?tab=products")}
-          className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${primaryBtnClass}`}
+          className={`w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 sm:py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${primaryBtnClass}`}
         >
           <span>Configurar Catálogo & Drive</span>
           <ChevronRight className="w-4 h-4" />

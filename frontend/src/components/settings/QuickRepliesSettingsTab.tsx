@@ -269,17 +269,17 @@ export default function QuickRepliesSettingsTab() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
           <button
             onClick={() => handleOpenModal(null, "document")}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600/10 dark:bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-semibold hover:bg-emerald-600/20 transition-all shadow-sm cursor-pointer"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 sm:py-2 rounded-xl bg-emerald-600/10 dark:bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-semibold hover:bg-emerald-600/20 transition-all shadow-sm cursor-pointer"
           >
             <Cloud className="w-4 h-4" />
             + Novo Catálogo (Drive)
           </button>
           <button
             onClick={() => handleOpenModal(null, "text")}
-            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold shadow-lg transition-all cursor-pointer ${primaryBtnClass}`}
+            className={`w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 sm:py-2 rounded-xl text-xs font-semibold shadow-lg transition-all cursor-pointer ${primaryBtnClass}`}
           >
             <Plus className="w-4 h-4" />
             + Atalho de Texto
@@ -287,11 +287,11 @@ export default function QuickRepliesSettingsTab() {
         </div>
       </div>
 
-      {/* Segmented Filter de Categorias */}
-      <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-xs">
+      {/* Segmented Filter de Categorias (Scroll Horizontal no Mobile) */}
+      <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-xs overflow-x-auto no-scrollbar whitespace-nowrap">
         <button
           onClick={() => setCategoryFilter("ALL")}
-          className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+          className={`shrink-0 px-3 py-1.5 rounded-lg font-medium transition-all ${
             categoryFilter === "ALL"
               ? `bg-white dark:bg-slate-800 ${accentTextClass} shadow-sm font-bold`
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -301,7 +301,7 @@ export default function QuickRepliesSettingsTab() {
         </button>
         <button
           onClick={() => setCategoryFilter("document")}
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all ${
+          className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all ${
             categoryFilter === "document"
               ? "bg-white dark:bg-slate-800 text-rose-600 dark:text-rose-400 shadow-sm font-bold"
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -312,7 +312,7 @@ export default function QuickRepliesSettingsTab() {
         </button>
         <button
           onClick={() => setCategoryFilter("image")}
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all ${
+          className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all ${
             categoryFilter === "image"
               ? "bg-white dark:bg-slate-800 text-purple-600 dark:text-purple-400 shadow-sm font-bold"
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -323,7 +323,7 @@ export default function QuickRepliesSettingsTab() {
         </button>
         <button
           onClick={() => setCategoryFilter("video")}
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all ${
+          className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all ${
             categoryFilter === "video"
               ? "bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm font-bold"
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -334,7 +334,7 @@ export default function QuickRepliesSettingsTab() {
         </button>
         <button
           onClick={() => setCategoryFilter("text")}
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all ${
+          className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all ${
             categoryFilter === "text"
               ? `bg-white dark:bg-slate-800 ${accentTextClass} shadow-sm font-bold`
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"

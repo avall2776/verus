@@ -843,9 +843,9 @@ export default function UsersSettingsTab() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
           <div
-            className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 font-medium px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800"
+            className="flex items-center justify-between sm:justify-start gap-1.5 text-xs text-slate-600 dark:text-slate-400 font-medium px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800"
             title={`Limite da sua conta: ${maxUsers} usuários simultâneos`}
           >
             <span>{users.length} / {maxUsers} usuários</span>
@@ -854,7 +854,7 @@ export default function UsersSettingsTab() {
 
           <button
             onClick={handleOpenInvite}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs transition-all shadow-sm cursor-pointer ${primaryBtnClass}`}
+            className={`w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 rounded-xl font-bold text-xs transition-all shadow-sm cursor-pointer ${primaryBtnClass}`}
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
             <span>Convidar Colaborador</span>
@@ -879,11 +879,11 @@ export default function UsersSettingsTab() {
           </div>
 
           {/* Filtro de Ambiente */}
-          <div className="relative">
+          <div className="relative w-full sm:w-auto">
             <select
               value={filterEnvironment}
               onChange={(e) => setFilterEnvironment(e.target.value)}
-              className={`appearance-none px-3.5 py-2 pr-8 rounded-xl bg-white dark:bg-[#121824] border border-slate-200 dark:border-slate-700/60 text-xs text-slate-700 dark:text-slate-300 font-medium outline-none ${focusBorderClass} cursor-pointer`}
+              className={`w-full appearance-none px-3.5 py-2 pr-8 rounded-xl bg-white dark:bg-[#121824] border border-slate-200 dark:border-slate-700/60 text-xs text-slate-700 dark:text-slate-300 font-medium outline-none ${focusBorderClass} cursor-pointer`}
             >
               <option value="all">Todos os ambientes</option>
               <option value="workspace-1">Workspace 1</option>
@@ -892,11 +892,11 @@ export default function UsersSettingsTab() {
           </div>
 
           {/* Filtro de Tipo de Usuário */}
-          <div className="relative">
+          <div className="relative w-full sm:w-auto">
             <select
               value={filterRole}
               onChange={(e) => setFilterRole(e.target.value)}
-              className={`appearance-none px-3.5 py-2 pr-8 rounded-xl bg-white dark:bg-[#121824] border border-slate-200 dark:border-slate-700/60 text-xs text-slate-700 dark:text-slate-300 font-medium outline-none ${focusBorderClass} cursor-pointer`}
+              className={`w-full appearance-none px-3.5 py-2 pr-8 rounded-xl bg-white dark:bg-[#121824] border border-slate-200 dark:border-slate-700/60 text-xs text-slate-700 dark:text-slate-300 font-medium outline-none ${focusBorderClass} cursor-pointer`}
             >
               <option value="all">Todos os tipos</option>
               <option value="administrador">Administrador</option>
@@ -907,11 +907,11 @@ export default function UsersSettingsTab() {
           </div>
 
           {/* Filtro de Setor */}
-          <div className="relative">
+          <div className="relative w-full sm:w-auto">
             <select
               value={filterDepartment}
               onChange={(e) => setFilterDepartment(e.target.value)}
-              className={`appearance-none px-3.5 py-2 pr-8 rounded-xl bg-white dark:bg-[#121824] border border-slate-200 dark:border-slate-700/60 text-xs text-slate-700 dark:text-slate-300 font-medium outline-none ${focusBorderClass} cursor-pointer`}
+              className={`w-full appearance-none px-3.5 py-2 pr-8 rounded-xl bg-white dark:bg-[#121824] border border-slate-200 dark:border-slate-700/60 text-xs text-slate-700 dark:text-slate-300 font-medium outline-none ${focusBorderClass} cursor-pointer`}
             >
               <option value="all">Todos os setores</option>
               {availableDepartments.map((dept) => (

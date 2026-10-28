@@ -242,7 +242,7 @@ export default function ProposalProductsSettingsTab() {
         <button
           type="button"
           onClick={() => handleOpenModal()}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer ${primaryBtnClass}`}
+          className={`w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer ${primaryBtnClass}`}
         >
           <Plus className="w-4 h-4" />
           <span>Cadastrar Produto / Foto</span>
@@ -250,25 +250,25 @@ export default function ProposalProductsSettingsTab() {
       </div>
 
       {/* CARD 1: CONFIGURAÇÃO DA PASTA DO GOOGLE DRIVE */}
-      <div className="p-5 rounded-2xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+      <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
               <Cloud className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+              <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
                 Pasta Principal do Google Drive (Repositório de Produtos)
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
                 Cole o link da pasta do Google Drive onde você organiza as fotos e catálogos dos seus produtos.
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 self-start sm:self-auto">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 text-[10px] sm:text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 self-start sm:self-auto shrink-0">
             <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>Armazenamento Direto no Drive (Zero Peso no BD)</span>
+            <span>Drive (Zero Peso no BD)</span>
           </div>
         </div>
 
@@ -284,12 +284,12 @@ export default function ProposalProductsSettingsTab() {
             />
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <button
               type="button"
               onClick={handleSaveDriveFolder}
               disabled={savingDriveConfig}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer disabled:opacity-50 ${primaryBtnClass}`}
+              className={`w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 sm:py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer disabled:opacity-50 ${primaryBtnClass}`}
             >
               {savingDriveConfig ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               <span>Salvar Pasta</span>

@@ -203,7 +203,7 @@ export default function AutomationsSettingsTab() {
           </button>
           <button
             onClick={() => setIsModalOpen(true)}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer ${primaryBtnClass}`}
+            className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer ${primaryBtnClass}`}
           >
             <Plus className="w-4 h-4" />
             Nova Automação
@@ -211,12 +211,12 @@ export default function AutomationsSettingsTab() {
         </div>
       </div>
 
-      {/* Sub-Abas: Regras vs Logs */}
-      <div className="flex items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800/80">
-        <div className="flex items-center gap-2">
+      {/* Sub-Abas: Regras vs Logs (Responsivo no Mobile) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800/80">
+        <div className="flex items-center gap-3 overflow-x-auto no-scrollbar whitespace-nowrap">
           <button
             onClick={() => setActiveSubTab("rules")}
-            className={`pb-3 text-xs font-bold transition-colors relative cursor-pointer ${
+            className={`pb-3 text-xs font-bold transition-colors relative cursor-pointer shrink-0 ${
               activeSubTab === "rules"
                 ? activeSubTabClass
                 : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
@@ -226,7 +226,7 @@ export default function AutomationsSettingsTab() {
           </button>
           <button
             onClick={() => setActiveSubTab("logs")}
-            className={`pb-3 text-xs font-bold transition-colors relative cursor-pointer ${
+            className={`pb-3 text-xs font-bold transition-colors relative cursor-pointer shrink-0 ${
               activeSubTab === "logs"
                 ? activeSubTabClass
                 : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
@@ -237,7 +237,7 @@ export default function AutomationsSettingsTab() {
         </div>
 
         {activeSubTab === "rules" && (
-          <div className="relative w-64 mb-2">
+          <div className="relative w-full sm:w-64 mb-2">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"

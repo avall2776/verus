@@ -333,7 +333,7 @@ export default function PlanSettingsTab() {
 
         <button
           onClick={() => router.push("/support")}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-colors shadow-sm shrink-0 cursor-pointer ${primaryBtnClass}`}
+          className={`w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-colors shadow-sm shrink-0 cursor-pointer ${primaryBtnClass}`}
         >
           <span>Falar com o Suporte / Upgrade</span>
           <ArrowUpRight size={14} />

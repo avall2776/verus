@@ -149,7 +149,7 @@ export default function DepartmentsSettingsTab() {
 
         <button
           onClick={() => handleOpenModal()}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-xs transition-colors shadow-sm cursor-pointer ${primaryBtnClass}`}
+          className={`w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 rounded-xl font-semibold text-xs transition-colors shadow-sm cursor-pointer ${primaryBtnClass}`}
         >
           <Plus className="w-4 h-4" />
           <span>Novo Departamento</span>

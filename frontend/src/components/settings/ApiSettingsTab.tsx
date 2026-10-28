@@ -323,7 +323,7 @@ print("Resposta:", response.json())`;
         <button
           type="button"
           onClick={() => setIsCreateModalOpen(true)}
-          className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white shadow-sm transition-all active:scale-95 shrink-0 cursor-pointer ${
+          className={`w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white shadow-sm transition-all active:scale-95 shrink-0 cursor-pointer ${
             isWhatsApp
               ? 'bg-[#00A884] hover:bg-[#02906F] shadow-[#00A884]/20'
               : 'bg-blue-600 hover:bg-blue-500 shadow-blue-600/20'
@@ -334,12 +334,12 @@ print("Resposta:", response.json())`;
         </button>
       </div>
 
-      {/* Sub-Tabs de Navegação */}
-      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
+      {/* Sub-Tabs de Navegação (Scroll Suave no Mobile) */}
+      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 overflow-x-auto no-scrollbar">
         <button
           type="button"
           onClick={() => setActiveSubTab("tokens")}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 whitespace-nowrap cursor-pointer ${
             activeSubTab === "tokens"
               ? isWhatsApp
                 ? 'bg-[#00A884]/15 text-[#00A884] border border-[#00A884]/30'
@@ -354,7 +354,7 @@ print("Resposta:", response.json())`;
         <button
           type="button"
           onClick={() => setActiveSubTab("docs")}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 whitespace-nowrap cursor-pointer ${
             activeSubTab === "docs"
               ? isWhatsApp
                 ? 'bg-[#00A884]/15 text-[#00A884] border border-[#00A884]/30'
@@ -369,7 +369,7 @@ print("Resposta:", response.json())`;
         <button
           type="button"
           onClick={() => setActiveSubTab("simulator")}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 whitespace-nowrap cursor-pointer ${
             activeSubTab === "simulator"
               ? isWhatsApp
                 ? 'bg-[#00A884]/15 text-[#00A884] border border-[#00A884]/30'
