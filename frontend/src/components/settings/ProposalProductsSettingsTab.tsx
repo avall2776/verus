@@ -300,11 +300,11 @@ export default function ProposalProductsSettingsTab() {
                 href={driveFolder}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors"
+                className="flex items-center justify-center gap-1.5 px-3.5 py-2.5 sm:py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors"
                 title="Abrir pasta no Google Drive"
               >
                 <ArrowUpRight className="w-4 h-4" />
-                <span className="hidden sm:inline">Abrir no Drive</span>
+                <span>Abrir no Drive</span>
               </a>
             )}
           </div>
@@ -442,7 +442,7 @@ export default function ProposalProductsSettingsTab() {
                         )}
                       </div>
 
-                      <h4 className="text-sm font-bold text-slate-900 dark:text-white truncate mt-1" title={product.name}>
+                      <h4 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-2 break-words mt-1" title={product.name}>
                         {product.name}
                       </h4>
 
@@ -457,9 +457,9 @@ export default function ProposalProductsSettingsTab() {
                   </div>
 
                   {product.description && (
-                    <div className="flex items-center gap-1.5 mt-0.5">
+                    <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Modelo:</span>
-                      <span className="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded-md border border-blue-200 dark:border-blue-500/20 truncate">
+                      <span className="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded-md border border-blue-200 dark:border-blue-500/20 break-words">
                         {product.description}
                       </span>
                     </div>
@@ -597,9 +597,9 @@ export default function ProposalProductsSettingsTab() {
 
                   {/* Link da Foto no Google Drive */}
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex flex-wrap items-center justify-between gap-1">
                       <span className="flex items-center gap-1.5">
-                        <Cloud className="w-3.5 h-3.5 text-blue-500" /> Link de Compartilhamento da Foto no Google Drive
+                        <Cloud className="w-3.5 h-3.5 text-blue-500 shrink-0" /> Link de Compartilhamento da Foto no Google Drive
                       </span>
                       {extractGoogleDriveId(form.driveUrl) && (
                         <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono">

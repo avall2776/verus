@@ -1561,7 +1561,7 @@ export default function UsersSettingsTab() {
                                 </span>
 
                                 <MenuIcon className={`w-4 h-4 shrink-0 ${isChecked ? (isWhatsApp ? "text-emerald-500" : "text-blue-500") : "text-slate-400 dark:text-slate-500"}`} />
-                                <span className={`text-xs font-medium truncate ${isChecked ? "text-slate-900 dark:text-white font-semibold" : ""}`}>
+                                <span className={`text-xs font-medium leading-tight break-words ${isChecked ? "text-slate-900 dark:text-white font-semibold" : ""}`}>
                                   {menu.label}
                                 </span>
                               </div>
@@ -1830,7 +1830,7 @@ export default function UsersSettingsTab() {
                                 {isChecked && <Check className="w-2 h-2 stroke-[3]" />}
                               </span>
                               <SubIcon className={`w-3.5 h-3.5 shrink-0 ${isChecked ? (isWhatsApp ? "text-emerald-500" : "text-blue-500") : "text-slate-400"}`} />
-                              <span className="text-xs font-medium truncate">{subItem.label}</span>
+                              <span className="text-xs font-medium leading-tight break-words">{subItem.label}</span>
                             </div>
                             <span title={subItem.tooltip} className="text-slate-400 p-0.5">
                               <HelpCircle className="w-3 h-3" />

@@ -263,20 +263,20 @@ export default function AiSettingsTab() {
       </div>
 
       {/* 2. CHAVE ATIVA OU CONFIGURAÇÃO DE NOVA CHAVE */}
-      <div className="rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 p-6 space-y-6 shadow-sm">
+      <div className="rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 p-4 sm:p-6 space-y-5 sm:space-y-6 shadow-sm">
         <div className="flex items-center gap-2.5 border-b border-slate-200 dark:border-slate-800/80 pb-4">
-          <Key className={`w-4 h-4 ${accentTextClass}`} />
-          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+          <Key className={`w-4 h-4 shrink-0 ${accentTextClass}`} />
+          <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
             Credenciais da OpenAI (Bring Your Own Key)
           </h3>
         </div>
 
         {status?.hasCustomKey && (
-          <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
+          <div className="p-3.5 sm:p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Chave Cadastrada:</span>
-                <span className={`font-mono text-xs px-2.5 py-1 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 font-semibold ${accentTextClass}`}>
+                <span className={`font-mono text-xs px-2.5 py-1 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 font-semibold break-all ${accentTextClass}`}>
                   {status.maskedCustomKey || "••••••••••••••••"}
                 </span>
               </div>
@@ -367,19 +367,19 @@ export default function AiSettingsTab() {
             </button>
           </div>
 
-          <p className="text-[11px] text-slate-500 flex items-center gap-1.5 pt-1">
-            <Lock className="w-3 h-3 text-slate-400 shrink-0" />
-            Criptografia ponta a ponta (AES-256): sua chave nunca é exposta no navegador e é armazenada com cifra de alta segurança.
+          <p className="text-[11px] text-slate-500 flex items-start gap-1.5 pt-1 leading-relaxed">
+            <Lock className="w-3 h-3 text-slate-400 shrink-0 mt-0.5" />
+            <span>Criptografia ponta a ponta (AES-256): sua chave nunca é exposta no navegador e é armazenada com cifra de alta segurança.</span>
           </p>
         </div>
       </div>
 
       {/* 3. ASSISTENTE PASSO A PASSO PARA O CLIENTE GERAR A CHAVE NA OPENAI */}
-      <div className="rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 p-6 space-y-5 shadow-sm">
-        <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800/80 pb-4">
+      <div className="rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 p-4 sm:p-6 space-y-5 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-slate-200 dark:border-slate-800/80 pb-4">
           <div className="flex items-center gap-2.5">
-            <HelpCircle className={`w-4 h-4 ${accentTextClass}`} />
-            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+            <HelpCircle className={`w-4 h-4 shrink-0 ${accentTextClass}`} />
+            <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white leading-snug">
               Como gerar sua chave na OpenAI (Passo a Passo)
             </h3>
           </div>
@@ -387,7 +387,7 @@ export default function AiSettingsTab() {
             href="https://platform.openai.com/api-keys"
             target="_blank"
             rel="noopener noreferrer"
-            className={`text-xs ${accentTextClass} font-semibold flex items-center gap-1 transition-colors`}
+            className={`text-xs ${accentTextClass} font-semibold flex items-center gap-1 transition-colors self-start sm:self-auto shrink-0`}
           >
             <span>Ir para OpenAI Platform</span>
             <ArrowUpRight className="w-3.5 h-3.5" />

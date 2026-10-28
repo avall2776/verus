@@ -27,7 +27,7 @@ export default function DashboardLayout({
         <TrialBanner />
         
         {/* Container rolável do conteúdo de cada tela com proteção de plano e governança */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden p-2.5 sm:p-4 md:p-8 pb-20 md:pb-8 print:block print:h-auto print:overflow-visible print:p-0 print:m-0">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-2.5 sm:p-4 md:p-8 pb-28 md:pb-8 print:block print:h-auto print:overflow-visible print:p-0 print:m-0">
           <PlanGuardWrapper>
             {children}
           </PlanGuardWrapper>

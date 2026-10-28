@@ -388,9 +388,9 @@ print("Resposta:", response.json())`;
       {activeSubTab === "tokens" && (
         <div className="flex flex-col gap-4">
           {/* Card de Aviso / Instrução Padrão Lero / Stripe */}
-          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5">
-              <ShieldCheck className="text-emerald-500 shrink-0" size={16} />
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
+            <div className="flex items-start sm:items-center gap-2.5">
+              <ShieldCheck className="text-emerald-500 shrink-0 mt-0.5 sm:mt-0" size={16} />
               <span>
                 Tokens de API concedem acesso seguro às rotas públicas de ingestão. Nunca compartilhe suas chaves em repositórios públicos.
               </span>
@@ -398,7 +398,7 @@ print("Resposta:", response.json())`;
             <button
               type="button"
               onClick={() => setActiveSubTab("docs")}
-              className="text-blue-600 dark:text-blue-400 font-bold hover:underline shrink-0 text-xs flex items-center gap-1"
+              className="text-blue-600 dark:text-blue-400 font-bold hover:underline shrink-0 text-xs flex items-center gap-1 self-end sm:self-auto"
             >
               <span>Ver Documentação</span>
               <ArrowRight size={12} />
@@ -523,16 +523,16 @@ print("Resposta:", response.json())`;
         <div className="flex flex-col gap-6">
           {/* Box de URL Base */}
           <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
+            <div className="min-w-0">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Endpoint Base da API</span>
-              <div className="font-mono text-xs sm:text-sm font-bold text-slate-800 dark:text-white mt-0.5">
+              <div className="font-mono text-xs sm:text-sm font-bold text-slate-800 dark:text-white mt-0.5 break-all">
                 {baseUrl}
               </div>
             </div>
             <button
               type="button"
               onClick={() => handleCopy(baseUrl, "base_url")}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors shrink-0 cursor-pointer"
+              className="w-full sm:w-auto justify-center flex items-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors shrink-0 cursor-pointer"
             >
               {copiedKey === "base_url" ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
               <span>{copiedKey === "base_url" ? "Copiado!" : "Copiar URL"}</span>
@@ -581,15 +581,15 @@ print("Resposta:", response.json())`;
 
           {/* Endpoint Principal: POST /leads */}
           <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
-            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-900/40">
-              <div className="flex items-center gap-2.5">
-                <span className="px-2 py-0.5 rounded bg-emerald-600 text-white font-mono text-[11px] font-bold">POST</span>
-                <span className="font-mono text-xs font-bold text-slate-800 dark:text-white">/api/v1/public/leads</span>
+            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-900/40">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="px-2 py-0.5 rounded bg-emerald-600 text-white font-mono text-[11px] font-bold shrink-0">POST</span>
+                <span className="font-mono text-xs font-bold text-slate-800 dark:text-white break-all">/api/v1/public/leads</span>
                 <span className="text-[11px] text-slate-400 hidden sm:inline">• Ingestão de Leads de Campanhas</span>
               </div>
 
               {/* Seletor de Linguagem do Exemplo */}
-              <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg text-[10px] font-semibold">
+              <div className="flex flex-wrap items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg text-[10px] font-semibold">
                 <button
                   type="button"
                   onClick={() => setCodeLang("curl")}

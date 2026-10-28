@@ -175,9 +175,9 @@ export default function PlanSettingsTab() {
       </div>
 
       {/* Card de Destaque do Plano Contratado */}
-      <div className="p-6 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+      <div className="p-4 sm:p-6 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6 relative overflow-hidden">
         <div className="space-y-2">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded border uppercase tracking-wider ${
               isWhatsApp
                 ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-600/10 border-emerald-200 dark:border-emerald-500/30"
@@ -189,7 +189,7 @@ export default function PlanSettingsTab() {
               Renovação Mensal
             </span>
           </div>
-          <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-wide">
+          <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-wide">
             Plano {plan.name}
           </h3>
           <p className="text-xs text-slate-600 dark:text-slate-400 max-w-xl">
@@ -197,9 +197,9 @@ export default function PlanSettingsTab() {
           </p>
         </div>
 
-        <div className="flex flex-col items-start md:items-end shrink-0">
+        <div className="flex flex-col items-start md:items-end shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-slate-800">
           <div className="flex items-baseline gap-1">
-            <span className="text-3xl font-black text-slate-900 dark:text-white font-mono">
+            <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-mono">
               R$ {Number(plan.price).toFixed(2)}
             </span>
             <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">/mês</span>
@@ -210,7 +210,7 @@ export default function PlanSettingsTab() {
 
       {/* Grade de Recursos e Módulos Inclusos (10 Módulos) */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
           <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
             Módulos e Recursos do Sistema ({activeModulesCount}/10 Liberados)
           </h4>

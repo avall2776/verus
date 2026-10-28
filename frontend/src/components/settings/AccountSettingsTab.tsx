@@ -133,10 +133,10 @@ export default function AccountSettingsTab() {
   return (
     <div className="space-y-6 max-w-4xl animate-in fade-in duration-150">
       {/* Card 1: Perfil e Informações Pessoais */}
-      <div className="p-6 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
+      <div className="p-4 sm:p-6 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
-          <div className="flex items-center gap-3">
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-lg overflow-hidden border shadow-sm ${
+          <div className="flex items-center gap-3 min-w-0">
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-lg overflow-hidden border shadow-sm shrink-0 ${
               isWhatsApp ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/30" : "bg-blue-500/10 text-blue-500 border-blue-500/30"
             }`}>
               {isAvatarUrlValid(avatarUrl) ? (
@@ -146,10 +146,10 @@ export default function AccountSettingsTab() {
                 name?.[0]?.toUpperCase() || <User className="w-6 h-6" />
               )}
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold text-slate-900 dark:text-white">{name || "Minha Conta"}</h2>
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-base font-bold text-slate-900 dark:text-white break-words">{name || "Minha Conta"}</h2>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
                   roleLabel === "Administrador"
                     ? "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300"
                     : roleLabel === "Supervisor"
@@ -159,7 +159,7 @@ export default function AccountSettingsTab() {
                   {roleLabel}
                 </span>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{email || "Sem e-mail cadastrado"}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 break-all">{email || "Sem e-mail cadastrado"}</p>
             </div>
           </div>
         </div>
@@ -228,7 +228,7 @@ export default function AccountSettingsTab() {
             <button
               type="submit"
               disabled={savingProfile}
-              className={`flex items-center gap-2 px-5 py-2 rounded-xl font-bold text-xs transition-all disabled:opacity-50 cursor-pointer ${primaryBtnClass}`}
+              className={`w-full sm:w-auto justify-center flex items-center gap-2 px-5 py-2.5 sm:py-2 rounded-xl font-bold text-xs transition-all disabled:opacity-50 cursor-pointer ${primaryBtnClass}`}
             >
               {savingProfile ? (
                 <>
@@ -247,9 +247,9 @@ export default function AccountSettingsTab() {
       </div>
 
       {/* Card 2: Segurança e Redefinição de Senha */}
-      <div className="p-6 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+      <div className="p-4 sm:p-6 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
         <div className="flex items-center gap-2.5 pb-3 border-b border-slate-200 dark:border-slate-800">
-          <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
             <KeyRound className="w-4 h-4" />
           </div>
           <div>
@@ -291,7 +291,7 @@ export default function AccountSettingsTab() {
             <button
               type="submit"
               disabled={savingPassword || !newPassword}
-              className={`flex items-center gap-2 px-5 py-2 rounded-xl font-bold text-xs transition-all disabled:opacity-50 cursor-pointer ${primaryBtnClass}`}
+              className={`w-full sm:w-auto justify-center flex items-center gap-2 px-5 py-2.5 sm:py-2 rounded-xl font-bold text-xs transition-all disabled:opacity-50 cursor-pointer ${primaryBtnClass}`}
             >
               {savingPassword ? (
                 <>

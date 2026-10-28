@@ -286,7 +286,7 @@ export default function AutomationsSettingsTab() {
                 >
                   <div className="space-y-1.5 flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-bold text-slate-900 dark:text-white truncate">{auto.name}</span>
+                      <span className="text-sm font-bold text-slate-900 dark:text-white break-words">{auto.name}</span>
                       <span
                         className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border ${trigger.color}`}
                       >
@@ -304,11 +304,11 @@ export default function AutomationsSettingsTab() {
                       )}
                     </div>
                     {auto.description && (
-                      <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">{auto.description}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 break-words">{auto.description}</p>
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                  <div className="flex items-center justify-end gap-2 shrink-0 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-slate-800/60">
                     <button
                       onClick={() => handleTestNow(auto.id, auto.name)}
                       disabled={testingId === auto.id}
@@ -364,29 +364,29 @@ export default function AutomationsSettingsTab() {
           {logs.slice(0, 20).map((log) => (
             <div
               key={log.id}
-              className="p-3.5 rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80 flex items-center justify-between gap-4 shadow-xs"
+              className="p-3.5 rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4 shadow-xs"
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-start sm:items-center gap-3 min-w-0">
                 {log.status === "SUCCESS" ? (
-                  <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
                     <CheckCircle2 className="w-4 h-4" />
                   </div>
                 ) : (
-                  <div className="w-7 h-7 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 flex items-center justify-center text-red-600 dark:text-red-400">
+                  <div className="w-7 h-7 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 flex items-center justify-center text-red-600 dark:text-red-400 shrink-0">
                     <XCircle className="w-4 h-4" />
                   </div>
                 )}
-                <div>
-                  <p className="text-xs font-bold text-slate-900 dark:text-white">
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-slate-900 dark:text-white break-words">
                     {log.automation?.name || "Automação"}
                   </p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 break-words">
                     {log.errorReason || log.error || (log.status === "SUCCESS" ? "Execução processada com sucesso" : "Falha na execução")}
                   </p>
                 </div>
               </div>
 
-              <div className="text-right">
+              <div className="text-left sm:text-right pl-10 sm:pl-0 shrink-0">
                 <span className="text-[10px] text-slate-500 font-mono">
                   {log.executedAt ? new Date(log.executedAt).toLocaleString("pt-BR") : "—"}
                 </span>

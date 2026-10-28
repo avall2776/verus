@@ -208,14 +208,14 @@ export default function CompanySettingsTab() {
         </div>
 
         {/* Notificação de Leads Qualificados (Multi-Tenant) */}
-        <div className={`p-4 rounded-xl border space-y-2 ${
+        <div className={`p-3.5 sm:p-4 rounded-xl border space-y-2 ${
           isWhatsApp
             ? "bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-500/20"
             : "bg-blue-50/70 dark:bg-blue-950/20 border-blue-200 dark:border-blue-500/20"
         }`}>
           <div className={`flex items-center gap-2 ${isWhatsApp ? "text-emerald-600 dark:text-emerald-400" : "text-blue-600 dark:text-blue-400"}`}>
-            <BellRing className="w-4 h-4" />
-            <h3 className={`text-xs font-bold uppercase tracking-wider ${isWhatsApp ? "text-emerald-700 dark:text-emerald-300" : "text-blue-700 dark:text-blue-300"}`}>
+            <BellRing className="w-4 h-4 shrink-0" />
+            <h3 className={`text-xs font-bold uppercase tracking-wider leading-snug ${isWhatsApp ? "text-emerald-700 dark:text-emerald-300" : "text-blue-700 dark:text-blue-300"}`}>
               WhatsApp da Central / Alerta de Novos Leads
             </h3>
           </div>
@@ -227,8 +227,8 @@ export default function CompanySettingsTab() {
               type="text"
               value={form.leadNotificationPhone}
               onChange={(e) => setForm({ ...form, leadNotificationPhone: e.target.value })}
-              placeholder="Ex: +55 (54) 99999-9999 ou 12036304... (ID do Grupo)"
-              className={`w-full p-3 text-xs rounded-xl bg-white dark:bg-[#070D1B] border text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none font-mono ${
+              placeholder="Ex: +55 (54) 99999-9999 ou ID do Grupo"
+              className={`w-full p-2.5 sm:p-3 text-xs rounded-xl bg-white dark:bg-[#070D1B] border text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none font-mono ${
                 isWhatsApp
                   ? "border-emerald-300 dark:border-emerald-500/30 focus:border-emerald-500"
                   : "border-blue-300 dark:border-blue-500/30 focus:border-blue-600"
@@ -238,14 +238,14 @@ export default function CompanySettingsTab() {
         </div>
 
         {/* Interruptor Master do Auto-Atendimento por IA */}
-        <div className="p-4 rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2.5">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
+        <div className="p-3.5 sm:p-4 rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2 min-w-0">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 leading-snug">
                 Auto-Atendimento por IA (WhatsApp)
               </span>
               <span
-                className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide border ${
+                className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide border shrink-0 ${
                   form.aiEnabled
                     ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30"
                     : "bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400 border-red-200 dark:border-red-500/30"
@@ -254,27 +254,27 @@ export default function CompanySettingsTab() {
                 {form.aiEnabled ? "Ligado" : "Desligado"}
               </span>
             </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed max-w-xl">
-              Quando desligado, o robô para de responder novas mensagens e todos os novos chamados caem diretamente para atendimento humano no Inbox.
-            </p>
-          </div>
 
-          <button
-            type="button"
-            onClick={() => setForm({ ...form, aiEnabled: !form.aiEnabled })}
-            className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-              form.aiEnabled ? "bg-emerald-500" : "bg-red-500/80"
-            }`}
-            role="switch"
-            aria-checked={form.aiEnabled}
-            title={form.aiEnabled ? "Clique para desligar a IA" : "Clique para ligar a IA"}
-          >
-            <span
-              className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                form.aiEnabled ? "translate-x-5" : "translate-x-0"
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, aiEnabled: !form.aiEnabled })}
+              className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                form.aiEnabled ? "bg-emerald-500" : "bg-red-500/80"
               }`}
-            />
-          </button>
+              role="switch"
+              aria-checked={form.aiEnabled}
+              title={form.aiEnabled ? "Clique para desligar a IA" : "Clique para ligar a IA"}
+            >
+              <span
+                className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                  form.aiEnabled ? "translate-x-5" : "translate-x-0"
+                }`}
+              />
+            </button>
+          </div>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+            Quando desligado, o robô para de responder novas mensagens e todos os novos chamados caem diretamente para atendimento humano no Inbox.
+          </p>
         </div>
 
         <div className="space-y-1.5">
@@ -312,19 +312,19 @@ export default function CompanySettingsTab() {
       </form>
 
       {/* Atalho Integrado: Catálogo & Google Drive de Produtos */}
-      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-blue-500/10 via-slate-500/5 to-transparent border border-blue-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-        <div className="flex items-start sm:items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/15 border border-blue-200 dark:border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
-            <PackageCheck className="w-5 h-5" />
-          </div>
-          <div className="min-w-0">
-            <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-blue-500/10 via-slate-500/5 to-transparent border border-blue-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4">
+        <div className="space-y-1.5 min-w-0">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-blue-50 dark:bg-blue-500/15 border border-blue-200 dark:border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+              <PackageCheck className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
+            <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-snug">
               Catálogo de Produtos & Fotos no Google Drive (Propostas)
             </h3>
-            <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
-              Configure a pasta do Drive e seus produtos para puxar as fotos automaticamente ao gerar orçamentos e propostas comerciais.
-            </p>
           </div>
+          <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+            Configure a pasta do Drive e seus produtos para puxar as fotos automaticamente ao gerar orçamentos e propostas comerciais.
+          </p>
         </div>
 
         <button

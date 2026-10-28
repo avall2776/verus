@@ -277,7 +277,7 @@ export default function DepartmentsSettingsTab() {
                         <div
                           key={u.id}
                           onClick={() => toggleUser(u.id)}
-                          className={`p-2 rounded-lg text-xs cursor-pointer flex items-center justify-between transition-colors ${
+                          className={`p-2 rounded-lg text-xs cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-0.5 sm:gap-2 transition-colors ${
                             isSelected
                               ? isWhatsApp
                                 ? "bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30"
@@ -285,8 +285,8 @@ export default function DepartmentsSettingsTab() {
                               : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                           }`}
                         >
-                          <span className="font-medium">{u.name}</span>
-                          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">{u.email}</span>
+                          <span className="font-medium truncate">{u.name}</span>
+                          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono truncate">{u.email}</span>
                         </div>
                       );
                     })

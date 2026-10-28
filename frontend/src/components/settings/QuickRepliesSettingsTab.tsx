@@ -484,20 +484,20 @@ export default function QuickRepliesSettingsTab() {
 
                   {/* Nome do Arquivo no WhatsApp */}
                   {reply.fileName && isMedia && (
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 text-[11px] font-mono">
-                      <FileCheck2 className="w-3 h-3 text-emerald-500" />
-                      {reply.fileName}
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 text-[11px] font-mono break-all">
+                      <FileCheck2 className="w-3 h-3 text-emerald-500 shrink-0" />
+                      <span>{reply.fileName}</span>
                     </div>
                   )}
 
                   {/* Mensagem / Legenda */}
-                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-3 whitespace-pre-wrap">
+                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-3 whitespace-pre-wrap break-words">
                     {reply.content}
                   </p>
                 </div>
 
                 {/* Rodapé do Card */}
-                <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between text-[10px] text-slate-400">
+                <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/60 flex flex-wrap items-center justify-between gap-2 text-[10px] text-slate-400">
                   <span className="flex items-center gap-1">
                     {isDrive ? (
                       <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">

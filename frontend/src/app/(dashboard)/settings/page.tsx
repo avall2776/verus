@@ -215,7 +215,7 @@ function SettingsContent() {
   };
 
   return (
-    <div className="flex flex-col h-full w-full max-w-[1700px] px-2 sm:px-4 md:px-6 mx-auto gap-4 sm:gap-5 pb-32 sm:pb-12 animate-in fade-in duration-150">
+    <div className="flex flex-col w-full max-w-[1700px] px-1.5 sm:px-4 md:px-6 mx-auto gap-4 sm:gap-5 pb-32 sm:pb-16 animate-in fade-in duration-150">
       {/* Header Corporativo Otimizado */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
         <div>
@@ -235,7 +235,7 @@ function SettingsContent() {
       </div>
 
       {/* Submenus: Seletor Mobile + Barra de Abas Horizontal */}
-      <div className="flex flex-col gap-3 sm:gap-4 flex-1">
+      <div className="flex flex-col gap-3 sm:gap-4">
         {/* Seletor Rápido de Submenu para Mobile (evita ter que rolar e nunca corta texto) */}
         <div className="sm:hidden relative">
           <div className="p-2.5 rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between gap-3">
