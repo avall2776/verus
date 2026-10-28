@@ -96,6 +96,9 @@ let ChatController = class ChatController {
             throw error;
         }
     }
+    async sendReaction(tenantId, conversationId, messageId, body, req) {
+        return this.chatService.sendReaction(tenantId, conversationId, messageId, body.reaction, req.user?.id, req.user?.name);
+    }
     async sendTemplateMessage(tenantId, conversationId, body) {
         try {
             return await this.chatService.sendTemplateMessage(tenantId, conversationId, body);
@@ -322,6 +325,17 @@ __decorate([
     __metadata("design:paramtypes", [String, String, send_message_dto_1.SendMessageDto]),
     __metadata("design:returntype", Promise)
 ], ChatController.prototype, "sendMessage", null);
+__decorate([
+    (0, common_1.Post)(':id/messages/:messageId/reaction'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Param)('messageId')),
+    __param(3, (0, common_1.Body)()),
+    __param(4, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String, Object, Object]),
+    __metadata("design:returntype", Promise)
+], ChatController.prototype, "sendReaction", null);
 __decorate([
     (0, common_1.Post)(':id/template'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),

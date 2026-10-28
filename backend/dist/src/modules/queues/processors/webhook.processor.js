@@ -479,6 +479,39 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             this.logger.log(`Conversa [${conversation.id}] reaberta (status -> ${initialStatus}, assignedTo -> null).`);
             this.chatGateway.emitConversationUpdated(tenantId, conversation);
         }
+        let quotedMessageToSave = null;
+        if (evolutionMetadata?.quotedInfo) {
+            const qInfo = evolutionMetadata.quotedInfo;
+            let matchedQuotedMsg = null;
+            if (qInfo.providerMessageId) {
+                matchedQuotedMsg = await this.prisma.message.findFirst({
+                    where: {
+                        tenantId,
+                        providerMessageId: qInfo.providerMessageId,
+                    },
+                    include: { contact: true },
+                });
+            }
+            if (matchedQuotedMsg) {
+                quotedMessageToSave = {
+                    id: matchedQuotedMsg.id,
+                    providerMessageId: matchedQuotedMsg.providerMessageId,
+                    content: matchedQuotedMsg.content,
+                    type: matchedQuotedMsg.type,
+                    mediaUrl: matchedQuotedMsg.mediaUrl,
+                    direction: matchedQuotedMsg.direction,
+                    senderType: matchedQuotedMsg.senderType,
+                    senderName: matchedQuotedMsg.direction === 'INBOUND' ? (matchedQuotedMsg.contact?.name || 'Cliente') : 'Você',
+                };
+            }
+            else if (qInfo.content || qInfo.providerMessageId) {
+                quotedMessageToSave = {
+                    providerMessageId: qInfo.providerMessageId,
+                    content: qInfo.content,
+                    senderName: 'WhatsApp',
+                };
+            }
+        }
         const savedMessage = await this.prisma.message.create({
             data: {
                 tenantId,
@@ -493,6 +526,7 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
                 senderType: fromMe ? 'user' : 'contact',
                 fromMe: fromMe,
                 status: 'delivered',
+                quotedMessage: quotedMessageToSave,
             }
         });
         this.logger.log(`Mensagem [${messageId}] (${fromMe ? 'OUTBOUND direto do WhatsApp' : 'INBOUND'}) salva com sucesso na conversa [${conversation.id}]`);

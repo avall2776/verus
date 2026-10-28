@@ -7,4 +7,6 @@ export declare class SendMessageDto {
     scheduledAt?: string;
     timezone?: string;
     instanceId?: string;
+    quotedMessageId?: string;
+    quotedMessage?: any;
 }

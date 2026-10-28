@@ -249,6 +249,8 @@ model Message {
   type               String       @default("text") // text, image, audio, video, document
   mediaUrl           String?
   audioTranscription String?
+  quotedMessage      Json?
+  reactions          Json?
   isInternal         Boolean      @default(false)
   fromMe             Boolean      @default(false)
   direction          String       @default("INBOUND") // INBOUND, OUTBOUND

@@ -108,7 +108,7 @@ let MessagingService = MessagingService_1 = class MessagingService {
         }
         const conn = await this.resolveConnection(payload.tenantId, payload.instanceId, cleanPhone);
         if (conn.preferredProvider === 'evolution') {
-            const evoRes = await this.sendEvolutionText(conn.evolution, cleanPhone, payload.content);
+            const evoRes = await this.sendEvolutionText(conn.evolution, cleanPhone, payload.content, payload.quoted);
             if (evoRes.success)
                 return evoRes;
             if (!conn.isLidTarget && conn.meta.token && conn.meta.phoneNumberId) {
@@ -124,7 +124,7 @@ let MessagingService = MessagingService_1 = class MessagingService {
             if (metaRes.success)
                 return metaRes;
             this.logger.warn(`Meta API falhou para ${cleanPhone}, acionando fallback Evolution API...`);
-            const evoRes = await this.sendEvolutionText(conn.evolution, cleanPhone, payload.content);
+            const evoRes = await this.sendEvolutionText(conn.evolution, cleanPhone, payload.content, payload.quoted);
             if (evoRes.success)
                 return evoRes;
             return metaRes;
@@ -190,11 +190,11 @@ let MessagingService = MessagingService_1 = class MessagingService {
             return { success: false, error: errorMsg, raw: errorObj };
         }
     }
-    async sendEvolutionText(evoConfig, cleanPhone, content) {
+    async sendEvolutionText(evoConfig, cleanPhone, content, quoted) {
         const url = `${evoConfig.url}/message/sendText/${evoConfig.instanceName}`;
         try {
             this.logger.log(`Disparando mensagem Evolution API [${evoConfig.instanceName}] para ${cleanPhone}...`);
-            const response = await axios_1.default.post(url, {
+            const reqBody = {
                 number: cleanPhone,
                 options: {
                     delay: 1200,
@@ -204,7 +204,11 @@ let MessagingService = MessagingService_1 = class MessagingService {
                 textMessage: {
                     text: content,
                 },
-            }, {
+            };
+            if (quoted) {
+                reqBody.quoted = quoted;
+            }
+            const response = await axios_1.default.post(url, reqBody, {
                 headers: {
                     apikey: evoConfig.apiKey,
                     'Content-Type': 'application/json',
@@ -350,7 +354,7 @@ let MessagingService = MessagingService_1 = class MessagingService {
             const isVideo = payload.type === 'video';
             const mediatype = isDocument ? 'document' : isVideo ? 'video' : 'image';
             const fileName = payload.filename || (isDocument ? 'documento.pdf' : isVideo ? 'video.mp4' : 'imagem.jpg');
-            const response = await axios_1.default.post(url, {
+            const reqBody = {
                 number: cleanPhone,
                 options: {
                     delay: 1200,
@@ -362,7 +366,11 @@ let MessagingService = MessagingService_1 = class MessagingService {
                     caption: payload.content || '',
                     fileName,
                 },
-            }, {
+            };
+            if (payload.quoted) {
+                reqBody.quoted = payload.quoted;
+            }
+            const response = await axios_1.default.post(url, reqBody, {
                 headers: {
                     apikey: evoConfig.apiKey,
                     'Content-Type': 'application/json',
@@ -381,7 +389,7 @@ let MessagingService = MessagingService_1 = class MessagingService {
                     const isVideo = payload.type === 'video';
                     const mediatype = isDocument ? 'document' : isVideo ? 'video' : 'image';
                     const fileName = payload.filename || (isDocument ? 'documento.pdf' : isVideo ? 'video.mp4' : 'imagem.jpg');
-                    const retryRes = await axios_1.default.post(url, {
+                    const retryReqBody = {
                         number: cleanPhone,
                         options: { delay: 1200, presence: 'composing' },
                         mediaMessage: {
@@ -390,7 +398,11 @@ let MessagingService = MessagingService_1 = class MessagingService {
                             caption: payload.content || '',
                             fileName,
                         },
-                    }, {
+                    };
+                    if (payload.quoted) {
+                        retryReqBody.quoted = payload.quoted;
+                    }
+                    const retryRes = await axios_1.default.post(url, retryReqBody, {
                         headers: { apikey: 'verto123', 'Content-Type': 'application/json' },
                         timeout: 25000,
                     });
@@ -572,6 +584,73 @@ let MessagingService = MessagingService_1 = class MessagingService {
         catch (err) {
             const errorMsg = err.response?.data?.error?.message || err.message;
             this.logger.error(`Erro ao enviar áudio Meta API: ${errorMsg}`);
+            return { success: false, error: errorMsg };
+        }
+    }
+    async sendReaction(payload) {
+        const cleanPhone = this.sanitizePhone(payload.phone);
+        if (!cleanPhone) {
+            return { success: false, error: 'Telefone inválido' };
+        }
+        const conn = await this.resolveConnection(payload.tenantId, payload.instanceId, cleanPhone);
+        const remoteJid = cleanPhone.includes('@') ? cleanPhone : `${cleanPhone}@s.whatsapp.net`;
+        const url = `${conn.evolution.url}/message/sendReaction/${conn.evolution.instanceName}`;
+        try {
+            this.logger.log(`Disparando reação [${payload.reaction || 'REMOVER'}] para mensagem ${payload.providerMessageId} via Evolution [${conn.evolution.instanceName}]...`);
+            const response = await axios_1.default.post(url, {
+                reactionMessage: {
+                    key: {
+                        remoteJid,
+                        fromMe: payload.fromMe ?? false,
+                        id: payload.providerMessageId,
+                    },
+                    reaction: payload.reaction,
+                },
+            }, {
+                headers: {
+                    apikey: conn.evolution.apiKey,
+                    'Content-Type': 'application/json',
+                },
+                timeout: 10000,
+            });
+            return {
+                success: true,
+                messageId: payload.providerMessageId,
+                provider: 'evolution',
+                raw: response.data,
+            };
+        }
+        catch (err) {
+            if (err.response?.status === 401 && conn.evolution.apiKey !== 'verto123') {
+                try {
+                    const retryRes = await axios_1.default.post(url, {
+                        reactionMessage: {
+                            key: {
+                                remoteJid,
+                                fromMe: payload.fromMe ?? false,
+                                id: payload.providerMessageId,
+                            },
+                            reaction: payload.reaction,
+                        },
+                    }, {
+                        headers: {
+                            apikey: 'verto123',
+                            'Content-Type': 'application/json',
+                        },
+                        timeout: 10000,
+                    });
+                    return {
+                        success: true,
+                        messageId: payload.providerMessageId,
+                        provider: 'evolution',
+                        raw: retryRes.data,
+                    };
+                }
+                catch (retryErr) { }
+            }
+            const rawError = err.response?.data?.response?.message || err.response?.data?.message || err.message;
+            const errorMsg = typeof rawError === 'object' ? JSON.stringify(rawError) : String(rawError);
+            this.logger.error(`Erro ao enviar reação Evolution API: ${errorMsg}`);
             return { success: false, error: errorMsg };
         }
     }

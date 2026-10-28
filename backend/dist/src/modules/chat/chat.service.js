@@ -755,6 +755,39 @@ let ChatService = ChatService_1 = class ChatService {
         const mediaUrl = payload.mediaUrl || null;
         const initialStatus = isInternal ? 'delivered' : 'pending';
         const tempMessageId = `manual_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+        let quotedMessageData = payload.quotedMessage || null;
+        let quotedEvolutionPayload = null;
+        if (payload.quotedMessageId) {
+            const quotedDbMsg = await this.prisma.message.findUnique({
+                where: { id: payload.quotedMessageId },
+                include: { contact: true }
+            });
+            if (quotedDbMsg) {
+                quotedMessageData = {
+                    id: quotedDbMsg.id,
+                    providerMessageId: quotedDbMsg.providerMessageId,
+                    content: quotedDbMsg.content,
+                    type: quotedDbMsg.type,
+                    mediaUrl: quotedDbMsg.mediaUrl,
+                    direction: quotedDbMsg.direction,
+                    senderType: quotedDbMsg.senderType,
+                    senderName: quotedDbMsg.direction === 'INBOUND' ? (quotedDbMsg.contact?.name || 'Cliente') : 'Você',
+                };
+                const cleanPhone = conversation.contact?.phone?.replace(/\D/g, '') || '';
+                const remoteJid = cleanPhone ? `${cleanPhone}@s.whatsapp.net` : '';
+                const fromMe = quotedDbMsg.direction === 'OUTBOUND';
+                quotedEvolutionPayload = {
+                    key: {
+                        id: quotedDbMsg.providerMessageId,
+                        remoteJid,
+                        fromMe,
+                    },
+                    message: {
+                        conversation: quotedDbMsg.content || (quotedDbMsg.type === 'image' ? 'Foto' : quotedDbMsg.type === 'video' ? 'Vídeo' : quotedDbMsg.type === 'audio' ? 'Áudio' : 'Mídia'),
+                    },
+                };
+            }
+        }
         let msg = await this.prisma.message.create({
             data: {
                 tenantId,
@@ -768,6 +801,7 @@ let ChatService = ChatService_1 = class ChatService {
                 direction: 'OUTBOUND',
                 senderType: 'user',
                 status: initialStatus,
+                quotedMessage: quotedMessageData,
             }
         });
         if (!isInternal && conversation.contact?.phone) {
@@ -789,6 +823,7 @@ let ChatService = ChatService_1 = class ChatService {
                                         ? 'video.mp4'
                                         : 'imagem.jpg'),
                         instanceId: payload.instanceId,
+                        quoted: quotedEvolutionPayload,
                     });
                 }
                 else {
@@ -797,6 +832,7 @@ let ChatService = ChatService_1 = class ChatService {
                         phone: conversation.contact.phone,
                         content: payload.content,
                         instanceId: payload.instanceId,
+                        quoted: quotedEvolutionPayload,
                     });
                 }
                 if (sendRes?.success) {
@@ -1121,6 +1157,113 @@ let ChatService = ChatService_1 = class ChatService {
         });
         this.logger.log(`Mensagem [${message.id}] apagada com sucesso na conversa [${conversationId}]`);
         return { success: true, messageId: message.id };
+    }
+    async sendReaction(tenantId, conversationId, messageId, reaction, userId, userName) {
+        const conversation = await this.prisma.conversation.findUnique({
+            where: { id: conversationId },
+            include: { contact: true },
+        });
+        if (!conversation || conversation.tenantId !== tenantId) {
+            throw new common_1.NotFoundException('Conversa não encontrada.');
+        }
+        const message = await this.prisma.message.findUnique({
+            where: { id: messageId },
+        });
+        if (!message || message.tenantId !== tenantId) {
+            throw new common_1.NotFoundException('Mensagem não encontrada.');
+        }
+        let currentReactions = Array.isArray(message.reactions) ? [...message.reactions] : [];
+        const userIdentifier = userId || 'operator';
+        const existingIndex = currentReactions.findIndex(r => r.userId === userIdentifier || (r.fromMe && !r.userId));
+        let finalReaction = reaction ? reaction.trim() : '';
+        if (finalReaction.length > 0) {
+            const newReactionObj = {
+                emoji: finalReaction,
+                userId: userIdentifier,
+                userName: userName || 'Atendente',
+                fromMe: true,
+                timestamp: Date.now(),
+            };
+            if (existingIndex >= 0) {
+                if (currentReactions[existingIndex].emoji === finalReaction) {
+                    currentReactions.splice(existingIndex, 1);
+                    finalReaction = '';
+                }
+                else {
+                    currentReactions[existingIndex] = newReactionObj;
+                }
+            }
+            else {
+                currentReactions.push(newReactionObj);
+            }
+        }
+        else {
+            if (existingIndex >= 0) {
+                currentReactions.splice(existingIndex, 1);
+            }
+        }
+        const updatedMessage = await this.prisma.message.update({
+            where: { id: message.id },
+            data: { reactions: currentReactions },
+        });
+        this.chatGateway.emitMessageReactionUpdated(tenantId, {
+            messageId: message.id,
+            conversationId: message.conversationId,
+            reactions: currentReactions,
+        });
+        if (message.providerMessageId && conversation.contact?.phone && !message.providerMessageId.startsWith('fallback_')) {
+            this.messagingService.sendReaction({
+                tenantId,
+                phone: conversation.contact.phone,
+                providerMessageId: message.providerMessageId,
+                reaction: finalReaction,
+                fromMe: message.direction === 'OUTBOUND',
+            }).catch(err => {
+                this.logger.error(`Falha ao sincronizar reação com WhatsApp: ${err.message}`);
+            });
+        }
+        return updatedMessage;
+    }
+    async handleIncomingReaction(tenantId, providerMessageId, reactionEmoji, senderJid, fromMe) {
+        const message = await this.prisma.message.findFirst({
+            where: { tenantId, providerMessageId },
+        });
+        if (!message) {
+            return null;
+        }
+        let currentReactions = Array.isArray(message.reactions) ? [...message.reactions] : [];
+        const senderKey = fromMe ? 'me' : (senderJid || 'contact');
+        const existingIndex = currentReactions.findIndex(r => r.senderKey === senderKey || (fromMe && r.fromMe) || (!fromMe && !r.fromMe));
+        const emoji = reactionEmoji ? reactionEmoji.trim() : '';
+        if (emoji.length > 0) {
+            const reactionObj = {
+                emoji,
+                senderKey,
+                fromMe,
+                timestamp: Date.now(),
+            };
+            if (existingIndex >= 0) {
+                currentReactions[existingIndex] = reactionObj;
+            }
+            else {
+                currentReactions.push(reactionObj);
+            }
+        }
+        else {
+            if (existingIndex >= 0) {
+                currentReactions.splice(existingIndex, 1);
+            }
+        }
+        const updated = await this.prisma.message.update({
+            where: { id: message.id },
+            data: { reactions: currentReactions },
+        });
+        this.chatGateway.emitMessageReactionUpdated(tenantId, {
+            messageId: message.id,
+            conversationId: message.conversationId,
+            reactions: currentReactions,
+        });
+        return updated;
     }
     async deleteConversation(tenantId, conversationId) {
         const conversation = await this.prisma.conversation.findFirst({

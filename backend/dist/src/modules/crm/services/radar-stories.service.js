@@ -34,6 +34,7 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
         this.chatService = chatService;
         this.logger = new common_1.Logger(RadarStoriesService_1.name);
         this.syncInterval = null;
+        this.aiClassificationCache = new Map();
     }
     async onModuleInit() {
         try {
@@ -126,7 +127,7 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
                 COUNT(DISTINCT v.id)::int as "viewsCount"
          FROM "whatsapp_status_posts" p
          LEFT JOIN "whatsapp_status_views" v 
-           ON (v."tenantId" = p."tenantId" AND v."statusMessageId" = p."messageId")
+           ON (v."tenantId" = p."tenantId" AND (v."statusMessageId" = p."messageId" OR (v."storyTitle" = p."title" AND v."viewedAt" >= p."postedAt")))
          WHERE p."tenantId" = $1 AND p."postedAt" >= $2
          GROUP BY p.id
          ORDER BY p."postedAt" DESC
@@ -264,28 +265,53 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
         if (!data.scheduledAt) {
             try {
                 const headers = { apikey: apiKey, 'Content-Type': 'application/json' };
+                const addNormalizedBrJids = (rawPhone, targetSet) => {
+                    let digits = String(rawPhone || '').replace(/@.*$/, '').replace(/\D/g, '');
+                    if (!digits || digits.length < 10 || digits.length > 13)
+                        return;
+                    if (digits.length === 10 || digits.length === 11) {
+                        digits = `55${digits}`;
+                    }
+                    if (!digits.startsWith('55'))
+                        return;
+                    targetSet.add(`${digits}@s.whatsapp.net`);
+                    if (digits.length === 13 && digits[4] === '9') {
+                        const withoutNine = digits.slice(0, 4) + digits.slice(5);
+                        targetSet.add(`${withoutNine}@s.whatsapp.net`);
+                    }
+                    else if (digits.length === 12) {
+                        const withNine = digits.slice(0, 4) + '9' + digits.slice(4);
+                        targetSet.add(`${withNine}@s.whatsapp.net`);
+                    }
+                };
+                const jidSet = new Set();
+                addNormalizedBrJids(String(instance?.phoneNumber || ''), jidSet);
+                addNormalizedBrJids('555499112550', jidSet);
+                addNormalizedBrJids('555496283090', jidSet);
+                addNormalizedBrJids('5554991109159', jidSet);
+                try {
+                    const evoContactsRes = await axios_1.default.post(`${serverUrl}/chat/findContacts/${instanceName}`, { where: {} }, { headers, timeout: 6000 });
+                    if (Array.isArray(evoContactsRes.data)) {
+                        for (const ec of evoContactsRes.data) {
+                            const jid = String(ec?.id || '');
+                            if (jid.endsWith('@s.whatsapp.net')) {
+                                addNormalizedBrJids(jid, jidSet);
+                            }
+                        }
+                    }
+                }
+                catch { }
                 const recentContacts = await this.prisma.contact.findMany({
                     where: {
                         tenantId,
-                        phone: { startsWith: '55' },
                         conversations: { some: {} },
                     },
                     orderBy: { updatedAt: 'desc' },
-                    take: 100,
+                    take: 120,
                     select: { phone: true },
                 });
-                const jidSet = new Set();
-                const instPhone = String(instance?.phoneNumber || '').replace(/\D/g, '');
-                if (instPhone.length >= 12 && instPhone.length <= 13) {
-                    jidSet.add(`${instPhone}@s.whatsapp.net`);
-                }
-                jidSet.add('555499112550@s.whatsapp.net');
-                jidSet.add('555496283090@s.whatsapp.net');
                 for (const c of recentContacts) {
-                    const clean = String(c.phone || '').replace(/\D/g, '');
-                    if (clean.length >= 12 && clean.length <= 13 && clean.startsWith('55')) {
-                        jidSet.add(`${clean}@s.whatsapp.net`);
-                    }
+                    addNormalizedBrJids(String(c.phone || ''), jidSet);
                 }
                 const statusJidList = Array.from(jidSet);
                 try {
@@ -305,7 +331,6 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
                 }
                 catch (firstErr) {
                     const coreJids = [
-                        ...(instPhone.length >= 12 ? [`${instPhone}@s.whatsapp.net`] : []),
                         '555499112550@s.whatsapp.net',
                         '555496283090@s.whatsapp.net',
                         '555491109159@s.whatsapp.net',
@@ -669,6 +694,159 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
             cleanDigits: clean,
         };
     }
+    resolveCityAndState(phone, contactAddress, viewCity, viewState, contextText) {
+        if (contactAddress && contactAddress.trim().length > 2 && contactAddress !== 'Região Sul') {
+            const parts = contactAddress.split(/[-/,]/).map((s) => s.trim()).filter(Boolean);
+            const st = parts.find((p) => p.length === 2 && /^[A-Z]{2}$/i.test(p))?.toUpperCase() || viewState || 'RS';
+            const ct = parts[0] || contactAddress.trim();
+            return { city: ct, state: st };
+        }
+        const fullText = `${contextText || ''} ${viewCity || ''}`.toLowerCase();
+        if (fullText.includes('eulina braga') || fullText.includes('passo fundo')) {
+            return { city: 'Passo Fundo', state: 'RS' };
+        }
+        const knownCities = [
+            { match: 'marau', city: 'Marau', state: 'RS' },
+            { match: 'carazinho', city: 'Carazinho', state: 'RS' },
+            { match: 'erechim', city: 'Erechim', state: 'RS' },
+            { match: 'tapejara', city: 'Tapejara', state: 'RS' },
+            { match: 'lagoa vermelha', city: 'Lagoa Vermelha', state: 'RS' },
+            { match: 'vacaria', city: 'Vacaria', state: 'RS' },
+            { match: 'caxias do sul', city: 'Caxias do Sul', state: 'RS' },
+            { match: 'bento gonçalves', city: 'Bento Gonçalves', state: 'RS' },
+            { match: 'bento goncalves', city: 'Bento Gonçalves', state: 'RS' },
+            { match: 'não-me-toque', city: 'Não-Me-Toque', state: 'RS' },
+            { match: 'nao-me-toque', city: 'Não-Me-Toque', state: 'RS' },
+            { match: 'nao me toque', city: 'Não-Me-Toque', state: 'RS' },
+            { match: 'ibirubá', city: 'Ibirubá', state: 'RS' },
+            { match: 'ibiruba', city: 'Ibirubá', state: 'RS' },
+            { match: 'soledade', city: 'Soledade', state: 'RS' },
+            { match: 'sarandi', city: 'Sarandi', state: 'RS' },
+            { match: 'getúlio vargas', city: 'Getúlio Vargas', state: 'RS' },
+            { match: 'getulio vargas', city: 'Getúlio Vargas', state: 'RS' },
+            { match: 'sertão', city: 'Sertão', state: 'RS' },
+            { match: 'coxilha', city: 'Coxilha', state: 'RS' },
+            { match: 'pontão', city: 'Pontão', state: 'RS' },
+            { match: 'casca', city: 'Casca', state: 'RS' },
+            { match: 'guaporé', city: 'Guaporé', state: 'RS' },
+            { match: 'serafina corrêa', city: 'Serafina Corrêa', state: 'RS' },
+            { match: 'sananduva', city: 'Sananduva', state: 'RS' },
+            { match: 'nova prata', city: 'Nova Prata', state: 'RS' },
+            { match: 'cruz alta', city: 'Cruz Alta', state: 'RS' },
+            { match: 'ijuí', city: 'Ijuí', state: 'RS' },
+            { match: 'ijui', city: 'Ijuí', state: 'RS' },
+            { match: 'santo ângelo', city: 'Santo Ângelo', state: 'RS' },
+            { match: 'santa rosa', city: 'Santa Rosa', state: 'RS' },
+            { match: 'palmeira das missões', city: 'Palmeira das Missões', state: 'RS' },
+            { match: 'santa maria', city: 'Santa Maria', state: 'RS' },
+            { match: 'pelotas', city: 'Pelotas', state: 'RS' },
+            { match: 'porto alegre', city: 'Porto Alegre', state: 'RS' },
+            { match: 'chapecó', city: 'Chapecó', state: 'SC' },
+            { match: 'chapeco', city: 'Chapecó', state: 'SC' },
+            { match: 'pato branco', city: 'Pato Branco', state: 'PR' },
+            { match: 'cascavel', city: 'Cascavel', state: 'PR' },
+            { match: 'toledo', city: 'Toledo', state: 'PR' },
+            { match: 'maringá', city: 'Maringá', state: 'PR' },
+            { match: 'londrina', city: 'Londrina', state: 'PR' },
+            { match: 'ponta grossa', city: 'Ponta Grossa', state: 'PR' },
+            { match: 'sorriso', city: 'Sorriso', state: 'MT' },
+            { match: 'sinop', city: 'Sinop', state: 'MT' },
+            { match: 'lucas do rio verde', city: 'Lucas do Rio Verde', state: 'MT' },
+            { match: 'rondonópolis', city: 'Rondonópolis', state: 'MT' },
+            { match: 'rio verde', city: 'Rio Verde', state: 'GO' },
+            { match: 'jataí', city: 'Jataí', state: 'GO' },
+            { match: 'dourados', city: 'Dourados', state: 'MS' },
+            { match: 'luís eduardo magalhães', city: 'Luís Eduardo Magalhães', state: 'BA' },
+            { match: 'barreiras', city: 'Barreiras', state: 'BA' },
+        ];
+        for (const item of knownCities) {
+            if (fullText.includes(item.match)) {
+                return { city: item.city, state: item.state };
+            }
+        }
+        let clean = String(phone || '').replace(/\D/g, '');
+        if (clean.startsWith('55') && clean.length >= 12) {
+            clean = clean.slice(2);
+        }
+        const ddd = clean.length >= 10 ? clean.slice(0, 2) : '';
+        const subscriber = clean.length === 11 ? clean.slice(3) : clean.length === 10 ? clean.slice(2) : '';
+        const prefix4 = subscriber.slice(0, 4);
+        if (ddd === '54') {
+            const passoFundoPrefixes = new Set([
+                '9910', '9911', '9912', '9913', '9914', '9915', '9916',
+                '9923', '9924', '9925', '9928', '9960', '9961', '9962', '9963', '9964', '9965',
+                '9990', '9995', '9996', '9997', '9998', '9999',
+                '9110', '9112', '9115', '9235', '9620', '9628', '9631', '9638', '9928',
+                '3311', '3312', '3313', '3314', '3315', '3316', '3317',
+            ]);
+            const carazinhoPrefixes = new Set(['3329', '3330', '3331', '3332']);
+            const marauPrefixes = new Set(['3342', '3343']);
+            const erechimPrefixes = new Set(['3519', '3520', '3521', '3522']);
+            const caxiasPrefixes = new Set([
+                '3211', '3212', '3213', '3214', '3215', '3217', '3218', '3219',
+                '3220', '3221', '3222', '3223', '3224', '3225', '3226', '3227', '3228', '3229',
+                '9917', '9918', '9919', '9117', '9118', '9119',
+            ]);
+            if (passoFundoPrefixes.has(prefix4))
+                return { city: 'Passo Fundo', state: 'RS' };
+            if (carazinhoPrefixes.has(prefix4))
+                return { city: 'Carazinho', state: 'RS' };
+            if (marauPrefixes.has(prefix4))
+                return { city: 'Marau', state: 'RS' };
+            if (erechimPrefixes.has(prefix4))
+                return { city: 'Erechim', state: 'RS' };
+            if (caxiasPrefixes.has(prefix4))
+                return { city: 'Caxias do Sul', state: 'RS' };
+            return { city: 'Passo Fundo / Região', state: 'RS' };
+        }
+        const dddMap = {
+            '51': { city: 'Porto Alegre / Região', state: 'RS' },
+            '53': { city: 'Pelotas / Sul', state: 'RS' },
+            '55': { city: 'Santa Maria / Missões', state: 'RS' },
+            '47': { city: 'Joinville / Vale do Itajaí', state: 'SC' },
+            '48': { city: 'Florianópolis / Sul', state: 'SC' },
+            '49': { city: 'Chapecó / Oeste', state: 'SC' },
+            '41': { city: 'Curitiba / Região', state: 'PR' },
+            '42': { city: 'Ponta Grossa / Campos Gerais', state: 'PR' },
+            '43': { city: 'Londrina / Norte', state: 'PR' },
+            '44': { city: 'Maringá / Campo Mourão', state: 'PR' },
+            '45': { city: 'Cascavel / Toledo', state: 'PR' },
+            '46': { city: 'Pato Branco / Sudoeste', state: 'PR' },
+            '11': { city: 'São Paulo', state: 'SP' },
+            '14': { city: 'Bauru / Marília', state: 'SP' },
+            '15': { city: 'Sorocaba / Itapetininga', state: 'SP' },
+            '16': { city: 'Ribeirão Preto', state: 'SP' },
+            '17': { city: 'São José do Rio Preto', state: 'SP' },
+            '18': { city: 'Presidente Prudente / Assis', state: 'SP' },
+            '19': { city: 'Campinas / Piracicaba', state: 'SP' },
+            '31': { city: 'Belo Horizonte', state: 'MG' },
+            '34': { city: 'Uberlândia / Triângulo', state: 'MG' },
+            '35': { city: 'Poços de Caldas / Sul', state: 'MG' },
+            '37': { city: 'Divinópolis / Centro-Oeste', state: 'MG' },
+            '38': { city: 'Montes Claros / Unaí', state: 'MG' },
+            '61': { city: 'Brasília / Cristalina', state: 'DF' },
+            '62': { city: 'Goiânia / Anápolis', state: 'GO' },
+            '64': { city: 'Rio Verde / Jataí', state: 'GO' },
+            '65': { city: 'Cuiabá / Médio-Norte', state: 'MT' },
+            '66': { city: 'Sorriso / Sinop / Rondonópolis', state: 'MT' },
+            '67': { city: 'Dourados / Campo Grande', state: 'MS' },
+            '63': { city: 'Palmas / Gurupi', state: 'TO' },
+            '77': { city: 'Luís Eduardo Magalhães / Barreiras', state: 'BA' },
+            '89': { city: 'Uruçuí / Bom Jesus', state: 'PI' },
+            '99': { city: 'Balsas / Imperatriz', state: 'MA' },
+            '91': { city: 'Belém / Paragominas', state: 'PA' },
+            '93': { city: 'Santarém / BR-163', state: 'PA' },
+            '94': { city: 'Marabá / Redenção', state: 'PA' },
+            '69': { city: 'Vilhena / Porto Velho', state: 'RO' },
+        };
+        if (ddd && dddMap[ddd]) {
+            return dddMap[ddd];
+        }
+        return {
+            city: viewCity && viewCity !== 'Região Sul' ? viewCity : 'Passo Fundo',
+            state: viewState || 'RS',
+        };
+    }
     async getMetrics(tenantId) {
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
@@ -855,16 +1033,16 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
                         deals: {
                             include: { assignee: { select: { name: true } } },
                             orderBy: { updatedAt: 'desc' },
-                            take: 3,
+                            take: 5,
                         },
                         conversations: {
                             orderBy: { updatedAt: 'desc' },
-                            take: 1,
+                            take: 3,
                             include: {
                                 messages: {
                                     where: { isInternal: false },
                                     orderBy: { createdAt: 'desc' },
-                                    take: 4,
+                                    take: 10,
                                 },
                             },
                         },
@@ -872,174 +1050,204 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
                 })
                 : [];
             const contactById = new Map();
-            const contactBySuffix = new Map();
+            const contactsBySuffix = new Map();
             const contactByLid = new Map();
             for (const c of matchedContacts) {
                 contactById.set(c.id, c);
                 const cDigits = (c.phone || '').replace(/\D/g, '');
                 if (cDigits.length >= 8 && cDigits.length <= 13) {
-                    contactBySuffix.set(cDigits.slice(-8), c);
+                    const sfx = cDigits.slice(-8);
+                    const arr = contactsBySuffix.get(sfx) || [];
+                    arr.push(c);
+                    contactsBySuffix.set(sfx, arr);
                 }
                 if (c.whatsappLid) {
                     contactByLid.set(c.whatsappLid.replace(/\D/g, ''), c);
                 }
             }
+            const isGenericName = (n) => {
+                if (!n)
+                    return true;
+                const low = n.trim().toLowerCase();
+                return (low === 'teste' ||
+                    low === 'comercial verto' ||
+                    low.startsWith('produtor rural') ||
+                    low.startsWith('contato whatsapp') ||
+                    low.startsWith('cliente whatsapp') ||
+                    /^\+?\d+$/.test(low));
+            };
             for (const view of rawViews) {
                 const rawDigits = String(view.phone || '').replace(/\D/g, '');
-                const lookupPhone = rawDigits;
-                const contact = (view.contactId ? contactById.get(view.contactId) : undefined) ||
-                    (lookupPhone.length >= 8 ? contactBySuffix.get(lookupPhone.slice(-8)) : undefined) ||
-                    (rawDigits ? contactByLid.get(rawDigits) : undefined) ||
+                const suffix8 = rawDigits.length >= 8 && rawDigits.length <= 13 ? rawDigits.slice(-8) : '';
+                const siblingContacts = [];
+                if (view.contactId && contactById.has(view.contactId)) {
+                    siblingContacts.push(contactById.get(view.contactId));
+                }
+                if (suffix8 && contactsBySuffix.has(suffix8)) {
+                    for (const sc of contactsBySuffix.get(suffix8)) {
+                        if (!siblingContacts.some((x) => x.id === sc.id)) {
+                            siblingContacts.push(sc);
+                        }
+                    }
+                }
+                if (rawDigits && contactByLid.has(rawDigits)) {
+                    const lc = contactByLid.get(rawDigits);
+                    if (!siblingContacts.some((x) => x.id === lc.id)) {
+                        siblingContacts.push(lc);
+                    }
+                }
+                const primaryContact = siblingContacts.find((c) => !isGenericName(c.name) && c.conversations?.some((cv) => cv.messages?.length > 0)) ||
+                    siblingContacts.find((c) => c.conversations?.some((cv) => cv.messages?.length > 0)) ||
+                    siblingContacts.find((c) => !isGenericName(c.name)) ||
+                    siblingContacts[0] ||
                     null;
-                const effectivePhone = contact?.phone && !contact.phone.includes('@lid') && contact.phone.replace(/\D/g, '').length <= 13
-                    ? contact.phone
+                const effectivePhone = primaryContact?.phone && !primaryContact.phone.includes('@lid') && primaryContact.phone.replace(/\D/g, '').length <= 13
+                    ? primaryContact.phone
                     : view.phone;
                 const phoneInfo = this.formatBrazilianPhone(effectivePhone);
                 const { dateFormatted, timeFormatted, relative } = this.formatDateTime(view.viewedAt);
-                const effectiveName = contact?.name && contact.name !== 'Comercial Verto' && !contact.name.startsWith('Produtor Rural')
-                    ? contact.name
-                    : view.contactName && view.contactName !== 'Comercial Verto'
-                        ? view.contactName
-                        : `Contato WhatsApp (${phoneInfo.cleanDigits.slice(-4) || 'WhatsApp'})`;
-                const nameLower = effectiveName.toLowerCase();
-                const contactTags = (contact?.tags || []).map((t) => t.toLowerCase());
-                const isInternalTeam = contactTags.includes('equipe interna') ||
-                    contactTags.includes('colaborador') ||
-                    nameLower === 'junior verto' ||
-                    nameLower.includes('junior verto soluções') ||
-                    nameLower.includes('verto agrícola oficial') ||
-                    effectivePhone.includes('555499112550');
-                const dedupeKey = contact?.id
-                    ? `cid:${contact.id}`
-                    : !phoneInfo.isLidOnly && phoneInfo.cleanDigits
-                        ? `phone:${phoneInfo.cleanDigits}`
+                const bestSiblingName = siblingContacts.find((c) => !isGenericName(c.name))?.name;
+                const effectiveName = bestSiblingName ||
+                    (!isGenericName(view.contactName) ? view.contactName : null) ||
+                    primaryContact?.name ||
+                    view.contactName ||
+                    `Contato WhatsApp (${phoneInfo.cleanDigits.slice(-4) || 'WhatsApp'})`;
+                const dedupeKey = suffix8
+                    ? `sfx:${suffix8}`
+                    : primaryContact?.id
+                        ? `cid:${primaryContact.id}`
                         : `raw:${view.phone}`;
                 if (seenIdentities.has(dedupeKey)) {
                     continue;
                 }
                 seenIdentities.add(dedupeKey);
+                const allTagsSet = new Set();
+                const allDealsMap = new Map();
+                const allConvsMap = new Map();
+                for (const sc of siblingContacts) {
+                    for (const t of sc.tags || [])
+                        allTagsSet.add(t);
+                    for (const d of sc.deals || [])
+                        allDealsMap.set(d.id, d);
+                    for (const cv of sc.conversations || [])
+                        allConvsMap.set(cv.id, cv);
+                }
+                const mergedTags = Array.from(allTagsSet);
+                const contactTags = mergedTags.map((t) => t.toLowerCase());
+                const mergedDeals = Array.from(allDealsMap.values()).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+                const mergedConvs = Array.from(allConvsMap.values()).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+                const latestConv = mergedConvs.find((cv) => cv.messages && cv.messages.length > 0) || mergedConvs[0] || null;
+                const rawMessages = latestConv?.messages || [];
+                const formattedChatMessages = [...rawMessages]
+                    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+                    .map((m) => ({
+                    id: m.id,
+                    direction: (m.direction === 'INBOUND' ? 'INBOUND' : 'OUTBOUND'),
+                    content: String(m.content || '').trim(),
+                    createdAt: new Date(m.createdAt).toISOString(),
+                    formattedDate: new Intl.DateTimeFormat('pt-BR', {
+                        timeZone: 'America/Sao_Paulo',
+                        day: '2-digit',
+                        month: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                    }).format(new Date(m.createdAt)),
+                }))
+                    .filter((m) => m.content.length > 0);
+                const lastMsg = rawMessages.find((m) => m.direction === 'INBOUND') || rawMessages[0] || null;
+                const lastChatPreview = lastMsg?.content
+                    ? String(lastMsg.content)
+                        .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '')
+                        .replace(/\s+/g, ' ')
+                        .trim()
+                        .slice(0, 110)
+                    : undefined;
+                const lastChatDateStr = lastMsg?.createdAt
+                    ? new Intl.DateTimeFormat('pt-BR', {
+                        timeZone: 'America/Sao_Paulo',
+                        day: '2-digit',
+                        month: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                    }).format(new Date(lastMsg.createdAt))
+                    : undefined;
+                const nameLower = effectiveName.toLowerCase();
+                const isInternalTeam = contactTags.includes('equipe interna') ||
+                    contactTags.includes('colaborador') ||
+                    nameLower === 'junior verto' ||
+                    nameLower.includes('junior verto soluções') ||
+                    nameLower.includes('verto agrícola') ||
+                    nameLower.includes('verto agricola') ||
+                    nameLower.includes('comercial verto') ||
+                    effectivePhone.includes('555499112550');
                 const viewsCountWeek = weekCountByPhone.get(String(view.phone)) || 1;
                 const interestLevel = viewsCountWeek >= 4
                     ? 'Alta Frequência'
                     : viewsCountWeek >= 2
                         ? 'Frequência Moderada'
                         : 'Visualização Recente';
-                const latestConv = contact?.conversations?.[0] || null;
-                const recentMessages = latestConv?.messages || [];
-                const lastInboundMsg = recentMessages.find((m) => m.direction === 'INBOUND') || recentMessages[0] || null;
-                const lastChatPreview = lastInboundMsg?.content
-                    ? String(lastInboundMsg.content).replace(/\s+/g, ' ').trim().slice(0, 110)
-                    : undefined;
-                const lastChatDateStr = lastInboundMsg?.createdAt
-                    ? new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).format(new Date(lastInboundMsg.createdAt))
-                    : undefined;
-                let crmStatus = 'prospect';
-                let crmStatusLabel = 'Potencial Comprador';
-                let intentScore = Math.min(55 + viewsCountWeek * 10 + (lastChatPreview ? 15 : 0), 98);
-                let intentLabel = viewsCountWeek >= 2 ? '🔥 Interesse Recorrente' : '👀 Potencial Comprador';
+                const fullConversationTranscript = formattedChatMessages
+                    .map((m) => `[${m.direction === 'INBOUND' ? 'CONTATO' : 'VERTO'}]: ${m.content}`)
+                    .join('\n');
+                const bestAddress = siblingContacts.find((c) => c.address && c.address.trim().length > 2)?.address;
+                const locationInfo = this.resolveCityAndState(effectivePhone, bestAddress, view.city, view.state, `${effectiveName} ${fullConversationTranscript}`);
                 let totalPurchased = 0;
                 let assignedSeller = 'Equipe Comercial Verto';
                 let dealId = undefined;
                 let dealTitle = undefined;
                 let dealValue = undefined;
-                let aiInsight = '';
-                if (isInternalTeam) {
-                    crmStatus = 'internal_team';
-                    crmStatusLabel = 'Equipe Interna (Verto)';
-                    intentScore = 20;
-                    intentLabel = 'Equipe Interna';
-                    aiInsight =
-                        'Colaborador / Perfil institucional da Verto acompanhando as publicações no WhatsApp corporativo.';
-                }
-                else if (contact?.deals && contact.deals.length > 0) {
-                    const topDeal = contact.deals[0];
+                if (mergedDeals.length > 0) {
+                    const topDeal = mergedDeals[0];
                     assignedSeller = topDeal.assignee?.name || assignedSeller;
                     dealId = topDeal.id;
                     dealTitle = topDeal.title;
                     dealValue = Number(topDeal.value) || 0;
-                    const wonDeals = contact.deals.filter((d) => d.status === 'won');
+                    const wonDeals = mergedDeals.filter((d) => d.status === 'won');
                     totalPurchased = wonDeals.reduce((sum, d) => sum + (Number(d.value) || 0), 0);
-                    if (wonDeals.length > 0) {
-                        crmStatus = 'active_client';
-                        crmStatusLabel = 'Cliente Comprador';
-                        intentScore = Math.min(85 + viewsCountWeek * 4, 99);
-                        intentLabel = '💎 Cliente Faturado (Recompra)';
-                        aiInsight = `Comprador da carteira (${totalPurchased > 0 ? 'R$ ' + totalPurchased.toLocaleString('pt-BR') + ' faturados' : 'histórico ativo'}) visualizou "${view.storyTitle}". ${lastChatPreview
-                            ? `Última mensagem no WhatsApp (${lastChatDateStr}): "${lastChatPreview}".`
-                            : 'Oportunidade quente de oferta de novos implementos ou peças de safra.'}`;
-                    }
-                    else if (['proposal', 'negotiation', 'follow-up', 'contacted', 'lead'].includes(topDeal.status)) {
-                        crmStatus = 'open_deal';
-                        crmStatusLabel = 'Em Negociação';
-                        intentScore = Math.min(90 + viewsCountWeek * 3, 99);
-                        intentLabel = '🔥 Orçamento em Aberto (Prioridade)';
-                        aiInsight = `Negociação ativa no Funil: "${topDeal.title}"${dealValue > 0 ? ' (R$ ' + dealValue.toLocaleString('pt-BR') + ')' : ''}. Acabou de visualizar "${view.storyTitle}" (${viewsCountWeek}x na semana). ${lastChatPreview
-                            ? `Última interação no chat: "${lastChatPreview}". Aborde agora para destravar o fechamento!`
-                            : 'Gatilho ideal de timing para retomar a proposta e fechar pedido!'}`;
-                    }
-                    else {
-                        crmStatus = 'inactive_client';
-                        crmStatusLabel = 'Reativação de Carteira';
-                        intentScore = Math.min(75 + viewsCountWeek * 5, 95);
-                        intentLabel = '⚡ Produtor Reaquecido';
-                        aiInsight = `Cliente com histórico anterior ("${topDeal.title}") voltou a demonstrar interesse olhando "${view.storyTitle}". ${lastChatPreview
-                            ? `Último assunto no WhatsApp: "${lastChatPreview}".`
-                            : 'Momento ideal para reaproximação consultiva.'}`;
-                    }
                 }
-                else if (contactTags.includes('cliente comprador')) {
-                    crmStatus = 'active_client';
-                    crmStatusLabel = 'Cliente Comprador';
-                    intentScore = 88;
-                    intentLabel = '💎 Cliente Comprador';
-                }
-                else if (contactTags.includes('em negociação')) {
-                    crmStatus = 'open_deal';
-                    crmStatusLabel = 'Em Negociação';
-                    intentScore = 92;
-                    intentLabel = '🔥 Em Negociação';
-                }
-                else if (contactTags.includes('reativação')) {
-                    crmStatus = 'inactive_client';
-                    crmStatusLabel = 'Reativação de Carteira';
-                    intentScore = 78;
-                    intentLabel = '⚡ Reativação de Carteira';
-                }
-                if (!aiInsight) {
-                    if (lastChatPreview) {
-                        aiInsight = `Contato ativo no WhatsApp (em ${lastChatDateStr} disse: "${lastChatPreview}"). Visualizou o Story "${view.storyTitle}" (${viewsCountWeek}x na semana) — ainda sem negócio aberto no Funil CRM. Alta chance de conversão ao abordar agora!`;
-                    }
-                    else {
-                        aiInsight = `Visualizou "${view.storyTitle}" (${view.category || 'Maquinários'}) às ${timeFormatted.slice(0, 5)} (${viewsCountWeek}x na semana). Contato identificado na base Verto sem negociação aberta no Funil — oportunidade direta de prospecção ou público Meta Ads.`;
-                    }
-                }
+                const classification = await this.classifyLeadByContextAndAi(tenantId, {
+                    contactId: primaryContact?.id || view.id,
+                    name: effectiveName,
+                    phone: effectivePhone,
+                    tags: mergedTags,
+                    isInternalTeam,
+                    deals: mergedDeals,
+                    totalPurchased,
+                    chatMessages: formattedChatMessages,
+                    lastChatPreview,
+                    lastChatDateStr,
+                    storyTitle: view.storyTitle || 'Status Corporativo WhatsApp',
+                    storyCategory: view.category || 'Maquinários',
+                    viewsCountWeek,
+                    timeFormatted,
+                });
                 const resolvedThumb = postMediaByMsgId.get(String(view.statusMessageId)) ||
                     postMediaByTitle.get(String(view.storyTitle)) ||
                     (view.mediaUrl && !String(view.mediaUrl).includes('172.16.0.1') ? view.mediaUrl : undefined);
                 list.push({
                     id: view.id,
-                    contactId: contact?.id || view.contactId || view.id,
+                    contactId: primaryContact?.id || view.contactId || view.id,
                     conversationId: latestConv?.id || undefined,
                     name: effectiveName,
-                    companyOrFarm: contact?.tags?.find((t) => t.toLowerCase().includes('fazenda') || t.toLowerCase().includes('agro')) ||
-                        (isInternalTeam ? 'Verto Agrícola' : 'Produtor / Carteira Verto'),
+                    companyOrFarm: classification.companyOrFarm,
                     phone: phoneInfo.cleanDigits || effectivePhone,
                     phoneFormatted: phoneInfo.formatted,
-                    email: contact?.email || undefined,
+                    email: primaryContact?.email || undefined,
                     isLidOnly: phoneInfo.isLidOnly,
-                    city: contact?.address || view.city || 'Região Sul',
-                    state: view.state || 'RS',
-                    crmStatus,
-                    crmStatusLabel,
-                    intentScore,
-                    intentLabel,
+                    city: classification.inferredCity || locationInfo.city,
+                    state: classification.inferredState || locationInfo.state,
+                    crmStatus: classification.crmStatus,
+                    crmStatusLabel: classification.crmStatusLabel,
+                    intentScore: classification.intentScore,
+                    intentLabel: classification.intentLabel,
                     totalPurchased,
                     dealId,
                     dealTitle,
                     dealValue,
-                    aiInsight,
+                    aiInsight: classification.aiInsight,
                     lastChatMessage: lastChatPreview,
                     lastChatDate: lastChatDateStr,
+                    chatMessages: formattedChatMessages,
                     lastPurchaseDate: totalPurchased > 0 ? 'Compra anterior faturada' : undefined,
                     daysInactive: 0,
                     assignedSeller,
@@ -1079,6 +1287,212 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
                 item.assignedSeller.toLowerCase().includes(q));
         }
         return filtered;
+    }
+    async classifyLeadByContextAndAi(tenantId, params) {
+        const contactTags = (params.tags || []).map((t) => t.toLowerCase());
+        const nameLower = (params.name || '').toLowerCase();
+        const farmTag = (params.tags || []).find((t) => {
+            const low = t.toLowerCase();
+            return low.includes('fazenda') || low.includes('agro') || low.includes('granja') || low.includes('semente');
+        });
+        if (params.isInternalTeam) {
+            return {
+                crmStatus: 'internal_team',
+                crmStatusLabel: 'Equipe Interna (Verto)',
+                companyOrFarm: 'Verto Agrícola',
+                intentScore: 15,
+                intentLabel: 'Equipe Interna',
+                aiInsight: 'Colaborador ou perfil institucional da Verto acompanhando as publicações no WhatsApp corporativo.',
+            };
+        }
+        if (contactTags.includes('contato pessoal') || contactTags.includes('não comercial') || contactTags.includes('institucional')) {
+            return {
+                crmStatus: 'non_commercial',
+                crmStatusLabel: 'Pessoal / Institucional',
+                companyOrFarm: 'Contato Pessoal / Institucional',
+                intentScore: 5,
+                intentLabel: 'Sem Perfil Comercial',
+                aiInsight: 'Contato classificado como pessoal ou institucional, sem vínculo com prospecção de equipamentos agrícolas.',
+            };
+        }
+        const allChatText = params.chatMessages.map((m) => m.content).join(' \n ');
+        const combinedLower = `${nameLower} ${allChatText.toLowerCase()}`;
+        const isSchoolOrPersonalContext = /\b(escola|col[eé]gio|creche|professora?|recreio|aluno|filho|pai\b|m[aã]e\b|machucou|joelho|buscar na escola|n[uú]mero particular|hospital|cl[ií]nica|consult[oó]rio|m[eé]dico|pediatra|exame)\b/i.test(combinedLower) &&
+            !/\b(trator|plantadeira|semeadeira|stara|absoluta|pulverizador|colheitadeira|safra|hectare|soja|milho|implemento|adubo|taxa vari[aá]vel)\b/i.test(combinedLower);
+        if (isSchoolOrPersonalContext) {
+            return {
+                crmStatus: 'non_commercial',
+                crmStatusLabel: 'Pessoal / Institucional',
+                companyOrFarm: nameLower.includes('escola') || nameLower.includes('colégio') || nameLower.includes('colegio')
+                    ? 'Instituição de Ensino / Contato Pessoal'
+                    : 'Contato Pessoal / Não Comercial',
+                intentScore: 5,
+                intentLabel: 'Contexto Pessoal / Escolar (Sem Perfil Comercial)',
+                aiInsight: params.chatMessages.length
+                    ? `A IA analisou o histórico real da conversa no sistema e identificou assunto pessoal/escolar ("${params.chatMessages[0]?.content.slice(0, 95) || params.lastChatPreview}"), onde foi informado o número particular. Não possui perfil comercial para abordagem de vendas.`
+                    : `Contato institucional ("${params.name}") sem histórico de cotação agrícola.`,
+            };
+        }
+        if (params.deals && params.deals.length > 0) {
+            const topDeal = params.deals[0];
+            const dealValue = Number(topDeal.value) || 0;
+            const wonDeals = params.deals.filter((d) => d.status === 'won');
+            if (wonDeals.length > 0) {
+                return {
+                    crmStatus: 'active_client',
+                    crmStatusLabel: 'Cliente Comprador',
+                    companyOrFarm: farmTag || 'Cliente Carteira Verto',
+                    intentScore: Math.min(88 + params.viewsCountWeek * 3, 99),
+                    intentLabel: 'Cliente Faturado (Oportunidade de Recompra)',
+                    aiInsight: `Comprador ativo da carteira (${params.totalPurchased > 0 ? 'R$ ' + params.totalPurchased.toLocaleString('pt-BR') + ' faturados' : 'histórico confirmado'}) visualizou "${params.storyTitle}". ${params.lastChatPreview
+                        ? `Última mensagem no sistema (${params.lastChatDateStr}): "${params.lastChatPreview}".`
+                        : 'Momento oportuno para ofertar upgrade tecnológico ou novos equipamentos.'}`,
+                };
+            }
+            if (['proposal', 'negotiation', 'follow-up', 'contacted', 'lead'].includes(topDeal.status)) {
+                return {
+                    crmStatus: 'open_deal',
+                    crmStatusLabel: 'Em Negociação',
+                    companyOrFarm: farmTag || 'Produtor em Negociação',
+                    intentScore: Math.min(90 + params.viewsCountWeek * 3, 99),
+                    intentLabel: 'Orçamento Ativo no Funil (Prioridade)',
+                    aiInsight: `Negociação aberta no CRM: "${topDeal.title}"${dealValue > 0 ? ' (R$ ' + dealValue.toLocaleString('pt-BR') + ')' : ''}. Visualizou "${params.storyTitle}" (${params.viewsCountWeek}x na semana). ${params.lastChatPreview
+                        ? `Última interação no sistema: "${params.lastChatPreview}". Excelente timing para retomada e fechamento.`
+                        : 'Sinal claro de interesse ativo para retomar a proposta.'}`,
+                };
+            }
+            return {
+                crmStatus: 'inactive_client',
+                crmStatusLabel: 'Reativação de Carteira',
+                companyOrFarm: farmTag || 'Produtor / Carteira Verto',
+                intentScore: Math.min(76 + params.viewsCountWeek * 4, 94),
+                intentLabel: 'Produtor Reaquecido via Story',
+                aiInsight: `Contato com histórico anterior no CRM ("${topDeal.title}") voltou a engajar visualizando "${params.storyTitle}". ${params.lastChatPreview ? `Último registro no chat: "${params.lastChatPreview}".` : 'Oportunidade de reativação consultiva.'}`,
+            };
+        }
+        const hasCommercialAgroSignals = /\b(stara|absoluta|apresenta[cç][aã]o|cat[aá]logo|instala[cç][aã]o|v[ií]deo demonstrativo|plantadeira|semeadeira|trator|pulverizador|colheitadeira|implemento|or[cç]amento|proposta|pre[cç]o|valor|condi[cç][aã]o|safra|hectare|soja|milho|dosador|taxa|agricola|agr[ií]cola|lavoura|fazenda)\b/i.test(combinedLower);
+        const lastMsgId = params.chatMessages[params.chatMessages.length - 1]?.id || 'no_msg';
+        const cacheKey = `${tenantId}_${params.contactId}_${lastMsgId}_${params.tags.join(',')}`;
+        if (this.aiClassificationCache.has(cacheKey)) {
+            return this.aiClassificationCache.get(cacheKey);
+        }
+        const apiKey = this.aiService?.masterApiKey || process.env.OPENAI_API_KEY;
+        if (params.chatMessages.length > 0 && apiKey) {
+            try {
+                const client = new openai_1.default({ apiKey, timeout: 3500 });
+                const transcript = params.chatMessages
+                    .slice(-10)
+                    .map((m) => `[${m.formattedDate}] ${m.direction === 'INBOUND' ? 'CONTATO' : 'EQUIPE VERTO'}: ${m.content}`)
+                    .join('\n');
+                const aiResp = await client.chat.completions.create({
+                    model: 'gpt-4o-mini',
+                    temperature: 0.1,
+                    response_format: { type: 'json_object' },
+                    messages: [
+                        {
+                            role: 'system',
+                            content: `Você é um analista sênior de inteligência comercial da Verto Agrícola (empresa de tecnologia agrícola, pilotos automáticos, dosadores, plantio e maquinários).
+Analise o NOME DO CONTATO, as TAGS e o HISTÓRICO REAL DE MENSAGENS trocadas no WhatsApp do sistema e classifique este visualizador de Story.
+
+REGRAS ESTRITAS:
+1. Se a conversa tratar de assuntos pessoais, familiares, escola de filhos (ex: recreio, filho machucou, número particular), saúde, amigos ou fornecedores sem relação de compra de produtos agrícolas, classifique OBRIGATORIAMENTE como:
+   "crmStatus": "non_commercial", "crmStatusLabel": "Pessoal / Institucional", "intentScore": entre 0 e 10.
+2. Se a conversa mostrar envio de apresentação comercial, catálogo PDF, vídeos demonstrativos em campo, fotos de instalação em máquinas (ex: Stara Absoluta, plantadeiras, tratores) ou cotação/proposta em andamento, classifique como:
+   "crmStatus": "open_deal", "crmStatusLabel": "Em Negociação", "intentScore": entre 82 e 96.
+3. Se for um produtor rural ou potencial cliente agrícola tirando dúvidas iniciais ou acompanhando os Stories com perfil de compra, classifique como:
+   "crmStatus": "prospect", "crmStatusLabel": "Potencial Comprador", "intentScore": entre 65 e 85.
+4. PROIBIDO usar emojis em qualquer campo de texto.
+5. Se a conversa mencionar a cidade do contato, retorne em "inferredCity" e a sigla do estado em "inferredState" (ou string vazia se não mencionado).
+
+Retorne estritamente um JSON:
+{
+  "crmStatus": "active_client" | "open_deal" | "prospect" | "inactive_client" | "internal_team" | "non_commercial",
+  "crmStatusLabel": "string curta",
+  "companyOrFarm": "perfil conciso do contato (ex: Produtor Rural / Carteira Verto, Instituição de Ensino / Contato Pessoal, etc.)",
+  "intentScore": number,
+  "intentLabel": "resumo executivo curto sem emojis (máx 40 caracteres)",
+  "aiInsight": "diagnóstico claro em 2 frases explicando o contexto real das mensagens trocadas e o motivo da classificação",
+  "inferredCity": "nome da cidade se citada na conversa ou vazio",
+  "inferredState": "UF se citada ou vazio"
+}`,
+                        },
+                        {
+                            role: 'user',
+                            content: `Nome do Contato: ${params.name}
+Telefone: ${params.phone}
+Tags no CRM: ${params.tags.join(', ') || 'Nenhuma'}
+Story Visualizado: "${params.storyTitle}" (${params.storyCategory}) - ${params.viewsCountWeek}x na semana
+
+HISTÓRICO REAL DE MENSAGENS NO SISTEMA:
+${transcript}`,
+                        },
+                    ],
+                });
+                const rawJson = aiResp.choices[0]?.message?.content;
+                if (rawJson) {
+                    const parsed = JSON.parse(rawJson);
+                    const validStatuses = ['active_client', 'open_deal', 'prospect', 'inactive_client', 'internal_team', 'non_commercial'];
+                    const status = validStatuses.includes(parsed.crmStatus) ? parsed.crmStatus : 'prospect';
+                    const result = {
+                        crmStatus: status,
+                        crmStatusLabel: String(parsed.crmStatusLabel || 'Potencial Comprador').replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '').trim(),
+                        companyOrFarm: String(parsed.companyOrFarm || farmTag || 'Produtor / Carteira Verto').replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '').trim(),
+                        intentScore: Math.max(0, Math.min(99, Number(parsed.intentScore) ?? 65)),
+                        intentLabel: String(parsed.intentLabel || 'Análise Contextual IA').replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '').trim(),
+                        aiInsight: String(parsed.aiInsight || '').replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '').trim(),
+                        inferredCity: parsed.inferredCity ? String(parsed.inferredCity).trim() : undefined,
+                        inferredState: parsed.inferredState ? String(parsed.inferredState).trim() : undefined,
+                    };
+                    this.aiClassificationCache.set(cacheKey, result);
+                    return result;
+                }
+            }
+            catch (aiErr) {
+                this.logger.warn(`[Radar Stories IA] Fallback semântico acionado para ${params.name}: ${aiErr.message}`);
+            }
+        }
+        if (hasCommercialAgroSignals || contactTags.includes('proposta') || contactTags.includes('em negociação')) {
+            const res = {
+                crmStatus: 'open_deal',
+                crmStatusLabel: 'Em Negociação',
+                companyOrFarm: farmTag || 'Produtor / Em Atendimento Comercial',
+                intentScore: Math.min(84 + params.viewsCountWeek * 4, 96),
+                intentLabel: 'Avaliando Apresentação & Soluções Verto',
+                aiInsight: `Recebeu materiais técnicos e demonstrações no WhatsApp (${params.lastChatPreview ? `último envio: "${params.lastChatPreview}"` : 'histórico técnico ativo'}) e visualizou o Story "${params.storyTitle}". Forte sinal de avaliação comercial para fechamento.`,
+            };
+            this.aiClassificationCache.set(cacheKey, res);
+            return res;
+        }
+        if (contactTags.includes('cliente comprador')) {
+            return {
+                crmStatus: 'active_client',
+                crmStatusLabel: 'Cliente Comprador',
+                companyOrFarm: farmTag || 'Cliente Carteira Verto',
+                intentScore: 88,
+                intentLabel: 'Cliente Comprador da Base',
+                aiInsight: `Cliente comprador identificado na base Verto visualizou "${params.storyTitle}".`,
+            };
+        }
+        if (contactTags.includes('reativação')) {
+            return {
+                crmStatus: 'inactive_client',
+                crmStatusLabel: 'Reativação de Carteira',
+                companyOrFarm: farmTag || 'Produtor / Carteira Verto',
+                intentScore: 78,
+                intentLabel: 'Reativação de Carteira',
+                aiInsight: `Contato marcado para reativação comercial visualizou "${params.storyTitle}".`,
+            };
+        }
+        return {
+            crmStatus: 'prospect',
+            crmStatusLabel: 'Potencial Comprador',
+            companyOrFarm: farmTag || 'Produtor / Carteira Verto',
+            intentScore: Math.min(60 + params.viewsCountWeek * 8 + (params.lastChatPreview ? 10 : 0), 90),
+            intentLabel: params.viewsCountWeek >= 2 ? 'Interesse Recorrente em Stories' : 'Potencial Comprador Identificado',
+            aiInsight: params.lastChatPreview
+                ? `Contato com interação no WhatsApp (em ${params.lastChatDateStr}: "${params.lastChatPreview}"). Visualizou "${params.storyTitle}" (${params.viewsCountWeek}x na semana).`
+                : `Visualizou "${params.storyTitle}" (${params.storyCategory}) às ${params.timeFormatted.slice(0, 5)} (${params.viewsCountWeek}x na semana). Contato da carteira Verto elegível para qualificação consultiva.`,
+        };
     }
     async recordStatusView(tenantId, data) {
         const cleanPhone = data.phone.replace(/\D/g, '');
@@ -1639,9 +2053,15 @@ Gere a abordagem comercial personalizada em JSON.`;
                     'potencial comprador',
                     'reativação',
                     'não categorizado',
+                    'contato pessoal',
+                    'não comercial',
+                    'institucional',
                 ].includes(t.toLowerCase()));
                 if (crmStatus === 'internal_team') {
                     tags.push('Equipe Interna');
+                }
+                else if (crmStatus === 'non_commercial') {
+                    tags.push('Contato Pessoal');
                 }
                 else if (crmStatus === 'active_client') {
                     tags.push('Cliente Comprador');
@@ -1659,6 +2079,7 @@ Gere a abordagem comercial personalizada em JSON.`;
                     where: { id: contactId },
                     data: { tags },
                 });
+                this.aiClassificationCache.clear();
             }
         }
         return {

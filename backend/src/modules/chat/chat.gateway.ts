@@ -184,5 +184,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.server.to(tenantId).emit('radar:story-posted', payload);
     }
   }
+
+  public emitMessageReactionUpdated(
+    tenantId: string,
+    payload: { messageId: string; conversationId: string; reactions: any }
+  ) {
+    if (this.server) {
+      this.server.to(tenantId).emit('messageReactionUpdated', payload);
+    } else {
+      this.logger.warn('WebSocket server not initialized yet, skipping emitMessageReactionUpdated');
+    }
+  }
 }
 

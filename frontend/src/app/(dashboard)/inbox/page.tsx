@@ -11,7 +11,7 @@ import {
   Smile, Bold, Italic, Strikethrough, Code, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Trash2, Play, Pause,
   Volume2, Check, CheckCheck, Copy, ExternalLink, Headphones, Download, ZoomIn, Maximize2,
   BellOff, History, UserPlus, FileDown, MessageSquarePlus, PanelRight, Info, Pin,
-  Clock, AlertCircle, Workflow, Pencil, ShoppingBag, MapPin, Video, ArrowLeft
+  Clock, AlertCircle, Workflow, Pencil, ShoppingBag, MapPin, Video, ArrowLeft, Reply
 } from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
 import { useWhatsApp } from "@/components/ui/WhatsAppProvider";
@@ -34,6 +34,8 @@ const COMMON_EMOJIS = [
   '🚀', '💡', '💬', '📞', '📅', '⏰', '⏳', '🎯', '✅', '❌', 
   '⚠️', '💰', '💵', '💳', '📊', '📈', '📌', '📎', '🎉', '🏆'
 ];
+
+const QUICK_REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 
 const TAG_COLOR_PALETTES = [
   { bg: 'bg-emerald-50 dark:bg-emerald-950/70', text: 'text-emerald-700 dark:text-emerald-300', border: 'border-emerald-200 dark:border-emerald-700/60', dot: 'bg-emerald-500 dark:bg-emerald-400' },
@@ -140,6 +142,32 @@ function InboxContent() {
   const [showSearchInChat, setShowSearchInChat] = useState(false);
   const [chatSearchQuery, setChatSearchQuery] = useState('');
   const [showContactInfo, setShowContactInfo] = useState(false);
+  const [replyingToMessage, setReplyingToMessage] = useState<any | null>(null);
+  const [activeReactionPickerMessageId, setActiveReactionPickerMessageId] = useState<string | null>(null);
+
+  const scrollToMessage = (msgId?: string) => {
+    if (!msgId) return;
+    const el = document.getElementById(`msg-${msgId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('ring-2', 'ring-emerald-500', 'bg-emerald-500/10', 'transition-all', 'duration-300');
+      setTimeout(() => {
+        el.classList.remove('ring-2', 'ring-emerald-500', 'bg-emerald-500/10');
+      }, 1800);
+    }
+  };
+
+  const handleToggleReaction = async (messageId: string, emoji: string) => {
+    if (!activeChat) return;
+    setActiveReactionPickerMessageId(null);
+    try {
+      const { data } = await api.post(`/conversations/${activeChat}/messages/${messageId}/reaction`, { reaction: emoji });
+      setMessages(prev => prev.map(m => m.id === messageId ? { ...m, reactions: data.reactions } : m));
+    } catch (err: any) {
+      console.error('Erro ao reagir à mensagem:', err);
+      toast.error('Não foi possível registrar a reação.');
+    }
+  };
 
   // Helper de auto-scroll para a última mensagem
   const scrollToBottom = (behavior: ScrollBehavior = 'auto') => {
@@ -1105,8 +1133,10 @@ function InboxContent() {
         type,
         mediaUrl: item.mediaUrl,
         filename,
+        ...(replyingToMessage ? { quotedMessageId: replyingToMessage.id } : {}),
         ...(activeInstance?.id ? { instanceId: activeInstance.id } : {})
       };
+      setReplyingToMessage(null);
 
       const { data } = await api.post(`/conversations/${activeChat}/messages`, payload);
       setMessages(prev => [...prev, data]);
@@ -1722,6 +1752,16 @@ function InboxContent() {
       }
     };
 
+    const handleMessageReactionUpdated = (payload: { messageId: string; conversationId: string; reactions: any }) => {
+      setMessages(prev =>
+        prev.map(m =>
+          m.id === payload.messageId
+            ? { ...m, reactions: payload.reactions }
+            : m
+        )
+      );
+    };
+
     socket.on('newMessage', handleNewMessage);
     socket.on('conversationUpdated', handleConversationUpdated);
     socket.on('conversationTransferred', handleConversationTransferred);
@@ -1730,6 +1770,7 @@ function InboxContent() {
     socket.on('messageDeleted', handleMessageDeleted);
     socket.on('conversationDeleted', handleConversationDeleted);
     socket.on('messageTranscribed', handleMessageTranscribed);
+    socket.on('messageReactionUpdated', handleMessageReactionUpdated);
 
     return () => {
       socket.off('newMessage', handleNewMessage);
@@ -1740,6 +1781,7 @@ function InboxContent() {
       socket.off('messageDeleted', handleMessageDeleted);
       socket.off('conversationDeleted', handleConversationDeleted);
       socket.off('messageTranscribed', handleMessageTranscribed);
+      socket.off('messageReactionUpdated', handleMessageReactionUpdated);
     };
   }, [socket, activeChat, activeTab, activeFilterTab, selectedDepartmentFilter, refetchConversations, refetchCounts]);
 
@@ -2017,6 +2059,11 @@ function InboxContent() {
       
       if (mediaUrl) {
         payload.mediaUrl = mediaUrl;
+      }
+
+      if (replyingToMessage) {
+        payload.quotedMessageId = replyingToMessage.id;
+        setReplyingToMessage(null);
       }
       
       const { data } = await api.post(`/conversations/${activeChat}/messages`, payload);
@@ -3580,7 +3627,7 @@ function InboxContent() {
                       )}
 
                       {/* Balão de Mensagem WhatsApp */}
-                      <div className={`flex flex-col max-w-[85%] sm:max-w-[70%] md:max-w-[65%] ${isMe ? 'self-end items-end' : 'self-start items-start'} relative group my-0.5`}>
+                      <div id={`msg-${msg.id}`} className={`flex flex-col max-w-[85%] sm:max-w-[70%] md:max-w-[65%] ${isMe ? 'self-end items-end' : 'self-start items-start'} relative group my-0.5`}>
                         <div className={`text-sm shadow-sm relative transition-all pt-1.5 pb-1.5 px-3 min-w-[85px] ${
                           msg.isInternal
                             ? 'bg-amber-50 text-amber-900 border border-amber-300 dark:bg-[#281b0a] dark:text-amber-100 dark:border-amber-500/30 rounded-lg rounded-tr-none'
@@ -3592,20 +3639,73 @@ function InboxContent() {
                                   ? 'bg-[#202C33] text-[#E9EDEF] shadow-sm border border-[#222D34] rounded-lg rounded-tl-none' 
                                   : 'bg-white text-slate-800 shadow-sm border border-slate-200/80 dark:bg-[#1E293B] dark:text-slate-100 dark:border-slate-700/50 rounded-lg rounded-tl-none')
                         }`}>
-                          {/* Botão de Excluir Mensagem no Hover (Padrão WhatsApp Web) */}
+                          {/* Barra de Ações no Hover (Padrão WhatsApp Web com Ícones Vetoriais de Alto Padrão) */}
                           {!msg.isInternal && (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteMessage(msg.id);
-                              }}
-                              title={isMe ? "Apagar mensagem para todos no WhatsApp" : "Apagar mensagem do histórico"}
-                              className={`absolute -top-2 -right-2 p-1.5 rounded-full ${isWhatsApp ? 'bg-[#202C33] border-[#222D34] text-[#8696A0] hover:text-rose-400' : 'bg-white dark:bg-[#0F172A] border-slate-200 dark:border-slate-700/80 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400'} border opacity-0 group-hover:opacity-100 transition-all shadow-lg z-20 cursor-pointer`}
-                            >
-                              <Trash2 size={13} />
-                            </button>
+                            <div className={`absolute -top-3 ${isMe ? 'right-2' : 'left-2'} z-20 hidden group-hover:flex items-center gap-0.5 bg-white/95 dark:bg-[#182229]/95 border border-slate-200 dark:border-slate-700/80 rounded-full px-1.5 py-0.5 shadow-lg backdrop-blur-md transition-all`}>
+                              {/* Botão de Reagir */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveReactionPickerMessageId(activeReactionPickerMessageId === msg.id ? null : msg.id);
+                                }}
+                                title="Reagir"
+                                className="p-1 rounded-full text-slate-500 hover:text-amber-500 dark:text-slate-400 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors cursor-pointer"
+                              >
+                                <Smile size={13} />
+                              </button>
+
+                              {/* Botão de Responder (Citar Mensagem) */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setReplyingToMessage(msg);
+                                  if (textareaRef.current) textareaRef.current.focus();
+                                }}
+                                title="Responder"
+                                className="p-1 rounded-full text-slate-500 hover:text-emerald-500 dark:text-slate-400 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors cursor-pointer"
+                              >
+                                <Reply size={13} />
+                              </button>
+
+                              {/* Botão de Excluir Mensagem */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteMessage(msg.id);
+                                }}
+                                title={isMe ? "Apagar mensagem para todos no WhatsApp" : "Apagar mensagem do histórico"}
+                                className="p-1 rounded-full text-slate-500 hover:text-rose-500 dark:text-slate-400 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors cursor-pointer"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
                           )}
+
+                          {/* Popover Flutuante de Reações Rápidas */}
+                          {activeReactionPickerMessageId === msg.id && (
+                            <>
+                              <div className="fixed inset-0 z-30" onClick={() => setActiveReactionPickerMessageId(null)} />
+                              <div className={`absolute -top-11 ${isMe ? 'right-0' : 'left-0'} z-40 flex items-center gap-1 bg-white dark:bg-[#182229] border border-slate-200 dark:border-slate-700 shadow-2xl rounded-full px-2 py-1 animate-in zoom-in-95 duration-150`}>
+                                {QUICK_REACTION_EMOJIS.map((emoji) => (
+                                  <button
+                                    key={emoji}
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleToggleReaction(msg.id, emoji);
+                                    }}
+                                    className="hover:scale-125 transition-transform text-base p-1 leading-none rounded-full hover:bg-slate-100 dark:hover:bg-slate-700/60 cursor-pointer"
+                                  >
+                                    {emoji}
+                                  </button>
+                                ))}
+                              </div>
+                            </>
+                          )}
+
                           {/* Cauda SVG do Balão WhatsApp */}
                           {msg.isInternal ? (
                             <svg className="absolute -top-[0.5px] -right-2 text-amber-50 dark:text-[#281b0a] pointer-events-none drop-shadow-sm" width="9" height="13" viewBox="0 0 9 13">
@@ -3634,6 +3734,28 @@ function InboxContent() {
                             <div className="inline-flex items-center gap-1 bg-cyan-100 dark:bg-cyan-950/80 border border-cyan-300 dark:border-cyan-500/40 text-cyan-800 dark:text-cyan-300 text-[10px] font-bold px-2 py-0.5 rounded-full mb-1 shadow-sm">
                               <Bot size={11} className="text-cyan-600 dark:text-cyan-400 animate-pulse" />
                               <span>IA {aiAgentName.toUpperCase()}</span>
+                            </div>
+                          )}
+
+                          {/* Mensagem Citada (Quoted / Reply Card estilo WhatsApp) */}
+                          {msg.quotedMessage && (
+                            <div 
+                              onClick={() => scrollToMessage(msg.quotedMessage.id)}
+                              className="mb-2 p-2 rounded-lg bg-black/10 dark:bg-black/30 border-l-4 border-emerald-500 text-xs cursor-pointer hover:bg-black/20 dark:hover:bg-black/40 transition-colors select-none"
+                              title="Ir para a mensagem original"
+                            >
+                              <div className="font-semibold text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mb-0.5">
+                                <Reply size={11} className="rotate-180" />
+                                <span>{msg.quotedMessage.senderName || (msg.quotedMessage.direction === 'OUTBOUND' ? 'Você' : (activeContactData?.name || 'Cliente'))}</span>
+                              </div>
+                              <div className="text-[11px] opacity-90 line-clamp-2">
+                                {msg.quotedMessage.content || (
+                                  msg.quotedMessage.type === 'image' ? '📷 Foto' :
+                                  msg.quotedMessage.type === 'video' ? '🎥 Vídeo' :
+                                  msg.quotedMessage.type === 'audio' ? '🎤 Mensagem de voz' :
+                                  msg.quotedMessage.type === 'document' ? '📄 Documento' : 'Mensagem'
+                                )}
+                              </div>
                             </div>
                           )}
 
@@ -3930,6 +4052,27 @@ function InboxContent() {
                               </button>
                             </div>
                           )}
+
+                          {/* Pílula de Reações Flutuante no Canto do Balão (Padrão WhatsApp) */}
+                          {Array.isArray(msg.reactions) && msg.reactions.length > 0 && (
+                            <div 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveReactionPickerMessageId(activeReactionPickerMessageId === msg.id ? null : msg.id);
+                              }}
+                              title="Reações (clique para alternar reação)"
+                              className={`absolute -bottom-2.5 ${isMe ? 'right-2' : 'left-2'} z-10 flex items-center gap-1 bg-white dark:bg-[#182229] border border-slate-200 dark:border-slate-700/80 rounded-full px-1.5 py-0.5 shadow-md text-xs cursor-pointer select-none transition-transform hover:scale-105 backdrop-blur-md`}
+                            >
+                              {Array.from(new Set(msg.reactions.map((r: any) => r.emoji))).slice(0, 3).map((emoji: any, idx) => (
+                                <span key={idx} className="text-xs leading-none">{emoji}</span>
+                              ))}
+                              {msg.reactions.length > 1 && (
+                                <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
+                                  {msg.reactions.length}
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -3942,6 +4085,36 @@ function InboxContent() {
 
             {/* Chat Input Area (Estrutura e Formato Idênticos ao WhatsApp) */}
             <div className="border-t border-slate-200 dark:border-slate-800/90 bg-white dark:bg-[#0B1224] z-30 flex flex-col shrink-0">
+              {/* Barra de Resposta / Citação Ativa (WhatsApp Quote Bar) */}
+              {replyingToMessage && (
+                <div className="mx-3 mt-2.5 p-2 px-3 rounded-xl bg-slate-100 dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700/80 flex items-center justify-between shadow-lg animate-in slide-in-from-bottom-2">
+                  <div className="flex items-center gap-2.5 overflow-hidden border-l-4 border-emerald-500 pl-2.5 py-0.5">
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                        <Reply size={12} className="rotate-180" />
+                        Respondendo a {replyingToMessage.direction === 'OUTBOUND' ? 'Você' : (activeContactData?.name || 'Cliente')}
+                      </span>
+                      <span className="text-xs text-slate-600 dark:text-slate-300 truncate max-w-[280px] sm:max-w-md">
+                        {replyingToMessage.content || (
+                          replyingToMessage.type === 'image' ? '📷 Foto' :
+                          replyingToMessage.type === 'video' ? '🎥 Vídeo' :
+                          replyingToMessage.type === 'audio' ? '🎤 Mensagem de voz' :
+                          replyingToMessage.type === 'document' ? '📄 Documento' : 'Mensagem'
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setReplyingToMessage(null)}
+                    className="p-1 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                    title="Cancelar resposta"
+                  >
+                    <X size={15} />
+                  </button>
+                </div>
+              )}
+
               {/* Banner Informativo quando o Atendimento estiver Finalizado */}
               {isResolved && (
                 <div className="bg-slate-100 dark:bg-[#0F172A]/95 border-b border-slate-200 dark:border-slate-800 px-3.5 py-2 flex items-center justify-between gap-2 shrink-0">

@@ -529,6 +529,41 @@ export class WebhookProcessor extends WorkerHost {
       this.chatGateway.emitConversationUpdated(tenantId, conversation);
     }
 
+    // Resolução de mensagem citada (Quote / Reply) recebida do WhatsApp
+    let quotedMessageToSave: any = null;
+    if (evolutionMetadata?.quotedInfo) {
+      const qInfo = evolutionMetadata.quotedInfo;
+      let matchedQuotedMsg: any = null;
+      if (qInfo.providerMessageId) {
+        matchedQuotedMsg = await this.prisma.message.findFirst({
+          where: {
+            tenantId,
+            providerMessageId: qInfo.providerMessageId,
+          },
+          include: { contact: true },
+        });
+      }
+
+      if (matchedQuotedMsg) {
+        quotedMessageToSave = {
+          id: matchedQuotedMsg.id,
+          providerMessageId: matchedQuotedMsg.providerMessageId,
+          content: matchedQuotedMsg.content,
+          type: matchedQuotedMsg.type,
+          mediaUrl: matchedQuotedMsg.mediaUrl,
+          direction: matchedQuotedMsg.direction,
+          senderType: matchedQuotedMsg.senderType,
+          senderName: matchedQuotedMsg.direction === 'INBOUND' ? (matchedQuotedMsg.contact?.name || 'Cliente') : 'Você',
+        };
+      } else if (qInfo.content || qInfo.providerMessageId) {
+        quotedMessageToSave = {
+          providerMessageId: qInfo.providerMessageId,
+          content: qInfo.content,
+          senderName: 'WhatsApp',
+        };
+      }
+    }
+
     // 5. Persistir a Mensagem (Inbound ou Outbound pelo celular)
     const savedMessage = await this.prisma.message.create({
       data: {
@@ -543,7 +578,8 @@ export class WebhookProcessor extends WorkerHost {
         audioTranscription,
         senderType: fromMe ? 'user' : 'contact',
         fromMe: fromMe,
-        status: 'delivered', 
+        status: 'delivered',
+        quotedMessage: quotedMessageToSave,
       }
     });
 

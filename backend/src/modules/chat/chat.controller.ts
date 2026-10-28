@@ -197,6 +197,24 @@ export class ChatController {
     }
   }
 
+  @Post(':id/messages/:messageId/reaction')
+  async sendReaction(
+    @CurrentTenant() tenantId: string,
+    @Param('id') conversationId: string,
+    @Param('messageId') messageId: string,
+    @Body() body: { reaction: string },
+    @Request() req: any,
+  ) {
+    return this.chatService.sendReaction(
+      tenantId,
+      conversationId,
+      messageId,
+      body.reaction,
+      req.user?.id,
+      req.user?.name,
+    );
+  }
+
   @Post(':id/template')
   async sendTemplateMessage(
     @CurrentTenant() tenantId: string,

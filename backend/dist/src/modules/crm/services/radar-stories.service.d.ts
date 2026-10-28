@@ -5,6 +5,13 @@ import { ChatGateway } from '../../chat/chat.gateway';
 import { ChatService } from '../../chat/chat.service';
 import { WhatsappService } from '../../whatsapp/whatsapp.service';
 import { StorageService } from '../../../shared/storage/storage.service';
+export interface StoryViewerChatMessage {
+    id: string;
+    direction: 'INBOUND' | 'OUTBOUND';
+    content: string;
+    createdAt: string;
+    formattedDate: string;
+}
 export interface StoryViewerItem {
     id: string;
     contactId: string;
@@ -17,7 +24,7 @@ export interface StoryViewerItem {
     isLidOnly?: boolean;
     city: string;
     state: string;
-    crmStatus: 'active_client' | 'inactive_client' | 'open_deal' | 'prospect' | 'internal_team';
+    crmStatus: 'active_client' | 'inactive_client' | 'open_deal' | 'prospect' | 'internal_team' | 'non_commercial';
     crmStatusLabel: string;
     intentScore: number;
     intentLabel: string;
@@ -28,6 +35,7 @@ export interface StoryViewerItem {
     aiInsight?: string;
     lastChatMessage?: string;
     lastChatDate?: string;
+    chatMessages?: StoryViewerChatMessage[];
     lastPurchaseDate?: string;
     daysInactive: number;
     assignedSeller: string;
@@ -53,6 +61,7 @@ export declare class RadarStoriesService implements OnModuleInit, OnModuleDestro
     private readonly chatService?;
     private readonly logger;
     private syncInterval;
+    private readonly aiClassificationCache;
     constructor(prisma: PrismaService, aiService: AiService, chatGateway?: ChatGateway, storageService?: StorageService, whatsappService?: WhatsappService, chatService?: ChatService);
     onModuleInit(): Promise<void>;
     onModuleDestroy(): void;
@@ -124,6 +133,10 @@ export declare class RadarStoriesService implements OnModuleInit, OnModuleDestro
         isLidOnly: boolean;
         cleanDigits: string;
     };
+    resolveCityAndState(phone: string, contactAddress?: string | null, viewCity?: string | null, viewState?: string | null, contextText?: string): {
+        city: string;
+        state: string;
+    };
     getMetrics(tenantId: string): Promise<{
         kpis: {
             totalViewsToday: any;
@@ -145,6 +158,7 @@ export declare class RadarStoriesService implements OnModuleInit, OnModuleDestro
         category?: string;
         search?: string;
     }): Promise<StoryViewerItem[]>;
+    private classifyLeadByContextAndAi;
     recordStatusView(tenantId: string, data: {
         phone: string;
         contactName?: string;

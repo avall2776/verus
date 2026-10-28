@@ -496,6 +496,68 @@ export class WebhooksController {
       return { status: 'evolution_send_processed' };
     }
 
+    // 2.5 Reações a Mensagens (MESSAGES_REACTION)
+    if (event === 'messages.reaction' || event === 'MESSAGES_REACTION') {
+      const reactionItems = Array.isArray(payload.data) ? payload.data : [payload.data];
+      for (const item of reactionItems) {
+        const targetMessageId = item?.reaction?.key?.id || item?.key?.id;
+        const emoji = item?.reaction?.text ?? '';
+        const senderJid = item?.key?.participant || item?.key?.remoteJid || '';
+        const fromMe = Boolean(item?.key?.fromMe);
+
+        if (targetMessageId) {
+          try {
+            const msg = await this.prisma.message.findFirst({
+              where: {
+                tenantId,
+                providerMessageId: targetMessageId,
+              },
+            });
+
+            if (msg) {
+              let currentReactions: any[] = Array.isArray(msg.reactions) ? [...(msg.reactions as any[])] : [];
+              const senderKey = fromMe ? 'me' : (senderJid || 'contact');
+              const existingIndex = currentReactions.findIndex(r => r.senderKey === senderKey || (fromMe && r.fromMe) || (!fromMe && !r.fromMe));
+
+              if (emoji && emoji.trim().length > 0) {
+                const reactionObj = {
+                  emoji: emoji.trim(),
+                  senderKey,
+                  fromMe,
+                  timestamp: Date.now(),
+                };
+                if (existingIndex >= 0) {
+                  currentReactions[existingIndex] = reactionObj;
+                } else {
+                  currentReactions.push(reactionObj);
+                }
+              } else {
+                if (existingIndex >= 0) {
+                  currentReactions.splice(existingIndex, 1);
+                }
+              }
+
+              await this.prisma.message.update({
+                where: { id: msg.id },
+                data: { reactions: currentReactions },
+              });
+
+              this.chatGateway.emitMessageReactionUpdated(tenantId, {
+                messageId: msg.id,
+                conversationId: msg.conversationId,
+                reactions: currentReactions,
+              });
+
+              this.logger.log(`Reação [${emoji || 'removida'}] sincronizada com a mensagem [${msg.id}]`);
+            }
+          } catch (e: any) {
+            this.logger.warn(`Erro ao processar reação webhook: ${e.message}`);
+          }
+        }
+      }
+      return { status: 'reaction_processed' };
+    }
+
     // 3. Novas Mensagens Inbound (MESSAGES_UPSERT)
     if (event === 'messages.upsert' || event === 'MESSAGES_UPSERT') {
       const data = payload.data;
@@ -681,6 +743,33 @@ export class WebhooksController {
 
       const mediaUrl = savedMediaInfo?.url || locationUrl || null;
 
+      const contextInfo =
+        messageObj?.extendedTextMessage?.contextInfo ||
+        messageObj?.imageMessage?.contextInfo ||
+        messageObj?.videoMessage?.contextInfo ||
+        messageObj?.documentMessage?.contextInfo ||
+        messageObj?.audioMessage?.contextInfo ||
+        data?.contextInfo;
+
+      let quotedInfo: any = null;
+      if (contextInfo?.quotedMessage || contextInfo?.stanzaId) {
+        const quotedMsg = contextInfo.quotedMessage;
+        const quotedText =
+          quotedMsg?.conversation ||
+          quotedMsg?.extendedTextMessage?.text ||
+          (quotedMsg?.imageMessage ? '📷 Foto' : '') ||
+          (quotedMsg?.videoMessage ? '🎥 Vídeo' : '') ||
+          (quotedMsg?.audioMessage ? '🎤 Mensagem de voz' : '') ||
+          (quotedMsg?.documentMessage ? '📄 Documento' : '') ||
+          '';
+
+        quotedInfo = {
+          providerMessageId: contextInfo.stanzaId,
+          content: quotedText,
+          participant: contextInfo.participant,
+        };
+      }
+
       const normalizedPayload = {
         entry: [
           {
@@ -734,6 +823,7 @@ export class WebhooksController {
             mediaFilename: mediaFilename,
             localFilePath: savedMediaInfo?.filePath || null,
             fromMe: isFromMe,
+            quotedInfo: quotedInfo,
           },
         },
         {

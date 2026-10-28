@@ -4,6 +4,7 @@ export interface SendMessagePayload {
     phone: string;
     content: string;
     instanceId?: string;
+    quoted?: any;
 }
 export interface SendAudioPayload {
     tenantId: string;
@@ -20,6 +21,15 @@ export interface SendMediaPayload {
     mediaUrl: string;
     content?: string;
     filename?: string;
+    instanceId?: string;
+    quoted?: any;
+}
+export interface SendReactionPayload {
+    tenantId: string;
+    phone: string;
+    providerMessageId: string;
+    reaction: string;
+    fromMe?: boolean;
     instanceId?: string;
 }
 export interface SendTemplatePayload {
@@ -54,4 +64,5 @@ export declare class MessagingService {
     sendAudio(payload: SendAudioPayload): Promise<SendResult>;
     private sendEvolutionAudio;
     private sendMetaAudio;
+    sendReaction(payload: SendReactionPayload): Promise<SendResult>;
 }

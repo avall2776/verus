@@ -32,4 +32,11 @@ export class SendMessageDto {
   @IsString()
   @IsOptional()
   instanceId?: string;
+
+  @IsString()
+  @IsOptional()
+  quotedMessageId?: string;
+
+  @IsOptional()
+  quotedMessage?: any;
 }

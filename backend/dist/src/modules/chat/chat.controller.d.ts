@@ -31,6 +31,8 @@ export declare class ChatController {
             type: string;
             mediaUrl: string | null;
             audioTranscription: string | null;
+            quotedMessage: import("@prisma/client/runtime/library").JsonValue | null;
+            reactions: import("@prisma/client/runtime/library").JsonValue | null;
             isInternal: boolean;
             fromMe: boolean;
             direction: string;
@@ -89,6 +91,8 @@ export declare class ChatController {
         type: string;
         mediaUrl: string | null;
         audioTranscription: string | null;
+        quotedMessage: import("@prisma/client/runtime/library").JsonValue | null;
+        reactions: import("@prisma/client/runtime/library").JsonValue | null;
         isInternal: boolean;
         fromMe: boolean;
         direction: string;
@@ -114,6 +118,8 @@ export declare class ChatController {
         type: string;
         mediaUrl: string | null;
         audioTranscription: string | null;
+        quotedMessage: import("@prisma/client/runtime/library").JsonValue | null;
+        reactions: import("@prisma/client/runtime/library").JsonValue | null;
         isInternal: boolean;
         fromMe: boolean;
         direction: string;
@@ -152,6 +158,8 @@ export declare class ChatController {
             type: string;
             mediaUrl: string | null;
             audioTranscription: string | null;
+            quotedMessage: import("@prisma/client/runtime/library").JsonValue | null;
+            reactions: import("@prisma/client/runtime/library").JsonValue | null;
             isInternal: boolean;
             fromMe: boolean;
             direction: string;
@@ -196,6 +204,8 @@ export declare class ChatController {
             type: string;
             mediaUrl: string | null;
             audioTranscription: string | null;
+            quotedMessage: import("@prisma/client/runtime/library").JsonValue | null;
+            reactions: import("@prisma/client/runtime/library").JsonValue | null;
             isInternal: boolean;
             fromMe: boolean;
             direction: string;
@@ -272,6 +282,8 @@ export declare class ChatController {
             type: string;
             mediaUrl: string | null;
             audioTranscription: string | null;
+            quotedMessage: import("@prisma/client/runtime/library").JsonValue | null;
+            reactions: import("@prisma/client/runtime/library").JsonValue | null;
             isInternal: boolean;
             fromMe: boolean;
             direction: string;
@@ -323,6 +335,8 @@ export declare class ChatController {
             type: string;
             mediaUrl: string | null;
             audioTranscription: string | null;
+            quotedMessage: import("@prisma/client/runtime/library").JsonValue | null;
+            reactions: import("@prisma/client/runtime/library").JsonValue | null;
             isInternal: boolean;
             fromMe: boolean;
             direction: string;
@@ -375,6 +389,8 @@ export declare class ChatController {
             type: string;
             mediaUrl: string | null;
             audioTranscription: string | null;
+            quotedMessage: import("@prisma/client/runtime/library").JsonValue | null;
+            reactions: import("@prisma/client/runtime/library").JsonValue | null;
             isInternal: boolean;
             fromMe: boolean;
             direction: string;
@@ -427,6 +443,8 @@ export declare class ChatController {
             type: string;
             mediaUrl: string | null;
             audioTranscription: string | null;
+            quotedMessage: import("@prisma/client/runtime/library").JsonValue | null;
+            reactions: import("@prisma/client/runtime/library").JsonValue | null;
             isInternal: boolean;
             fromMe: boolean;
             direction: string;
@@ -489,6 +507,8 @@ export declare class ChatController {
             type: string;
             mediaUrl: string | null;
             audioTranscription: string | null;
+            quotedMessage: import("@prisma/client/runtime/library").JsonValue | null;
+            reactions: import("@prisma/client/runtime/library").JsonValue | null;
             isInternal: boolean;
             fromMe: boolean;
             direction: string;
@@ -545,6 +565,8 @@ export declare class ChatController {
             type: string;
             mediaUrl: string | null;
             audioTranscription: string | null;
+            quotedMessage: import("@prisma/client/runtime/library").JsonValue | null;
+            reactions: import("@prisma/client/runtime/library").JsonValue | null;
             isInternal: boolean;
             fromMe: boolean;
             direction: string;
@@ -618,6 +640,8 @@ export declare class ChatController {
             type: string;
             mediaUrl: string | null;
             audioTranscription: string | null;
+            quotedMessage: import("@prisma/client/runtime/library").JsonValue | null;
+            reactions: import("@prisma/client/runtime/library").JsonValue | null;
             isInternal: boolean;
             fromMe: boolean;
             direction: string;
@@ -653,6 +677,30 @@ export declare class ChatController {
         type: string;
         mediaUrl: string | null;
         audioTranscription: string | null;
+        quotedMessage: import("@prisma/client/runtime/library").JsonValue | null;
+        reactions: import("@prisma/client/runtime/library").JsonValue | null;
+        isInternal: boolean;
+        fromMe: boolean;
+        direction: string;
+        senderType: string;
+        scheduledAt: Date | null;
+        conversationId: string;
+    }>;
+    sendReaction(tenantId: string, conversationId: string, messageId: string, body: {
+        reaction: string;
+    }, req: any): Promise<{
+        id: string;
+        tenantId: string;
+        createdAt: Date;
+        contactId: string;
+        status: string;
+        providerMessageId: string | null;
+        content: string;
+        type: string;
+        mediaUrl: string | null;
+        audioTranscription: string | null;
+        quotedMessage: import("@prisma/client/runtime/library").JsonValue | null;
+        reactions: import("@prisma/client/runtime/library").JsonValue | null;
         isInternal: boolean;
         fromMe: boolean;
         direction: string;
@@ -678,6 +726,8 @@ export declare class ChatController {
             type: string;
             mediaUrl: string | null;
             audioTranscription: string | null;
+            quotedMessage: import("@prisma/client/runtime/library").JsonValue | null;
+            reactions: import("@prisma/client/runtime/library").JsonValue | null;
             isInternal: boolean;
             fromMe: boolean;
             direction: string;
@@ -700,6 +750,8 @@ export declare class ChatController {
             type: string;
             mediaUrl: string | null;
             audioTranscription: string | null;
+            quotedMessage: import("@prisma/client/runtime/library").JsonValue | null;
+            reactions: import("@prisma/client/runtime/library").JsonValue | null;
             isInternal: boolean;
             fromMe: boolean;
             direction: string;
@@ -719,6 +771,8 @@ export declare class ChatController {
         type: string;
         mediaUrl: string | null;
         audioTranscription: string | null;
+        quotedMessage: import("@prisma/client/runtime/library").JsonValue | null;
+        reactions: import("@prisma/client/runtime/library").JsonValue | null;
         isInternal: boolean;
         fromMe: boolean;
         direction: string;
@@ -737,6 +791,8 @@ export declare class ChatController {
         type: string;
         mediaUrl: string | null;
         audioTranscription: string | null;
+        quotedMessage: import("@prisma/client/runtime/library").JsonValue | null;
+        reactions: import("@prisma/client/runtime/library").JsonValue | null;
         isInternal: boolean;
         fromMe: boolean;
         direction: string;
@@ -755,6 +811,8 @@ export declare class ChatController {
         type: string;
         mediaUrl: string | null;
         audioTranscription: string | null;
+        quotedMessage: import("@prisma/client/runtime/library").JsonValue | null;
+        reactions: import("@prisma/client/runtime/library").JsonValue | null;
         isInternal: boolean;
         fromMe: boolean;
         direction: string;
@@ -782,6 +840,8 @@ export declare class ChatController {
         type: string;
         mediaUrl: string | null;
         audioTranscription: string | null;
+        quotedMessage: import("@prisma/client/runtime/library").JsonValue | null;
+        reactions: import("@prisma/client/runtime/library").JsonValue | null;
         isInternal: boolean;
         fromMe: boolean;
         direction: string;

@@ -12,6 +12,7 @@ export interface SendMessagePayload {
   phone: string;
   content: string;
   instanceId?: string;
+  quoted?: any;
 }
 
 export interface SendAudioPayload {
@@ -30,6 +31,16 @@ export interface SendMediaPayload {
   mediaUrl: string;
   content?: string;
   filename?: string;
+  instanceId?: string;
+  quoted?: any;
+}
+
+export interface SendReactionPayload {
+  tenantId: string;
+  phone: string;
+  providerMessageId: string;
+  reaction: string;
+  fromMe?: boolean;
   instanceId?: string;
 }
 
@@ -185,7 +196,7 @@ export class MessagingService {
 
     // TENTATIVA 1: Provedor preferencial
     if (conn.preferredProvider === 'evolution') {
-      const evoRes = await this.sendEvolutionText(conn.evolution, cleanPhone, payload.content);
+      const evoRes = await this.sendEvolutionText(conn.evolution, cleanPhone, payload.content, payload.quoted);
       if (evoRes.success) return evoRes;
 
       // Fallback para Meta SOMENTE se não for LID e tiver credenciais Meta válidas
@@ -201,7 +212,7 @@ export class MessagingService {
 
       // Fallback para Evolution API se Meta falhar
       this.logger.warn(`Meta API falhou para ${cleanPhone}, acionando fallback Evolution API...`);
-      const evoRes = await this.sendEvolutionText(conn.evolution, cleanPhone, payload.content);
+      const evoRes = await this.sendEvolutionText(conn.evolution, cleanPhone, payload.content, payload.quoted);
       if (evoRes.success) return evoRes;
       return metaRes;
     }
@@ -307,24 +318,31 @@ export class MessagingService {
     evoConfig: { url: string; apiKey: string; instanceName: string },
     cleanPhone: string,
     content: string,
+    quoted?: any,
   ): Promise<SendResult> {
     const url = `${evoConfig.url}/message/sendText/${evoConfig.instanceName}`;
     try {
       this.logger.log(`Disparando mensagem Evolution API [${evoConfig.instanceName}] para ${cleanPhone}...`);
 
+      const reqBody: any = {
+        number: cleanPhone,
+        options: {
+          delay: 1200,
+          presence: 'composing',
+          linkPreview: false,
+        },
+        textMessage: {
+          text: content,
+        },
+      };
+
+      if (quoted) {
+        reqBody.quoted = quoted;
+      }
+
       const response = await axios.post(
         url,
-        {
-          number: cleanPhone,
-          options: {
-            delay: 1200,
-            presence: 'composing',
-            linkPreview: false,
-          },
-          textMessage: {
-            text: content,
-          },
-        },
+        reqBody,
         {
           headers: {
             apikey: evoConfig.apiKey,
@@ -507,21 +525,27 @@ export class MessagingService {
       const mediatype = isDocument ? 'document' : isVideo ? 'video' : 'image';
       const fileName = payload.filename || (isDocument ? 'documento.pdf' : isVideo ? 'video.mp4' : 'imagem.jpg');
 
+      const reqBody: any = {
+        number: cleanPhone,
+        options: {
+          delay: 1200,
+          presence: 'composing',
+        },
+        mediaMessage: {
+          mediatype,
+          media: base64Media || fullMediaUrl,
+          caption: payload.content || '',
+          fileName,
+        },
+      };
+
+      if (payload.quoted) {
+        reqBody.quoted = payload.quoted;
+      }
+
       const response = await axios.post(
         url,
-        {
-          number: cleanPhone,
-          options: {
-            delay: 1200,
-            presence: 'composing',
-          },
-          mediaMessage: {
-            mediatype,
-            media: base64Media || fullMediaUrl,
-            caption: payload.content || '',
-            fileName,
-          },
-        },
+        reqBody,
         {
           headers: {
             apikey: evoConfig.apiKey,
@@ -542,18 +566,22 @@ export class MessagingService {
           const isVideo = payload.type === 'video';
           const mediatype = isDocument ? 'document' : isVideo ? 'video' : 'image';
           const fileName = payload.filename || (isDocument ? 'documento.pdf' : isVideo ? 'video.mp4' : 'imagem.jpg');
+          const retryReqBody: any = {
+            number: cleanPhone,
+            options: { delay: 1200, presence: 'composing' },
+            mediaMessage: {
+              mediatype,
+              media: base64Media || fullMediaUrl,
+              caption: payload.content || '',
+              fileName,
+            },
+          };
+          if (payload.quoted) {
+            retryReqBody.quoted = payload.quoted;
+          }
           const retryRes = await axios.post(
             url,
-            {
-              number: cleanPhone,
-              options: { delay: 1200, presence: 'composing' },
-              mediaMessage: {
-                mediatype,
-                media: base64Media || fullMediaUrl,
-                caption: payload.content || '',
-                fileName,
-              },
-            },
+            retryReqBody,
             {
               headers: { apikey: 'verto123', 'Content-Type': 'application/json' },
               timeout: 25000,
@@ -786,6 +814,89 @@ export class MessagingService {
     } catch (err: any) {
       const errorMsg = err.response?.data?.error?.message || err.message;
       this.logger.error(`Erro ao enviar áudio Meta API: ${errorMsg}`);
+      return { success: false, error: errorMsg };
+    }
+  }
+
+  /**
+   * Envia ou remove uma reação com emoji em uma mensagem existente no WhatsApp via Evolution API
+   */
+  async sendReaction(payload: SendReactionPayload): Promise<SendResult> {
+    const cleanPhone = this.sanitizePhone(payload.phone);
+    if (!cleanPhone) {
+      return { success: false, error: 'Telefone inválido' };
+    }
+
+    const conn = await this.resolveConnection(payload.tenantId, payload.instanceId, cleanPhone);
+    const remoteJid = cleanPhone.includes('@') ? cleanPhone : `${cleanPhone}@s.whatsapp.net`;
+    const url = `${conn.evolution.url}/message/sendReaction/${conn.evolution.instanceName}`;
+
+    try {
+      this.logger.log(
+        `Disparando reação [${payload.reaction || 'REMOVER'}] para mensagem ${payload.providerMessageId} via Evolution [${conn.evolution.instanceName}]...`
+      );
+
+      const response = await axios.post(
+        url,
+        {
+          reactionMessage: {
+            key: {
+              remoteJid,
+              fromMe: payload.fromMe ?? false,
+              id: payload.providerMessageId,
+            },
+            reaction: payload.reaction,
+          },
+        },
+        {
+          headers: {
+            apikey: conn.evolution.apiKey,
+            'Content-Type': 'application/json',
+          },
+          timeout: 10000,
+        },
+      );
+
+      return {
+        success: true,
+        messageId: payload.providerMessageId,
+        provider: 'evolution',
+        raw: response.data,
+      };
+    } catch (err: any) {
+      if (err.response?.status === 401 && conn.evolution.apiKey !== 'verto123') {
+        try {
+          const retryRes = await axios.post(
+            url,
+            {
+              reactionMessage: {
+                key: {
+                  remoteJid,
+                  fromMe: payload.fromMe ?? false,
+                  id: payload.providerMessageId,
+                },
+                reaction: payload.reaction,
+              },
+            },
+            {
+              headers: {
+                apikey: 'verto123',
+                'Content-Type': 'application/json',
+              },
+              timeout: 10000,
+            },
+          );
+          return {
+            success: true,
+            messageId: payload.providerMessageId,
+            provider: 'evolution',
+            raw: retryRes.data,
+          };
+        } catch (retryErr: any) {}
+      }
+      const rawError = err.response?.data?.response?.message || err.response?.data?.message || err.message;
+      const errorMsg = typeof rawError === 'object' ? JSON.stringify(rawError) : String(rawError);
+      this.logger.error(`Erro ao enviar reação Evolution API: ${errorMsg}`);
       return { success: false, error: errorMsg };
     }
   }
