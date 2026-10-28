@@ -11,7 +11,7 @@ import {
   Smile, Bold, Italic, Strikethrough, Code, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Trash2, Play, Pause,
   Volume2, Check, CheckCheck, Copy, ExternalLink, Headphones, Download, ZoomIn, Maximize2,
   BellOff, History, UserPlus, FileDown, MessageSquarePlus, PanelRight, Info, Pin,
-  Clock, AlertCircle, Workflow, Pencil, ShoppingBag, MapPin, Video, ArrowLeft, Reply
+  Clock, AlertCircle, Workflow, Pencil, ShoppingBag, MapPin, Video, ArrowLeft, Reply, Users
 } from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
 import { useWhatsApp } from "@/components/ui/WhatsAppProvider";
@@ -144,6 +144,7 @@ function InboxContent() {
   const [showContactInfo, setShowContactInfo] = useState(false);
   const [replyingToMessage, setReplyingToMessage] = useState<any | null>(null);
   const [activeReactionPickerMessageId, setActiveReactionPickerMessageId] = useState<string | null>(null);
+  const [selectedMessageForAction, setSelectedMessageForAction] = useState<string | null>(null);
 
   const scrollToMessage = (msgId?: string) => {
     if (!msgId) return;
@@ -1019,7 +1020,11 @@ function InboxContent() {
       type?: 'text' | 'document' | 'image' | 'video';
       mediaUrl?: string | null;
       fileName?: string | null;
+      mediaFiles?: Array<{ url: string; driveId?: string; type: string; fileName: string }>;
       isMedia?: boolean;
+      imageCount?: number;
+      videoCount?: number;
+      docCount?: number;
       action?: () => void;
     }> = [];
 
@@ -1027,14 +1032,38 @@ function InboxContent() {
     if (Array.isArray(quickReplies) && quickReplies.length > 0) {
       quickReplies.forEach(qr => {
         const sc = qr.shortcut.startsWith('/') ? qr.shortcut : `/${qr.shortcut}`;
-        const isMedia = Boolean(qr.type && qr.type !== 'text' && qr.mediaUrl);
+        let mediaFiles: Array<{ url: string; driveId?: string; type: string; fileName: string }> = [];
+
+        if (Array.isArray(qr.mediaFiles) && qr.mediaFiles.length > 0) {
+          mediaFiles = qr.mediaFiles;
+        } else if (qr.mediaUrl) {
+          const trimmed = qr.mediaUrl.trim();
+          if (trimmed.startsWith('[')) {
+            try {
+              const parsed = JSON.parse(trimmed);
+              if (Array.isArray(parsed)) mediaFiles = parsed;
+            } catch {}
+          }
+          if (mediaFiles.length === 0 && qr.type !== 'text') {
+            mediaFiles = [{
+              url: qr.mediaUrl,
+              driveId: qr.mediaDriveId || undefined,
+              type: qr.type || 'image',
+              fileName: qr.fileName || 'arquivo'
+            }];
+          }
+        }
+
+        const isMedia = mediaFiles.length > 0 || Boolean(qr.type && qr.type !== 'text' && qr.mediaUrl);
+        const imageCount = qr.imageCount !== undefined ? qr.imageCount : mediaFiles.filter(m => m.type === 'image').length;
+        const videoCount = qr.videoCount !== undefined ? qr.videoCount : mediaFiles.filter(m => m.type === 'video').length;
+        const docCount = qr.docCount !== undefined ? qr.docCount : mediaFiles.filter(m => m.type === 'document').length;
         const type = (qr.type || 'text') as 'text' | 'document' | 'image' | 'video';
 
         let iconType: 'zap' | 'image' | 'file' | 'audio' | 'catalog' = 'zap';
-        if (type === 'document') iconType = 'file';
-        else if (type === 'image') iconType = 'image';
-        else if (type === 'video') iconType = 'catalog';
-        else if (sc.toLowerCase().includes('cat')) iconType = 'catalog';
+        if (type === 'document' || docCount > 0) iconType = 'file';
+        else if (type === 'video' || videoCount > 0) iconType = 'catalog';
+        else if (type === 'image' || imageCount > 0) iconType = 'image';
 
         items.push({
           id: `qr-${qr.id}`,
@@ -1047,7 +1076,11 @@ function InboxContent() {
           type,
           mediaUrl: qr.mediaUrl,
           fileName: qr.fileName,
+          mediaFiles,
           isMedia,
+          imageCount,
+          videoCount,
+          docCount,
         });
       });
     }
@@ -1059,8 +1092,8 @@ function InboxContent() {
         id: 'action-catalogo',
         category: 'reply',
         shortcut: '/catalogo',
-        title: '/catalogo',
-        description: 'Enviar catálogo comercial da empresa',
+        title: 'Catálogo Verto Oficial',
+        description: 'Apresentação comercial e catálogo técnico completo Verto Soluções Agrícolas',
         iconType: 'catalog',
         content: 'Confira nosso catálogo oficial com todas as soluções completas!',
         type: 'text'
@@ -1073,8 +1106,8 @@ function InboxContent() {
         id: 'action-foto',
         category: 'action',
         shortcut: '/foto',
-        title: '/foto (ou /video)',
-        description: 'Anexar imagem, foto ou vídeo da galeria',
+        title: 'Anexar Imagem / Foto',
+        description: 'Anexar imagem, foto ou vídeo da galeria local',
         iconType: 'image',
         action: () => fileInputImageRef.current?.click()
       },
@@ -1082,8 +1115,8 @@ function InboxContent() {
         id: 'action-arquivo',
         category: 'action',
         shortcut: '/arquivo',
-        title: '/arquivo (ou /documento)',
-        description: 'Anexar documento PDF, DOCX ou planilha',
+        title: 'Anexar Documento',
+        description: 'Anexar arquivo PDF, planilha ou proposta comercial',
         iconType: 'file',
         action: () => fileInputDocRef.current?.click()
       },
@@ -1091,8 +1124,8 @@ function InboxContent() {
         id: 'action-audio',
         category: 'action',
         shortcut: '/audio',
-        title: '/audio (gravar voz)',
-        description: 'Iniciar gravador de mensagem de áudio',
+        title: 'Gravar Áudio de Voz',
+        description: 'Iniciar gravação de voz com transcrição automática',
         iconType: 'audio',
         action: () => startRecording()
       }
@@ -1114,43 +1147,63 @@ function InboxContent() {
 
   const handleSendMediaSlashItem = async (item: typeof slashItems[0]) => {
     if (!activeChat) {
-      toast.error('Selecione uma conversa para enviar o catálogo.');
+      toast.error('Selecione uma conversa para enviar o material.');
       return;
     }
 
     setInputText('');
     setShowQuickReplies(false);
 
-    const type = item.type || 'document';
-    const filename = item.fileName || (type === 'document' ? 'catalogo.pdf' : type === 'video' ? 'video.mp4' : 'imagem.jpg');
+    const mediaList = (item.mediaFiles && item.mediaFiles.length > 0)
+      ? item.mediaFiles
+      : (item.mediaUrl ? [{ url: item.mediaUrl, type: item.type || 'document', fileName: item.fileName || 'arquivo' }] : []);
 
-    const toastId = toast.loading(`Enviando ${item.title || 'catálogo'} via WhatsApp...`);
+    if (mediaList.length === 0) return;
+
+    const countLabel = mediaList.length > 1 ? ` (${mediaList.length} mídias)` : '';
+    const toastId = toast.loading(`Enviando ${item.title || 'material'}${countLabel} via WhatsApp...`);
 
     try {
-      const payload: any = {
-        content: item.content || item.title || '',
-        isInternal: isInternalMode,
-        type,
-        mediaUrl: item.mediaUrl,
-        filename,
-        ...(replyingToMessage ? { quotedMessageId: replyingToMessage.id } : {}),
-        ...(activeInstance?.id ? { instanceId: activeInstance.id } : {})
-      };
-      setReplyingToMessage(null);
+      for (let i = 0; i < mediaList.length; i++) {
+        const m = mediaList[i];
+        const mType = (m.type || item.type || 'image') as string;
+        const isFirst = i === 0;
 
-      const { data } = await api.post(`/conversations/${activeChat}/messages`, payload);
-      setMessages(prev => [...prev, data]);
-      toast.success(`${item.title || 'Catálogo'} enviado com sucesso via WhatsApp!`, { id: toastId });
+        // Legenda no primeiro envio para acompanhar o pacote
+        const content = isFirst ? (item.content || item.title || '') : '';
+        const filename = m.fileName || (mType === 'document' ? 'catalogo.pdf' : mType === 'video' ? 'video.mp4' : 'imagem.jpg');
+
+        const payload: any = {
+          content,
+          isInternal: isInternalMode,
+          type: mType,
+          mediaUrl: m.url,
+          filename,
+          ...(replyingToMessage && isFirst ? { quotedMessageId: replyingToMessage.id } : {}),
+          ...(activeInstance?.id ? { instanceId: activeInstance.id } : {})
+        };
+
+        const { data } = await api.post(`/conversations/${activeChat}/messages`, payload);
+        setMessages(prev => [...prev, data]);
+
+        if (mediaList.length > 1 && i < mediaList.length - 1) {
+          // Pequeno intervalo entre envios de lote para integridade do Baileys
+          await new Promise(r => setTimeout(r, 450));
+        }
+      }
+
+      setReplyingToMessage(null);
+      toast.success(`${item.title || 'Material'} enviado com sucesso via WhatsApp!`, { id: toastId });
 
       if (!isInternalMode) {
-        setContacts(prev => prev.map(c => c.id === activeChat ? { ...c, lastMsg: `[${type.toUpperCase()}] ${item.title || item.shortcut}` } : c));
+        setContacts(prev => prev.map(c => c.id === activeChat ? { ...c, lastMsg: `[${item.type?.toUpperCase() || 'CATÁLOGO'}] ${item.title || item.shortcut}` } : c));
       }
 
       if (isResolved) {
         api.patch(`/conversations/${activeChat}/reopen`).then(() => refetchConversations()).catch(() => {});
       }
     } catch (err: any) {
-      console.error('Erro ao enviar catálogo via atalho:', err);
+      console.error('Erro ao enviar material via atalho:', err);
       toast.error(err.response?.data?.message || 'Falha ao enviar arquivo via WhatsApp.', { id: toastId });
     }
   };
@@ -1162,7 +1215,7 @@ function InboxContent() {
     if (item.action) {
       setInputText('');
       item.action();
-    } else if (item.isMedia && item.mediaUrl) {
+    } else if (item.isMedia) {
       handleSendMediaSlashItem(item);
     } else if (item.content) {
       setInputText(item.content);
@@ -4443,31 +4496,48 @@ function InboxContent() {
                               }}
                             />
                             
-                            {/* Popover de Respostas Rápidas & Catálogo (Menu /) */}
+                            {/* Popover de Respostas Rápidas & Catálogo (Menu / - Padrão Lero) */}
                             {showQuickReplies && (
                               <>
                                 <div className="fixed inset-0 z-40" onClick={() => setShowQuickReplies(false)} />
-                                <div className="absolute bottom-full left-0 mb-3 w-[360px] max-w-[90vw] bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700 shadow-[0_20px_50px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.85)] rounded-2xl overflow-hidden z-50 animate-in slide-in-from-bottom-2">
-                                  {/* Cabeçalho */}
-                                  <div className="px-3.5 py-2.5 bg-slate-100 dark:bg-slate-800/90 text-xs font-bold text-slate-800 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                      <Zap size={13} className="text-amber-500 dark:text-amber-400" />
-                                      <span>Respostas Rápidas & Catálogo</span>
+                                <div className="absolute bottom-full left-0 mb-3 w-[520px] max-w-[95vw] bg-[#1a2230] border border-slate-700/80 shadow-[0_20px_50px_rgba(0,0,0,0.6)] rounded-2xl overflow-hidden z-50 animate-in slide-in-from-bottom-2">
+                                  {/* Top Search Filter Header */}
+                                  <div className="px-4 py-2.5 bg-[#141b27] border-b border-slate-700/70 flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2 w-full text-slate-300">
+                                      <span className="text-emerald-400 font-bold font-mono text-sm select-none">/</span>
+                                      <input 
+                                        type="text"
+                                        value={quickReplyFilter}
+                                        onChange={(e) => {
+                                          setQuickReplyFilter(e.target.value);
+                                          setQuickReplyIndex(0);
+                                        }}
+                                        placeholder="Digite para filtrar..."
+                                        className="bg-transparent border-none outline-none text-slate-200 placeholder-slate-500 w-full text-sm font-sans"
+                                        autoFocus
+                                      />
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-normal">Use ↑↓ e Enter</span>
-                                      <button 
-                                        type="button" 
-                                        onClick={() => setShowQuickReplies(false)} 
-                                        className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-0.5"
-                                      >
-                                        <X size={12} />
-                                      </button>
-                                    </div>
+                                    <button 
+                                      type="button" 
+                                      onClick={() => setShowQuickReplies(false)} 
+                                      className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
+                                      title="Fechar"
+                                    >
+                                      <X size={14} />
+                                    </button>
+                                  </div>
+
+                                  {/* Subheader: Mensagens da Equipe */}
+                                  <div className="px-4 py-2 bg-[#101723] flex items-center gap-2 text-xs font-semibold text-slate-400 border-b border-slate-800/80">
+                                    <Users size={14} className="text-slate-400 shrink-0" />
+                                    <span>Mensagens da Equipe</span>
+                                    <span className="ml-auto text-[10px] text-slate-500 font-mono">
+                                      {filteredSlashItems.length} atalhos
+                                    </span>
                                   </div>
 
                                   {/* Lista de itens */}
-                                  <div className="max-h-64 overflow-y-auto divide-y divide-slate-200 dark:divide-slate-800/60">
+                                  <div className="max-h-72 overflow-y-auto divide-y divide-slate-800/60 p-2 space-y-1">
                                     {filteredSlashItems.length > 0 ? (
                                       filteredSlashItems.map((item, idx) => {
                                         const isSelected = idx === quickReplyIndex;
@@ -4476,70 +4546,79 @@ function InboxContent() {
                                             key={item.id} 
                                             onClick={() => handleSelectSlashItem(item)}
                                             onMouseEnter={() => setQuickReplyIndex(idx)}
-                                            className={`px-3.5 py-2.5 cursor-pointer transition-colors flex items-start gap-2.5 ${
+                                            className={`px-3 py-2 cursor-pointer transition-colors flex items-start gap-3 rounded-xl ${
                                               isSelected 
-                                                ? 'bg-blue-50 dark:bg-blue-600/20 border-l-2 border-blue-600 dark:border-blue-400 text-slate-900 dark:text-white' 
-                                                : 'hover:bg-slate-50 dark:hover:bg-slate-800/70 text-slate-700 dark:text-slate-300'
+                                                ? 'bg-[#153828] border border-emerald-500/50 text-white shadow-sm' 
+                                                : 'hover:bg-slate-800/60 text-slate-300 border border-transparent'
                                             }`}
                                           >
-                                            <div className="mt-0.5 p-1 rounded-md bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 shrink-0">
-                                              {item.type === 'document' && <FileText size={14} className="text-rose-500 dark:text-rose-400" />}
-                                              {item.type === 'image' && <ImageIcon size={14} className="text-purple-500 dark:text-purple-400" />}
-                                              {item.type === 'video' && <Video size={14} className="text-emerald-500 dark:text-emerald-400" />}
-                                              {(!item.type || item.type === 'text') && item.iconType === 'catalog' && <ShoppingBag size={14} className="text-emerald-500 dark:text-emerald-400" />}
-                                              {(!item.type || item.type === 'text') && item.iconType === 'image' && <ImageIcon size={14} className="text-blue-500 dark:text-blue-400" />}
-                                              {(!item.type || item.type === 'text') && item.iconType === 'file' && <FileText size={14} className="text-cyan-500 dark:text-cyan-400" />}
-                                              {(!item.type || item.type === 'text') && item.iconType === 'audio' && <Mic size={14} className="text-rose-500 dark:text-rose-400" />}
-                                              {(!item.type || item.type === 'text') && item.iconType === 'zap' && <Zap size={14} className="text-amber-500 dark:text-amber-400" />}
-                                            </div>
+                                            <MessageSquare 
+                                              size={16} 
+                                              className={`shrink-0 mt-1 transition-colors ${isSelected ? 'text-emerald-400' : 'text-slate-400'}`} 
+                                            />
 
                                             <div className="flex-1 min-w-0">
-                                              <div className="flex items-center justify-between gap-1 mb-0.5">
-                                                <div className="flex items-center gap-1.5 flex-wrap">
-                                                  <span className="text-xs font-mono font-bold text-blue-600 dark:text-blue-400">{item.shortcut}</span>
-                                                  {item.isMedia && (
-                                                    <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
-                                                      item.type === 'document'
-                                                        ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
-                                                        : item.type === 'video'
-                                                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
-                                                        : 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20'
-                                                    }`}>
-                                                      {item.type === 'document' ? 'PDF NATIVO' : item.type === 'video' ? 'VÍDEO NATIVO' : 'FOTO NATIVA'}
-                                                    </span>
-                                                  )}
-                                                  {item.category === 'action' && (
-                                                    <span className="text-[10px] px-1.5 py-0.2 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded border border-slate-300 dark:border-slate-700">ação</span>
-                                                  )}
-                                                </div>
-                                                {item.fileName && (
-                                                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono truncate max-w-[130px]" title={item.fileName}>
-                                                    {item.fileName}
-                                                  </span>
+                                              <div className="flex items-center gap-2 flex-wrap">
+                                                <span className="text-sm font-semibold text-emerald-400 font-mono">
+                                                  {item.shortcut}
+                                                </span>
+                                                <span className="text-sm font-bold text-white truncate">
+                                                  {item.title}
+                                                </span>
+                                                {item.isMedia && (
+                                                  <div className="inline-flex items-center gap-1.5 ml-0.5">
+                                                    <Paperclip size={12} className="text-emerald-400 shrink-0" />
+                                                    {(item.imageCount || 0) > 0 && (
+                                                      <span className="inline-flex items-center gap-1 bg-emerald-950/80 border border-emerald-500/30 text-emerald-300 text-[11px] px-1.5 py-0.2 rounded font-medium">
+                                                        <ImageIcon size={11} /> {item.imageCount}
+                                                      </span>
+                                                    )}
+                                                    {(item.videoCount || 0) > 0 && (
+                                                      <span className="inline-flex items-center gap-1 bg-emerald-950/80 border border-emerald-500/30 text-emerald-300 text-[11px] px-1.5 py-0.2 rounded font-medium">
+                                                        <Video size={11} /> {item.videoCount}
+                                                      </span>
+                                                    )}
+                                                    {(item.docCount || 0) > 0 && (
+                                                      <span className="inline-flex items-center gap-1 bg-emerald-950/80 border border-emerald-500/30 text-emerald-300 text-[11px] px-1.5 py-0.2 rounded font-medium">
+                                                        <FileText size={11} /> {item.docCount}
+                                                      </span>
+                                                    )}
+                                                  </div>
+                                                )}
+                                                {item.category === 'action' && (
+                                                  <span className="text-[10px] px-1.5 py-0.2 bg-slate-800 text-slate-400 rounded border border-slate-700">ação</span>
                                                 )}
                                               </div>
-                                              {item.title && item.title !== item.shortcut && (
-                                                <div className="text-[11px] font-bold text-slate-800 dark:text-slate-100 truncate mb-0.5">
-                                                  {item.title}
-                                                </div>
-                                              )}
-                                              <div className="text-[11px] text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed">
+                                              <p className="text-xs text-slate-400 truncate mt-0.5 leading-relaxed">
                                                 {item.description}
-                                              </div>
+                                              </p>
                                             </div>
+
+                                            <button 
+                                              type="button" 
+                                              onClick={(e) => { 
+                                                e.stopPropagation(); 
+                                                setShowQuickReplies(false); 
+                                                window.open('/settings?tab=quick-replies', '_blank'); 
+                                              }} 
+                                              className="p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors cursor-pointer shrink-0 ml-2" 
+                                              title="Editar atalho"
+                                            >
+                                              <Pencil size={13} />
+                                            </button>
                                           </div>
                                         );
                                       })
                                     ) : (
-                                      <div className="p-4 text-center">
-                                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-                                          Nenhum atalho encontrado para <span className="font-mono text-blue-600 dark:text-blue-400 font-bold">/{quickReplyFilter}</span>
+                                      <div className="p-5 text-center">
+                                        <p className="text-xs text-slate-400 mb-2">
+                                          Nenhum atalho encontrado para <span className="font-mono text-emerald-400 font-bold">/{quickReplyFilter}</span>
                                         </p>
                                         <a 
                                           href="/settings?tab=quick-replies" 
                                           target="_blank" 
                                           rel="noopener noreferrer"
-                                          className="inline-flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 underline"
+                                          className="inline-flex items-center gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 underline"
                                         >
                                           <Plus size={12} /> Criar nova resposta rápida
                                         </a>
@@ -4547,17 +4626,21 @@ function InboxContent() {
                                     )}
                                   </div>
 
-                                  {/* Rodapé informativo */}
-                                  <div className="px-3 py-1.5 bg-slate-50 dark:bg-[#0B1224] border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400">
-                                    <span>Dica: digite <code className="text-blue-600 dark:text-blue-300 font-mono">/catalogo</code>, <code className="text-blue-600 dark:text-blue-300 font-mono">/ola</code></span>
+                                  {/* Rodapé Padrão Lero */}
+                                  <div className="px-4 py-2.5 bg-[#0e1522] border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500 font-mono">
+                                    <div className="flex items-center gap-4">
+                                      <span>↑↓ navegar</span>
+                                      <span>Enter selecionar</span>
+                                      <span>Esc fechar</span>
+                                    </div>
                                     <a 
                                       href="/settings?tab=quick-replies" 
                                       target="_blank" 
                                       rel="noopener noreferrer" 
-                                      className="text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-300 transition-colors flex items-center gap-1"
+                                      className="text-slate-400 hover:text-emerald-400 transition-colors flex items-center gap-1 font-sans"
                                     >
                                       <span>Gerenciar atalhos</span>
-                                      <ExternalLink size={10} />
+                                      <ExternalLink size={11} />
                                     </a>
                                   </div>
                                 </div>

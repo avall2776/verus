@@ -43,6 +43,10 @@ export interface QuickReplyItem {
   mediaUrl?: string | null;
   mediaDriveId?: string | null;
   fileName?: string | null;
+  mediaFiles?: Array<{ url: string; driveId?: string; type: string; fileName: string }>;
+  imageCount?: number;
+  videoCount?: number;
+  docCount?: number;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -602,16 +606,44 @@ export default function QuickRepliesSettingsTab() {
 
                   {/* Título do Material */}
                   {reply.title && (
-                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100 tracking-tight">
-                      {reply.title}
-                    </h4>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100 tracking-tight">
+                        {reply.title}
+                      </h4>
+                      {/* Badges de Anexos estilo Lero */}
+                      {isMedia && (
+                        <div className="inline-flex items-center gap-1.5 ml-1">
+                          <span className="text-emerald-500 text-xs">📎</span>
+                          {(reply.imageCount || 0) > 0 && (
+                            <span className="inline-flex items-center gap-1 bg-emerald-950/40 border border-emerald-500/30 text-emerald-400 text-[10px] px-1.5 py-0.2 rounded font-medium">
+                              <ImageIcon className="w-3 h-3" /> {reply.imageCount} {reply.imageCount === 1 ? 'foto' : 'fotos'}
+                            </span>
+                          )}
+                          {(reply.videoCount || 0) > 0 && (
+                            <span className="inline-flex items-center gap-1 bg-emerald-950/40 border border-emerald-500/30 text-emerald-400 text-[10px] px-1.5 py-0.2 rounded font-medium">
+                              <Video className="w-3 h-3" /> {reply.videoCount} {reply.videoCount === 1 ? 'vídeo' : 'vídeos'}
+                            </span>
+                          )}
+                          {(reply.docCount || 0) > 0 && (
+                            <span className="inline-flex items-center gap-1 bg-emerald-950/40 border border-emerald-500/30 text-emerald-400 text-[10px] px-1.5 py-0.2 rounded font-medium">
+                              <FileText className="w-3 h-3" /> {reply.docCount} {reply.docCount === 1 ? 'PDF' : 'PDFs'}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   )}
 
-                  {/* Nome do Arquivo no WhatsApp */}
+                  {/* Nome do Arquivo / Pacote no WhatsApp */}
                   {reply.fileName && isMedia && (
                     <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 text-[11px] font-mono break-all">
                       <FileCheck2 className="w-3 h-3 text-emerald-500 shrink-0" />
                       <span>{reply.fileName}</span>
+                      {reply.mediaFiles && reply.mediaFiles.length > 1 && (
+                        <span className="text-[10px] text-emerald-500 font-sans font-bold">
+                          (+{reply.mediaFiles.length - 1} mídias no pacote)
+                        </span>
+                      )}
                     </div>
                   )}
 
