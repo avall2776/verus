@@ -665,6 +665,8 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
     }
     async handleWhatsAppStatusEvent(tenantId, event, payload) {
         try {
+            const rawInstName = payload?.instance || payload?.data?.instance || '';
+            const instName = await this.whatsappService.getEvolutionInstanceName(tenantId, rawInstName);
             const isPostEvent = event === 'messages.upsert' ||
                 event === 'MESSAGES_UPSERT' ||
                 event === 'send.message' ||
@@ -687,6 +689,9 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                     orderBy: { isDefault: 'desc' },
                 });
                 const selfDigits = activeInst?.phoneNumber ? activeInst.phoneNumber.replace(/\D/g, '') : null;
+                const selfLid = activeInst?.settings?.ownerLid
+                    ? String((activeInst?.settings).ownerLid).split(':')[0].replace(/\D/g, '')
+                    : null;
                 for (const data of items) {
                     const key = data?.key;
                     if (!key)
@@ -694,9 +699,10 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                     const remoteJid = key.remoteJid || data.remoteJid || '';
                     if (!remoteJid.includes('status@broadcast'))
                         continue;
-                    const participant = String(key.participant || data.participant || '').replace(/\D/g, '');
+                    const participant = String(key.participant || data.participant || '').split(':')[0].replace(/\D/g, '');
                     const isOwn = Boolean(key.fromMe) ||
-                        (selfDigits && participant && (participant.includes(selfDigits) || selfDigits.includes(participant)));
+                        (selfDigits && participant && (participant.includes(selfDigits) || selfDigits.includes(participant))) ||
+                        (selfLid && participant && (participant.includes(selfLid) || selfLid.includes(participant)));
                     if (!isOwn) {
                         continue;
                     }
@@ -714,7 +720,8 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                         lower.includes('máquina') ||
                         lower.includes('implemento') ||
                         lower.includes('pulverizador') ||
-                        lower.includes('colheitadeira')) {
+                        lower.includes('colheitadeira') ||
+                        lower.includes('grade')) {
                         category = 'Maquinários';
                     }
                     else if (lower.includes('adubo') ||
@@ -741,6 +748,18 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                         lower.includes('oficina')) {
                         category = 'Peças & Serviços';
                     }
+                    let fullBase64 = messageObj?.base64 || data?.base64 || null;
+                    if (!fullBase64 && instName && (messageObj?.imageMessage || messageObj?.videoMessage)) {
+                        try {
+                            fullBase64 = await this.whatsappService.getBase64FromEvolutionMedia(instName, messageObj, key);
+                        }
+                        catch { }
+                    }
+                    let highResDataUri = null;
+                    if (fullBase64 && typeof fullBase64 === 'string' && fullBase64.length > 500 && !messageObj?.videoMessage) {
+                        const mime = messageObj?.imageMessage?.mimetype || 'image/jpeg';
+                        highResDataUri = fullBase64.startsWith('data:') ? fullBase64 : `data:${mime};base64,${fullBase64}`;
+                    }
                     const rawJpeg = messageObj?.imageMessage?.jpegThumbnail || messageObj?.videoMessage?.jpegThumbnail;
                     let thumbnailBase64 = null;
                     if (rawJpeg) {
@@ -750,9 +769,17 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                         else if (typeof rawJpeg === 'string' && rawJpeg.length > 20) {
                             thumbnailBase64 = rawJpeg.startsWith('data:') ? rawJpeg : `data:image/jpeg;base64,${rawJpeg}`;
                         }
+                        else if (rawJpeg?.data && Array.isArray(rawJpeg.data)) {
+                            thumbnailBase64 = `data:image/jpeg;base64,${Buffer.from(rawJpeg.data).toString('base64')}`;
+                        }
                     }
                     let mediaUrl = null;
-                    if (data?.mediaUrl && !data.mediaUrl.includes('mmg.whatsapp.net')) {
+                    if (highResDataUri) {
+                        mediaUrl = highResDataUri;
+                    }
+                    else if (data?.mediaUrl &&
+                        !data.mediaUrl.includes('mmg.whatsapp.net') &&
+                        !data.mediaUrl.includes('172.16.0.1')) {
                         mediaUrl = data.mediaUrl;
                     }
                     else if (thumbnailBase64) {
@@ -760,12 +787,21 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                     }
                     const tsVal = data?.messageTimestamp?.low || data?.messageTimestamp;
                     const postedDate = tsVal ? new Date(Number(tsVal) * 1000) : new Date();
-                    const existing = await this.prisma.$queryRawUnsafe(`SELECT id, "mediaUrl" FROM "whatsapp_status_posts" WHERE "tenantId" = $1 AND "messageId" = $2 LIMIT 1`, tenantId, key.id);
+                    let existing = await this.prisma.$queryRawUnsafe(`SELECT id, "messageId", "mediaUrl" FROM "whatsapp_status_posts" WHERE "tenantId" = $1 AND "messageId" = $2 LIMIT 1`, tenantId, key.id);
+                    if (!existing || existing.length === 0) {
+                        existing = await this.prisma.$queryRawUnsafe(`SELECT id, "messageId", "mediaUrl" FROM "whatsapp_status_posts"
+               WHERE "tenantId" = $1
+                 AND "messageId" LIKE 'story_msg_%'
+                 AND "postedAt" >= NOW() - INTERVAL '15 minutes'
+               ORDER BY "postedAt" DESC
+               LIMIT 1`, tenantId);
+                    }
                     let finalPostId = existing?.[0]?.id;
                     if (existing && existing.length > 0) {
-                        if (mediaUrl && !existing[0].mediaUrl) {
-                            await this.prisma.$executeRawUnsafe(`UPDATE "whatsapp_status_posts" SET "mediaUrl" = $1 WHERE "id" = $2`, mediaUrl, existing[0].id);
-                        }
+                        const curMediaLen = existing[0].mediaUrl ? String(existing[0].mediaUrl).length : 0;
+                        const newMediaLen = mediaUrl ? mediaUrl.length : 0;
+                        const bestMedia = newMediaLen > curMediaLen ? mediaUrl : existing[0].mediaUrl;
+                        await this.prisma.$executeRawUnsafe(`UPDATE "whatsapp_status_posts" SET "messageId" = $1, "mediaUrl" = $2 WHERE "id" = $3`, key.id, bestMedia, existing[0].id);
                     }
                     else {
                         finalPostId = `post_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
@@ -799,9 +835,7 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                 }
                 for (const item of items) {
                     const remoteJid = item?.key?.remoteJid || item?.remoteJid || payload?.data?.key?.remoteJid || '';
-                    if (!remoteJid.includes('status@broadcast'))
-                        continue;
-                    const storyMessageId = item?.key?.id || item?.id || payload?.data?.key?.id;
+                    const storyMessageId = item?.key?.id || item?.id || item?.keyId || payload?.data?.key?.id;
                     if (!storyMessageId)
                         continue;
                     let matchedPost = null;
@@ -812,6 +846,34 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                         }
                     }
                     catch (e) { }
+                    if (!matchedPost && !remoteJid.includes('status@broadcast')) {
+                        continue;
+                    }
+                    if (!matchedPost && remoteJid.includes('status@broadcast') && (item?.key?.fromMe || item?.fromMe)) {
+                        const recentPosts = await this.prisma.$queryRawUnsafe(`SELECT * FROM "whatsapp_status_posts"
+               WHERE "tenantId" = $1 AND "postedAt" >= NOW() - INTERVAL '24 hours'
+               ORDER BY "postedAt" DESC LIMIT 1`, tenantId).catch(() => []);
+                        if (recentPosts && recentPosts.length > 0) {
+                            matchedPost = recentPosts[0];
+                            if (String(matchedPost.messageId).startsWith('story_msg_')) {
+                                await this.prisma.$executeRawUnsafe(`UPDATE "whatsapp_status_posts" SET "messageId" = $1 WHERE "id" = $2`, storyMessageId, matchedPost.id).catch(() => { });
+                                matchedPost.messageId = storyMessageId;
+                            }
+                        }
+                        else {
+                            const autoPostId = `post_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+                            await this.prisma.$executeRawUnsafe(`INSERT INTO "whatsapp_status_posts" ("id", "tenantId", "messageId", "title", "category", "postedAt")
+                 VALUES ($1, $2, $3, $4, $5, NOW())`, autoPostId, tenantId, storyMessageId, 'Status Comercial WhatsApp', 'Maquinários').catch(() => { });
+                            matchedPost = {
+                                id: autoPostId,
+                                tenantId,
+                                messageId: storyMessageId,
+                                title: 'Status Comercial WhatsApp',
+                                category: 'Maquinários',
+                                mediaUrl: null,
+                            };
+                        }
+                    }
                     if (!matchedPost) {
                         continue;
                     }
@@ -819,22 +881,39 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                         item?.key?.participant ||
                         item?.receipt?.userJid ||
                         item?.userJid ||
+                        (remoteJid && !remoteJid.includes('status@broadcast') ? remoteJid : null) ||
                         payload?.data?.participant ||
                         payload?.data?.receipt?.userJid;
                     if (!rawParticipant)
                         continue;
                     let cleanPhone = String(rawParticipant)
+                        .split(':')[0]
                         .replace('@s.whatsapp.net', '')
                         .replace('@c.us', '')
                         .replace('@lid', '')
                         .replace(/\D/g, '');
                     let resolvedName = null;
+                    let resolvedAvatar = null;
                     if (rawParticipant.includes('@lid') || cleanPhone.length > 13) {
                         try {
-                            const lidMatch = await this.whatsappService.resolveLidFromAllTenants(rawParticipant);
-                            if (lidMatch?.realPhone) {
-                                cleanPhone = lidMatch.realPhone;
-                                resolvedName = lidMatch.realName;
+                            const evoResolution = await this.whatsappService.resolveContactFromEvolution(tenantId, instName, rawParticipant, item?.pushName || payload?.data?.pushName);
+                            if (evoResolution?.realPhone) {
+                                cleanPhone = evoResolution.realPhone;
+                            }
+                            if (evoResolution?.realName && evoResolution.realName !== 'Comercial Verto') {
+                                resolvedName = evoResolution.realName;
+                            }
+                            if (evoResolution?.avatarUrl) {
+                                resolvedAvatar = evoResolution.avatarUrl;
+                            }
+                            if (cleanPhone.length > 13) {
+                                const lidMatch = await this.whatsappService.resolveLidFromAllTenants(rawParticipant);
+                                if (lidMatch?.realPhone) {
+                                    cleanPhone = lidMatch.realPhone;
+                                }
+                                if (!resolvedName && lidMatch?.realName && lidMatch.realName !== 'Comercial Verto') {
+                                    resolvedName = lidMatch.realName;
+                                }
                             }
                         }
                         catch (e) { }
@@ -844,15 +923,21 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                     const timestampVal = item?.update?.readTimestamp ||
                         item?.readTimestamp ||
                         item?.timestamp ||
+                        item?.datetime ||
                         payload?.data?.receipt?.readTimestamp ||
                         payload?.data?.readTimestamp;
-                    const viewedAt = timestampVal ? new Date(Number(timestampVal) * 1000) : new Date();
+                    const tsNum = Number(timestampVal);
+                    const viewedAt = tsNum
+                        ? new Date(tsNum > 10000000000 ? tsNum : tsNum * 1000)
+                        : new Date();
                     let contact = await this.prisma.contact.findFirst({
                         where: {
                             tenantId,
                             OR: [
                                 { phone: cleanPhone },
-                                { phone: { endsWith: cleanPhone.slice(-8) } },
+                                ...(cleanPhone.length >= 10 && cleanPhone.length <= 13
+                                    ? [{ phone: { endsWith: cleanPhone.slice(-8) } }]
+                                    : []),
                                 ...(rawParticipant.includes('@lid')
                                     ? [{ whatsappLid: rawParticipant }, { whatsappLid: { contains: cleanPhone } }]
                                     : []),
@@ -867,22 +952,35 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                                 name: resolvedName || `Contato WhatsApp (${cleanPhone.slice(-4)})`,
                                 phone: formattedPhone,
                                 whatsappLid: rawParticipant.includes('@lid') ? rawParticipant : null,
+                                avatarUrl: resolvedAvatar,
                                 source: 'WhatsApp',
                                 tags: ['Radar Stories', 'Visualizou Status'],
                             },
                         });
                     }
-                    else if (rawParticipant.includes('@lid') && !contact.whatsappLid) {
-                        await this.prisma.contact
-                            .update({
-                            where: { id: contact.id },
-                            data: { whatsappLid: rawParticipant },
-                        })
-                            .catch(() => { });
+                    else {
+                        const contactUpdates = {};
+                        if (rawParticipant.includes('@lid') && !contact.whatsappLid) {
+                            contactUpdates.whatsappLid = rawParticipant;
+                        }
+                        if (cleanPhone.length >= 10 && cleanPhone.length <= 13 && (contact.phone?.includes('@lid') || (contact.phone || '').length > 13)) {
+                            contactUpdates.phone = cleanPhone;
+                        }
+                        if (resolvedName && (!contact.name || contact.name.startsWith('Produtor Rural') || contact.name.startsWith('Contato WhatsApp'))) {
+                            contactUpdates.name = resolvedName;
+                        }
+                        if (Object.keys(contactUpdates).length > 0) {
+                            contact = await this.prisma.contact
+                                .update({
+                                where: { id: contact.id },
+                                data: contactUpdates,
+                            })
+                                .catch(() => contact);
+                        }
                     }
                     const existing = await this.prisma.$queryRawUnsafe(`SELECT id FROM "whatsapp_status_views"
-             WHERE "tenantId" = $1 AND ("phone" = $2 OR "phone" = $3) AND "statusMessageId" = $4
-             LIMIT 1`, tenantId, cleanPhone, rawParticipant, storyMessageId);
+             WHERE "tenantId" = $1 AND ("phone" = $2 OR "phone" = $3 OR "contactId" = $4) AND "statusMessageId" = $5
+             LIMIT 1`, tenantId, cleanPhone, rawParticipant, contact.id, storyMessageId);
                     if (!existing || existing.length === 0) {
                         const viewId = `view_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
                         await this.prisma.$executeRawUnsafe(`INSERT INTO "whatsapp_status_views"

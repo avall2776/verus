@@ -42,7 +42,13 @@ let RadarStoriesController = class RadarStoriesController {
         return this.radarStoriesService.updateViewerClassification(tenantId, viewId, body);
     }
     async exportMetaAudience(tenantId, body) {
-        return this.radarStoriesService.exportMetaAudience(tenantId, body?.viewerIds);
+        return this.radarStoriesService.exportMetaAudience(tenantId, body?.viewerIds, body?.mode || 'sha256');
+    }
+    async sendDirectApproach(tenantId, body) {
+        return this.radarStoriesService.sendDirectApproach(tenantId, body);
+    }
+    async convertViewerToDeal(tenantId, body) {
+        return this.radarStoriesService.convertViewerToDeal(tenantId, body);
     }
     async createCampaignFromViewers(tenantId, body) {
         return this.radarStoriesService.createCampaignFromViewers(tenantId, body);
@@ -127,6 +133,22 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], RadarStoriesController.prototype, "exportMetaAudience", null);
+__decorate([
+    (0, common_1.Post)('send-approach'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], RadarStoriesController.prototype, "sendDirectApproach", null);
+__decorate([
+    (0, common_1.Post)('convert-to-deal'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], RadarStoriesController.prototype, "convertViewerToDeal", null);
 __decorate([
     (0, common_1.Post)('campaigns/create'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),

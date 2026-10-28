@@ -392,7 +392,7 @@ let GoalsService = class GoalsService {
                 email: u.email,
                 role: u.role || 'Consultor de Vendas',
                 avatarUrl: null,
-                departments: (u.departments || []).map((d) => d.department?.name).filter(Boolean),
+                departments: (u.departments || []).map((d) => (d.department?.name || '').replace(/geral/i, '').trim()).filter(Boolean),
                 totalDeals,
                 dealsWon: wonDeals.length,
                 dealsCount: wonDeals.length,
@@ -512,7 +512,7 @@ let GoalsService = class GoalsService {
                 email: user.email,
                 role: user.role,
                 createdAt: user.createdAt,
-                departments: (user.departments || []).map((d) => d.department?.name).filter(Boolean),
+                departments: (user.departments || []).map((d) => (d.department?.name || '').replace(/geral/i, '').trim()).filter(Boolean),
             },
             period: period || 'month',
             metrics: {

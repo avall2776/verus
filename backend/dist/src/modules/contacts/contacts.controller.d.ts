@@ -10,7 +10,7 @@ export declare class ContactsController {
         source: string;
         avatarUrl: string;
         tags: string[];
-        statusCategory: "lost" | "won" | "hot" | "cold" | "collaborator" | "partner";
+        statusCategory: "won" | "lost" | "hot" | "cold" | "collaborator" | "partner";
         isClient: boolean;
         dealsCount: number;
         totalWonValue: number;

@@ -2,23 +2,32 @@ import { OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaService } from '../../../shared/database/prisma.service';
 import { AiService } from '../../ai/ai.service';
 import { ChatGateway } from '../../chat/chat.gateway';
+import { ChatService } from '../../chat/chat.service';
+import { WhatsappService } from '../../whatsapp/whatsapp.service';
 import { StorageService } from '../../../shared/storage/storage.service';
 export interface StoryViewerItem {
     id: string;
     contactId: string;
+    conversationId?: string;
     name: string;
     companyOrFarm: string;
     phone: string;
     phoneFormatted: string;
+    email?: string;
     isLidOnly?: boolean;
     city: string;
     state: string;
     crmStatus: 'active_client' | 'inactive_client' | 'open_deal' | 'prospect' | 'internal_team';
     crmStatusLabel: string;
+    intentScore: number;
+    intentLabel: string;
     totalPurchased: number;
+    dealId?: string;
     dealTitle?: string;
     dealValue?: number;
     aiInsight?: string;
+    lastChatMessage?: string;
+    lastChatDate?: string;
     lastPurchaseDate?: string;
     daysInactive: number;
     assignedSeller: string;
@@ -40,9 +49,11 @@ export declare class RadarStoriesService implements OnModuleInit, OnModuleDestro
     private readonly aiService;
     private readonly chatGateway?;
     private readonly storageService?;
+    private readonly whatsappService?;
+    private readonly chatService?;
     private readonly logger;
     private syncInterval;
-    constructor(prisma: PrismaService, aiService: AiService, chatGateway?: ChatGateway, storageService?: StorageService);
+    constructor(prisma: PrismaService, aiService: AiService, chatGateway?: ChatGateway, storageService?: StorageService, whatsappService?: WhatsappService, chatService?: ChatService);
     onModuleInit(): Promise<void>;
     onModuleDestroy(): void;
     private startBackgroundSync;
@@ -105,6 +116,8 @@ export declare class RadarStoriesService implements OnModuleInit, OnModuleDestro
         }[];
         syncedViewsCount: number;
     }>;
+    private resolveViewerIdentity;
+    reconcileExistingLidViewers(tenantId: string, instanceName?: string): Promise<number>;
     private formatDateTime;
     formatBrazilianPhone(phone: string): {
         formatted: string;
@@ -113,10 +126,10 @@ export declare class RadarStoriesService implements OnModuleInit, OnModuleDestro
     };
     getMetrics(tenantId: string): Promise<{
         kpis: {
-            totalViewsToday: number;
-            totalViewsWeek: number;
+            totalViewsToday: any;
+            totalViewsWeek: any;
             producersTracked: number;
-            inactiveReheated: number;
+            inactiveReheated: any;
             hotOpportunities: number;
             conversionRatePercent: number;
         };
@@ -170,6 +183,47 @@ export declare class RadarStoriesService implements OnModuleInit, OnModuleDestro
             suggestedProduct: any;
         };
     }>;
+    sendDirectApproach(tenantId: string, body: {
+        viewerId?: string;
+        contactId?: string;
+        phone: string;
+        contactName?: string;
+        message: string;
+        storyTitle?: string;
+        createDeal?: boolean;
+    }): Promise<{
+        success: boolean;
+        contactId: string;
+        conversationId: string;
+        deal: any;
+        message: string;
+    }>;
+    convertViewerToDeal(tenantId: string, body: {
+        viewerId?: string;
+        contactId?: string;
+        phone: string;
+        contactName: string;
+        storyTitle: string;
+        category?: string;
+        estimatedValue?: number;
+    }): Promise<{
+        success: boolean;
+        alreadyExisted: boolean;
+        deal: {
+            id: string;
+            tenantId: string;
+            createdAt: Date;
+            updatedAt: Date;
+            contactId: string;
+            assignedTo: string | null;
+            status: string;
+            title: string;
+            value: import("@prisma/client/runtime/library").Decimal;
+            notes: string | null;
+            metadata: import("@prisma/client/runtime/library").JsonValue | null;
+        };
+        message: string;
+    }>;
     updatePost(tenantId: string, postId: string, data: {
         title?: string;
         category?: string;
@@ -199,8 +253,11 @@ export declare class RadarStoriesService implements OnModuleInit, OnModuleDestro
         success: boolean;
         message: string;
     }>;
-    exportMetaAudience(tenantId: string, viewerIds?: string[]): Promise<{
+    private sha256Meta;
+    private normalizeMetaText;
+    exportMetaAudience(tenantId: string, viewerIds?: string[], mode?: 'sha256' | 'plain'): Promise<{
         success: boolean;
+        mode: "sha256" | "plain";
         filename: string;
         totalContacts: number;
         csvContent: string;
@@ -216,6 +273,8 @@ export declare class RadarStoriesService implements OnModuleInit, OnModuleDestro
         campaignName: string;
         objective: string;
         totalAudience: number;
+        scheduledMessagesCount: number;
+        createdDealsCount: number;
         createdAt: string;
         message: string;
     }>;

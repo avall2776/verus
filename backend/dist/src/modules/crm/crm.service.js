@@ -88,9 +88,33 @@ let CrmService = CrmService_1 = class CrmService {
         return deal;
     }
     async findTenantUsers(tenantId) {
-        return this.prisma.user.findMany({
-            where: { tenantId },
-            select: { id: true, name: true, email: true, role: true }
+        const users = await this.prisma.user.findMany({
+            where: { tenantId, isActive: true },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                canAccessMarketing: true,
+                permissions: true,
+                departments: {
+                    select: {
+                        department: {
+                            select: { id: true, name: true }
+                        }
+                    }
+                }
+            }
+        });
+        return users.filter(u => {
+            const deptNames = (u.departments || []).map(d => (d.department?.name || '').toLowerCase());
+            const isMarketingDept = deptNames.some(n => n.includes('marketing'));
+            const isCommercialDept = deptNames.some(n => n.includes('comercial') || n.includes('venda') || n.includes('crm') || n.includes('atendimento'));
+            if (isMarketingDept && !isCommercialDept)
+                return false;
+            if (u.email?.toLowerCase().includes('marketing@') && !isCommercialDept)
+                return false;
+            return true;
         });
     }
     async createDeal(tenantId, data) {

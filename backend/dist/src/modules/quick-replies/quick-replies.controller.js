@@ -14,15 +14,59 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.QuickRepliesController = void 0;
 const common_1 = require("@nestjs/common");
+const platform_express_1 = require("@nestjs/platform-express");
 const quick_replies_service_1 = require("./quick-replies.service");
 const jwt_auth_guard_1 = require("../../shared/guards/jwt-auth.guard");
 const tenant_decorator_1 = require("../../shared/decorators/tenant.decorator");
+const google_oauth_helper_1 = require("../../shared/helpers/google-oauth.helper");
+const google_drive_helper_1 = require("../../shared/helpers/google-drive.helper");
 let QuickRepliesController = class QuickRepliesController {
     constructor(quickRepliesService) {
         this.quickRepliesService = quickRepliesService;
     }
     async getQuickReplies(tenantId) {
         return this.quickRepliesService.findAll(tenantId);
+    }
+    async getGoogleDriveStatus(tenantId) {
+        const status = (0, google_oauth_helper_1.isGoogleDriveConnected)(tenantId);
+        const authUrl = (0, google_oauth_helper_1.getGoogleOAuthUrl)(tenantId);
+        return {
+            connected: status.connected,
+            email: status.email,
+            authUrl,
+        };
+    }
+    async exchangeGoogleDriveToken(tenantId, code) {
+        if (!code) {
+            throw new common_1.BadRequestException('Código de autorização não informado.');
+        }
+        const result = await (0, google_oauth_helper_1.exchangeCodeForTokens)(code, tenantId);
+        if (!result.success) {
+            throw new common_1.BadRequestException(result.error || 'Falha ao autorizar o Google Drive.');
+        }
+        return result;
+    }
+    async uploadToDrive(tenantId, file) {
+        if (!file) {
+            throw new common_1.BadRequestException('Nenhum arquivo enviado.');
+        }
+        try {
+            const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID || '1nHrHOq1s3D8Ckvl-gAcoeIAKGkopvnaG';
+            const uploaded = await (0, google_oauth_helper_1.uploadBufferToGoogleDrive)(file.buffer, file.originalname, file.mimetype, folderId, tenantId);
+            const detectedType = (0, google_drive_helper_1.detectMediaType)(file.originalname);
+            return {
+                success: true,
+                fileId: uploaded.fileId,
+                webViewLink: uploaded.webViewLink,
+                webContentLink: uploaded.webContentLink,
+                fileName: file.originalname,
+                type: detectedType,
+            };
+        }
+        catch (err) {
+            console.error('[UPLOAD_TO_DRIVE_ERROR]', err);
+            throw new common_1.BadRequestException(err.message || 'Falha ao fazer upload para o Google Drive.');
+        }
     }
     async createQuickReply(tenantId, body) {
         return this.quickRepliesService.create(tenantId, body);
@@ -42,6 +86,32 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], QuickRepliesController.prototype, "getQuickReplies", null);
+__decorate([
+    (0, common_1.Get)('google-drive/status'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], QuickRepliesController.prototype, "getGoogleDriveStatus", null);
+__decorate([
+    (0, common_1.Post)('google-drive/exchange-token'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Body)('code')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], QuickRepliesController.prototype, "exchangeGoogleDriveToken", null);
+__decorate([
+    (0, common_1.Post)('upload-to-drive'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file', {
+        limits: { fileSize: 150 * 1024 * 1024 }
+    })),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.UploadedFile)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], QuickRepliesController.prototype, "uploadToDrive", null);
 __decorate([
     (0, common_1.Post)(),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),

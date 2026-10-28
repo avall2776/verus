@@ -4,10 +4,10 @@ export declare class RadarStoriesController {
     constructor(radarStoriesService: RadarStoriesService);
     getMetrics(tenantId: string): Promise<{
         kpis: {
-            totalViewsToday: number;
-            totalViewsWeek: number;
+            totalViewsToday: any;
+            totalViewsWeek: any;
             producersTracked: number;
-            inactiveReheated: number;
+            inactiveReheated: any;
             hotOpportunities: number;
             conversionRatePercent: number;
         };
@@ -73,11 +73,54 @@ export declare class RadarStoriesController {
     }>;
     exportMetaAudience(tenantId: string, body: {
         viewerIds?: string[];
+        mode?: 'sha256' | 'plain';
     }): Promise<{
         success: boolean;
+        mode: "sha256" | "plain";
         filename: string;
         totalContacts: number;
         csvContent: string;
+    }>;
+    sendDirectApproach(tenantId: string, body: {
+        viewerId?: string;
+        contactId?: string;
+        phone: string;
+        contactName?: string;
+        message: string;
+        storyTitle?: string;
+        createDeal?: boolean;
+    }): Promise<{
+        success: boolean;
+        contactId: string;
+        conversationId: string;
+        deal: any;
+        message: string;
+    }>;
+    convertViewerToDeal(tenantId: string, body: {
+        viewerId?: string;
+        contactId?: string;
+        phone: string;
+        contactName: string;
+        storyTitle: string;
+        category?: string;
+        estimatedValue?: number;
+    }): Promise<{
+        success: boolean;
+        alreadyExisted: boolean;
+        deal: {
+            id: string;
+            tenantId: string;
+            createdAt: Date;
+            updatedAt: Date;
+            contactId: string;
+            assignedTo: string | null;
+            status: string;
+            title: string;
+            value: import("@prisma/client/runtime/library").Decimal;
+            notes: string | null;
+            metadata: import("@prisma/client/runtime/library").JsonValue | null;
+        };
+        message: string;
     }>;
     createCampaignFromViewers(tenantId: string, body: {
         campaignName: string;
@@ -90,6 +133,8 @@ export declare class RadarStoriesController {
         campaignName: string;
         objective: string;
         totalAudience: number;
+        scheduledMessagesCount: number;
+        createdDealsCount: number;
         createdAt: string;
         message: string;
     }>;

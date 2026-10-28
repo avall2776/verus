@@ -33,7 +33,15 @@ export declare class CrmController {
         id: string;
         name: string;
         email: string;
+        departments: {
+            department: {
+                id: string;
+                name: string;
+            };
+        }[];
         role: string;
+        canAccessMarketing: boolean;
+        permissions: import("@prisma/client/runtime/library").JsonValue;
     }[]>;
     createDeal(tenantId: string, dealData: any): Promise<{
         contact: {

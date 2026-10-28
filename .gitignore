@@ -27,6 +27,8 @@ yarn-error.log*
 # misc
 .DS_Store
 *.pem
+backend/credentials/
+*.service_account.json
 
 # Editor directories and files
 .idea

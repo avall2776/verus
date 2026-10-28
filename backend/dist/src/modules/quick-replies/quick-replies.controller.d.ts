@@ -15,6 +15,24 @@ export declare class QuickRepliesController {
         mediaDriveId: string | null;
         fileName: string | null;
     }[]>;
+    getGoogleDriveStatus(tenantId: string): Promise<{
+        connected: boolean;
+        email: string;
+        authUrl: string;
+    }>;
+    exchangeGoogleDriveToken(tenantId: string, code: string): Promise<{
+        success: boolean;
+        email?: string;
+        error?: string;
+    }>;
+    uploadToDrive(tenantId: string, file: Express.Multer.File): Promise<{
+        success: boolean;
+        fileId: string;
+        webViewLink: string;
+        webContentLink: string;
+        fileName: string;
+        type: "document" | "image" | "video";
+    }>;
     createQuickReply(tenantId: string, body: CreateQuickReplyDto): Promise<{
         id: string;
         tenantId: string;
