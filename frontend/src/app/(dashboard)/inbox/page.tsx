@@ -8,7 +8,7 @@ import {
   BrainCircuit, Lock, Image as ImageIcon, FileText, Mic, X, ArrowRightLeft, Network,
   RefreshCw, TrendingUp, Calendar, MessageSquare, CheckCircle2, Plus, Sparkles,
   BookUser, CalendarClock, PhoneCall, Zap, Eye, ShieldCheck, PhoneForwarded, UserCheck,
-  Smile, Bold, Italic, Strikethrough, Code, ChevronDown, Trash2, Play, Pause,
+  Smile, Bold, Italic, Strikethrough, Code, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Trash2, Play, Pause,
   Volume2, Check, CheckCheck, Copy, ExternalLink, Headphones, Download, ZoomIn, Maximize2,
   BellOff, History, UserPlus, FileDown, MessageSquarePlus, PanelRight, Info, Pin,
   Clock, AlertCircle, Workflow, Pencil, ShoppingBag, MapPin, Video, ArrowLeft
@@ -222,8 +222,21 @@ function InboxContent() {
   const [editingNameValue, setEditingNameValue] = useState('');
   const [isSavingName, setIsSavingName] = useState(false);
 
-  // Estados para Integração com Radar de Stories (Visualizadores Recentes)
+  // Estados para Integração com Radar de Stories (Visualizadores Recentes + Stories Ativos da Linha Principal)
   const [recentStoryViewers, setRecentStoryViewers] = useState<Set<string>>(new Set());
+  const [activeLineStories, setActiveLineStories] = useState<any[]>([]);
+  const [storyViewersList, setStoryViewersList] = useState<any[]>([]);
+  const [storyViewerModal, setStoryViewerModal] = useState<{
+    isOpen: boolean;
+    currentIndex: number;
+    showViewersDrawer: boolean;
+    highlightedViewerName?: string;
+    highlightedViewerTime?: string;
+  }>({
+    isOpen: false,
+    currentIndex: 0,
+    showViewersDrawer: false,
+  });
   const [contactLatestStory, setContactLatestStory] = useState<{
     id: string;
     statusMessageId: string;
@@ -238,9 +251,19 @@ function InboxContent() {
 
   const fetchRecentStoryViewers = useCallback(async () => {
     try {
-      const res = await api.get('/crm/radar-stories/recent-viewers-phones');
-      if (res.data?.phones && Array.isArray(res.data.phones)) {
-        setRecentStoryViewers(new Set(res.data.phones.map((p: string) => p.replace(/\D/g, ''))));
+      const [phonesRes, postsRes, viewersRes] = await Promise.all([
+        api.get('/crm/radar-stories/recent-viewers-phones').catch(() => ({ data: null })),
+        api.get('/crm/radar-stories/active-posts').catch(() => ({ data: null })),
+        api.get('/crm/radar-stories/viewers').catch(() => ({ data: null })),
+      ]);
+      if (phonesRes.data?.phones && Array.isArray(phonesRes.data.phones)) {
+        setRecentStoryViewers(new Set(phonesRes.data.phones.map((p: string) => p.replace(/\D/g, ''))));
+      }
+      if (Array.isArray(postsRes.data)) {
+        setActiveLineStories(postsRes.data);
+      }
+      if (Array.isArray(viewersRes.data)) {
+        setStoryViewersList(viewersRes.data);
       }
     } catch (err) {
       // silencioso
@@ -256,16 +279,24 @@ function InboxContent() {
   useEffect(() => {
     if (!socket) return;
     const handleView = (data: any) => {
-      if (data.phone) {
+      if (data?.phone) {
         const clean = data.phone.replace(/\D/g, '');
         setRecentStoryViewers((prev) => new Set([...Array.from(prev), clean]));
       }
+      fetchRecentStoryViewers();
+    };
+    const handlePosted = () => {
+      fetchRecentStoryViewers();
     };
     socket.on('story_view_detected', handleView);
+    socket.on('radar:story-view', handleView);
+    socket.on('radar:story-posted', handlePosted);
     return () => {
       socket.off('story_view_detected', handleView);
+      socket.off('radar:story-view', handleView);
+      socket.off('radar:story-posted', handlePosted);
     };
-  }, [socket]);
+  }, [socket, fetchRecentStoryViewers]);
 
   // Carrega contatos silenciados e mensagens agendadas salvos no localStorage
   useEffect(() => {
@@ -2140,50 +2171,109 @@ function InboxContent() {
             const isWaConnecting = effectiveStatus === 'connecting' || effectiveStatus === 'qrcode';
             const instancePic = activeInstance?.profilePicUrl || waStatus?.profilePicUrl;
             const instanceName = activeInstance?.name || waStatus?.instanceName || 'Linha Principal';
+            const hasActiveStories = activeLineStories.length > 0;
+            const totalActiveViews = activeLineStories.reduce((acc, s) => acc + (Number(s.viewsCount) || 0), 0);
 
             return (
-              <div 
-                onClick={() => setShowInstanceDropdown(prev => !prev)}
-                className="flex items-center gap-2.5 cursor-pointer group p-1 -ml-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-all min-w-0"
-                title="Clique para alternar linha / instância WhatsApp"
-              >
-                {/* Foto de Perfil Circular da Instância (Linha Principal) */}
-                <div className="relative shrink-0">
-                  <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-100 dark:bg-[#17253D] border border-slate-200 dark:border-slate-700/80 flex items-center justify-center text-slate-700 dark:text-white font-bold text-xs shadow-md">
-                    {isAvatarUrlValid(instancePic) ? (
-                      <img 
-                        src={instancePic!} 
-                        alt={instanceName} 
-                        referrerPolicy="no-referrer"
-                        className="w-full h-full object-cover rounded-full"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLElement).style.display = 'none';
-                        }}
-                      />
-                    ) : (
-                      <span className="text-xs text-blue-600 dark:text-blue-300 font-bold uppercase">
-                        {instanceName.substring(0, 2).toUpperCase()}
-                      </span>
-                    )}
-
+              <div className="flex items-center gap-2.5 min-w-0">
+                {/* Foto de Perfil Circular da Instância (Linha Principal) - Clicar abre o Story igual no WhatsApp */}
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (hasActiveStories) {
+                      setStoryViewerModal({
+                        isOpen: true,
+                        currentIndex: 0,
+                        showViewersDrawer: false,
+                      });
+                    } else {
+                      setShowInstanceDropdown(prev => !prev);
+                    }
+                  }}
+                  className="relative shrink-0 cursor-pointer group/lineAvatar"
+                  title={
+                    hasActiveStories
+                      ? `Clique para visualizar ${activeLineStories.length === 1 ? 'o Story ativo' : `os ${activeLineStories.length} Stories ativos`} da ${instanceName}`
+                      : 'Clique para alternar linha / instância WhatsApp'
+                  }
+                >
+                  <div
+                    className={`p-[2.5px] rounded-full transition-all ${
+                      hasActiveStories
+                        ? 'bg-gradient-to-tr from-[#00A884] via-emerald-400 to-cyan-400 shadow-[0_0_14px_rgba(0,168,132,0.5)] group-hover/lineAvatar:scale-105'
+                        : ''
+                    }`}
+                  >
+                    <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-100 dark:bg-[#17253D] border border-slate-200 dark:border-slate-700/80 flex items-center justify-center text-slate-700 dark:text-white font-bold text-xs shadow-md">
+                      {isAvatarUrlValid(instancePic) ? (
+                        <img 
+                          src={instancePic!} 
+                          alt={instanceName} 
+                          referrerPolicy="no-referrer"
+                          className="w-full h-full object-cover rounded-full"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLElement).style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <span className="text-xs text-blue-600 dark:text-blue-300 font-bold uppercase">
+                          {instanceName.substring(0, 2).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
                   </div>
+
                   {/* Status de Presença */}
                   <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-[#0B1224] ${
                     isWaConnected ? 'bg-emerald-400 animate-pulse' : isWaConnecting ? 'bg-amber-400' : 'bg-rose-500'
                   }`} />
+
+                  {/* Badge de Story Ativo na Linha Principal */}
+                  {hasActiveStories && (
+                    <div
+                      className="absolute -top-1 -right-1 px-1 min-w-[16px] h-4 rounded-full bg-[#00A884] border-2 border-white dark:border-[#0B1224] flex items-center justify-center text-white text-[9px] font-black shadow-sm"
+                      title={`${activeLineStories.length} Story ativo • ${totalActiveViews} visualizações`}
+                    >
+                      <Eye size={9} className="text-white" />
+                    </div>
+                  )}
                 </div>
 
-                {/* Identificação da Linha */}
-                <div className="flex flex-col min-w-0">
+                {/* Identificação da Linha (Clicar no nome alterna a instância) */}
+                <div
+                  onClick={() => setShowInstanceDropdown(prev => !prev)}
+                  className="flex flex-col min-w-0 cursor-pointer group p-1 -ml-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-all"
+                  title="Clique para alternar linha / instância WhatsApp"
+                >
                   <div className="flex items-center gap-1">
                     <span className="text-[13px] font-bold text-slate-900 dark:text-white tracking-tight truncate max-w-[130px] group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors">
                       {instanceName}
                     </span>
                     <ChevronDown size={12} className={`text-slate-400 transition-transform ${showInstanceDropdown ? 'rotate-180 text-blue-600 dark:text-white' : ''}`} />
                   </div>
-                  <span className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight truncate">
-                    {isWaConnected ? (activeInstance?.phoneNumber || 'Conectado') : 'Desconectado'}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight truncate">
+                      {isWaConnected ? (activeInstance?.phoneNumber || 'Conectado') : 'Desconectado'}
+                    </span>
+                    {hasActiveStories && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setStoryViewerModal({
+                            isOpen: true,
+                            currentIndex: 0,
+                            showViewersDrawer: false,
+                          });
+                        }}
+                        className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-[9px] font-bold text-emerald-600 dark:text-emerald-400 transition-colors cursor-pointer shrink-0"
+                        title="Clique para abrir o Story ativo da Linha Principal"
+                      >
+                        <Eye size={9} />
+                        <span>Ver Story</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             );
@@ -2570,10 +2660,39 @@ function InboxContent() {
                 }`}
               >
                 {/* Avatar Circular 48x48 com Story Ring Pulsante */}
-                <div className="relative shrink-0">
+                <div
+                  onClick={(e) => {
+                    if (hasRecentStory && activeLineStories.length > 0) {
+                      e.stopPropagation();
+                      const suffix = cleanContactPhone.slice(-8);
+                      const viewerRecord = storyViewersList.find((v: any) => {
+                        const vp = String(v.rawPhone || v.phone || '').replace(/\D/g, '');
+                        return vp && suffix && (vp.endsWith(suffix) || suffix.endsWith(vp.slice(-8)));
+                      });
+                      let targetIdx = 0;
+                      if (viewerRecord) {
+                        const matchedIdx = activeLineStories.findIndex(
+                          (s: any) =>
+                            (viewerRecord.statusMessageId && s.messageId === viewerRecord.statusMessageId) ||
+                            (viewerRecord.storyWatched && s.title === viewerRecord.storyWatched)
+                        );
+                        if (matchedIdx >= 0) targetIdx = matchedIdx;
+                      }
+                      setStoryViewerModal({
+                        isOpen: true,
+                        currentIndex: targetIdx,
+                        showViewersDrawer: false,
+                        highlightedViewerName: formatContactDisplayName(contact.name, contact.phone),
+                        highlightedViewerTime: viewerRecord?.viewedAtExactTime || undefined,
+                      });
+                    }
+                  }}
+                  className="relative shrink-0"
+                  title={hasRecentStory ? "Clique no anel para ver o Story visualizado por este contato" : undefined}
+                >
                   <div className={`p-[2.5px] rounded-full transition-all ${
                     hasRecentStory 
-                      ? 'bg-gradient-to-tr from-emerald-500 via-teal-400 to-blue-500 shadow-[0_0_12px_rgba(16,185,129,0.35)] animate-pulse' 
+                      ? 'bg-gradient-to-tr from-emerald-500 via-teal-400 to-blue-500 shadow-[0_0_12px_rgba(16,185,129,0.35)] animate-pulse hover:scale-105' 
                       : ''
                   }`}>
                     <div className={`w-12 h-12 rounded-full overflow-hidden ${isWhatsApp ? 'bg-[#202C33] border-[#222D34]' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700/60'} border flex items-center justify-center text-slate-700 dark:text-white font-bold text-sm shadow-inner`}>
@@ -2604,7 +2723,7 @@ function InboxContent() {
                   {hasRecentStory && (
                     <div 
                       className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-blue-600 border-2 border-white dark:border-[#0B1224] flex items-center justify-center text-white shadow-sm"
-                      title="Visualizou Status nas últimas 24h"
+                      title="Visualizou Status nas últimas 24h (Clique para ver o Story)"
                     >
                       <Eye size={9} className="text-white" />
                     </div>
@@ -5252,6 +5371,308 @@ function InboxContent() {
           </div>
         </div>
       )}
+
+      {/* MODAL VISUALIZADOR DE STORIES 9:16 DA LINHA PRINCIPAL (ESTILO NATIVO WHATSAPP) */}
+      {storyViewerModal.isOpen && activeLineStories.length > 0 && (() => {
+        const safeIdx = Math.min(Math.max(storyViewerModal.currentIndex, 0), activeLineStories.length - 1);
+        const currentStory = activeLineStories[safeIdx];
+        const instancePic = activeInstance?.profilePicUrl || waStatus?.profilePicUrl;
+        const instanceName = activeInstance?.name || waStatus?.instanceName || 'Linha Principal';
+
+        const currentStoryViewers = storyViewersList.filter((v: any) => {
+          if (currentStory.messageId && v.statusMessageId === currentStory.messageId) return true;
+          if (currentStory.title && v.storyWatched === currentStory.title) return true;
+          return activeLineStories.length === 1;
+        });
+
+        return (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-3 sm:p-6 animate-in fade-in duration-200 select-none"
+            onClick={() => setStoryViewerModal(prev => ({ ...prev, isOpen: false }))}
+          >
+            {/* Moldura 9:16 Estilo WhatsApp Status */}
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-[410px] h-[88vh] max-h-[760px] rounded-3xl overflow-hidden bg-[#0B141A] border border-white/15 shadow-[0_25px_70px_rgba(0,0,0,0.95)] flex flex-col justify-between"
+            >
+              {/* Topo: Barras de Progresso Segmentadas + Header da Linha Principal */}
+              <div className="relative z-20 bg-gradient-to-b from-black/85 via-black/50 to-transparent pt-3 px-3.5 pb-6">
+                {/* Barras de Progresso dos Stories Ativos */}
+                <div className="flex items-center gap-1.5 mb-3">
+                  {activeLineStories.map((st: any, idx: number) => (
+                    <button
+                      key={st.id || idx}
+                      type="button"
+                      onClick={() =>
+                        setStoryViewerModal(prev => ({
+                          ...prev,
+                          currentIndex: idx,
+                          showViewersDrawer: false,
+                        }))
+                      }
+                      className="flex-1 h-1 rounded-full overflow-hidden bg-white/25 cursor-pointer transition-all"
+                      title={st.title || `Story ${idx + 1}`}
+                    >
+                      <div
+                        className={`h-full rounded-full transition-all duration-300 ${
+                          idx <= safeIdx ? 'w-full bg-[#00A884]' : 'w-0 bg-transparent'
+                        }`}
+                      />
+                    </button>
+                  ))}
+                </div>
+
+                {/* Linha Principal Info + Botões */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-10 h-10 rounded-full p-[2px] bg-gradient-to-tr from-[#00A884] to-emerald-400 shrink-0">
+                      <div className="w-full h-full rounded-full overflow-hidden bg-[#111B21] flex items-center justify-center text-white font-bold text-xs">
+                        {isAvatarUrlValid(instancePic) ? (
+                          <img
+                            src={instancePic!}
+                            alt={instanceName}
+                            referrerPolicy="no-referrer"
+                            className="w-full h-full object-cover rounded-full"
+                          />
+                        ) : (
+                          <span>{instanceName.substring(0, 2).toUpperCase()}</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <h4 className="text-xs font-bold text-white truncate">{instanceName}</h4>
+                        <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-[#00A884]/25 text-[#00A884] border border-[#00A884]/40">
+                          Status Ativo
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-300 truncate">
+                        {currentStory.postedAtDate} às {currentStory.postedAtTime} ({currentStory.postedAtRelative})
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Link
+                      href="/crm/radar-stories"
+                      className="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-[11px] font-semibold border border-white/15 flex items-center gap-1 transition-colors"
+                      title="Abrir Radar de Stories & Status completo"
+                    >
+                      <Sparkles size={12} className="text-emerald-400" />
+                      <span>Radar IA</span>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => setStoryViewerModal(prev => ({ ...prev, isOpen: false }))}
+                      className="w-8 h-8 rounded-xl bg-white/10 hover:bg-rose-500/30 text-white flex items-center justify-center transition-colors cursor-pointer"
+                      title="Fechar Story"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Banner de Destaque quando aberto pelo clique no anel de um contato específico */}
+                {storyViewerModal.highlightedViewerName && (
+                  <div className="mt-2.5 px-3 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-400/40 backdrop-blur-md flex items-center justify-between text-[11px] text-emerald-200">
+                    <div className="flex items-center gap-1.5 truncate">
+                      <Eye size={13} className="text-emerald-400 shrink-0" />
+                      <span className="truncate">
+                        Visualizado por <strong className="text-white">{storyViewerModal.highlightedViewerName}</strong>
+                      </span>
+                    </div>
+                    {storyViewerModal.highlightedViewerTime && (
+                      <span className="font-mono text-[10px] text-emerald-300 shrink-0 ml-2">
+                        às {storyViewerModal.highlightedViewerTime}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Área Central: Foto / Mídia do Story em 9:16 */}
+              <div className="absolute inset-0 flex items-center justify-center bg-[#0B141A] z-10">
+                {currentStory.mediaUrl ? (
+                  <img
+                    src={currentStory.mediaUrl}
+                    alt={currentStory.title || "Story WhatsApp"}
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <div className="p-8 text-center flex flex-col items-center gap-3 max-w-xs">
+                    <div className="w-14 h-14 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                      <ImageIcon size={28} />
+                    </div>
+                    <p className="text-base font-bold text-white leading-relaxed">
+                      {currentStory.title || "Status publicado no WhatsApp"}
+                    </p>
+                    <span className="text-xs text-slate-400">{currentStory.category}</span>
+                  </div>
+                )}
+
+                {/* Botões de Navegação Anterior / Próximo quando há mais de 1 Story ativo */}
+                {activeLineStories.length > 1 && (
+                  <>
+                    {safeIdx > 0 && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setStoryViewerModal(prev => ({
+                            ...prev,
+                            currentIndex: safeIdx - 1,
+                            showViewersDrawer: false,
+                          }))
+                        }
+                        className="absolute left-2.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-black/75 border border-white/15 text-white flex items-center justify-center transition-all cursor-pointer z-20"
+                        title="Story anterior"
+                      >
+                        <ChevronLeft size={18} />
+                      </button>
+                    )}
+                    {safeIdx < activeLineStories.length - 1 && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setStoryViewerModal(prev => ({
+                            ...prev,
+                            currentIndex: safeIdx + 1,
+                            showViewersDrawer: false,
+                          }))
+                        }
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-black/75 border border-white/15 text-white flex items-center justify-center transition-all cursor-pointer z-20"
+                        title="Próximo Story"
+                      >
+                        <ChevronRight size={18} />
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {/* Rodapé do Story: Legenda + Barra de Visualizadores Estilo WhatsApp */}
+              <div className="relative z-20 bg-gradient-to-t from-black/95 via-black/70 to-transparent pt-8 pb-4 px-4 flex flex-col items-center gap-3">
+                {currentStory.title && currentStory.title !== '..' && (
+                  <div className="w-full px-3.5 py-2 rounded-xl bg-black/60 backdrop-blur-md border border-white/10 text-center">
+                    <p className="text-xs text-white font-medium leading-relaxed">{currentStory.title}</p>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setStoryViewerModal(prev => ({
+                      ...prev,
+                      showViewersDrawer: !prev.showViewersDrawer,
+                    }))
+                  }
+                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#202C33]/95 hover:bg-[#2A3942] border border-white/15 text-white text-xs font-bold shadow-lg transition-all cursor-pointer"
+                >
+                  <Eye size={15} className="text-[#00A884]" />
+                  <span>
+                    {Math.max(currentStoryViewers.length, Number(currentStory.viewsCount) || 0)} visualizações
+                  </span>
+                  <ChevronUp
+                    size={14}
+                    className={`text-slate-300 transition-transform ${
+                      storyViewerModal.showViewersDrawer ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Gaveta Deslizante de Quem Visualizou este Story (Igual ao WhatsApp) */}
+              {storyViewerModal.showViewersDrawer && (
+                <div className="absolute inset-x-0 bottom-0 h-[62%] bg-[#111B21] border-t border-[#222D34] rounded-t-3xl z-30 flex flex-col shadow-2xl animate-in slide-in-from-bottom-5 duration-200">
+                  <div className="px-4 py-3 bg-[#202C33] border-b border-[#222D34] flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Eye size={15} className="text-[#00A884]" />
+                      <span className="text-xs font-bold text-white">
+                        Visualizado por {currentStoryViewers.length} contatos
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setStoryViewerModal(prev => ({ ...prev, showViewersDrawer: false }))
+                      }
+                      className="p-1 text-slate-400 hover:text-white rounded-lg cursor-pointer"
+                    >
+                      <X size={15} />
+                    </button>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto divide-y divide-[#222D34]/60 p-2">
+                    {currentStoryViewers.length === 0 ? (
+                      <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400 text-xs">
+                        <span>Nenhuma visualização registrada neste Story ainda.</span>
+                      </div>
+                    ) : (
+                      currentStoryViewers.map((viewer: any) => (
+                        <div
+                          key={viewer.id}
+                          className="flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-xl hover:bg-[#202C33] transition-colors"
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="w-9 h-9 rounded-full bg-[#2A3942] border border-white/10 flex items-center justify-center text-white font-bold text-xs shrink-0 overflow-hidden">
+                              {isAvatarUrlValid(viewer.avatarUrl) ? (
+                                <img
+                                  src={viewer.avatarUrl}
+                                  alt={viewer.name}
+                                  referrerPolicy="no-referrer"
+                                  className="w-full h-full object-cover rounded-full"
+                                />
+                              ) : (
+                                <span>{getContactInitials(viewer.name, viewer.phone)}</span>
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <p className="text-xs font-bold text-white truncate">{viewer.name}</p>
+                                {viewer.leadClassificationLabel && (
+                                  <span className="px-1.5 py-0.2 rounded text-[9px] font-semibold bg-white/10 text-slate-200 border border-white/10 shrink-0">
+                                    {viewer.leadClassificationLabel}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-slate-400 truncate">
+                                {viewer.city} - {viewer.state} • Hoje às {viewer.viewedAtExactTime}
+                              </p>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const vSuffix = String(viewer.rawPhone || viewer.phone || '').replace(/\D/g, '').slice(-8);
+                              const matchedContact = contacts.find((c) => {
+                                const cp = String(c.phone || '').replace(/\D/g, '');
+                                return (
+                                  (viewer.conversationId && c.id === viewer.conversationId) ||
+                                  (viewer.contactId && c.contactId === viewer.contactId) ||
+                                  (cp && vSuffix && cp.endsWith(vSuffix))
+                                );
+                              });
+                              setStoryViewerModal(prev => ({ ...prev, isOpen: false }));
+                              if (matchedContact) {
+                                setActiveChat(matchedContact.id);
+                              } else {
+                                setSearchQuery(viewer.name || viewer.phone || '');
+                              }
+                            }}
+                            className="px-2.5 py-1.5 rounded-lg bg-[#00A884] hover:bg-[#02906F] text-white text-[10px] font-bold shrink-0 cursor-pointer transition-colors"
+                          >
+                            Abrir Chat
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
       {/* MODAL HISTÓRICO DE ATENDIMENTO */}
       {showHistoryModal && activeContactData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-200">
