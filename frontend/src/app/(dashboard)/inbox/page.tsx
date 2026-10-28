@@ -25,6 +25,7 @@ import GlobalScheduledCenterModal from "@/components/inbox/GlobalScheduledCenter
 import VersusAudioPlayer from "@/components/chat/VersusAudioPlayer";
 import { sanitizeAvatarUrl, isAvatarUrlValid } from "@/lib/avatarUtils";
 import { useTheme } from "@/contexts/ThemeContext";
+import { extractGoogleDriveId, isGoogleDriveUrl, getDriveThumbnailUrl } from "@/lib/googleDriveHelper";
 
 const COMMON_EMOJIS = [
   '😀', '😃', '😄', '😁', '😅', '😂', '🤣', '😊', '😇', '🙂', 
@@ -522,6 +523,26 @@ function InboxContent() {
     if (url.includes('mmg.whatsapp.net') && (url.includes('.enc') || url.includes('/v/t62.') || url.includes('oe='))) {
       return '';
     }
+
+    // Suporte a arquivos e mídias do Google Drive
+    if (isGoogleDriveUrl(url)) {
+      const driveId = extractGoogleDriveId(url);
+      if (driveId) {
+        if (type === 'image') {
+          // CDN direta de imagem do Google para exibição instantânea na tag <img>
+          return `https://lh3.googleusercontent.com/d/${driveId}`;
+        }
+        if (type === 'video') {
+          // Streaming proxy com headers corretos de vídeo reproduzível em HTML5
+          return `/api-backend/media/drive-stream/${driveId}?name=video.mp4`;
+        }
+        if (type === 'document') {
+          return `https://drive.google.com/file/d/${driveId}/view?usp=sharing`;
+        }
+        return `https://lh3.googleusercontent.com/d/${driveId}`;
+      }
+    }
+
     if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:') || url.startsWith('data:')) {
       return url;
     }
@@ -3510,6 +3531,13 @@ function InboxContent() {
                                     src={getMediaUrl(msg.mediaUrl, 'image')} 
                                     alt={msg.content || "Anexo"} 
                                     className="rounded-xl max-h-64 sm:max-h-72 object-cover transition-transform duration-300 group-hover:scale-[1.02]" 
+                                    onError={(e) => {
+                                      const driveId = extractGoogleDriveId(msg.mediaUrl);
+                                      const target = e.currentTarget;
+                                      if (driveId && !target.src.includes('drive-stream')) {
+                                        target.src = `/api-backend/media/drive-stream/${driveId}?name=imagem.jpg`;
+                                      }
+                                    }}
                                   />
                                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
                                     <div className="p-2.5 rounded-full bg-black/60 text-white backdrop-blur-sm shadow-xl flex items-center gap-1.5 text-xs font-semibold transform translate-y-1 group-hover:translate-y-0 transition-transform duration-200">
@@ -3530,8 +3558,8 @@ function InboxContent() {
                             </div>
                           )}
 
-                          {/* Renderização de Vídeos (WhatsApp Nativo) */}
-                          {(msg.type === 'video' || (!!msg.mediaUrl && /\.(mp4|mov|webm|mkv|avi)($|\?)/i.test(msg.mediaUrl))) && (
+                          {/* Renderização de Vídeos (WhatsApp Nativo e Google Drive) */}
+                          {(msg.type === 'video' || (!!msg.mediaUrl && (/\.(mp4|mov|webm|mkv|avi)($|\?)/i.test(msg.mediaUrl) || isGoogleDriveUrl(msg.mediaUrl)))) && (
                             <div className="mb-2 max-w-[320px] sm:max-w-[380px]">
                               {msg.mediaUrl?.includes('lvdphjhftfjdifnzuazd.supabase.co') ? (
                                 <div className="flex items-center gap-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-700 dark:text-amber-400 text-xs">
@@ -3547,9 +3575,15 @@ function InboxContent() {
                                     src={getMediaUrl(msg.mediaUrl, 'video')}
                                     controls
                                     preload="metadata"
+                                    playsInline
                                     className="rounded-xl w-full max-h-72 object-contain bg-black"
                                     onError={(e) => {
                                       const target = e.currentTarget;
+                                      const driveId = extractGoogleDriveId(msg.mediaUrl);
+                                      if (driveId && target.parentElement) {
+                                        target.parentElement.innerHTML = `<iframe src="https://drive.google.com/file/d/${driveId}/preview" class="w-full h-56 rounded-xl border-0" allow="autoplay"></iframe>`;
+                                        return;
+                                      }
                                       target.style.display = 'none';
                                       if (target.parentElement) {
                                         target.parentElement.innerHTML = '<div class="p-3 text-xs text-amber-600 dark:text-amber-400">Vídeo indisponível</div>';
@@ -3684,15 +3718,15 @@ function InboxContent() {
                           {/* Documentos e Anexos Diversos */}
                           {(msg.type === 'document' || (!!msg.mediaUrl && !/\.(mp4|mov|webm|ogg|opus|mp3|m4a|wav|jpg|jpeg|png|webp|gif)($|\?)/i.test(msg.mediaUrl) && !msg.mediaUrl.includes('maps.google.com') && msg.type !== 'audio' && msg.type !== 'video' && msg.type !== 'image' && msg.type !== 'location')) && (
                             <div className="flex items-center gap-2.5 p-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 dark:bg-black/30 dark:hover:bg-black/40 dark:border-white/10 rounded-xl transition-colors mb-2 max-w-[340px]">
-                              <div className="w-8 h-8 rounded-lg bg-blue-500/20 border border-blue-500/40 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+                              <div className="w-8 h-8 rounded-lg bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-600 dark:text-rose-400 shrink-0">
                                 <FileText size={18} />
                               </div>
                               <div className="min-w-0 flex-1">
                                 <span className="text-xs truncate font-medium text-slate-800 dark:text-slate-200 block" title={msg.content || 'Documento anexo'}>
-                                  {msg.content?.replace(/^📄\s*\[Documento:\s*([^\]]+)\][\s\S]*$/, '$1') || 'Documento anexo'}
+                                  {msg.content?.replace(/^📄\s*\[Documento:\s*([^\]]+)\][\s\S]*$/, '$1') || (isGoogleDriveUrl(msg.mediaUrl) ? 'Catálogo / PDF (Google Drive)' : 'Documento anexo')}
                                 </span>
                                 <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                  {msg.mediaUrl?.includes('lvdphjhftfjdifnzuazd.supabase.co') ? 'ARQUIVO HISTÓRICO (CRM ANTERIOR)' : (msg.mediaUrl ? (msg.mediaUrl.split('.').pop()?.split('?')[0] || 'ARQUIVO') : 'ARQUIVO')}
+                                  {isGoogleDriveUrl(msg.mediaUrl) ? 'GOOGLE DRIVE' : msg.mediaUrl?.includes('lvdphjhftfjdifnzuazd.supabase.co') ? 'ARQUIVO HISTÓRICO' : (msg.mediaUrl ? (msg.mediaUrl.split('.').pop()?.split('?')[0] || 'PDF') : 'DOCUMENTO')}
                                 </span>
                               </div>
                               {getMediaUrl(msg.mediaUrl, 'document') && !msg.mediaUrl?.includes('lvdphjhftfjdifnzuazd.supabase.co') ? (
