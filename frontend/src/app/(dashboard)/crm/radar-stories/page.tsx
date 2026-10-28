@@ -215,6 +215,9 @@ export default function RadarStoriesPage() {
   const [selectedViewerForDetails, setSelectedViewerForDetails] = useState<StoryViewer | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState<boolean>(false);
 
+  // Modal Funcional Interativo para os 4 KPIs Executivos do Topo
+  const [selectedKpiModal, setSelectedKpiModal] = useState<"views" | "base" | "recent" | "crm" | null>(null);
+
   // Modal de Abordagem IA
   const [selectedViewer, setSelectedViewer] = useState<StoryViewer | null>(null);
   const [isAiModalOpen, setIsAiModalOpen] = useState<boolean>(false);
@@ -932,81 +935,121 @@ export default function RadarStoriesPage() {
       {/* ======================================================================= */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Card 1: Visualizações Hoje */}
-        <div className="p-4 sm:p-5 rounded-2xl border bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col gap-3">
+        <div
+          onClick={() => setSelectedKpiModal("views")}
+          className="p-4 sm:p-5 rounded-2xl border bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col gap-3 cursor-pointer hover:border-blue-500/60 hover:shadow-lg dark:hover:bg-[#0d162a] transition-all group relative select-none"
+          title="Clique para abrir a Auditoria Executiva de Visualizações dos Stories"
+        >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 group-hover:text-blue-500 transition-colors">
               Visualizações Confirmadas (Hoje)
             </span>
-            <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500">
-              <Eye className="w-4 h-4" />
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-blue-500 font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
+                Auditar ↗
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500 group-hover:scale-110 group-hover:bg-blue-500/20 transition-all">
+                <Eye className="w-4 h-4" />
+              </div>
             </div>
           </div>
           <div>
-            <div className="text-2xl font-black text-slate-900 dark:text-white">
+            <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
               {metrics?.kpis.totalViewsToday || 0}
             </div>
-            <div className="text-xs text-blue-500 font-semibold mt-0.5">
-              {metrics?.kpis.totalViewsWeek || 0} visualizações nos últimos 7 dias
+            <div className="text-xs text-blue-500 font-semibold mt-1 flex items-center justify-between">
+              <span>{metrics?.kpis.totalViewsWeek || 0} visualizações nos últimos 7 dias</span>
+              <span className="text-[10px] text-slate-400 group-hover:text-blue-400 font-mono">Ver detalhes →</span>
             </div>
           </div>
         </div>
 
         {/* Card 2: Contatos Rastreados no Tenant */}
-        <div className="p-4 sm:p-5 rounded-2xl border bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col gap-3">
+        <div
+          onClick={() => setSelectedKpiModal("base")}
+          className="p-4 sm:p-5 rounded-2xl border bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col gap-3 cursor-pointer hover:border-emerald-500/60 hover:shadow-lg dark:hover:bg-[#0d1c25] transition-all group relative select-none"
+          title="Clique para gerenciar e auditar o alcance da base de contatos do WhatsApp"
+        >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 group-hover:text-emerald-500 transition-colors">
               Base de Contatos na Linha
             </span>
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500">
-              <Users className="w-4 h-4" />
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-emerald-500 font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
+                Gerenciar ↗
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 group-hover:scale-110 group-hover:bg-emerald-500/20 transition-all">
+                <Users className="w-4 h-4" />
+              </div>
             </div>
           </div>
           <div>
-            <div className="text-2xl font-black text-slate-900 dark:text-white">
+            <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
               {(metrics?.kpis.producersTracked || 0).toLocaleString("pt-BR")}
             </div>
-            <div className="text-xs text-emerald-500 font-semibold mt-0.5">
-              Contatos reais com WhatsApp no ecossistema
+            <div className="text-xs text-emerald-500 font-semibold mt-1 flex items-center justify-between">
+              <span>Contatos reais com WhatsApp no ecossistema</span>
+              <span className="text-[10px] text-slate-400 group-hover:text-emerald-400 font-mono">Alcance →</span>
             </div>
           </div>
         </div>
 
         {/* Card 3: Inativos Reaquecidos */}
-        <div className="p-4 sm:p-5 rounded-2xl border bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col gap-3">
+        <div
+          onClick={() => setSelectedKpiModal("recent")}
+          className="p-4 sm:p-5 rounded-2xl border bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col gap-3 cursor-pointer hover:border-amber-500/60 hover:shadow-lg dark:hover:bg-[#1a1710] transition-all group relative select-none"
+          title="Clique para ver a lista de clientes que visualizaram status nesta semana"
+        >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 group-hover:text-amber-500 transition-colors">
               Interações de Status Recentes
             </span>
-            <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500">
-              <TrendingUp className="w-4 h-4" />
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-amber-500 font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
+                Ver Leads ↗
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 group-hover:scale-110 group-hover:bg-amber-500/20 transition-all">
+                <TrendingUp className="w-4 h-4" />
+              </div>
             </div>
           </div>
           <div>
-            <div className="text-2xl font-black text-slate-900 dark:text-white">
+            <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
               {metrics?.kpis.inactiveReheated || 0}
             </div>
-            <div className="text-xs text-amber-500 font-semibold mt-0.5">
-              Clientes que visualizaram status nesta semana
+            <div className="text-xs text-amber-500 font-semibold mt-1 flex items-center justify-between">
+              <span>Clientes que visualizaram status nesta semana</span>
+              <span className="text-[10px] text-slate-400 group-hover:text-amber-400 font-mono">Acionar →</span>
             </div>
           </div>
         </div>
 
         {/* Card 4: Oportunidades em Aberto no Funil */}
-        <div className="p-4 sm:p-5 rounded-2xl border bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col gap-3">
+        <div
+          onClick={() => setSelectedKpiModal("crm")}
+          className="p-4 sm:p-5 rounded-2xl border bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col gap-3 cursor-pointer hover:border-purple-500/60 hover:shadow-lg dark:hover:bg-[#181126] transition-all group relative select-none"
+          title="Clique para cruzar visualizadores de Status com as Oportunidades do CRM"
+        >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 group-hover:text-purple-400 transition-colors">
               Oportunidades no CRM
             </span>
-            <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-500">
-              <Activity className="w-4 h-4" />
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-purple-400 font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
+                Abrir Funil ↗
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-500 group-hover:scale-110 group-hover:bg-purple-500/20 transition-all">
+                <Activity className="w-4 h-4" />
+              </div>
             </div>
           </div>
           <div>
-            <div className="text-2xl font-black text-slate-900 dark:text-white">
+            <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
               {metrics?.kpis.hotOpportunities || 0}
             </div>
-            <div className="text-xs text-purple-400 font-semibold mt-0.5">
-              Negócios ativos em negociação na carteira
+            <div className="text-xs text-purple-400 font-semibold mt-1 flex items-center justify-between">
+              <span>Negócios ativos em negociação na carteira</span>
+              <span className="text-[10px] text-slate-400 group-hover:text-purple-400 font-mono">Cruzar CRM →</span>
             </div>
           </div>
         </div>
@@ -3681,6 +3724,418 @@ export default function RadarStoriesPage() {
                 )}
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================================= */}
+      {/* 8. MODAL FUNCIONAL EXECUTIVO PARA OS 4 KPIS DO TOPO                     */}
+      {/* ======================================================================= */}
+      {selectedKpiModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200 select-none">
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col animate-in zoom-in-95 duration-200"
+          >
+            {/* 1. Modal KPI: Visualizações Confirmadas */}
+            {selectedKpiModal === "views" && (
+              <>
+                <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500 shrink-0">
+                      <Eye className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                        Auditoria de Visualizações de Stories & Status
+                      </h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Rastreio auditável de visualizações confirmadas por post e horário
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSelectedKpiModal(null)}
+                    className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="p-5 overflow-y-auto space-y-4 text-xs">
+                  {/* Cards de Métricas */}
+                  <div className="grid grid-cols-3 gap-2.5">
+                    <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B]">
+                      <span className="text-[10px] text-slate-400 uppercase font-bold block mb-1">Hoje</span>
+                      <span className="text-2xl font-black text-blue-600 dark:text-blue-400">{metrics?.kpis.totalViewsToday || 0}</span>
+                      <span className="text-[10px] text-slate-500 block mt-0.5">confirmadas hoje</span>
+                    </div>
+                    <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B]">
+                      <span className="text-[10px] text-slate-400 uppercase font-bold block mb-1">Últimos 7 dias</span>
+                      <span className="text-2xl font-black text-slate-900 dark:text-white">{metrics?.kpis.totalViewsWeek || 0}</span>
+                      <span className="text-[10px] text-slate-500 block mt-0.5">alcance semanal</span>
+                    </div>
+                    <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B]">
+                      <span className="text-[10px] text-slate-400 uppercase font-bold block mb-1">Stories no Ar</span>
+                      <span className="text-2xl font-black text-emerald-500">{activePosts.length}</span>
+                      <span className="text-[10px] text-slate-500 block mt-0.5">ativas (24h)</span>
+                    </div>
+                  </div>
+
+                  {/* Stories Ativos e Contadores */}
+                  <div className="space-y-2">
+                    <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                      Stories Ativos com Contagem de Visualizadores:
+                    </h4>
+                    <div className="space-y-2">
+                      {activePosts.length === 0 ? (
+                        <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 text-center text-slate-400">
+                          Nenhum Story publicado nas últimas 24h.
+                        </div>
+                      ) : (
+                        activePosts.map((post) => (
+                          <div
+                            key={post.id}
+                            className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B] flex items-center justify-between gap-3"
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="w-12 h-12 rounded-lg bg-slate-200 dark:bg-slate-800 overflow-hidden shrink-0 border border-slate-300 dark:border-slate-700">
+                                {post.mediaUrl ? (
+                                  <img src={post.mediaUrl} alt={post.title} className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-slate-400">
+                                    <ImageIcon className="w-5 h-5" />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="min-w-0">
+                                <h5 className="font-bold text-slate-900 dark:text-white truncate text-xs">{post.title || "Story WhatsApp"}</h5>
+                                <div className="flex items-center gap-2 text-[10px] text-slate-400 mt-0.5">
+                                  <span className="px-1.5 py-0.2 rounded font-semibold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                                    {post.category}
+                                  </span>
+                                  <span>Postado às {post.postedAtTime}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-500/10 text-blue-500 border border-blue-500/20 font-bold shrink-0">
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>{post.viewsCount} visualizações</span>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Informação Estratégica */}
+                  <div className="p-3.5 rounded-xl border border-blue-500/20 bg-blue-500/5 text-xs text-slate-600 dark:text-slate-300 flex items-start gap-2.5">
+                    <Info className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
+                    <span>
+                      Todas as visualizações são capturadas em tempo real via WhatsApp Baileys / Evolution API com timestamp auditável de Brasília, sem dados simulados.
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-900/30">
+                  <button
+                    onClick={() => {
+                      setSelectedKpiModal(null);
+                      handleSyncWithWhatsApp();
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors cursor-pointer"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5 text-blue-500" />
+                    <span>Sincronizar com WhatsApp</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelectedKpiModal(null);
+                      const el = document.querySelector("table");
+                      if (el) el.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors shadow-sm cursor-pointer"
+                  >
+                    Ver Tabela Completa Abaixo
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* 2. Modal KPI: Base de Contatos na Linha */}
+            {selectedKpiModal === "base" && (
+              <>
+                <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 shrink-0">
+                      <Users className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                        Gestão & Alcance da Base de Contatos da Linha
+                      </h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Potencial de alcance orgânico no WhatsApp e ações para multiplicar visualizações
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSelectedKpiModal(null)}
+                    className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="p-5 overflow-y-auto space-y-4 text-xs">
+                  {/* Métricas da Base */}
+                  <div className="grid grid-cols-3 gap-2.5">
+                    <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B]">
+                      <span className="text-[10px] text-slate-400 uppercase font-bold block mb-1">Contatos Salvos</span>
+                      <span className="text-2xl font-black text-emerald-500">{(metrics?.kpis.producersTracked || 0).toLocaleString("pt-BR")}</span>
+                      <span className="text-[10px] text-slate-500 block mt-0.5">na linha principal</span>
+                    </div>
+                    <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B]">
+                      <span className="text-[10px] text-slate-400 uppercase font-bold block mb-1">Visualizadores Ativos</span>
+                      <span className="text-2xl font-black text-slate-900 dark:text-white">{viewers.length}</span>
+                      <span className="text-[10px] text-slate-500 block mt-0.5">com perfil comercial IA</span>
+                    </div>
+                    <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B]">
+                      <span className="text-[10px] text-slate-400 uppercase font-bold block mb-1">No Funil CRM</span>
+                      <span className="text-2xl font-black text-purple-400">{metrics?.kpis.hotOpportunities || 0}</span>
+                      <span className="text-[10px] text-slate-500 block mt-0.5">negócios abertos</span>
+                    </div>
+                  </div>
+
+                  {/* Diagnóstico Estratégico para o Gestor */}
+                  <div className="p-4 rounded-xl border border-emerald-500/25 bg-emerald-500/5 space-y-2">
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400 text-xs block">
+                      Como funciona a entrega de Stories no WhatsApp:
+                    </span>
+                    <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-[11.5px]">
+                      O WhatsApp entrega Stories apenas para contatos com <strong>salvamento mútuo</strong> (quando a Verto tem o contato salvo e o cliente também tem o número da Verto salvo no celular dele).
+                    </p>
+                    <div className="pt-2 border-t border-emerald-500/20 text-[11px] text-slate-600 dark:text-slate-300 space-y-1">
+                      <p className="font-semibold text-slate-900 dark:text-white">Dicas para multiplicar as visualizações de 16 para centenas:</p>
+                      <ul className="list-disc pl-4 space-y-0.5">
+                        <li>Envie mensagens de catálogo com botão solicitando que salvem o contato comercial da Verto;</li>
+                        <li>Exporte esta base higienizada para Públicos Semelhantes (Lookalike) no Meta Ads;</li>
+                        <li>Poste stories com ofertas reais de maquinários e peças nos horários de pico (11h às 13h e 17h às 19h).</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 bg-slate-50 dark:bg-slate-900/30">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        setSelectedKpiModal(null);
+                        handleExportMetaAudience("sha256");
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-500 border border-indigo-500/25 text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      <span>Exportar Meta Ads</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedKpiModal(null);
+                        handleExportMetaAudience("plain");
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-colors cursor-pointer"
+                    >
+                      <Download className="w-3.5 h-3.5 text-blue-500" />
+                      <span>Planilha CSV</span>
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setSelectedKpiModal(null);
+                      setIsCampaignModalOpen(true);
+                    }}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors shadow-sm cursor-pointer"
+                  >
+                    <Megaphone className="w-3.5 h-3.5" />
+                    <span>Criar Campanha de Disparo</span>
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* 3. Modal KPI: Interações Recentes */}
+            {selectedKpiModal === "recent" && (
+              <>
+                <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 shrink-0">
+                      <TrendingUp className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                        Leads com Interações de Status Recentes
+                      </h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Contatos que demonstraram atenção ativa no WhatsApp nos últimos dias
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSelectedKpiModal(null)}
+                    className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="p-5 overflow-y-auto space-y-3 max-h-[55vh] text-xs">
+                  <div className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">
+                    {viewers.length} contatos identificados nesta semana:
+                  </div>
+
+                  <div className="space-y-2">
+                    {viewers.map((v) => (
+                      <div
+                        key={v.id}
+                        className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B] flex items-center justify-between gap-3"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 flex items-center justify-center font-bold text-xs text-slate-700 dark:text-white shrink-0">
+                            {v.avatarUrl ? (
+                              <img src={v.avatarUrl} alt={v.name} className="w-full h-full object-cover rounded-full" />
+                            ) : (
+                              <span>{v.name.substring(0, 2).toUpperCase()}</span>
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-bold text-slate-900 dark:text-white truncate">{v.name}</span>
+                              <span className="text-[10px] text-slate-400">({v.city} - {v.state})</span>
+                            </div>
+                            <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                              Viu: &ldquo;{v.storyMedia.title}&rdquo; às {v.storyMedia.exactTime}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                            v.crmStatus === "open_deal"
+                              ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
+                              : v.crmStatus === "active_client"
+                              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                              : v.crmStatus === "non_commercial"
+                              ? "bg-rose-500/10 text-rose-400 border-rose-500/30"
+                              : "bg-blue-500/10 text-blue-400 border-blue-500/30"
+                          }`}>
+                            {v.crmStatusLabel}
+                          </span>
+                          <button
+                            onClick={() => {
+                              setSelectedKpiModal(null);
+                              handleOpenAiModal(v);
+                            }}
+                            className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] cursor-pointer"
+                          >
+                            Abordar
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-900/30">
+                  <span className="text-[11px] text-slate-400">
+                    Clique em qualquer lead para iniciar uma abordagem direta com IA.
+                  </span>
+                  <button
+                    onClick={() => {
+                      setSelectedKpiModal(null);
+                      const el = document.querySelector("table");
+                      if (el) el.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold transition-colors cursor-pointer"
+                  >
+                    Ver na Tabela Completa
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* 4. Modal KPI: Oportunidades no CRM */}
+            {selectedKpiModal === "crm" && (
+              <>
+                <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-500 shrink-0">
+                      <Activity className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                        Oportunidades no CRM & Cruzamento com Status
+                      </h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Visualizadores de Stories que estão no meio de negociações no Funil Comercial
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSelectedKpiModal(null)}
+                    className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="p-5 overflow-y-auto space-y-4 text-xs">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B]">
+                      <span className="text-[10px] text-slate-400 uppercase font-bold block mb-1">Total no Funil CRM</span>
+                      <span className="text-2xl font-black text-purple-400">{metrics?.kpis.hotOpportunities || 0}</span>
+                      <span className="text-[10px] text-slate-500 block mt-0.5">negócios ativos na carteira</span>
+                    </div>
+                    <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B]">
+                      <span className="text-[10px] text-slate-400 uppercase font-bold block mb-1">Visualizadores em Negociação</span>
+                      <span className="text-2xl font-black text-amber-400">
+                        {viewers.filter((v) => v.crmStatus === "open_deal" || v.dealTitle).length}
+                      </span>
+                      <span className="text-[10px] text-slate-500 block mt-0.5">acompanhando os Stories da empresa</span>
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-xl border border-purple-500/20 bg-purple-500/5 text-xs text-slate-600 dark:text-slate-300 space-y-1.5">
+                    <span className="font-bold text-purple-400 block">Vantagem de Fechamento:</span>
+                    <p className="leading-relaxed">
+                      Quando um cliente com proposta aberta visualiza um Story, é o momento perfeito para o vendedor enviar um follow-up natural. A IA do sistema já gera a mensagem sugerida baseada no maquinário que ele viu.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-900/30">
+                  <button
+                    onClick={() => {
+                      setSelectedKpiModal(null);
+                      setActiveFilterTab("open_deal");
+                      const el = document.querySelector("table");
+                      if (el) el.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-bold transition-colors cursor-pointer"
+                  >
+                    <TrendingUp className="w-3.5 h-3.5" />
+                    <span>Filtrar Leads em Negociação na Tabela</span>
+                  </button>
+
+                  <a
+                    href="/crm"
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-colors shadow-sm"
+                  >
+                    <span>Ir para o Funil de Vendas (CRM)</span>
+                    <ArrowUpRight className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
