@@ -75,6 +75,7 @@ interface StoryViewer {
   companyOrFarm: string;
   phone: string;
   phoneFormatted?: string;
+  avatarUrl?: string;
   email?: string;
   isLidOnly?: boolean;
   city: string;
@@ -868,7 +869,7 @@ export default function RadarStoriesPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-12 animate-in fade-in duration-200">
+    <div className="flex flex-col gap-6 w-full max-w-[1680px] mx-auto px-2 sm:px-4 lg:px-6 pb-12 animate-in fade-in duration-200">
       {/* ======================================================================= */}
       {/* 1. CABEÇALHO EXECUTIVO                                                  */}
       {/* ======================================================================= */}
@@ -1461,11 +1462,11 @@ export default function RadarStoriesPage() {
         )}
 
         {/* Tabela Executiva com Rastreabilidade de Data, Horário e Post (Desktop / Tablet) */}
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
+        <div className="hidden md:block overflow-x-auto scrollbar-thin">
+          <table className="w-full text-left text-xs border-collapse min-w-[1240px]">
             <thead>
-              <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
-                <th className="py-3 px-3 w-10 text-center">
+              <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-400 font-bold uppercase tracking-wider text-[10px] bg-slate-50/50 dark:bg-slate-900/30">
+                <th className="py-3.5 px-3 w-12 text-center">
                   <button
                     onClick={handleToggleSelectAll}
                     className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 transition-colors cursor-pointer"
@@ -1478,26 +1479,26 @@ export default function RadarStoriesPage() {
                     )}
                   </button>
                 </th>
-                <th className="py-3 px-3">Contato / Carteira</th>
-                <th className="py-3 px-3">Telefone / WhatsApp</th>
-                <th className="py-3 px-3">Post / Story Identificado</th>
-                <th className="py-3 px-3">Data & Horário Exato</th>
-                <th className="py-3 px-3">Classificação Comercial IA & CRM</th>
-                <th className="py-3 px-3 text-right">Ação Comercial</th>
+                <th className="py-3.5 px-4 min-w-[240px]">Contato / Carteira</th>
+                <th className="py-3.5 px-4 min-w-[200px]">Telefone / WhatsApp</th>
+                <th className="py-3.5 px-4 min-w-[220px]">Post / Story Identificado</th>
+                <th className="py-3.5 px-4 min-w-[160px]">Data & Horário Exato</th>
+                <th className="py-3.5 px-4 min-w-[280px]">Classificação Comercial IA & CRM</th>
+                <th className="py-3.5 px-4 min-w-[170px] text-right pr-6">Ação Comercial</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
               {loadingViewers ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-400">
+                  <td colSpan={7} className="py-16 text-center text-slate-400">
                     <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-blue-500" />
-                    <span>Carregando contatos reais e visualizações do sistema...</span>
+                    <span className="text-sm font-medium">Carregando contatos reais e visualizações do sistema...</span>
                   </td>
                 </tr>
               ) : filteredViewers.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-400">
-                    Nenhum contato encontrado com os filtros selecionados.
+                  <td colSpan={7} className="py-16 text-center text-slate-400">
+                    <span className="text-sm font-medium">Nenhum contato encontrado com os filtros selecionados.</span>
                   </td>
                 </tr>
               ) : (
@@ -1506,12 +1507,12 @@ export default function RadarStoriesPage() {
                   return (
                     <tr
                       key={viewer.id}
-                      className={`hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors ${
+                      className={`hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors ${
                         isSelected ? "bg-blue-500/5 dark:bg-blue-500/10" : ""
                       }`}
                     >
                       {/* Checkbox de Seleção */}
-                      <td className="py-3 px-3 text-center">
+                      <td className="py-4 px-3 text-center align-middle">
                         <button
                           onClick={() => handleToggleSelect(viewer.id)}
                           className="p-1 rounded text-slate-400 hover:text-blue-500 transition-colors cursor-pointer"
@@ -1524,44 +1525,69 @@ export default function RadarStoriesPage() {
                         </button>
                       </td>
 
-                      {/* Contato / Carteira */}
-                      <td className="py-3 px-3">
-                        <div className="font-bold text-slate-900 dark:text-white leading-tight flex items-center gap-1.5">
-                          <span>{viewer.name}</span>
-                          {viewer.hasRealView && (
-                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" title="Visualização confirmada" />
-                          )}
-                        </div>
-                        <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5">
-                          <Building2 className="w-3 h-3 text-slate-400 shrink-0" />
-                          <span>{viewer.companyOrFarm}</span>
-                        </div>
-                        <div className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
-                          <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
-                          <span>{viewer.city} - {viewer.state}</span>
+                      {/* Contato / Carteira com Foto/Iniciais e Espaçamento Executivo */}
+                      <td className="py-4 px-4 align-middle">
+                        <div className="flex items-center gap-3">
+                          {/* Avatar Circular */}
+                          <div className="relative shrink-0">
+                            <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-bold text-xs text-slate-700 dark:text-slate-200 shadow-inner overflow-hidden">
+                              {viewer.avatarUrl ? (
+                                <img
+                                  src={viewer.avatarUrl}
+                                  alt={viewer.name}
+                                  className="w-full h-full object-cover rounded-full"
+                                  onError={(e) => {
+                                    (e.currentTarget as HTMLElement).style.display = "none";
+                                  }}
+                                />
+                              ) : (
+                                <span>{viewer.name.substring(0, 2).toUpperCase()}</span>
+                              )}
+                            </div>
+                            {viewer.hasRealView && (
+                              <span
+                                className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white dark:border-[#0B1224]"
+                                title="Visualização confirmada em tempo real"
+                              />
+                            )}
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <div className="font-bold text-sm text-slate-900 dark:text-white leading-snug truncate whitespace-nowrap flex items-center gap-1.5" title={viewer.name}>
+                              <span>{viewer.name}</span>
+                            </div>
+                            <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5 truncate whitespace-nowrap" title={viewer.companyOrFarm}>
+                              <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                              <span className="truncate">{viewer.companyOrFarm}</span>
+                            </div>
+                            <div className="text-[11px] text-slate-400 dark:text-slate-500 flex items-center gap-1 mt-0.5 whitespace-nowrap">
+                              <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                              <span>{viewer.city} - {viewer.state}</span>
+                            </div>
+                          </div>
                         </div>
                       </td>
 
                       {/* Telefone / WhatsApp Formatado com Botão de Edição */}
-                      <td className="py-3 px-3 whitespace-nowrap min-w-[170px]">
-                        <div className="flex items-center gap-1.5 whitespace-nowrap">
+                      <td className="py-4 px-4 align-middle whitespace-nowrap">
+                        <div className="flex items-center gap-2 whitespace-nowrap">
                           {viewer.isLidOnly ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 whitespace-nowrap">
-                              <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 whitespace-nowrap">
+                              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
                               <span>WhatsApp Verificado</span>
                             </span>
                           ) : (
-                            <span className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200 whitespace-nowrap">
+                            <span className="font-mono text-sm font-bold text-slate-900 dark:text-slate-100 whitespace-nowrap">
                               {viewer.phoneFormatted || `+${viewer.phone}`}
                             </span>
                           )}
 
                           <button
                             onClick={() => handleOpenEditPhoneModal(viewer)}
-                            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-blue-500 transition-colors cursor-pointer"
+                            className="p-1 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-blue-500 transition-colors cursor-pointer"
                             title="Editar / Associar número de telefone deste contato"
                           >
-                            <Edit3 className="w-3 h-3" />
+                            <Edit3 className="w-3.5 h-3.5" />
                           </button>
 
                           <button
@@ -1570,19 +1596,20 @@ export default function RadarStoriesPage() {
                               navigator.clipboard.writeText(cleanDigits);
                               toast.success("Número copiado!");
                             }}
-                            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                            className="p-1 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
                             title="Copiar número"
                           >
-                            <Copy className="w-3 h-3" />
+                            <Copy className="w-3.5 h-3.5" />
                           </button>
                         </div>
-                        <div className="text-[10px] text-slate-400 mt-0.5 whitespace-nowrap">
-                          Resp: {viewer.assignedSeller}
+                        <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 whitespace-nowrap flex items-center gap-1">
+                          <span className="font-medium text-slate-400">Resp:</span>
+                          <span className="font-semibold text-slate-700 dark:text-slate-300">{viewer.assignedSeller}</span>
                         </div>
                       </td>
 
                       {/* Post / Story Identificado com Miniatura e Lightbox */}
-                      <td className="py-3 px-3 max-w-[280px]">
+                      <td className="py-4 px-4 align-middle">
                         <div className="flex items-center gap-3">
                           <div
                             onClick={() =>
@@ -1596,8 +1623,8 @@ export default function RadarStoriesPage() {
                                 contactName: viewer.name,
                               })
                             }
-                            className="relative w-11 h-11 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0 group/thumb cursor-pointer shadow-sm hover:ring-2 hover:ring-blue-500/50 transition-all"
-                            title="Clique para visualizar a foto do Story"
+                            className="relative w-12 h-12 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0 group/thumb cursor-pointer shadow-sm hover:ring-2 hover:ring-blue-500/50 transition-all"
+                            title="Clique para visualizar a foto ampliada do Story"
                           >
                             {viewer.storyMedia.thumbnailUrl ? (
                               <img
@@ -1611,7 +1638,7 @@ export default function RadarStoriesPage() {
                               </div>
                             )}
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center">
-                              <Maximize2 className="w-3.5 h-3.5 text-white" />
+                              <Maximize2 className="w-4 h-4 text-white" />
                             </div>
                           </div>
 
@@ -1628,17 +1655,18 @@ export default function RadarStoriesPage() {
                                   contactName: viewer.name,
                                 })
                               }
-                              className="font-semibold text-slate-800 dark:text-slate-200 line-clamp-1 hover:text-blue-500 cursor-pointer transition-colors"
+                              className="font-semibold text-xs text-slate-800 dark:text-slate-200 line-clamp-1 hover:text-blue-500 cursor-pointer transition-colors"
+                              title={viewer.storyMedia.title}
                             >
                               {viewer.storyMedia.title}
                             </div>
-                            <div className="flex items-center gap-1.5 mt-1">
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                            <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                                 {getCategoryIcon(viewer.storyMedia.category)}
                                 <span>{viewer.storyMedia.category}</span>
                               </span>
                               {viewer.hasRealView && (
-                                <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center gap-1">
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center gap-1">
                                   <CheckCircle2 className="w-2.5 h-2.5" />
                                   Confirmada
                                 </span>
@@ -1649,26 +1677,26 @@ export default function RadarStoriesPage() {
                       </td>
 
                       {/* Data & Horário Exato */}
-                      <td className="py-3 px-3 whitespace-nowrap">
-                        <div className="flex items-center gap-1.5 font-mono text-slate-700 dark:text-slate-200 font-bold text-xs">
-                          <Clock className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                      <td className="py-4 px-4 align-middle whitespace-nowrap">
+                        <div className="flex items-center gap-1.5 font-mono text-slate-800 dark:text-slate-100 font-bold text-sm">
+                          <Clock className="w-4 h-4 text-emerald-500 shrink-0" />
                           <span>{viewer.storyMedia.exactTime}</span>
                         </div>
-                        <div className="flex items-center gap-1 text-[10px] text-slate-400 mt-0.5">
-                          <Calendar className="w-3 h-3 text-blue-500 shrink-0" />
+                        <div className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                          <Calendar className="w-3.5 h-3.5 text-blue-500 shrink-0" />
                           <span>{viewer.storyMedia.exactDate}</span>
-                          <span className="text-slate-500 font-mono">({viewer.storyMedia.viewedAt})</span>
+                          <span className="text-slate-400 dark:text-slate-500 font-mono">({viewer.storyMedia.viewedAt})</span>
                         </div>
                       </td>
 
                       {/* Classificação Comercial IA & CRM (Com Seletor Interativo Manual) */}
-                      <td className="py-3 px-3 min-w-[210px] max-w-[280px]">
-                        <div className="flex flex-col gap-1.5 items-start">
+                      <td className="py-4 px-4 align-middle">
+                        <div className="flex flex-col gap-2 items-start">
                           <div className="relative inline-flex items-center">
                             <select
                               value={viewer.crmStatus}
                               onChange={(e) => handleUpdateViewerClassification(viewer, e.target.value)}
-                              className={`appearance-none pl-7 pr-6 py-1 rounded-full text-[11px] font-bold border outline-none cursor-pointer transition-all shadow-sm ${
+                              className={`appearance-none pl-8 pr-7 py-1.5 rounded-full text-xs font-bold border outline-none cursor-pointer transition-all shadow-sm ${
                                 viewer.crmStatus === "active_client"
                                   ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:border-emerald-400 dark:bg-emerald-950/40"
                                   : viewer.crmStatus === "open_deal"
@@ -1690,7 +1718,7 @@ export default function RadarStoriesPage() {
                               <option value="internal_team" className="bg-slate-900 text-slate-300 font-semibold">Equipe Interna (Verto)</option>
                               <option value="non_commercial" className="bg-slate-900 text-rose-400 font-semibold">Pessoal / Institucional</option>
                             </select>
-                            <div className="absolute left-2 pointer-events-none">
+                            <div className="absolute left-2.5 pointer-events-none">
                               {viewer.crmStatus === "active_client" ? (
                                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                               ) : viewer.crmStatus === "open_deal" ? (
@@ -1705,7 +1733,7 @@ export default function RadarStoriesPage() {
                                 <Sparkles className="w-3.5 h-3.5 text-blue-400" />
                               )}
                             </div>
-                            <div className="absolute right-2 pointer-events-none text-slate-400">
+                            <div className="absolute right-2.5 pointer-events-none text-slate-400">
                               <ChevronDown className="w-3 h-3" />
                             </div>
                           </div>
@@ -1714,7 +1742,7 @@ export default function RadarStoriesPage() {
                           {viewer.intentLabel && viewer.crmStatus !== "internal_team" && (
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <span
-                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border ${
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-bold border ${
                                   viewer.crmStatus === "non_commercial"
                                     ? "bg-slate-500/10 text-slate-400 border-slate-500/25"
                                     : (viewer.intentScore || 0) >= 85
@@ -1725,11 +1753,11 @@ export default function RadarStoriesPage() {
                                 }`}
                               >
                                 {viewer.crmStatus === "non_commercial" ? (
-                                  <BadgeAlert className="w-3 h-3 shrink-0 text-slate-400" />
+                                  <BadgeAlert className="w-3.5 h-3.5 shrink-0 text-slate-400" />
                                 ) : (viewer.intentScore || 0) >= 80 ? (
-                                  <Flame className="w-3 h-3 shrink-0" />
+                                  <Flame className="w-3.5 h-3.5 shrink-0" />
                                 ) : (
-                                  <Target className="w-3 h-3 shrink-0" />
+                                  <Target className="w-3.5 h-3.5 shrink-0" />
                                 )}
                                 <span>{viewer.intentLabel} ({viewer.intentScore ?? 65}%)</span>
                               </span>
@@ -1738,13 +1766,13 @@ export default function RadarStoriesPage() {
 
                           {/* Detalhe de Compra ou Negociação */}
                           {viewer.totalPurchased > 0 ? (
-                            <div className="text-[11px] text-emerald-400 font-mono font-bold flex items-center gap-1 whitespace-nowrap">
-                              <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
+                            <div className="text-xs text-emerald-400 font-mono font-bold flex items-center gap-1 whitespace-nowrap">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                               <span>Faturado: {formatCurrency(viewer.totalPurchased)}</span>
                             </div>
                           ) : viewer.dealTitle ? (
-                            <div className="text-[11px] text-amber-400 font-semibold truncate max-w-[240px] flex items-center gap-1" title={viewer.dealTitle}>
-                              <TrendingUp className="w-3 h-3 text-amber-400 shrink-0" />
+                            <div className="text-xs text-amber-400 font-semibold truncate max-w-[280px] flex items-center gap-1" title={viewer.dealTitle}>
+                              <TrendingUp className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                               <span className="truncate">
                                 {viewer.dealValue ? `${formatCurrency(viewer.dealValue)} • ` : ""}{viewer.dealTitle}
                               </span>
@@ -1756,10 +1784,10 @@ export default function RadarStoriesPage() {
                                 setSelectedViewerForDetails(viewer);
                                 setIsDetailsModalOpen(true);
                               }}
-                              className="text-[10.5px] text-slate-300 hover:text-blue-400 truncate max-w-[245px] flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-800/50 hover:bg-blue-500/10 border border-slate-700/60 hover:border-blue-500/30 transition-colors cursor-pointer"
+                              className="text-[11px] text-slate-300 hover:text-blue-400 truncate max-w-[280px] flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-800/60 hover:bg-blue-500/10 border border-slate-700/60 hover:border-blue-500/30 transition-colors cursor-pointer"
                               title={`Clique para ler as ${viewer.chatMessages?.length || 1} mensagens da conversa no sistema: "${viewer.lastChatMessage}"`}
                             >
-                              <MessageSquare className="w-3 h-3 text-blue-400 shrink-0" />
+                              <MessageSquare className="w-3.5 h-3.5 text-blue-400 shrink-0" />
                               <span className="truncate">Chat: &ldquo;{viewer.lastChatMessage}&rdquo;</span>
                             </button>
                           ) : null}
@@ -1772,50 +1800,52 @@ export default function RadarStoriesPage() {
                             }}
                             className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-400 hover:text-blue-300 transition-colors pt-0.5 cursor-pointer group"
                           >
-                            <Sparkles className="w-3 h-3 text-blue-400 group-hover:scale-110 transition-transform" />
+                            <Sparkles className="w-3.5 h-3.5 text-blue-400 group-hover:scale-110 transition-transform" />
                             <span>Ver Conversas & Análise IA</span>
-                            <ChevronRight className="w-3 h-3 text-blue-400 group-hover:translate-x-0.5 transition-transform" />
+                            <ChevronRight className="w-3.5 h-3.5 text-blue-400 group-hover:translate-x-0.5 transition-transform" />
                           </button>
                         </div>
                       </td>
 
-                      {/* Ação Comercial */}
-                      <td className="py-3 px-3 text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-1.5">
+                      {/* Ação Comercial com Alinhamento e Espaçamento Perfeito */}
+                      <td className="py-4 px-4 text-right align-middle whitespace-nowrap pr-6">
+                        <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => handleOpenAiModal(viewer)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition-colors shadow-sm cursor-pointer"
+                            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-all shadow-sm hover:shadow-blue-500/25 active:scale-95 cursor-pointer"
                             title="Gerar e disparar abordagem comercial pelo sistema com IA"
                           >
-                            <Sparkles className="w-3 h-3 text-amber-300" />
+                            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
                             <span>Abordar IA</span>
                           </button>
+
                           {viewer.crmStatus !== "internal_team" && viewer.crmStatus !== "non_commercial" && !viewer.dealId && (
                             <button
                               onClick={() => handleConvertViewerToDeal(viewer)}
                               disabled={convertingViewerId === viewer.id}
-                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/25 font-bold text-[11px] transition-colors cursor-pointer disabled:opacity-50"
+                              className="flex items-center gap-1 px-3 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/25 font-bold text-xs transition-colors cursor-pointer disabled:opacity-50"
                               title="Converter este visualizador em uma Oportunidade ativa no Funil CRM com 1 clique"
                             >
                               {convertingViewerId === viewer.id ? (
-                                <Loader2 className="w-3 h-3 animate-spin" />
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
                               ) : (
-                                <Plus className="w-3 h-3" />
+                                <Plus className="w-3.5 h-3.5" />
                               )}
                               <span>Negócio</span>
                             </button>
                           )}
+
                           <button
                             onClick={() => {
                               setSelectedViewerForDetails(viewer);
                               setIsDetailsModalOpen(true);
                             }}
-                            className="relative p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-blue-500/50 dark:hover:border-blue-500/50 text-slate-600 dark:text-slate-300 hover:text-blue-400 transition-colors cursor-pointer"
+                            className="relative p-2 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-blue-500/50 dark:hover:border-blue-500/50 text-slate-600 dark:text-slate-300 hover:text-blue-400 transition-colors cursor-pointer"
                             title="Ver Histórico de Conversas do Sistema & Contexto IA"
                           >
-                            <MessageSquare className="w-3.5 h-3.5" />
+                            <MessageSquare className="w-4 h-4" />
                             {viewer.chatMessages && viewer.chatMessages.length > 0 && (
-                              <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-blue-600 text-[9px] font-bold text-white flex items-center justify-center">
+                              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-blue-600 text-[10px] font-bold text-white flex items-center justify-center">
                                 {viewer.chatMessages.length}
                               </span>
                             )}
