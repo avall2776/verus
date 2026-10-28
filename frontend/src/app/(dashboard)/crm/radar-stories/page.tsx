@@ -70,18 +70,25 @@ import { useSocket } from "@/components/ui/SocketProvider";
 interface StoryViewer {
   id: string;
   contactId: string;
+  conversationId?: string;
   name: string;
   companyOrFarm: string;
   phone: string;
   phoneFormatted?: string;
+  email?: string;
   isLidOnly?: boolean;
   city: string;
   state: string;
   crmStatus: "active_client" | "inactive_client" | "open_deal" | "prospect" | "internal_team";
   crmStatusLabel: string;
+  intentScore?: number;
+  intentLabel?: string;
   totalPurchased: number;
+  dealId?: string;
   dealTitle?: string;
   dealValue?: number;
+  lastChatMessage?: string;
+  lastChatDate?: string;
   aiInsight?: string;
   lastPurchaseDate?: string;
   daysInactive: number;
@@ -204,6 +211,9 @@ export default function RadarStoriesPage() {
   const [selectedViewer, setSelectedViewer] = useState<StoryViewer | null>(null);
   const [isAiModalOpen, setIsAiModalOpen] = useState<boolean>(false);
   const [isGeneratingAi, setIsGeneratingAi] = useState<boolean>(false);
+  const [isSendingDirectApproach, setIsSendingDirectApproach] = useState<boolean>(false);
+  const [autoCreateDealOnSend, setAutoCreateDealOnSend] = useState<boolean>(true);
+  const [convertingViewerId, setConvertingViewerId] = useState<string | null>(null);
   const [generatedApproach, setGeneratedApproach] = useState<{
     casualMessage: string;
     strategicReasoning: string;
@@ -234,24 +244,64 @@ export default function RadarStoriesPage() {
   const [publishScheduleDate, setPublishScheduleDate] = useState<string>("");
   const [isPublishing, setIsPublishing] = useState<boolean>(false);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Compressão automática em Canvas (1080x1920 JPEG 0.82) para evitar PayloadTooLargeError (413) e garantir nitidez
+  const compressImageFile = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error("Falha ao ler imagem"));
+      reader.onload = (event) => {
+        const rawDataUrl = event.target?.result as string;
+        const img = new window.Image();
+        img.onerror = () => resolve(rawDataUrl);
+        img.onload = () => {
+          try {
+            const maxW = 1080;
+            const maxH = 1920;
+            let { width, height } = img;
+            if (width > maxW || height > maxH) {
+              const ratio = Math.min(maxW / width, maxH / height);
+              width = Math.round(width * ratio);
+              height = Math.round(height * ratio);
+            }
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) {
+              resolve(rawDataUrl);
+              return;
+            }
+            ctx.drawImage(img, 0, 0, width, height);
+            const compressed = canvas.toDataURL("image/jpeg", 0.84);
+            resolve(compressed);
+          } catch {
+            resolve(rawDataUrl);
+          }
+        };
+        img.src = rawDataUrl;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
       toast.error("Por favor, selecione um arquivo de imagem (JPEG, PNG ou WebP).");
       return;
     }
-    if (file.size > 8 * 1024 * 1024) {
-      toast.error("A imagem deve ter no máximo 8MB.");
+    if (file.size > 15 * 1024 * 1024) {
+      toast.error("A imagem deve ter no máximo 15MB.");
       return;
     }
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const base64 = event.target?.result as string;
-      setPublishImageBase64(base64);
-      setPublishImagePreview(base64);
-    };
-    reader.readAsDataURL(file);
+    try {
+      const compressedBase64 = await compressImageFile(file);
+      setPublishImageBase64(compressedBase64);
+      setPublishImagePreview(compressedBase64);
+    } catch {
+      toast.error("Erro ao processar a imagem.");
+    }
   };
 
   const handlePublishStory = async (e: React.FormEvent) => {
@@ -457,6 +507,57 @@ export default function RadarStoriesPage() {
     window.open(`https://wa.me/${cleanPhone}?text=${encoded}`, "_blank");
   };
 
+  // Disparo Direto da Abordagem pelo WhatsApp Conectado no Sistema (Sem sair do painel)
+  const handleSendDirectApproach = async () => {
+    if (!selectedViewer || !generatedApproach?.casualMessage?.trim()) return;
+    try {
+      setIsSendingDirectApproach(true);
+      const res = await api.post("/crm/radar-stories/send-approach", {
+        viewerId: selectedViewer.id,
+        contactId: selectedViewer.contactId,
+        phone: selectedViewer.phone,
+        contactName: selectedViewer.name,
+        message: generatedApproach.casualMessage.trim(),
+        storyTitle: selectedViewer.storyMedia.title,
+        createDeal: autoCreateDealOnSend,
+      });
+      toast.success(
+        res.data?.message || "Abordagem enviada com sucesso pelo WhatsApp corporativo!"
+      );
+      setIsAiModalOpen(false);
+      fetchViewers();
+      fetchMetrics();
+    } catch (err: any) {
+      toast.error(
+        err.response?.data?.message || "Erro ao enviar abordagem diretamente. Tente pelo WhatsApp externo."
+      );
+    } finally {
+      setIsSendingDirectApproach(false);
+    }
+  };
+
+  // Converter visualizador de Story diretamente em Oportunidade / Negócio no Funil CRM
+  const handleConvertViewerToDeal = async (viewer: StoryViewer) => {
+    try {
+      setConvertingViewerId(viewer.id);
+      const res = await api.post("/crm/radar-stories/convert-to-deal", {
+        viewerId: viewer.id,
+        contactId: viewer.contactId,
+        phone: viewer.phone,
+        contactName: viewer.name,
+        storyTitle: viewer.storyMedia.title,
+        storyCategory: viewer.storyMedia.category,
+      });
+      toast.success(res.data?.message || `Oportunidade criada no Funil CRM para ${viewer.name}!`);
+      fetchViewers();
+      fetchMetrics();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Erro ao converter contato em oportunidade no CRM.");
+    } finally {
+      setConvertingViewerId(null);
+    }
+  };
+
   // Seleção de visualizadores para tráfego pago e ações em massa
   const handleToggleSelect = (id: string) => {
     setSelectedViewerIds((prev) => {
@@ -475,16 +576,19 @@ export default function RadarStoriesPage() {
     }
   };
 
-  // Exportar público personalizado para o Meta Ads (CSV oficial)
-  const handleExportMetaAudience = async () => {
+  // Exportar público personalizado para o Meta Ads (Suporta SHA-256 Criptografado ou Planilha Aberta)
+  const handleExportMetaAudience = async (mode: "sha256" | "plain" = "sha256") => {
     try {
       setIsExportingMeta(true);
       const viewerIds = selectedViewerIds.size > 0 ? Array.from(selectedViewerIds) : undefined;
-      const res = await api.post("/crm/radar-stories/meta-audience/export", { viewerIds });
+      const res = await api.post("/crm/radar-stories/meta-audience/export", {
+        viewerIds,
+        mode,
+      });
       const { csvContent, filename, totalContacts } = res.data;
 
       if (!csvContent) {
-        toast.error("Nenhum contato qualificado para exportação.");
+        toast.error("Nenhum contato qualificado com telefone real para exportação.");
         return;
       }
 
@@ -492,13 +596,20 @@ export default function RadarStoriesPage() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.setAttribute("href", url);
-      link.setAttribute("download", filename || "publico_meta_ads_stories_verto.csv");
+      link.setAttribute(
+        "download",
+        filename || (mode === "sha256" ? "meta_ads_sha256_stories_verto.csv" : "planilha_stories_verto.csv")
+      );
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
 
-      toast.success(`Público com ${totalContacts} contatos exportado no formato oficial Meta Ads!`);
+      toast.success(
+        mode === "sha256"
+          ? `Público com ${totalContacts} contatos exportado com Criptografia SHA-256 oficial do Meta Ads!`
+          : `Planilha comercial com ${totalContacts} contatos exportada com sucesso!`
+      );
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Erro ao exportar audiência Meta Ads.");
     } finally {
@@ -524,6 +635,7 @@ export default function RadarStoriesPage() {
       toast.success(res.data?.message || "Campanha gerada com sucesso!");
       setIsCampaignModalOpen(false);
       setSelectedViewerIds(new Set());
+      fetchMetrics();
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Erro ao criar campanha.");
     } finally {
@@ -538,19 +650,19 @@ export default function RadarStoriesPage() {
     setIsPhotoModalOpen(true);
   };
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
       toast.error("Selecione um arquivo de imagem válido (PNG, JPEG ou WebP).");
       return;
     }
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const base64 = event.target?.result as string;
-      setNewPhotoBase64(base64);
-    };
-    reader.readAsDataURL(file);
+    try {
+      const compressedBase64 = await compressImageFile(file);
+      setNewPhotoBase64(compressedBase64);
+    } catch {
+      toast.error("Erro ao processar a foto.");
+    }
   };
 
   const handleSavePhoto = async () => {
@@ -1218,38 +1330,72 @@ export default function RadarStoriesPage() {
           </div>
         </div>
 
-        {/* Abas de Filtragem Rápida por Classificação Comercial IA */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-2 pt-2 border-t border-slate-100 dark:border-slate-800/80 no-scrollbar">
-          <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1 shrink-0">
-            Filtro IA:
-          </span>
-          {[
-            { id: "all", label: "Todos", count: viewers.length },
-            { id: "active_client", label: "Compradores", count: viewers.filter((v) => v.crmStatus === "active_client").length, color: "text-emerald-500" },
-            { id: "open_deal", label: "Negociação", count: viewers.filter((v) => v.crmStatus === "open_deal").length, color: "text-amber-500" },
-            { id: "prospect", label: "Potenciais", count: viewers.filter((v) => v.crmStatus === "prospect").length, color: "text-blue-500" },
-            { id: "inactive_client", label: "Reativação", count: viewers.filter((v) => v.crmStatus === "inactive_client").length, color: "text-purple-400" },
-            { id: "internal_team", label: "Equipe", count: viewers.filter((v) => v.crmStatus === "internal_team").length, color: "text-slate-400" },
-          ].map((tab) => (
+        {/* Abas de Filtragem Rápida por Classificação Comercial IA + Exportação Rápida Meta Ads */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 pb-2 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+            <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1 shrink-0">
+              Filtro IA:
+            </span>
+            {[
+              { id: "all", label: "Todos", count: viewers.length },
+              { id: "active_client", label: "Compradores", count: viewers.filter((v) => v.crmStatus === "active_client").length, color: "text-emerald-500" },
+              { id: "open_deal", label: "Negociação", count: viewers.filter((v) => v.crmStatus === "open_deal").length, color: "text-amber-500" },
+              { id: "prospect", label: "Potenciais", count: viewers.filter((v) => v.crmStatus === "prospect").length, color: "text-blue-500" },
+              { id: "inactive_client", label: "Reativação", count: viewers.filter((v) => v.crmStatus === "inactive_client").length, color: "text-purple-400" },
+              { id: "internal_team", label: "Equipe", count: viewers.filter((v) => v.crmStatus === "internal_team").length, color: "text-slate-400" },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveFilterTab(tab.id)}
+                className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                  activeFilterTab === tab.id
+                    ? "bg-blue-600 text-white shadow-sm shadow-blue-500/20"
+                    : "bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800"
+                }`}
+              >
+                <span>{tab.label}</span>
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+                  activeFilterTab === tab.id
+                    ? "bg-white/20 text-white"
+                    : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200"
+                }`}>
+                  {tab.count}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {/* Botões Diretos de Tráfego Pago / Meta Ads Criptografado (SHA-256) e Planilha */}
+          <div className="flex flex-wrap items-center gap-1.5 shrink-0">
             <button
-              key={tab.id}
-              onClick={() => setActiveFilterTab(tab.id)}
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
-                activeFilterTab === tab.id
-                  ? "bg-blue-600 text-white shadow-sm shadow-blue-500/20"
-                  : "bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800"
-              }`}
+              onClick={() => handleExportMetaAudience("sha256")}
+              disabled={isExportingMeta}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/25 text-[11px] font-bold transition-colors cursor-pointer disabled:opacity-50"
+              title="Exportar lista com Hash Criptografado SHA-256 oficial para Públicos Personalizados do Meta Ads"
             >
-              <span>{tab.label}</span>
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
-                activeFilterTab === tab.id
-                  ? "bg-white/20 text-white"
-                  : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200"
-              }`}>
-                {tab.count}
-              </span>
+              {isExportingMeta ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5" />}
+              <span>Meta Ads (SHA-256)</span>
             </button>
-          ))}
+
+            <button
+              onClick={() => handleExportMetaAudience("plain")}
+              disabled={isExportingMeta}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-[11px] font-semibold transition-colors cursor-pointer disabled:opacity-50"
+              title="Exportar planilha aberta com Nome, Telefone, Cidade e Valor para prospecção comercial"
+            >
+              <Download className="w-3.5 h-3.5 text-blue-500" />
+              <span>Planilha CSV</span>
+            </button>
+
+            <button
+              onClick={() => setIsCampaignModalOpen(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 text-[11px] font-bold transition-colors cursor-pointer"
+              title="Criar campanha de disparo no WhatsApp com Anti-Ban ou público de remarketing"
+            >
+              <Megaphone className="w-3.5 h-3.5" />
+              <span>Campanha / Disparo</span>
+            </button>
+          </div>
         </div>
 
         {/* Barra de Ações em Lote para Tráfego Pago / Audiência Meta Ads */}
@@ -1261,22 +1407,31 @@ export default function RadarStoriesPage() {
               </div>
               <div>
                 <span className="text-xs font-bold text-slate-900 dark:text-white">
-                  {selectedViewerIds.size} contato(s) selecionado(s) para Ação de Vendas
+                  {selectedViewerIds.size} contato(s) selecionado(s) para Ação de Vendas & Tráfego
                 </span>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  Exporte para público de Meta Ads ou gere campanha de remarketing com 1 clique.
+                  Exporte em Hash Criptografado SHA-256 para o Meta Ads, baixe a planilha ou dispare abordagem em lote.
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <button
-                onClick={handleExportMetaAudience}
+                onClick={() => handleExportMetaAudience("sha256")}
                 disabled={isExportingMeta}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
               >
-                {isExportingMeta ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
-                <span>Exportar Audiência Meta Ads (CSV)</span>
+                {isExportingMeta ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5" />}
+                <span>Exportar Meta Ads (SHA-256)</span>
+              </button>
+
+              <button
+                onClick={() => handleExportMetaAudience("plain")}
+                disabled={isExportingMeta}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Planilha Aberta (CSV)</span>
               </button>
 
               <button
@@ -1284,7 +1439,7 @@ export default function RadarStoriesPage() {
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors shadow-sm cursor-pointer"
               >
                 <Megaphone className="w-3.5 h-3.5" />
-                <span>Criar Campanha Tráfego Pago</span>
+                <span>Criar Campanha / Disparo</span>
               </button>
 
               <button
@@ -1542,6 +1697,24 @@ export default function RadarStoriesPage() {
                             </div>
                           </div>
 
+                          {/* Termômetro de Intenção IA & Contexto Real do Inbox */}
+                          {viewer.intentLabel && viewer.crmStatus !== "internal_team" && (
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span
+                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border ${
+                                  (viewer.intentScore || 0) >= 85
+                                    ? "bg-rose-500/10 text-rose-400 border-rose-500/25"
+                                    : (viewer.intentScore || 0) >= 70
+                                    ? "bg-amber-500/10 text-amber-400 border-amber-500/25"
+                                    : "bg-blue-500/10 text-blue-400 border-blue-500/25"
+                                }`}
+                              >
+                                <Flame className="w-3 h-3 shrink-0" />
+                                <span>{viewer.intentLabel} ({viewer.intentScore || 65}%)</span>
+                              </span>
+                            </div>
+                          )}
+
                           {/* Detalhe de Compra ou Negociação */}
                           {viewer.totalPurchased > 0 ? (
                             <div className="text-[11px] text-emerald-400 font-mono font-bold flex items-center gap-1 whitespace-nowrap">
@@ -1554,6 +1727,11 @@ export default function RadarStoriesPage() {
                               <span className="truncate">
                                 {viewer.dealValue ? `${formatCurrency(viewer.dealValue)} • ` : ""}{viewer.dealTitle}
                               </span>
+                            </div>
+                          ) : viewer.lastChatMessage ? (
+                            <div className="text-[10.5px] text-slate-400 truncate max-w-[240px] flex items-center gap-1" title={viewer.lastChatMessage}>
+                              <MessageSquare className="w-3 h-3 text-blue-400 shrink-0" />
+                              <span className="truncate">Chat: &ldquo;{viewer.lastChatMessage}&rdquo;</span>
                             </div>
                           ) : null}
 
@@ -1578,10 +1756,26 @@ export default function RadarStoriesPage() {
                           <button
                             onClick={() => handleOpenAiModal(viewer)}
                             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition-colors shadow-sm cursor-pointer"
+                            title="Gerar e disparar abordagem comercial pelo sistema com IA"
                           >
                             <Sparkles className="w-3 h-3 text-amber-300" />
-                            <span>Abordagem IA</span>
+                            <span>Abordar IA</span>
                           </button>
+                          {viewer.crmStatus !== "internal_team" && !viewer.dealId && (
+                            <button
+                              onClick={() => handleConvertViewerToDeal(viewer)}
+                              disabled={convertingViewerId === viewer.id}
+                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/25 font-bold text-[11px] transition-colors cursor-pointer disabled:opacity-50"
+                              title="Converter este visualizador em uma Oportunidade ativa no Funil CRM com 1 clique"
+                            >
+                              {convertingViewerId === viewer.id ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <Plus className="w-3 h-3" />
+                              )}
+                              <span>Negócio</span>
+                            </button>
+                          )}
                           <button
                             onClick={() => {
                               const cleanPhone = (viewer.phone || "").replace(/\D/g, "");
@@ -1823,8 +2017,14 @@ export default function RadarStoriesPage() {
                     </div>
 
                     {/* Detalhe Comercial / Faturado ou Negociação */}
-                    {(viewer.totalPurchased > 0 || viewer.dealTitle) && (
-                      <div className="mt-2 text-xs flex items-center justify-between">
+                    <div className="mt-2 text-xs flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        {viewer.intentLabel && viewer.crmStatus !== "internal_team" && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                            <Flame className="w-2.5 h-2.5 shrink-0" />
+                            <span>{viewer.intentLabel}</span>
+                          </span>
+                        )}
                         {viewer.totalPurchased > 0 ? (
                           <span className="text-[11px] text-emerald-400 font-mono font-bold flex items-center gap-1">
                             <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
@@ -1836,19 +2036,19 @@ export default function RadarStoriesPage() {
                             <span className="truncate">{viewer.dealValue ? `${formatCurrency(viewer.dealValue)} • ` : ""}{viewer.dealTitle}</span>
                           </span>
                         ) : null}
-
-                        <button
-                          onClick={() => {
-                            setSelectedViewerForDetails(viewer);
-                            setIsDetailsModalOpen(true);
-                          }}
-                          className="text-[10.5px] text-blue-400 hover:text-blue-300 font-semibold flex items-center gap-0.5 cursor-pointer"
-                        >
-                          <span>Ver Detalhes</span>
-                          <ChevronRight className="w-3 h-3" />
-                        </button>
                       </div>
-                    )}
+
+                      <button
+                        onClick={() => {
+                          setSelectedViewerForDetails(viewer);
+                          setIsDetailsModalOpen(true);
+                        }}
+                        className="text-[10.5px] text-blue-400 hover:text-blue-300 font-semibold flex items-center gap-0.5 cursor-pointer ml-auto"
+                      >
+                        <span>Ver Análise IA</span>
+                        <ChevronRight className="w-3 h-3" />
+                      </button>
+                    </div>
 
                     {/* Ações Mobile */}
                     <div className="mt-3 pt-2.5 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center gap-2">
@@ -1857,8 +2057,23 @@ export default function RadarStoriesPage() {
                         className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer"
                       >
                         <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                        <span>Abordagem IA</span>
+                        <span>Abordar IA</span>
                       </button>
+
+                      {viewer.crmStatus !== "internal_team" && !viewer.dealId && (
+                        <button
+                          onClick={() => handleConvertViewerToDeal(viewer)}
+                          disabled={convertingViewerId === viewer.id}
+                          className="flex items-center justify-center gap-1 py-2 px-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/25 font-bold text-xs transition-colors cursor-pointer disabled:opacity-50"
+                        >
+                          {convertingViewerId === viewer.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Plus className="w-3.5 h-3.5" />
+                          )}
+                          <span>Negócio</span>
+                        </button>
+                      )}
 
                       <button
                         onClick={() => {
@@ -1880,7 +2095,7 @@ export default function RadarStoriesPage() {
       </div>
 
       {/* ======================================================================= */}
-      {/* 5. MODAL DE ABORDAGEM CASUAL GERADA POR OPENAI REAL                     */}
+      {/* 5. MODAL DE ABORDAGEM CASUAL GERADA POR OPENAI REAL + DISPARO DIRETO    */}
       {/* ======================================================================= */}
       {isAiModalOpen && selectedViewer && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
@@ -1893,10 +2108,10 @@ export default function RadarStoriesPage() {
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                    Abordagem Comercial Casual (OpenAI)
+                    Abordagem Comercial Contextual (OpenAI + Histórico WhatsApp)
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Formulada sob medida para {selectedViewer.name} sem mencionar visualização de status.
+                    Formulada com base no histórico real de conversas de {selectedViewer.name} sem mencionar visualização de status.
                   </p>
                 </div>
               </div>
@@ -1911,11 +2126,13 @@ export default function RadarStoriesPage() {
             {/* Conteúdo Modal */}
             <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
               {/* Contexto do Visualizador */}
-              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-xs grid grid-cols-2 gap-3">
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-xs grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <span className="text-slate-400 block text-[10px] uppercase font-bold">Produtor / Contato:</span>
                   <span className="font-bold text-slate-800 dark:text-slate-200">{selectedViewer.name}</span>
-                  <span className="text-[11px] text-slate-400 block font-mono">+{selectedViewer.phone}</span>
+                  <span className="text-[11px] text-slate-400 block font-mono">
+                    {selectedViewer.phoneFormatted || `+${selectedViewer.phone}`}
+                  </span>
                 </div>
                 <div>
                   <span className="text-slate-400 block text-[10px] uppercase font-bold">Post Visualizado:</span>
@@ -1931,33 +2148,58 @@ export default function RadarStoriesPage() {
                 <div className="py-12 flex flex-col items-center justify-center gap-3 text-slate-500 dark:text-slate-400">
                   <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
                   <div className="text-xs font-semibold">
-                    Invocando OpenAI com inteligência comercial B2B/Agro...
+                    Analisando histórico real de WhatsApp, Funil CRM e invocando OpenAI...
                   </div>
                   <div className="text-[11px] text-slate-400 max-w-sm text-center">
-                    Criando timing de coincidência natural e eliminando clichês de redes sociais.
+                    Criando gancho consultivo personalizado com base nas últimas mensagens trocadas com este cliente.
                   </div>
                 </div>
               )}
 
-              {/* Mensagem e Raciocínio Estratégico */}
+              {/* Mensagem Editável e Raciocínio Estratégico */}
               {!isGeneratingAi && generatedApproach && (
                 <div className="space-y-4">
-                  {/* Mensagem Pronta para Envio */}
+                  {/* Mensagem Editável para Disparo Direto */}
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
-                      <span>Mensagem Sugerida para WhatsApp:</span>
+                      <span>Mensagem Pronta para Disparo (Editável):</span>
                       <span className="text-[11px] text-emerald-500 font-semibold flex items-center gap-1">
-                        <Check className="w-3 h-3" /> Tom Consultivo & Sóbrio
+                        <Check className="w-3 h-3" /> Tom Consultivo & Contextual
                       </span>
                     </div>
-                    <div className="p-4 rounded-xl bg-slate-100 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-xs text-slate-800 dark:text-slate-200 font-medium whitespace-pre-wrap leading-relaxed select-all">
-                      {generatedApproach.casualMessage}
-                    </div>
+                    <textarea
+                      rows={4}
+                      value={generatedApproach.casualMessage}
+                      onChange={(e) =>
+                        setGeneratedApproach((prev) =>
+                          prev ? { ...prev, casualMessage: e.target.value } : prev
+                        )
+                      }
+                      className="w-full p-3.5 rounded-xl bg-slate-100 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-xs text-slate-800 dark:text-slate-200 font-medium leading-relaxed outline-none focus:border-blue-500 resize-none"
+                    />
                   </div>
+
+                  {/* Opção de Criar Oportunidade no CRM automaticamente no disparo */}
+                  <label className="flex items-center gap-2.5 p-3 rounded-xl border border-amber-500/25 bg-amber-500/5 text-xs text-slate-700 dark:text-slate-200 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={autoCreateDealOnSend}
+                      onChange={(e) => setAutoCreateDealOnSend(e.target.checked)}
+                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <div className="flex-1">
+                      <span className="font-bold text-amber-500 block">
+                        Abrir / Reaquecer Oportunidade no Funil CRM automaticamente
+                      </span>
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                        Ao disparar a mensagem, o sistema registra o negócio no Funil Comercial vinculado a este Story.
+                      </span>
+                    </div>
+                  </label>
 
                   {/* Raciocínio Estratégico */}
                   <div className="p-3.5 rounded-xl border border-blue-500/20 bg-blue-500/5 text-xs text-slate-600 dark:text-slate-300 space-y-1">
-                    <span className="font-bold text-blue-500 block">Justificativa Comercial:</span>
+                    <span className="font-bold text-blue-500 block">Diagnóstico & Contexto Identificado pela IA:</span>
                     <p className="text-[11px] leading-relaxed">{generatedApproach.strategicReasoning}</p>
                   </div>
 
@@ -1981,10 +2223,10 @@ export default function RadarStoriesPage() {
             </div>
 
             {/* Footer Modal */}
-            <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2 bg-slate-50 dark:bg-slate-900/30">
+            <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-end gap-2 bg-slate-50 dark:bg-slate-900/30">
               <button
                 onClick={() => setIsAiModalOpen(false)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                className="px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
               >
                 Fechar
               </button>
@@ -1992,17 +2234,29 @@ export default function RadarStoriesPage() {
                 <>
                   <button
                     onClick={handleCopyMessage}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200 transition-colors cursor-pointer"
                   >
                     {copiedMessage ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{copiedMessage ? "Copiado!" : "Copiar Texto"}</span>
+                    <span>{copiedMessage ? "Copiado!" : "Copiar"}</span>
                   </button>
                   <button
                     onClick={handleOpenWhatsApp}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-colors shadow-sm"
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 text-xs font-semibold transition-colors cursor-pointer"
                   >
-                    <Send className="w-3.5 h-3.5" />
-                    <span>Enviar no WhatsApp</span>
+                    <ArrowUpRight className="w-3.5 h-3.5" />
+                    <span>WhatsApp Web</span>
+                  </button>
+                  <button
+                    onClick={handleSendDirectApproach}
+                    disabled={isSendingDirectApproach}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+                  >
+                    {isSendingDirectApproach ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Send className="w-3.5 h-3.5" />
+                    )}
+                    <span>Disparar Agora pelo Sistema</span>
                   </button>
                 </>
               )}
@@ -2941,7 +3195,7 @@ export default function RadarStoriesPage() {
             </div>
 
             <form onSubmit={handleCreateCampaign} className="p-6 space-y-4">
-              <div className="p-3.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs flex items-center justify-between">
+              <div className="p-3.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2 text-indigo-400">
                   <Target className="w-4 h-4 shrink-0" />
                   <span className="font-semibold">
@@ -2950,15 +3204,26 @@ export default function RadarStoriesPage() {
                       : `Todos os ${filteredViewers.length} contatos filtrados`}
                   </span>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleExportMetaAudience}
-                  disabled={isExportingMeta}
-                  className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-                >
-                  <Download className="w-3 h-3" />
-                  <span>Baixar CSV Meta Ads</span>
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => handleExportMetaAudience("sha256")}
+                    disabled={isExportingMeta}
+                    className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                  >
+                    <ShieldCheck className="w-3 h-3" />
+                    <span>Meta Ads (SHA-256)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleExportMetaAudience("plain")}
+                    disabled={isExportingMeta}
+                    className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                  >
+                    <Download className="w-3 h-3" />
+                    <span>Planilha CSV</span>
+                  </button>
+                </div>
               </div>
 
               <div>
@@ -2984,17 +3249,19 @@ export default function RadarStoriesPage() {
                   onChange={(e) => setCampaignObjective(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B] text-xs text-slate-900 dark:text-white outline-none focus:border-blue-500 cursor-pointer"
                 >
-                  <option value="meta_ads_custom_audience">Meta Ads (Instagram & Facebook) - Público Personalizado</option>
+                  <option value="whatsapp_mass_broadcast">Disparo Consultivo Direcionado no WhatsApp (Fila Anti-Ban 45s)</option>
+                  <option value="meta_ads_custom_audience">Meta Ads (Instagram & Facebook) - Público Personalizado (SHA-256)</option>
                   <option value="meta_ads_lookalike">Meta Ads - Público Semelhante (Lookalike 1%)</option>
                   <option value="google_customer_match">Google Ads - Segmentação por Lista de Clientes</option>
-                  <option value="whatsapp_mass_broadcast">Disparo Consultivo Direcionado no WhatsApp</option>
                 </select>
               </div>
 
               <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40 text-[11px] text-slate-500 dark:text-slate-400 space-y-1">
-                <span className="font-bold text-slate-700 dark:text-slate-300 block">Formato Oficial Meta Ads:</span>
+                <span className="font-bold text-slate-700 dark:text-slate-300 block">
+                  Criptografia SHA-256 Meta Ads & Disparo Anti-Ban:
+                </span>
                 <p>
-                  O arquivo CSV gerado contém as colunas padrão (email, phone, fn, ln, ct, st, country) com os telefones sanitizados em formato internacional (+55...).
+                  No modo <strong>Meta Ads (SHA-256)</strong>, todos os dados (email, telefone E.164, nome, cidade, UF) são criptografados com hash hexadecimal SHA-256 de 64 caracteres + coluna de valor (LTV). No modo <strong>Disparo WhatsApp</strong>, as abordagens são agendadas na fila com intervalo Anti-Ban de 45s.
                 </p>
               </div>
 
@@ -3012,7 +3279,7 @@ export default function RadarStoriesPage() {
                   className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
                 >
                   {isCreatingCampaign ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Megaphone className="w-3.5 h-3.5" />}
-                  <span>Criar Campanha no CRM</span>
+                  <span>Executar Campanha</span>
                 </button>
               </div>
             </form>
@@ -3231,11 +3498,37 @@ export default function RadarStoriesPage() {
                 </div>
               </div>
 
-              {/* Análise Completa da IA */}
+              {/* Análise Completa da IA + Última Mensagem no WhatsApp */}
+              {selectedViewerForDetails.lastChatMessage && (
+                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40 space-y-1.5 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1">
+                      <MessageSquare className="w-3 h-3 text-blue-500" />
+                      <span>Última Mensagem Real no Inbox WhatsApp:</span>
+                    </span>
+                    {selectedViewerForDetails.lastChatDate && (
+                      <span className="text-[10px] font-mono text-slate-400">
+                        {selectedViewerForDetails.lastChatDate}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-700 dark:text-slate-200 italic">
+                    &ldquo;{selectedViewerForDetails.lastChatMessage}&rdquo;
+                  </p>
+                </div>
+              )}
+
               <div className="p-4 rounded-xl border border-blue-500/20 bg-blue-500/5 space-y-2">
-                <div className="flex items-center gap-1.5 text-blue-500 font-bold text-xs">
-                  <Sparkles className="w-4 h-4 text-blue-500" />
-                  <span>Análise Estratégica da IA:</span>
+                <div className="flex items-center justify-between text-blue-500 font-bold text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-blue-500" />
+                    <span>Análise Estratégica da IA:</span>
+                  </div>
+                  {selectedViewerForDetails.intentLabel && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                      {selectedViewerForDetails.intentLabel} ({selectedViewerForDetails.intentScore || 65}%)
+                    </span>
+                  )}
                 </div>
                 <p className="text-xs text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap">
                   {selectedViewerForDetails.aiInsight || "Contato monitorado pelo Radar de Stories com registro ativo de visualização."}
@@ -3244,7 +3537,7 @@ export default function RadarStoriesPage() {
             </div>
 
             {/* Rodapé / Ações */}
-            <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2 bg-slate-50 dark:bg-slate-900/30">
+            <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 bg-slate-50 dark:bg-slate-900/30">
               <button
                 type="button"
                 onClick={() => setIsDetailsModalOpen(false)}
@@ -3253,20 +3546,22 @@ export default function RadarStoriesPage() {
                 Fechar
               </button>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 {selectedViewerForDetails.crmStatus !== "internal_team" && (
                   <>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const cleanPhone = (selectedViewerForDetails.phone || "").replace(/\D/g, "");
-                        window.open(`https://wa.me/${cleanPhone}`, "_blank");
-                      }}
-                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-slate-400 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors cursor-pointer"
-                    >
-                      <MessageSquare className="w-3.5 h-3.5" />
-                      <span>WhatsApp Direto</span>
-                    </button>
+                    {!selectedViewerForDetails.dealId && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleConvertViewerToDeal(selectedViewerForDetails);
+                          setIsDetailsModalOpen(false);
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-bold transition-colors cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Criar Negócio no CRM</span>
+                      </button>
+                    )}
 
                     <button
                       type="button"
@@ -3277,7 +3572,7 @@ export default function RadarStoriesPage() {
                       className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors shadow-sm cursor-pointer"
                     >
                       <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                      <span>Gerar Abordagem com OpenAI</span>
+                      <span>Gerar & Disparar Abordagem IA</span>
                     </button>
                   </>
                 )}

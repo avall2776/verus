@@ -59,9 +59,43 @@ export class RadarStoriesController {
   @Post('meta-audience/export')
   async exportMetaAudience(
     @CurrentTenant() tenantId: string,
-    @Body() body: { viewerIds?: string[] },
+    @Body() body: { viewerIds?: string[]; mode?: 'sha256' | 'plain' },
   ) {
-    return this.radarStoriesService.exportMetaAudience(tenantId, body?.viewerIds);
+    return this.radarStoriesService.exportMetaAudience(tenantId, body?.viewerIds, body?.mode || 'sha256');
+  }
+
+  @Post('send-approach')
+  async sendDirectApproach(
+    @CurrentTenant() tenantId: string,
+    @Body()
+    body: {
+      viewerId?: string;
+      contactId?: string;
+      phone: string;
+      contactName?: string;
+      message: string;
+      storyTitle?: string;
+      createDeal?: boolean;
+    },
+  ) {
+    return this.radarStoriesService.sendDirectApproach(tenantId, body);
+  }
+
+  @Post('convert-to-deal')
+  async convertViewerToDeal(
+    @CurrentTenant() tenantId: string,
+    @Body()
+    body: {
+      viewerId?: string;
+      contactId?: string;
+      phone: string;
+      contactName: string;
+      storyTitle: string;
+      category?: string;
+      estimatedValue?: number;
+    },
+  ) {
+    return this.radarStoriesService.convertViewerToDeal(tenantId, body);
   }
 
   @Post('campaigns/create')
