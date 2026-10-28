@@ -79,7 +79,7 @@ interface StoryViewer {
   isLidOnly?: boolean;
   city: string;
   state: string;
-  crmStatus: "active_client" | "inactive_client" | "open_deal" | "prospect" | "internal_team";
+  crmStatus: "active_client" | "inactive_client" | "open_deal" | "prospect" | "internal_team" | "non_commercial";
   crmStatusLabel: string;
   intentScore?: number;
   intentLabel?: string;
@@ -89,6 +89,13 @@ interface StoryViewer {
   dealValue?: number;
   lastChatMessage?: string;
   lastChatDate?: string;
+  chatMessages?: Array<{
+    id: string;
+    direction: "INBOUND" | "OUTBOUND";
+    content: string;
+    createdAt: string;
+    formattedDate: string;
+  }>;
   aiInsight?: string;
   lastPurchaseDate?: string;
   daysInactive: number;
@@ -742,6 +749,7 @@ export default function RadarStoriesPage() {
         prospect: "Potencial Comprador",
         inactive_client: "Reativação de Carteira",
         internal_team: "Equipe Interna (Verto)",
+        non_commercial: "Pessoal / Institucional",
       };
 
       setViewers((prev) =>
@@ -1304,6 +1312,7 @@ export default function RadarStoriesPage() {
                 <option value="prospect">Potenciais Compradores</option>
                 <option value="inactive_client">Reativação</option>
                 <option value="internal_team">Equipe Interna</option>
+                <option value="non_commercial">Pessoal / Institucional</option>
               </select>
 
               <select
@@ -1335,6 +1344,7 @@ export default function RadarStoriesPage() {
               { id: "prospect", label: "Potenciais", count: viewers.filter((v) => v.crmStatus === "prospect").length, color: "text-blue-500" },
               { id: "inactive_client", label: "Reativação", count: viewers.filter((v) => v.crmStatus === "inactive_client").length, color: "text-purple-400" },
               { id: "internal_team", label: "Equipe", count: viewers.filter((v) => v.crmStatus === "internal_team").length, color: "text-slate-400" },
+              { id: "non_commercial", label: "Pessoal / Outros", count: viewers.filter((v) => v.crmStatus === "non_commercial").length, color: "text-rose-400" },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -1659,6 +1669,8 @@ export default function RadarStoriesPage() {
                                   ? "bg-amber-500/10 text-amber-400 border-amber-500/30 hover:border-amber-400 dark:bg-amber-950/40"
                                   : viewer.crmStatus === "internal_team"
                                   ? "bg-slate-500/15 text-slate-300 border-slate-500/30 hover:border-slate-400 dark:bg-slate-800/60"
+                                  : viewer.crmStatus === "non_commercial"
+                                  ? "bg-rose-500/10 text-rose-400 border-rose-500/30 hover:border-rose-400 dark:bg-rose-950/40"
                                   : viewer.crmStatus === "inactive_client"
                                   ? "bg-purple-500/10 text-purple-400 border-purple-500/30 hover:border-purple-400 dark:bg-purple-950/40"
                                   : "bg-blue-500/10 text-blue-400 border-blue-500/30 hover:border-blue-400 dark:bg-blue-950/40"
@@ -1670,6 +1682,7 @@ export default function RadarStoriesPage() {
                               <option value="prospect" className="bg-slate-900 text-blue-400 font-semibold">Potencial Comprador</option>
                               <option value="inactive_client" className="bg-slate-900 text-purple-400 font-semibold">Reativação de Carteira</option>
                               <option value="internal_team" className="bg-slate-900 text-slate-300 font-semibold">Equipe Interna (Verto)</option>
+                              <option value="non_commercial" className="bg-slate-900 text-rose-400 font-semibold">Pessoal / Institucional</option>
                             </select>
                             <div className="absolute left-2 pointer-events-none">
                               {viewer.crmStatus === "active_client" ? (
@@ -1678,6 +1691,8 @@ export default function RadarStoriesPage() {
                                 <TrendingUp className="w-3.5 h-3.5 text-amber-400" />
                               ) : viewer.crmStatus === "internal_team" ? (
                                 <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
+                              ) : viewer.crmStatus === "non_commercial" ? (
+                                <BadgeAlert className="w-3.5 h-3.5 text-rose-400" />
                               ) : viewer.crmStatus === "inactive_client" ? (
                                 <Clock className="w-3.5 h-3.5 text-purple-400" />
                               ) : (
@@ -1694,15 +1709,23 @@ export default function RadarStoriesPage() {
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <span
                                 className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border ${
-                                  (viewer.intentScore || 0) >= 85
-                                    ? "bg-rose-500/10 text-rose-400 border-rose-500/25"
+                                  viewer.crmStatus === "non_commercial"
+                                    ? "bg-slate-500/10 text-slate-400 border-slate-500/25"
+                                    : (viewer.intentScore || 0) >= 85
+                                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/25"
                                     : (viewer.intentScore || 0) >= 70
                                     ? "bg-amber-500/10 text-amber-400 border-amber-500/25"
                                     : "bg-blue-500/10 text-blue-400 border-blue-500/25"
                                 }`}
                               >
-                                <Flame className="w-3 h-3 shrink-0" />
-                                <span>{viewer.intentLabel} ({viewer.intentScore || 65}%)</span>
+                                {viewer.crmStatus === "non_commercial" ? (
+                                  <BadgeAlert className="w-3 h-3 shrink-0 text-slate-400" />
+                                ) : (viewer.intentScore || 0) >= 80 ? (
+                                  <Flame className="w-3 h-3 shrink-0" />
+                                ) : (
+                                  <Target className="w-3 h-3 shrink-0" />
+                                )}
+                                <span>{viewer.intentLabel} ({viewer.intentScore ?? 65}%)</span>
                               </span>
                             </div>
                           )}
@@ -1721,10 +1744,18 @@ export default function RadarStoriesPage() {
                               </span>
                             </div>
                           ) : viewer.lastChatMessage ? (
-                            <div className="text-[10.5px] text-slate-400 truncate max-w-[240px] flex items-center gap-1" title={viewer.lastChatMessage}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedViewerForDetails(viewer);
+                                setIsDetailsModalOpen(true);
+                              }}
+                              className="text-[10.5px] text-slate-300 hover:text-blue-400 truncate max-w-[245px] flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-800/50 hover:bg-blue-500/10 border border-slate-700/60 hover:border-blue-500/30 transition-colors cursor-pointer"
+                              title={`Clique para ler as ${viewer.chatMessages?.length || 1} mensagens da conversa no sistema: "${viewer.lastChatMessage}"`}
+                            >
                               <MessageSquare className="w-3 h-3 text-blue-400 shrink-0" />
                               <span className="truncate">Chat: &ldquo;{viewer.lastChatMessage}&rdquo;</span>
-                            </div>
+                            </button>
                           ) : null}
 
                           {/* Botão Executivo para Abrir Modal com todas as informações completas */}
@@ -1736,7 +1767,7 @@ export default function RadarStoriesPage() {
                             className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-400 hover:text-blue-300 transition-colors pt-0.5 cursor-pointer group"
                           >
                             <Sparkles className="w-3 h-3 text-blue-400 group-hover:scale-110 transition-transform" />
-                            <span>Ver Análise IA & Negócio</span>
+                            <span>Ver Conversas & Análise IA</span>
                             <ChevronRight className="w-3 h-3 text-blue-400 group-hover:translate-x-0.5 transition-transform" />
                           </button>
                         </div>
@@ -1753,7 +1784,7 @@ export default function RadarStoriesPage() {
                             <Sparkles className="w-3 h-3 text-amber-300" />
                             <span>Abordar IA</span>
                           </button>
-                          {viewer.crmStatus !== "internal_team" && !viewer.dealId && (
+                          {viewer.crmStatus !== "internal_team" && viewer.crmStatus !== "non_commercial" && !viewer.dealId && (
                             <button
                               onClick={() => handleConvertViewerToDeal(viewer)}
                               disabled={convertingViewerId === viewer.id}
@@ -1770,13 +1801,18 @@ export default function RadarStoriesPage() {
                           )}
                           <button
                             onClick={() => {
-                              const cleanPhone = (viewer.phone || "").replace(/\D/g, "");
-                              window.open(`https://wa.me/${cleanPhone}`, "_blank");
+                              setSelectedViewerForDetails(viewer);
+                              setIsDetailsModalOpen(true);
                             }}
-                            className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
-                            title="Abrir Conversa no WhatsApp"
+                            className="relative p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-blue-500/50 dark:hover:border-blue-500/50 text-slate-600 dark:text-slate-300 hover:text-blue-400 transition-colors cursor-pointer"
+                            title="Ver Histórico de Conversas do Sistema & Contexto IA"
                           >
                             <MessageSquare className="w-3.5 h-3.5" />
+                            {viewer.chatMessages && viewer.chatMessages.length > 0 && (
+                              <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-blue-600 text-[9px] font-bold text-white flex items-center justify-center">
+                                {viewer.chatMessages.length}
+                              </span>
+                            )}
                           </button>
                         </div>
                       </td>
@@ -3490,8 +3526,42 @@ export default function RadarStoriesPage() {
                 </div>
               </div>
 
-              {/* Análise Completa da IA + Última Mensagem no WhatsApp */}
-              {selectedViewerForDetails.lastChatMessage && (
+              {/* Histórico Completo da Conversa Real no Sistema */}
+              {selectedViewerForDetails.chatMessages && selectedViewerForDetails.chatMessages.length > 0 ? (
+                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 space-y-2.5 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1.5">
+                      <MessageSquare className="w-3.5 h-3.5 text-blue-500" />
+                      <span>Conversas Geradas no Sistema ({selectedViewerForDetails.chatMessages.length} mensagens recentes):</span>
+                    </span>
+                    <a
+                      href="/whatsapp"
+                      className="text-[10px] font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1"
+                    >
+                      <span>Abrir no Inbox</span>
+                      <ArrowUpRight className="w-3 h-3" />
+                    </a>
+                  </div>
+                  <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
+                    {selectedViewerForDetails.chatMessages.map((msg) => (
+                      <div
+                        key={msg.id}
+                        className={`p-2.5 rounded-lg border text-[11px] leading-relaxed ${
+                          msg.direction === "INBOUND"
+                            ? "bg-white dark:bg-[#070D1B] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 mr-6"
+                            : "bg-blue-600/10 border-blue-500/25 text-blue-900 dark:text-blue-200 ml-6"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between text-[9.5px] font-bold mb-0.5 opacity-75">
+                          <span>{msg.direction === "INBOUND" ? selectedViewerForDetails.name : "Equipe Verto (Sistema)"}</span>
+                          <span className="font-mono">{msg.formattedDate}</span>
+                        </div>
+                        <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : selectedViewerForDetails.lastChatMessage ? (
                 <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40 space-y-1.5 text-xs">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1">
@@ -3508,6 +3578,11 @@ export default function RadarStoriesPage() {
                     &ldquo;{selectedViewerForDetails.lastChatMessage}&rdquo;
                   </p>
                 </div>
+              ) : (
+                <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 text-[11px] text-slate-400 flex items-center gap-2">
+                  <MessageSquare className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                  <span>Nenhuma conversa prévia registrada no Inbox do sistema para este número.</span>
+                </div>
               )}
 
               <div className="p-4 rounded-xl border border-blue-500/20 bg-blue-500/5 space-y-2">
@@ -3518,7 +3593,7 @@ export default function RadarStoriesPage() {
                   </div>
                   {selectedViewerForDetails.intentLabel && (
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
-                      {selectedViewerForDetails.intentLabel} ({selectedViewerForDetails.intentScore || 65}%)
+                      {selectedViewerForDetails.intentLabel} ({selectedViewerForDetails.intentScore ?? 65}%)
                     </span>
                   )}
                 </div>
@@ -3539,7 +3614,7 @@ export default function RadarStoriesPage() {
               </button>
 
               <div className="flex flex-wrap items-center gap-2">
-                {selectedViewerForDetails.crmStatus !== "internal_team" && (
+                {selectedViewerForDetails.crmStatus !== "internal_team" && selectedViewerForDetails.crmStatus !== "non_commercial" && (
                   <>
                     {!selectedViewerForDetails.dealId && (
                       <button
