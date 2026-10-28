@@ -314,7 +314,7 @@ let MessagingService = MessagingService_1 = class MessagingService {
                     const driveData = await (0, google_drive_helper_1.downloadDriveFileBuffer)(driveId);
                     if (driveData) {
                         if (payload.type === 'image' && driveData.buffer.length < 3.5 * 1024 * 1024) {
-                            base64Media = `data:${driveData.mimeType};base64,${driveData.buffer.toString('base64')}`;
+                            base64Media = driveData.buffer.toString('base64');
                         }
                     }
                 }
