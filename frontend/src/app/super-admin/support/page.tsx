@@ -2,34 +2,34 @@
 
 import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { 
-  Headphones, 
-  Search, 
-  Send, 
-  Lock, 
-  MessageSquare, 
-  Building2, 
-  PhoneCall, 
-  Mail, 
-  User, 
-  CheckCircle2, 
-  Clock, 
-  AlertTriangle, 
+import {
+  Headphones,
+  Search,
+  Send,
+  Lock,
+  MessageSquare,
+  Building2,
+  PhoneCall,
+  Mail,
+  User,
+  CheckCircle2,
+  Clock,
+  AlertTriangle,
   RefreshCw,
-  Loader2, 
-  ExternalLink, 
-  ChevronDown, 
+  Loader2,
+  ExternalLink,
+  ChevronDown,
   ChevronUp,
-  Maximize2, 
-  FileText, 
-  Copy, 
-  Check, 
+  Maximize2,
+  FileText,
+  Copy,
+  Check,
   CheckCheck,
-  X, 
-  Users, 
-  ShieldCheck, 
-  HelpCircle, 
-  Tag, 
+  X,
+  Users,
+  ShieldCheck,
+  HelpCircle,
+  Tag,
   Cpu,
   Sparkles,
   MessageCircle,
@@ -59,23 +59,24 @@ import api from "@/lib/api";
 import { useSocket } from "@/components/ui/SocketProvider";
 import { toast } from "sonner";
 import CompanyXRayModal from "@/components/super-admin/CompanyXRayModal";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export const dynamic = "force-dynamic";
 
-// Dicionários Oficiais de Tradução e Estilo (100% PT-BR)
+// Dicionários Oficiais de Tradução e Estilo (100% PT-BR com alto contraste Clean / Dark / WhatsApp)
 const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; border: string }> = {
-  OPEN: { label: "Aberto", bg: "bg-amber-500/10", text: "text-amber-400", border: "border-amber-500/30" },
-  IN_PROGRESS: { label: "Em Atendimento", bg: "bg-blue-500/10", text: "text-blue-400", border: "border-blue-500/30" },
-  WAITING_CLIENT: { label: "Aguardando Cliente", bg: "bg-purple-500/10", text: "text-purple-400", border: "border-purple-500/30" },
-  RESOLVED: { label: "Resolvido", bg: "bg-emerald-500/10", text: "text-emerald-400", border: "border-emerald-500/30" },
-  CLOSED: { label: "Fechado", bg: "bg-slate-500/10", text: "text-slate-400", border: "border-slate-500/30" },
+  OPEN: { label: "Aberto", bg: "bg-amber-50 dark:bg-amber-500/10", text: "text-amber-800 dark:text-amber-400", border: "border-amber-300 dark:border-amber-500/30" },
+  IN_PROGRESS: { label: "Em Atendimento", bg: "bg-blue-50 dark:bg-blue-500/10", text: "text-blue-800 dark:text-blue-400", border: "border-blue-300 dark:border-blue-500/30" },
+  WAITING_CLIENT: { label: "Aguardando Cliente", bg: "bg-purple-50 dark:bg-purple-500/10", text: "text-purple-800 dark:text-purple-400", border: "border-purple-300 dark:border-purple-500/30" },
+  RESOLVED: { label: "Resolvido", bg: "bg-emerald-50 dark:bg-emerald-500/10", text: "text-emerald-800 dark:text-emerald-400", border: "border-emerald-300 dark:border-emerald-500/30" },
+  CLOSED: { label: "Fechado", bg: "bg-slate-100 dark:bg-slate-500/10", text: "text-slate-800 dark:text-slate-400", border: "border-slate-300 dark:border-slate-500/30" },
 };
 
 const PRIORITY_CONFIG: Record<string, { label: string; color: string; badge: string; dot: string }> = {
-  LOW: { label: "Baixa", color: "text-slate-400", badge: "bg-slate-800 text-slate-300 border-slate-700", dot: "bg-slate-400" },
-  MEDIUM: { label: "Média", color: "text-blue-400", badge: "bg-blue-900/30 text-blue-400 border-blue-800", dot: "bg-blue-400" },
-  HIGH: { label: "Alta", color: "text-amber-400", badge: "bg-amber-900/30 text-amber-400 border-amber-800", dot: "bg-amber-400" },
-  URGENT: { label: "Urgente", color: "text-rose-400", badge: "bg-rose-900/30 text-rose-400 border-rose-800", dot: "bg-rose-500" },
+  LOW: { label: "Baixa", color: "text-slate-600 dark:text-slate-400", badge: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700", dot: "bg-slate-500 dark:bg-slate-400" },
+  MEDIUM: { label: "Média", color: "text-blue-700 dark:text-blue-400", badge: "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800", dot: "bg-blue-600 dark:bg-blue-400" },
+  HIGH: { label: "Alta", color: "text-amber-800 dark:text-amber-400", badge: "bg-amber-50 dark:bg-amber-900/30 text-amber-800 dark:text-amber-400 border-amber-300 dark:border-amber-800", dot: "bg-amber-600 dark:bg-amber-400" },
+  URGENT: { label: "Urgente", color: "text-rose-700 dark:text-rose-400", badge: "bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 border-rose-300 dark:border-rose-800", dot: "bg-rose-600 dark:bg-rose-500" },
 };
 
 const CATEGORY_CONFIG: Record<string, string> = {
@@ -98,6 +99,7 @@ function getChatDateLabel(dateInput?: string | number | Date): string {
 }
 
 function SuperAdminSupportContent() {
+  const { theme, isClean, isWhatsApp, isDark } = useTheme();
   const { socket } = useSocket();
   const searchParams = useSearchParams();
   const initialTicketId = searchParams.get("ticketId");
@@ -202,7 +204,7 @@ function SuperAdminSupportContent() {
           setTenantsList(tList);
         }
       }
-    } catch {}
+    } catch { }
   }, []);
 
   // Mensagens do Cliente (Atendimento WhatsApp)
@@ -245,13 +247,13 @@ function SuperAdminSupportContent() {
       if (savedQueue !== null) setShowQueuePanel(savedQueue === "true");
       const savedSide = localStorage.getItem("versus_support_side_open");
       if (savedSide !== null) setShowSidePanel(savedSide === "true");
-    } catch {}
+    } catch { }
   }, []);
 
   const toggleQueuePanel = () => {
     setShowQueuePanel((prev) => {
       const next = !prev;
-      try { localStorage.setItem("versus_support_queue_open", String(next)); } catch {}
+      try { localStorage.setItem("versus_support_queue_open", String(next)); } catch { }
       return next;
     });
   };
@@ -259,7 +261,7 @@ function SuperAdminSupportContent() {
   const toggleSidePanel = () => {
     setShowSidePanel((prev) => {
       const next = !prev;
-      try { localStorage.setItem("versus_support_side_open", String(next)); } catch {}
+      try { localStorage.setItem("versus_support_side_open", String(next)); } catch { }
       return next;
     });
   };
@@ -276,7 +278,7 @@ function SuperAdminSupportContent() {
         setTenantsList(list);
         try {
           sessionStorage.setItem("versus_super_tenants_simple", JSON.stringify(list));
-        } catch {}
+        } catch { }
       })
       .catch((e) => console.error(e));
   }, []);
@@ -298,7 +300,7 @@ function SuperAdminSupportContent() {
       setTickets(fetched);
       try {
         sessionStorage.setItem("versus_super_support_tickets", JSON.stringify(fetched));
-      } catch {}
+      } catch { }
 
       // Auto-selecionar ticket inicial ou manter seleção
       const targetId = selectIdAfter || initialTicketId;
@@ -622,7 +624,7 @@ function SuperAdminSupportContent() {
       });
       setSelectedTicket((prev: any) => ({ ...prev, status: res.data.status }));
       const statusLabel = STATUS_CONFIG[newStatus]?.label || newStatus;
-      
+
       if (newStatus === 'RESOLVED') {
         toast.success(`Chamado marcado como Resolvido! Deseja converter em melhoria técnica?`, {
           action: {
@@ -658,22 +660,22 @@ function SuperAdminSupportContent() {
   const totalOpenTickets = tickets.filter(t => t.status === 'OPEN' || t.status === 'IN_PROGRESS').length;
 
   return (
-    <div className="h-[calc(100vh-5.5rem)] flex flex-col w-full max-w-[1600px] mx-auto overflow-hidden text-slate-100">
-      
+    <div className="h-[calc(100vh-5.5rem)] flex flex-col w-full max-w-[1600px] mx-auto overflow-hidden text-slate-900 dark:text-slate-100">
+
       {/* 1. TOPO DA CENTRAL: TÍTULO & NAVEGAÇÃO DE SUBCATEGORIAS */}
-      <div className="flex flex-wrap sm:flex-nowrap items-center justify-between pb-3 border-b border-slate-800 shrink-0 gap-3">
+      <div className="flex flex-wrap sm:flex-nowrap items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800 shrink-0 gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0 shadow-inner">
+          <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 shadow-inner">
             <Headphones size={22} />
           </div>
           <div>
-            <h1 className="text-base font-bold text-white tracking-wide flex items-center gap-2">
+            <h1 className="text-base font-bold text-slate-900 dark:text-white tracking-wide flex items-center gap-2">
               Central de Atendimento ao Vivo
-              <span className="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded-full font-mono font-bold">
+              <span className="text-[10px] bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30 px-2 py-0.5 rounded-full font-mono font-bold">
                 Vallor Suporte
               </span>
             </h1>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-600 dark:text-slate-400">
               Atendimento unificado ao cliente, respostas com Copiloto IA e canal interno dedicado da equipe.
             </p>
           </div>
@@ -681,23 +683,23 @@ function SuperAdminSupportContent() {
 
         {/* NAVEGADOR DE SUBCATEGORIAS: ATENDIMENTO AO CLIENTE vs CHAT INTERNO DA EQUIPE */}
         <div className="flex items-center gap-2">
-          <div className="flex items-center bg-slate-50 dark:bg-[#070D1B] p-1 rounded-xl border border-slate-800">
+          <div className="flex items-center bg-slate-100 dark:bg-[#070D1B] p-1 rounded-xl border border-slate-200 dark:border-slate-800">
             {/* Aba 1: Atendimento ao Cliente */}
             <button
               type="button"
               onClick={() => setActiveSubView('customer_service')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-                activeSubView === 'customer_service'
-                  ? 'bg-blue-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-              }`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${activeSubView === 'customer_service'
+                  ? isWhatsApp
+                    ? 'bg-[#00A884] text-white shadow-md'
+                    : 'bg-blue-600 text-white shadow-md'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-slate-800/60'
+                }`}
             >
               <MessageSquare size={14} />
               <span>Atendimento ao Cliente</span>
               {totalOpenTickets > 0 && (
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
-                  activeSubView === 'customer_service' ? 'bg-blue-800 text-blue-100' : 'bg-slate-800 text-slate-300'
-                }`}>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${activeSubView === 'customer_service' ? 'bg-blue-800 text-blue-100' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                  }`}>
                   {totalOpenTickets}
                 </span>
               )}
@@ -707,18 +709,16 @@ function SuperAdminSupportContent() {
             <button
               type="button"
               onClick={() => setActiveSubView('team_chat')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-                activeSubView === 'team_chat'
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${activeSubView === 'team_chat'
                   ? 'bg-purple-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-              }`}
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-slate-800/60'
+                }`}
             >
               <Users size={14} />
               <span>Chat Interno da Equipe</span>
               {teamMessages.length > 0 && (
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
-                  activeSubView === 'team_chat' ? 'bg-purple-800 text-purple-100' : 'bg-purple-950/80 text-purple-300'
-                }`}>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${activeSubView === 'team_chat' ? 'bg-purple-800 text-purple-100' : 'bg-purple-100 dark:bg-purple-950/80 text-purple-800 dark:text-purple-300'
+                  }`}>
                   {teamMessages.length}
                 </span>
               )}
@@ -731,17 +731,15 @@ function SuperAdminSupportContent() {
                 setActiveSubView('ai_config');
                 fetchAiConfig();
               }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-                activeSubView === 'ai_config'
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${activeSubView === 'ai_config'
                   ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-              }`}
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-slate-800/60'
+                }`}
             >
-              <Bot size={14} className={aiConfig.isActive ? "text-cyan-300" : "text-slate-400"} />
+              <Bot size={14} className={aiConfig.isActive ? "text-cyan-500 dark:text-cyan-300" : "text-slate-500 dark:text-slate-400"} />
               <span>Agente IA de Suporte</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
-                aiConfig.isActive ? 'bg-cyan-950 text-cyan-300 border border-cyan-500/40' : 'bg-slate-800 text-slate-400'
-              }`}>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${aiConfig.isActive ? 'bg-cyan-100 dark:bg-cyan-950 text-cyan-800 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-500/40' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-400'
+                }`}>
                 {aiConfig.isActive ? "ATIVO" : "OFF"}
               </span>
             </button>
@@ -749,10 +747,10 @@ function SuperAdminSupportContent() {
 
           <button
             onClick={() => fetchTickets()}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800 text-xs font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer shadow-sm"
             title="Atualizar lista de chamados"
           >
-            <RefreshCw size={13} className={loadingList ? "animate-spin text-blue-400" : ""} />
+            <RefreshCw size={13} className={loadingList ? "animate-spin text-blue-600 dark:text-blue-400" : ""} />
             <span className="hidden md:inline">Atualizar</span>
           </button>
         </div>
@@ -760,7 +758,7 @@ function SuperAdminSupportContent() {
 
       {/* 2. CORPO PRINCIPAL */}
       <div className="flex-1 flex overflow-hidden pt-3 gap-3">
-        
+
         {/* ========================================================================= */}
         {/* SUB-ABA 1: ATENDIMENTO AO CLIENTE (PADRÃO WHATSAPP BUSINESS)               */}
         {/* ========================================================================= */}
@@ -768,15 +766,18 @@ function SuperAdminSupportContent() {
           <>
             {/* COLUNA 1: FILA DE ATENDIMENTO (Minimizável) */}
             {showQueuePanel && (
-              <div className={`${selectedTicket ? 'hidden md:flex' : 'flex'} w-full md:w-80 lg:w-84 xl:w-90 bg-white dark:bg-[#0B1224] border border-slate-800 rounded-xl flex-col overflow-hidden shrink-0 shadow-xl transition-all duration-200 animate-fadeIn`}>
-                
+              <div className={`${selectedTicket ? 'hidden md:flex' : 'flex'} w-full md:w-80 lg:w-84 xl:w-90 bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-xl flex-col overflow-hidden shrink-0 shadow-lg transition-all duration-200 animate-fadeIn`}>
+
                 {/* Topo da Fila: Título com Contador & Botão Minimizar */}
-                <div className="p-3 border-b border-slate-800 bg-slate-50 dark:bg-[#070D1B] space-y-2">
+                <div className="p-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B] space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <MessageSquare size={15} className="text-blue-400" />
-                      <h2 className="text-xs font-bold text-white uppercase tracking-wider">Conversas & Fila</h2>
-                      <span className="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono font-bold px-1.5 py-0.2 rounded-full">
+                      <MessageSquare size={15} className={isWhatsApp ? "text-[#00A884]" : "text-blue-600 dark:text-blue-400"} />
+                      <h2 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Conversas & Fila</h2>
+                      <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-full ${isWhatsApp
+                          ? "bg-[#00A884]/15 text-[#00A884] border border-[#00A884]/30"
+                          : "bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20"
+                        }`}>
                         {tickets.length}
                       </span>
                     </div>
@@ -784,7 +785,7 @@ function SuperAdminSupportContent() {
                     <button
                       type="button"
                       onClick={toggleQueuePanel}
-                      className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                      className="p-1 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                       title="Minimizar fila lateral de conversas"
                     >
                       <PanelLeftClose size={16} />
@@ -792,13 +793,13 @@ function SuperAdminSupportContent() {
                   </div>
 
                   <div className="relative">
-                    <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                    <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
                     <input
                       type="text"
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                       placeholder="Pesquisar chamados..."
-                      className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder:text-slate-500 outline-none focus:border-blue-500 transition-colors"
+                      className="w-full bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-blue-500 transition-colors"
                     />
                   </div>
 
@@ -806,7 +807,7 @@ function SuperAdminSupportContent() {
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      className="bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded px-2 py-1 text-[11px] text-slate-300 outline-none cursor-pointer focus:border-blue-500"
+                      className="bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 rounded px-2 py-1 text-[11px] text-slate-700 dark:text-slate-300 outline-none cursor-pointer focus:border-blue-500"
                     >
                       <option value="ALL">Status: Todos</option>
                       <option value="OPEN">Abertos</option>
@@ -819,7 +820,7 @@ function SuperAdminSupportContent() {
                     <select
                       value={selectedTenantId}
                       onChange={(e) => setSelectedTenantId(e.target.value)}
-                      className="bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded px-2 py-1 text-[11px] text-slate-300 outline-none truncate cursor-pointer focus:border-blue-500"
+                      className="bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 rounded px-2 py-1 text-[11px] text-slate-700 dark:text-slate-300 outline-none truncate cursor-pointer focus:border-blue-500"
                     >
                       <option value="ALL">Empresa: Todas</option>
                       {tenantsList.map((t) => (
@@ -830,14 +831,14 @@ function SuperAdminSupportContent() {
                 </div>
 
                 {/* Lista de Chamados */}
-                <div className="flex-1 overflow-y-auto divide-y divide-slate-800/60 custom-scrollbar bg-white dark:bg-[#0B1224]">
+                <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60 custom-scrollbar bg-white dark:bg-[#0B1224]">
                   {loadingList ? (
-                    <div className="p-6 text-center text-slate-400 text-xs flex items-center justify-center gap-2">
-                      <Loader2 size={16} className="animate-spin text-blue-400" />
+                    <div className="p-6 text-center text-slate-600 dark:text-slate-400 text-xs flex items-center justify-center gap-2">
+                      <Loader2 size={16} className="animate-spin text-blue-600 dark:text-blue-400" />
                       <span>Carregando conversas...</span>
                     </div>
                   ) : tickets.length === 0 ? (
-                    <div className="p-6 text-center text-slate-400 text-xs">
+                    <div className="p-6 text-center text-slate-600 dark:text-slate-400 text-xs">
                       Nenhum chamado encontrado na fila.
                     </div>
                   ) : (
@@ -851,17 +852,18 @@ function SuperAdminSupportContent() {
                         <div
                           key={ticket.id}
                           onClick={() => loadTicketDetails(ticket.id)}
-                          className={`p-3 cursor-pointer transition-all flex items-start gap-2.5 ${
-                            isSelected
-                              ? "bg-slate-800/80 border-l-4 border-blue-500 shadow-sm"
-                              : "hover:bg-slate-800/30 border-l-4 border-transparent"
-                          }`}
+                          className={`p-3 cursor-pointer transition-all flex items-start gap-2.5 ${isSelected
+                              ? isWhatsApp
+                                ? "bg-[#00A884]/15 border-l-4 border-[#00A884] shadow-sm"
+                                : "bg-blue-50/90 dark:bg-slate-800/80 border-l-4 border-blue-600 dark:border-blue-500 shadow-sm"
+                              : "hover:bg-slate-50 dark:hover:bg-slate-800/30 border-l-4 border-transparent"
+                            }`}
                         >
                           {/* Avatar com Inicial da Empresa */}
-                          <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-white font-bold text-xs shrink-0 relative mt-0.5">
+                          <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-800 dark:text-white font-bold text-xs shrink-0 relative mt-0.5">
                             {companyInitial}
                             {ticket.status === 'OPEN' && (
-                              <span className="w-2.5 h-2.5 rounded-full bg-blue-500 absolute -top-0.5 -right-0.5 ring-2 ring-[#0B1224]" />
+                              <span className="w-2.5 h-2.5 rounded-full bg-blue-500 absolute -top-0.5 -right-0.5 ring-2 ring-white dark:ring-[#0B1224]" />
                             )}
                           </div>
 
@@ -869,24 +871,24 @@ function SuperAdminSupportContent() {
                           <div className="flex-1 min-w-0">
                             {/* Linha 1: Nome da Empresa + Hora */}
                             <div className="flex items-center justify-between gap-1 mb-0.5">
-                              <span className="font-semibold text-xs text-white truncate">
+                              <span className="font-semibold text-xs text-slate-900 dark:text-white truncate">
                                 {ticket.tenant?.name || "Empresa"}
                               </span>
-                              <span className={`text-[10px] shrink-0 font-mono ${ticket.status === 'OPEN' ? 'text-blue-400 font-bold' : 'text-slate-400'}`}>
+                              <span className={`text-[10px] shrink-0 font-mono ${ticket.status === 'OPEN' ? (isWhatsApp ? 'text-[#00A884] font-bold' : 'text-blue-600 dark:text-blue-400 font-bold') : 'text-slate-500 dark:text-slate-400'}`}>
                                 {new Date(ticket.updatedAt || ticket.createdAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                               </span>
                             </div>
 
                             {/* Linha 2: Solicitante + Assunto em formato snippet */}
-                            <p className="text-[11px] text-slate-400 truncate mb-1">
-                              <strong className="text-slate-300">{ticket.user?.name ? `${ticket.user.name.split(' ')[0]}: ` : ''}</strong>
+                            <p className="text-[11px] text-slate-600 dark:text-slate-400 truncate mb-1">
+                              <strong className="text-slate-800 dark:text-slate-200">{ticket.user?.name ? `${ticket.user.name.split(' ')[0]}: ` : ''}</strong>
                               {ticket.subject}
                             </p>
 
                             {/* Linha 3: Protocolo + Status Traduzido + Prioridade */}
                             <div className="flex items-center justify-between gap-1">
                               <div className="flex items-center gap-1.5 overflow-hidden">
-                                <span className="font-mono text-[9px] font-bold text-blue-400">
+                                <span className={`font-mono text-[9px] font-bold ${isWhatsApp ? 'text-[#00A884]' : 'text-blue-600 dark:text-blue-400'}`}>
                                   #{ticket.ticketNumber || ticket.id.substring(0, 5).toUpperCase()}
                                 </span>
                                 <span className={`text-[8px] font-bold px-1.5 py-0.2 rounded border uppercase shrink-0 ${statusCfg.bg} ${statusCfg.text} ${statusCfg.border}`}>
@@ -896,7 +898,7 @@ function SuperAdminSupportContent() {
 
                               <div className="flex items-center gap-1 shrink-0">
                                 <span className={`w-1.5 h-1.5 rounded-full ${priorityCfg.dot}`} />
-                                <span className="text-[9px] text-slate-400">{priorityCfg.label}</span>
+                                <span className="text-[9px] text-slate-600 dark:text-slate-400 font-medium">{priorityCfg.label}</span>
                               </div>
                             </div>
                           </div>
@@ -909,23 +911,23 @@ function SuperAdminSupportContent() {
             )}
 
             {/* COLUNA 2: JANELA DE ATENDIMENTO */}
-            <div className={`${!selectedTicket ? 'hidden md:flex' : 'flex'} flex-1 w-full bg-white dark:bg-[#0B1224] border border-slate-800 rounded-xl flex-col overflow-hidden relative shadow-2xl transition-all duration-200`}>
-              
+            <div className={`${!selectedTicket ? 'hidden md:flex' : 'flex'} flex-1 w-full bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-xl flex-col overflow-hidden relative shadow-2xl transition-all duration-200`}>
+
               {/* Textura Sutil no Padrão do Layout */}
               <div className="absolute inset-0 opacity-[0.025] pointer-events-none z-0 bg-[radial-gradient(#38bdf8_1px,transparent_1px)] [background-size:20px_20px]" />
 
               {selectedTicket ? (
                 <>
                   {/* HEADER DO ATENDIMENTO: LAYOUT FLEXÍVEL SEM SOBREPOSIÇÃO */}
-                  <div className="min-h-[58px] px-3 md:px-4 py-2 border-b border-slate-800 bg-slate-50 dark:bg-[#070D1B] flex flex-wrap items-center justify-between gap-2 z-10 shrink-0">
-                    
+                  <div className="min-h-[58px] px-3 md:px-4 py-2 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B] flex flex-wrap items-center justify-between gap-2 z-10 shrink-0">
+
                     {/* Bloco Esquerdo: Informações do Cliente & Alternador da Fila */}
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
                       {/* Botão Voltar para Fila (Mobile) */}
                       <button
                         type="button"
                         onClick={() => setSelectedTicket(null)}
-                        className="md:hidden p-1.5 -ml-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
+                        className="md:hidden p-1.5 -ml-1 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
                         title="Voltar para a lista de chamados"
                       >
                         <ArrowLeft size={18} />
@@ -935,44 +937,47 @@ function SuperAdminSupportContent() {
                       <button
                         type="button"
                         onClick={toggleQueuePanel}
-                        className="hidden md:flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-white dark:bg-[#0B1224] hover:bg-slate-800 border border-slate-800 text-xs font-semibold text-slate-200 transition-colors cursor-pointer shrink-0 shadow-sm"
+                        className="hidden md:flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-white dark:bg-[#0B1224] hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors cursor-pointer shrink-0 shadow-sm"
                         title={showQueuePanel ? "Recolher fila de chamados" : "Expandir fila de chamados"}
                       >
                         {showQueuePanel ? (
                           <>
-                            <PanelLeftClose size={15} className="text-slate-400" />
-                            <span className="text-[11px] text-slate-400">Recolher</span>
+                            <PanelLeftClose size={15} className="text-slate-500 dark:text-slate-400" />
+                            <span className="text-[11px] text-slate-600 dark:text-slate-400">Recolher</span>
                           </>
                         ) : (
                           <>
-                            <PanelLeftOpen size={15} className="text-blue-400" />
-                            <span className="text-[11px] text-blue-300 font-bold">Fila ({tickets.length})</span>
+                            <PanelLeftOpen size={15} className={isWhatsApp ? "text-[#00A884]" : "text-blue-600 dark:text-blue-400"} />
+                            <span className={`text-[11px] font-bold ${isWhatsApp ? "text-[#00A884]" : "text-blue-700 dark:text-blue-300"}`}>Fila ({tickets.length})</span>
                           </>
                         )}
                       </button>
 
                       {/* Avatar do Cliente */}
                       <div className="relative shrink-0">
-                        <div className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-white font-bold text-xs shadow-inner">
+                        <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-800 dark:text-white font-bold text-xs shadow-inner">
                           {(selectedTicket.tenant?.name || "C").charAt(0).toUpperCase()}
                         </div>
-                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 absolute bottom-0 right-0 ring-2 ring-[#070D1B]" title="Canal Ativo" />
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 absolute bottom-0 right-0 ring-2 ring-white dark:ring-[#070D1B]" title="Canal Ativo" />
                       </div>
 
                       {/* Dados do Cliente: truncate com min-w-0 para nunca sobrepor os botões */}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <h2 className="text-xs md:text-sm font-bold text-white truncate" title={selectedTicket.tenant?.name}>
+                          <h2 className="text-xs md:text-sm font-bold text-slate-900 dark:text-white truncate" title={selectedTicket.tenant?.name}>
                             {selectedTicket.tenant?.name || "Empresa Cliente"}
                           </h2>
-                          <span className="font-mono text-[10px] md:text-xs text-blue-400 font-bold px-1.5 py-0.2 rounded bg-blue-500/10 border border-blue-500/20 shrink-0">
+                          <span className={`font-mono text-[10px] md:text-xs font-bold px-1.5 py-0.2 rounded border shrink-0 ${isWhatsApp
+                              ? "bg-[#00A884]/15 text-[#00A884] border-[#00A884]/30"
+                              : "text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/20"
+                            }`}>
                             #{selectedTicket.ticketNumber || selectedTicket.id.substring(0, 5).toUpperCase()}
                           </span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-[11px] text-slate-400 truncate">
-                          <span className="truncate">Solicitante: <strong className="text-slate-200">{selectedTicket.user?.name || "Cliente"}</strong></span>
+                        <div className="flex items-center gap-1.5 text-[11px] text-slate-600 dark:text-slate-400 truncate">
+                          <span className="truncate">Solicitante: <strong className="text-slate-900 dark:text-slate-200">{selectedTicket.user?.name || "Cliente"}</strong></span>
                           <span>•</span>
-                          <span className="text-cyan-400 text-[10px] truncate">{CATEGORY_CONFIG[selectedTicket.category] || selectedTicket.category}</span>
+                          <span className="text-blue-700 dark:text-cyan-400 text-[10px] font-medium truncate">{CATEGORY_CONFIG[selectedTicket.category] || selectedTicket.category}</span>
                         </div>
                       </div>
                     </div>
@@ -982,22 +987,22 @@ function SuperAdminSupportContent() {
 
                       {/* BADGE CSAT (se avaliado pelo cliente) */}
                       {selectedTicket.satisfactionRating && (
-                        <div 
-                          className="flex items-center gap-1 bg-amber-500/10 border border-amber-500/30 px-2 py-1 rounded-lg text-xs font-bold text-amber-300 shrink-0"
+                        <div
+                          className="flex items-center gap-1 bg-amber-50 dark:bg-amber-500/10 border border-amber-300 dark:border-amber-500/30 px-2 py-1 rounded-lg text-xs font-bold text-amber-800 dark:text-amber-300 shrink-0"
                           title={selectedTicket.satisfactionFeedback ? `Avaliação do Cliente: "${selectedTicket.satisfactionFeedback}"` : "Avaliação CSAT registrada"}
                         >
-                          <Star size={12} className="fill-amber-400 text-amber-400" />
+                          <Star size={12} className="fill-amber-500 text-amber-500" />
                           <span>CSAT {selectedTicket.satisfactionRating}/5</span>
                         </div>
                       )}
 
                       {/* BADGE DEMANDA ENGENHARIA/CRM */}
                       {selectedTicket.aiHandoffDemandId && (
-                        <div 
-                          className="hidden lg:flex items-center gap-1 bg-cyan-500/10 border border-cyan-500/30 px-2 py-1 rounded-lg text-xs font-bold text-cyan-300 shrink-0"
+                        <div
+                          className="hidden lg:flex items-center gap-1 bg-cyan-50 dark:bg-cyan-500/10 border border-cyan-300 dark:border-cyan-500/30 px-2 py-1 rounded-lg text-xs font-bold text-cyan-800 dark:text-cyan-300 shrink-0"
                           title="Demanda catalogada no Backlog de Engenharia"
                         >
-                          <Cpu size={12} className="text-cyan-400" />
+                          <Cpu size={12} className="text-cyan-600 dark:text-cyan-400" />
                           <span>Demanda</span>
                         </div>
                       )}
@@ -1007,11 +1012,10 @@ function SuperAdminSupportContent() {
                         type="button"
                         onClick={handleToggleTicketAi}
                         disabled={togglingTicketAi}
-                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border shadow-sm shrink-0 ${
-                          selectedTicket.isAiPaused
-                            ? "bg-emerald-950/40 border-emerald-500/40 text-emerald-300 hover:bg-emerald-900/60"
-                            : "bg-amber-950/40 border-amber-500/40 text-amber-300 hover:bg-amber-900/60"
-                        }`}
+                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border shadow-sm shrink-0 ${selectedTicket.isAiPaused
+                            ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-500/40 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60"
+                            : "bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-500/40 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60"
+                          }`}
                         title={
                           selectedTicket.isAiPaused
                             ? "A IA está pausada para este chamado. Clique para reativar as respostas da IA."
@@ -1022,12 +1026,12 @@ function SuperAdminSupportContent() {
                           <Loader2 size={13} className="animate-spin" />
                         ) : selectedTicket.isAiPaused ? (
                           <>
-                            <Play size={13} className="text-emerald-400 shrink-0" />
+                            <Play size={13} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
                             <span>Reativar IA</span>
                           </>
                         ) : (
                           <>
-                            <Pause size={13} className="text-amber-400 shrink-0" />
+                            <Pause size={13} className="text-amber-600 dark:text-amber-400 shrink-0" />
                             <span>Pausar IA</span>
                           </>
                         )}
@@ -1043,14 +1047,13 @@ function SuperAdminSupportContent() {
                             setIsCopilotOpen(prev => !prev);
                           }
                         }}
-                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-sm shrink-0 ${
-                          isCopilotOpen
+                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-sm shrink-0 ${isCopilotOpen
                             ? "bg-cyan-500 text-slate-950 ring-2 ring-cyan-400/50 font-black"
-                            : "bg-cyan-950/30 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-900/40"
-                        }`}
+                            : "bg-cyan-50 dark:bg-cyan-950/30 border border-cyan-300 dark:border-cyan-500/30 text-cyan-800 dark:text-cyan-300 hover:bg-cyan-100 dark:hover:bg-cyan-900/40"
+                          }`}
                         title="Abrir o Copiloto IA de Atendimento Híbrido"
                       >
-                        <Sparkles size={13} className={copilotLoading ? "animate-spin" : isCopilotOpen ? "text-slate-950" : "text-cyan-400"} />
+                        <Sparkles size={13} className={copilotLoading ? "animate-spin" : isCopilotOpen ? "text-slate-950" : "text-cyan-600 dark:text-cyan-400"} />
                         <span>Copiloto</span>
                       </button>
 
@@ -1058,10 +1061,10 @@ function SuperAdminSupportContent() {
                       <button
                         type="button"
                         onClick={() => setIsDetailModalOpen(true)}
-                        className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-white dark:bg-[#0B1224] border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800 text-xs font-semibold transition-all cursor-pointer shrink-0"
+                        className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold transition-all cursor-pointer shrink-0 shadow-sm"
                         title="Ler a solicitação original completa do cliente"
                       >
-                        <FileText size={13} className="text-blue-400" />
+                        <FileText size={13} className="text-blue-600 dark:text-blue-400" />
                         <span className="hidden sm:inline">Dúvida</span>
                       </button>
 
@@ -1070,25 +1073,25 @@ function SuperAdminSupportContent() {
                         type="button"
                         onClick={handleSendToEngineering}
                         disabled={sendingToEngineering}
-                        className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-white dark:bg-[#0B1224] border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800 text-xs font-semibold transition-all cursor-pointer shrink-0"
+                        className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold transition-all cursor-pointer shrink-0 shadow-sm"
                         title="Enviar para o Kanban de Engenharia de Produto"
                       >
-                        <Cpu size={13} className="text-cyan-400" />
+                        <Cpu size={13} className="text-cyan-600 dark:text-cyan-400" />
                         <span className="hidden sm:inline">{sendingToEngineering ? "..." : "Engenharia"}</span>
                       </button>
 
                       {/* Seletor de Status Traduzido */}
-                      <div className="flex items-center bg-white dark:bg-[#0B1224] border border-slate-800 rounded-lg px-2 py-1 shrink-0">
+                      <div className="flex items-center bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1 shrink-0 shadow-sm">
                         <select
                           value={selectedTicket.status}
                           onChange={(e) => handleUpdateStatus(e.target.value)}
-                          className="bg-transparent text-xs font-bold text-slate-200 outline-none cursor-pointer"
+                          className="bg-transparent text-xs font-bold text-slate-800 dark:text-slate-200 outline-none cursor-pointer"
                         >
-                          <option value="OPEN" className="bg-white dark:bg-[#0B1224] text-amber-400">Aberto</option>
-                          <option value="IN_PROGRESS" className="bg-white dark:bg-[#0B1224] text-blue-400">Em Atendimento</option>
-                          <option value="WAITING_CLIENT" className="bg-white dark:bg-[#0B1224] text-purple-400">Aguardando Cliente</option>
-                          <option value="RESOLVED" className="bg-white dark:bg-[#0B1224] text-emerald-400">Resolvido</option>
-                          <option value="CLOSED" className="bg-white dark:bg-[#0B1224] text-slate-400">Fechado</option>
+                          <option value="OPEN" className="bg-white dark:bg-[#0B1224] text-amber-700 dark:text-amber-400">Aberto</option>
+                          <option value="IN_PROGRESS" className="bg-white dark:bg-[#0B1224] text-blue-700 dark:text-blue-400">Em Atendimento</option>
+                          <option value="WAITING_CLIENT" className="bg-white dark:bg-[#0B1224] text-purple-700 dark:text-purple-400">Aguardando Cliente</option>
+                          <option value="RESOLVED" className="bg-white dark:bg-[#0B1224] text-emerald-700 dark:text-emerald-400">Resolvido</option>
+                          <option value="CLOSED" className="bg-white dark:bg-[#0B1224] text-slate-700 dark:text-slate-400">Fechado</option>
                         </select>
                       </div>
 
@@ -1102,11 +1105,10 @@ function SuperAdminSupportContent() {
                             toggleSidePanel();
                           }
                         }}
-                        className={`flex items-center gap-1 px-2 py-1.5 rounded-lg border transition-colors cursor-pointer text-xs font-semibold shrink-0 ${
-                          showSidePanel
-                            ? "bg-blue-600/20 border-blue-500/40 text-blue-300"
-                            : "bg-white dark:bg-[#0B1224] border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800"
-                        }`}
+                        className={`flex items-center gap-1 px-2 py-1.5 rounded-lg border transition-colors cursor-pointer text-xs font-semibold shrink-0 shadow-sm ${showSidePanel
+                            ? "bg-blue-50 dark:bg-blue-600/20 border-blue-300 dark:border-blue-500/40 text-blue-700 dark:text-blue-300"
+                            : "bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
+                          }`}
                         title={showSidePanel ? "Ocultar painel Raio-X" : "Exibir painel Raio-X"}
                       >
                         {showSidePanel ? <PanelRightClose size={14} /> : <PanelRightOpen size={14} />}
@@ -1209,12 +1211,12 @@ function SuperAdminSupportContent() {
 
                   {/* 3. ÁREA DE MENSAGENS COM BALÕES NO PADRÃO DO LAYOUT */}
                   <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar z-10">
-                    
+
                     {/* MENSAGEM FIXADA NO TOPO: SOLICITAÇÃO ORIGINAL DO CLIENTE */}
                     {selectedTicket.description && (
                       <div className="flex justify-center mb-4">
-                        <div className="w-full max-w-2xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-xl p-3.5 shadow-md">
-                          <div className="flex items-center justify-between text-xs font-bold text-blue-400 border-b border-slate-800 pb-1.5 mb-2">
+                        <div className="w-full max-w-2xl bg-blue-50/70 dark:bg-[#070D1B] border border-blue-200 dark:border-slate-800 rounded-xl p-3.5 shadow-sm">
+                          <div className="flex items-center justify-between text-xs font-bold text-blue-700 dark:text-blue-400 border-b border-blue-200/60 dark:border-slate-800 pb-1.5 mb-2">
                             <span className="flex items-center gap-1.5">
                               <FileText size={14} />
                               <span>Solicitação Original #{selectedTicket.ticketNumber} ({selectedTicket.user?.name || "Cliente"})</span>
@@ -1222,20 +1224,20 @@ function SuperAdminSupportContent() {
                             <button
                               type="button"
                               onClick={() => setIsDetailModalOpen(true)}
-                              className="text-[11px] text-blue-300 hover:text-white underline flex items-center gap-1 cursor-pointer"
+                              className="text-[11px] text-blue-600 dark:text-blue-300 hover:text-blue-800 dark:hover:text-white underline flex items-center gap-1 cursor-pointer font-semibold"
                             >
                               <Maximize2 size={11} />
                               <span>Expandir</span>
                             </button>
                           </div>
 
-                          <p className="text-xs text-slate-200 whitespace-pre-wrap leading-relaxed">
+                          <p className="text-xs text-slate-800 dark:text-slate-200 whitespace-pre-wrap leading-relaxed font-medium">
                             {selectedTicket.description}
                           </p>
 
-                          <div className="flex items-center justify-between pt-2 text-[10px] text-slate-500">
+                          <div className="flex items-center justify-between pt-2 text-[10px] text-slate-600 dark:text-slate-400">
                             <span>Aberto em: {new Date(selectedTicket.createdAt).toLocaleString("pt-BR")}</span>
-                            <span className="font-semibold text-blue-400">{selectedTicket.subject}</span>
+                            <span className="font-semibold text-blue-700 dark:text-blue-400">{selectedTicket.subject}</span>
                           </div>
                         </div>
                       </div>
@@ -1243,16 +1245,16 @@ function SuperAdminSupportContent() {
 
                     {/* LISTAGEM DE MENSAGENS PÚBLICAS */}
                     {publicMessages.length === 0 ? (
-                      <div className="py-12 text-center text-slate-400 text-xs flex flex-col items-center">
-                        <MessageSquare size={32} className="opacity-30 mb-2 text-blue-400" />
-                        <p className="text-white font-semibold">Inicie a conversa com o cliente.</p>
+                      <div className="py-12 text-center text-slate-600 dark:text-slate-400 text-xs flex flex-col items-center">
+                        <MessageSquare size={32} className="opacity-30 mb-2 text-blue-600 dark:text-blue-400" />
+                        <p className="text-slate-900 dark:text-white font-semibold">Inicie a conversa com o cliente.</p>
                         <p>Digite uma resposta humanizada ou use o Copiloto IA para sugerir uma solução técnica pronta.</p>
                       </div>
                     ) : (
                       publicMessages.map((msg: any, idx: number) => {
                         const isAi = msg.senderRole === "AI_AGENT";
                         const isOperator = msg.senderRole === "SUPER_ADMIN" || msg.senderRole === "ADMIN" || msg.senderRole === "AGENT" || isAi;
-                        
+
                         // Separador de Data
                         const prevMsg = idx > 0 ? publicMessages[idx - 1] : null;
                         const currentDateLabel = getChatDateLabel(msg.createdAt);
@@ -1264,7 +1266,7 @@ function SuperAdminSupportContent() {
                             {/* Pílula de Data */}
                             {showDateDivider && (
                               <div className="flex justify-center my-2">
-                                <div className="bg-slate-50 dark:bg-[#070D1B] text-slate-400 text-[10px] font-medium px-3 py-0.5 rounded-lg shadow-sm border border-slate-800 uppercase tracking-wide">
+                                <div className="bg-slate-100 dark:bg-[#070D1B] text-slate-600 dark:text-slate-400 text-[10px] font-semibold px-3 py-0.5 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 uppercase tracking-wide">
                                   {currentDateLabel}
                                 </div>
                               </div>
@@ -1272,37 +1274,57 @@ function SuperAdminSupportContent() {
 
                             {/* Balão de Mensagem */}
                             <div className={`flex flex-col max-w-[85%] sm:max-w-[70%] md:max-w-[65%] ${isOperator ? 'self-end items-end' : 'self-start items-start'} relative group my-1`}>
-                              <div className={`text-xs shadow-md relative pt-2.5 pb-2 px-3.5 min-w-[140px] leading-relaxed rounded-2xl ${
-                                isAi
+                              <div className={`text-xs shadow-md relative pt-2.5 pb-2 px-3.5 min-w-[140px] leading-relaxed rounded-2xl ${isAi
                                   ? 'bg-gradient-to-br from-[#0c223c] to-[#081729] text-slate-100 rounded-tr-sm border border-cyan-500/40 ring-1 ring-cyan-500/20'
-                                  : isOperator
-                                  ? 'bg-slate-100 dark:bg-[#13233e] text-slate-100 rounded-tr-sm border border-blue-500/30'
-                                  : 'bg-slate-100 dark:bg-[#1E293B] text-slate-100 rounded-tl-sm border border-slate-700/60'
-                              }`}>
+                                  : isWhatsApp
+                                    ? isOperator
+                                      ? 'bg-[#D9FDD3] dark:bg-[#005C4B] text-[#111B21] dark:text-[#E9EDEF] rounded-tr-sm border border-[#bbf2b2] dark:border-[#005C4B]'
+                                      : 'bg-white dark:bg-[#202C33] text-[#111B21] dark:text-[#E9EDEF] rounded-tl-sm border border-slate-200 dark:border-transparent'
+                                    : isOperator
+                                      ? 'bg-blue-50 dark:bg-[#13233e] text-slate-900 dark:text-slate-100 rounded-tr-sm border border-blue-200 dark:border-blue-500/30'
+                                      : 'bg-white dark:bg-[#1E293B] text-slate-900 dark:text-slate-100 rounded-tl-sm border border-slate-200 dark:border-slate-700/60 shadow-sm'
+                                }`}>
 
                                 {/* Nome do Remetente */}
-                                <div className="flex items-center justify-between gap-3 text-[10px] font-bold mb-1 pb-0.5 border-b border-white/10">
-                                  <span className={isAi ? "text-cyan-300 flex items-center gap-1.5" : isOperator ? "text-blue-300" : "text-slate-300"}>
+                                <div className={`flex items-center justify-between gap-3 text-[10px] font-bold mb-1 pb-0.5 border-b ${isAi ? 'border-cyan-500/20' : isWhatsApp ? 'border-black/5 dark:border-white/10' : 'border-slate-200 dark:border-white/10'
+                                  }`}>
+                                  <span className={
+                                    isAi
+                                      ? "text-cyan-300 flex items-center gap-1.5"
+                                      : isWhatsApp
+                                        ? isOperator
+                                          ? "text-[#008069] dark:text-[#25D366]"
+                                          : "text-[#128C7E] dark:text-[#00A884]"
+                                        : isOperator
+                                          ? "text-blue-700 dark:text-blue-300"
+                                          : "text-slate-700 dark:text-slate-300"
+                                  }>
                                     {isAi && <Bot size={12} className="text-cyan-300 shrink-0" />}
                                     {msg.senderName || (isAi ? "Sofia - Suporte Vallor" : isOperator ? "Suporte Vallor" : "Cliente")}
                                   </span>
-                                  <span className={`font-mono text-[9px] px-1 py-0.2 rounded uppercase ${
-                                    isAi 
-                                      ? "bg-cyan-950 text-cyan-300 border border-cyan-500/40" 
-                                      : isOperator 
-                                      ? "text-blue-300/80" 
-                                      : "text-slate-400"
-                                  }`}>
+                                  <span className={`font-mono text-[9px] px-1 py-0.2 rounded uppercase ${isAi
+                                      ? "bg-cyan-950 text-cyan-300 border border-cyan-500/40"
+                                      : isWhatsApp
+                                        ? isOperator
+                                          ? "text-[#008069] dark:text-[#25D366]"
+                                          : "text-slate-500 dark:text-slate-400"
+                                        : isOperator
+                                          ? "text-blue-700 dark:text-blue-300/80"
+                                          : "text-slate-600 dark:text-slate-400"
+                                    }`}>
                                     {isAi ? "IA Autônoma" : isOperator ? "Operador" : "Cliente"}
                                   </span>
                                 </div>
 
                                 {/* Texto da Mensagem */}
-                                <p className="whitespace-pre-wrap leading-relaxed text-slate-100 font-normal">{msg.content}</p>
+                                <p className={`whitespace-pre-wrap leading-relaxed font-normal ${isAi ? 'text-slate-100' : isWhatsApp ? 'text-[#111B21] dark:text-[#E9EDEF]' : 'text-slate-900 dark:text-slate-100'
+                                  }`}>
+                                  {msg.content}
+                                </p>
 
                                 {/* Horário e Check ou Sparkles para IA */}
-                                <div className="flex items-center justify-end gap-1 text-[10px] text-slate-400 mt-1">
-                                  <span className="text-slate-400">
+                                <div className="flex items-center justify-end gap-1 text-[10px] mt-1">
+                                  <span className={isWhatsApp ? "text-[#667781] dark:text-[#8696A0]" : "text-slate-500 dark:text-slate-400"}>
                                     {new Date(msg.createdAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                                   </span>
                                   {isAi ? (
@@ -1310,7 +1332,7 @@ function SuperAdminSupportContent() {
                                       <Sparkles size={12} className="text-cyan-300" />
                                     </span>
                                   ) : isOperator ? (
-                                    <CheckCheck size={13} className="text-blue-400" />
+                                    <CheckCheck size={13} className={isWhatsApp ? "text-[#53BDEB]" : "text-blue-600 dark:text-blue-400"} />
                                   ) : null}
                                 </div>
 
@@ -1340,8 +1362,8 @@ function SuperAdminSupportContent() {
                     <div ref={messagesEndRef} />
                   </div>
 
-                  {/* 4. COMPOSER NO PADRÃO DO LAYOUT (SEM EMOJIS INFORMÁIS) */}
-                  <div className="p-3 border-t border-slate-800 bg-slate-50 dark:bg-[#070D1B] z-10 relative shrink-0">
+                  {/* 4. COMPOSER NO PADRÃO DO LAYOUT */}
+                  <div className="p-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B] z-10 relative shrink-0">
                     {/* Formulário de Envio */}
                     <form onSubmit={handleSendClientMessage} className="space-y-1.5">
                       <div className="flex items-center gap-2">
@@ -1352,10 +1374,10 @@ function SuperAdminSupportContent() {
                             setInternalMode('coach_ai');
                             setActiveSubView('team_chat');
                           }}
-                          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-950/40 hover:bg-blue-900/50 border border-blue-500/30 text-xs font-semibold text-blue-300 transition-all cursor-pointer shrink-0 shadow-sm"
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 border border-blue-300 dark:border-blue-500/30 text-xs font-semibold text-blue-700 dark:text-blue-300 transition-all cursor-pointer shrink-0 shadow-sm"
                           title="Abrir o canal de treinamento da equipe para orientar a Sofia"
                         >
-                          <Bot size={14} className="text-cyan-400" />
+                          <Bot size={14} className="text-cyan-600 dark:text-cyan-400" />
                           <span className="hidden sm:inline">Treinar IA</span>
                         </button>
 
@@ -1364,10 +1386,10 @@ function SuperAdminSupportContent() {
                           type="button"
                           onClick={handleTriggerAiCopilot}
                           disabled={copilotLoading}
-                          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-cyan-950/40 hover:bg-cyan-900/50 border border-cyan-500/30 text-xs font-semibold text-cyan-300 transition-all cursor-pointer shrink-0 shadow-sm"
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-cyan-50 dark:bg-cyan-950/40 hover:bg-cyan-100 dark:hover:bg-cyan-900/50 border border-cyan-300 dark:border-cyan-500/30 text-xs font-semibold text-cyan-800 dark:text-cyan-300 transition-all cursor-pointer shrink-0 shadow-sm"
                           title="Pedir para o Copiloto IA formular a resposta técnica"
                         >
-                          <Sparkles size={14} className={copilotLoading ? "animate-spin text-cyan-400" : "text-cyan-400"} />
+                          <Sparkles size={14} className={copilotLoading ? "animate-spin text-cyan-600 dark:text-cyan-400" : "text-cyan-600 dark:text-cyan-400"} />
                           <span className="hidden sm:inline">Sugerir IA</span>
                         </button>
 
@@ -1384,14 +1406,15 @@ function SuperAdminSupportContent() {
                           }}
                           placeholder="Digite uma mensagem para o cliente..."
                           rows={1}
-                          className="flex-1 bg-white dark:bg-[#0B1224] py-2 px-3 text-xs text-white placeholder:text-slate-500 border border-slate-800 rounded-xl outline-none resize-none max-h-32 custom-scrollbar focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition-all"
+                          className="flex-1 bg-white dark:bg-[#0B1224] py-2 px-3 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 border border-slate-300 dark:border-slate-800 rounded-xl outline-none resize-none max-h-32 custom-scrollbar focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition-all shadow-sm"
                         />
 
                         {/* Botão Enviar Circular Azul */}
                         <button
                           type="submit"
                           disabled={sendingClientMessage || !clientMessage.trim()}
-                          className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed shrink-0 cursor-pointer shadow-lg shadow-blue-600/20 active:scale-95"
+                          className={`w-10 h-10 rounded-full text-white flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed shrink-0 cursor-pointer shadow-lg active:scale-95 ${isWhatsApp ? 'bg-[#00A884] hover:bg-[#008f6f] shadow-[#00A884]/20' : 'bg-blue-600 hover:bg-blue-500 shadow-blue-600/20'
+                            }`}
                           title="Enviar resposta ao cliente (Enter)"
                         >
                           {sendingClientMessage ? (
@@ -1402,8 +1425,11 @@ function SuperAdminSupportContent() {
                         </button>
                       </div>
 
-                      <div className="flex items-center justify-between px-2 text-[10px] text-slate-500">
-                        <span>💬 Canal Oficial • A mensagem é sincronizada e entregue ao solicitante em tempo real.</span>
+                      <div className="flex items-center justify-between px-2 text-[10px] text-slate-600 dark:text-slate-400">
+                        <span className="flex items-center gap-1.5">
+                          <ShieldCheck size={12} className="text-blue-600 dark:text-blue-400" />
+                          <span>Canal Oficial • A mensagem é sincronizada e entregue ao solicitante em tempo real.</span>
+                        </span>
                         <span className="hidden sm:inline">Enter para enviar • Shift + Enter para nova linha</span>
                       </div>
                     </form>
@@ -1426,17 +1452,17 @@ function SuperAdminSupportContent() {
 
             {/* COLUNA 3: PAINEL LATERAL RAIO-X DA EMPRESA (Minimizável) */}
             {showSidePanel && selectedTicket?.tenant && (
-              <div className="hidden xl:flex w-72 lg:w-80 bg-white dark:bg-[#0B1224] border border-slate-800 rounded-xl flex-col overflow-hidden shrink-0 shadow-xl animate-fadeIn transition-all duration-200">
-                <div className="p-3 border-b border-slate-800 bg-slate-50 dark:bg-[#070D1B] flex items-center justify-between">
-                  <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                    <Building2 size={13} className="text-blue-400" />
+              <div className="hidden xl:flex w-72 lg:w-80 bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-xl flex-col overflow-hidden shrink-0 shadow-xl animate-fadeIn transition-all duration-200">
+                <div className="p-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B] flex items-center justify-between">
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                    <Building2 size={13} className={isWhatsApp ? "text-[#00A884]" : "text-blue-600 dark:text-blue-400"} />
                     Raio-X da Empresa
                   </h3>
 
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => setIsXRayOpen(true)}
-                      className="text-[11px] font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1 cursor-pointer p-1 rounded hover:bg-slate-800"
+                      className="text-[11px] font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 flex items-center gap-1 cursor-pointer p-1 rounded hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors"
                       title="Abrir detalhes completos em tela cheia"
                     >
                       <span>Expandir</span>
@@ -1444,7 +1470,7 @@ function SuperAdminSupportContent() {
                     </button>
                     <button
                       onClick={toggleSidePanel}
-                      className="text-slate-400 hover:text-white cursor-pointer p-1 rounded hover:bg-slate-800"
+                      className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer p-1 rounded hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors"
                       title="Minimizar Raio-X"
                     >
                       <PanelRightClose size={15} />
@@ -1454,38 +1480,38 @@ function SuperAdminSupportContent() {
 
                 <div className="flex-1 overflow-y-auto p-3.5 space-y-3 custom-scrollbar text-xs bg-white dark:bg-[#0B1224]">
                   {/* Card Empresa */}
-                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 space-y-1.5">
-                    <h4 className="font-bold text-white truncate text-sm">{selectedTicket.tenant.name}</h4>
-                    <span className="text-[10px] text-slate-400 font-mono block">
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-sm">
+                    <h4 className="font-bold text-slate-900 dark:text-white truncate text-sm">{selectedTicket.tenant.name}</h4>
+                    <span className="text-[10px] text-slate-600 dark:text-slate-400 font-mono block">
                       {selectedTicket.tenant.cnpj || "Sem CNPJ cadastrado"}
                     </span>
                     <div className="flex items-center gap-1.5 pt-1">
-                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 uppercase">
+                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-500/30 uppercase">
                         Conta Ativa
                       </span>
-                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 border border-slate-700 uppercase">
+                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 uppercase">
                         {selectedTicket.tenant.plan?.name || "Standard"}
                       </span>
                     </div>
                   </div>
 
                   {/* Contatos */}
-                  <div className="space-y-1.5 text-[11px] p-2.5 rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-800">
-                    <div className="flex items-center gap-2 text-slate-300">
+                  <div className="space-y-1.5 text-[11px] p-2.5 rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
                       <Mail size={12} className="text-slate-500 shrink-0" />
                       <span className="truncate">{selectedTicket.tenant.email || "E-mail não informado"}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-slate-300">
+                    <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
                       <PhoneCall size={12} className="text-slate-500 shrink-0" />
                       <span>{selectedTicket.tenant.phone || "Telefone não informado"}</span>
                     </div>
                   </div>
 
                   {/* Solicitante */}
-                  <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-800 space-y-1">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block">Operador Solicitante</span>
-                    <p className="font-semibold text-white truncate">{selectedTicket.user?.name}</p>
-                    <p className="text-[10px] text-slate-400 font-mono truncate">{selectedTicket.user?.email}</p>
+                  <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 space-y-1 shadow-sm">
+                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase block">Operador Solicitante</span>
+                    <p className="font-semibold text-slate-900 dark:text-white truncate">{selectedTicket.user?.name}</p>
+                    <p className="text-[10px] text-slate-600 dark:text-slate-400 font-mono truncate">{selectedTicket.user?.email}</p>
                   </div>
                 </div>
               </div>
@@ -1497,43 +1523,43 @@ function SuperAdminSupportContent() {
         {/* SUB-ABA 2: CHAT INTERNO DA EQUIPE & MENTORIA DA IA (SOFIA)               */}
         {/* ========================================================================= */}
         {activeSubView === 'team_chat' && (
-          <div className="flex-1 bg-white dark:bg-[#0B1224] border border-slate-800 rounded-xl flex flex-col overflow-hidden shadow-xl">
-            
+          <div className="flex-1 bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col overflow-hidden shadow-xl">
+
             {/* Header da Subcategoria da Equipe */}
-            <div className="p-4 border-b border-slate-800 bg-gradient-to-r from-[#0F172A] to-[#0B1224] flex flex-wrap items-center justify-between gap-3 shrink-0">
+            <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-gradient-to-r dark:from-[#0F172A] dark:to-[#0B1224] flex flex-wrap items-center justify-between gap-3 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-300 shrink-0">
-                  <Bot size={20} className="text-cyan-400" />
+                <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-300 shrink-0">
+                  <Bot size={20} className="text-cyan-600 dark:text-cyan-400" />
                 </div>
                 <div>
-                  <h2 className="text-sm font-bold text-white flex items-center gap-2">
+                  <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     Canal Interno & Mentoria da IA de Suporte
-                    <span className="text-[10px] bg-slate-800 text-slate-300 border border-slate-700 px-2 py-0.5 rounded-full font-mono uppercase flex items-center gap-1 font-bold">
+                    <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 px-2 py-0.5 rounded-full font-mono uppercase flex items-center gap-1 font-bold">
                       <Lock size={10} /> Confidencial
                     </span>
                   </h2>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
                     Alinhamentos técnicos da equipe e mentoria direta para treinar e ajustar as diretrizes da Sofia. <strong>100% invisível para o cliente.</strong>
                   </p>
                 </div>
               </div>
 
               {selectedTicket && (
-                <div className="flex items-center gap-2 bg-slate-50 dark:bg-[#070D1B] border border-slate-800 px-3 py-1.5 rounded-xl text-xs">
-                  <span className="text-slate-400">Chamado Vinculado:</span>
-                  <span className="font-mono text-cyan-400 font-bold">#{selectedTicket.ticketNumber}</span>
-                  <span className="text-white font-semibold truncate max-w-xs">{selectedTicket.tenant?.name}</span>
+                <div className="flex items-center gap-2 bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 px-3 py-1.5 rounded-xl text-xs shadow-sm">
+                  <span className="text-slate-500 dark:text-slate-400">Chamado Vinculado:</span>
+                  <span className="font-mono text-cyan-700 dark:text-cyan-400 font-bold">#{selectedTicket.ticketNumber}</span>
+                  <span className="text-slate-900 dark:text-white font-semibold truncate max-w-xs">{selectedTicket.tenant?.name}</span>
                 </div>
               )}
             </div>
 
             {/* Banner de Garantia e Blindagem */}
-            <div className="px-4 py-2 bg-slate-900/60 border-b border-slate-800 flex items-center justify-between text-xs text-slate-300">
+            <div className="px-4 py-2 bg-blue-50/70 dark:bg-slate-900/60 border-b border-blue-200/80 dark:border-slate-800 flex items-center justify-between text-xs text-slate-700 dark:text-slate-300">
               <div className="flex items-center gap-2">
-                <ShieldCheck size={15} className="text-blue-400 shrink-0" />
+                <ShieldCheck size={15} className="text-blue-600 dark:text-blue-400 shrink-0" />
                 <span>Ambiente Seguro: Nenhuma anotação ou instrução de treinamento postada nesta aba é transmitida para o cliente.</span>
               </div>
-              <span className="text-[10px] font-mono text-slate-400 font-bold hidden sm:inline">
+              <span className="text-[10px] font-mono text-slate-600 dark:text-slate-400 font-bold hidden sm:inline">
                 {teamMessages.length} registro(s) interno(s)
               </span>
             </div>
@@ -1543,8 +1569,8 @@ function SuperAdminSupportContent() {
               {teamMessages.length === 0 ? (
                 <div className="py-16 text-center text-slate-500 text-xs flex flex-col items-center max-w-md mx-auto">
                   <Lock size={32} className="opacity-30 mb-2 text-slate-400" />
-                  <p className="text-slate-300 font-bold text-sm mb-1">Nenhum registro interno ainda.</p>
-                  <p className="text-slate-400">
+                  <p className="text-slate-800 dark:text-slate-300 font-bold text-sm mb-1">Nenhum registro interno ainda.</p>
+                  <p className="text-slate-600 dark:text-slate-400">
                     Use o campo abaixo para registrar notas técnicas ou orientar a Sofia sobre correções, novas regras e postura para este chamado.
                   </p>
                 </div>
@@ -1600,28 +1626,28 @@ function SuperAdminSupportContent() {
                   if (isCoachingPrompt) {
                     return (
                       <div key={msg.id || idx} className="max-w-2xl mx-auto w-full animate-fadeIn">
-                        <div className="p-3.5 rounded-xl bg-blue-950/25 border border-blue-500/40 space-y-2 shadow-sm">
-                          <div className="flex items-center justify-between text-[11px] font-bold text-blue-300 border-b border-blue-500/20 pb-1">
+                        <div className="p-3.5 rounded-xl bg-blue-50 dark:bg-blue-950/25 border border-blue-200 dark:border-blue-500/40 space-y-2 shadow-sm">
+                          <div className="flex items-center justify-between text-[11px] font-bold text-blue-700 dark:text-blue-300 border-b border-blue-200 dark:border-blue-500/20 pb-1">
                             <div className="flex items-center gap-2">
-                              <GraduationCap size={14} className="text-blue-400 shrink-0" />
-                              <span className="text-white">{msg.senderName || "Super Admin"}</span>
-                              <span className="text-[9px] bg-blue-500/20 text-blue-300 px-1.5 py-0.2 rounded font-mono uppercase font-bold">
+                              <GraduationCap size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                              <span className="text-slate-900 dark:text-white">{msg.senderName || "Super Admin"}</span>
+                              <span className="text-[9px] bg-blue-100 dark:bg-blue-500/20 text-blue-800 dark:text-blue-300 px-1.5 py-0.2 rounded font-mono uppercase font-bold">
                                 Treinamento / Mentoria
                               </span>
                             </div>
-                            <span className="text-slate-400 font-mono text-[10px]">
+                            <span className="text-slate-500 dark:text-slate-400 font-mono text-[10px]">
                               {new Date(msg.createdAt).toLocaleString("pt-BR")}
                             </span>
                           </div>
 
                           {quoteAttachment?.text && (
-                            <div className="p-2 rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-blue-500/20 text-[11px] text-slate-300 italic border-l-2 border-l-cyan-400">
-                              <span className="text-[10px] text-cyan-400 font-bold block not-italic uppercase mb-0.5">Resposta do Chamado:</span>
+                            <div className="p-2 rounded-lg bg-white dark:bg-[#070D1B] border border-blue-200 dark:border-blue-500/20 text-[11px] text-slate-700 dark:text-slate-300 italic border-l-2 border-l-cyan-500">
+                              <span className="text-[10px] text-cyan-700 dark:text-cyan-400 font-bold block not-italic uppercase mb-0.5">Resposta do Chamado:</span>
                               &ldquo;{quoteAttachment.text}&rdquo;
                             </div>
                           )}
 
-                          <p className="text-xs text-slate-100 whitespace-pre-wrap leading-relaxed">
+                          <p className="text-xs text-slate-800 dark:text-slate-100 whitespace-pre-wrap leading-relaxed font-normal">
                             {msg.content.replace("[ORIENTAÇÃO IA]:", "").trim()}
                           </p>
                         </div>
@@ -1631,21 +1657,21 @@ function SuperAdminSupportContent() {
 
                   return (
                     <div key={msg.id || idx} className="max-w-2xl mx-auto w-full">
-                      <div className="p-3.5 rounded-xl bg-purple-950/20 border border-purple-500/30 space-y-1.5 shadow-sm">
-                        <div className="flex items-center justify-between text-[11px] font-bold text-purple-300 border-b border-purple-500/20 pb-1">
+                      <div className="p-3.5 rounded-xl bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-500/30 space-y-1.5 shadow-sm">
+                        <div className="flex items-center justify-between text-[11px] font-bold text-purple-800 dark:text-purple-300 border-b border-purple-200 dark:border-purple-500/20 pb-1">
                           <div className="flex items-center gap-2">
-                            <User size={13} className="text-purple-400 shrink-0" />
-                            <span>{msg.senderName || "Operador"}</span>
-                            <span className="text-[9px] bg-purple-500/20 text-purple-300 px-1.5 py-0.2 rounded font-mono uppercase">
+                            <User size={13} className="text-purple-600 dark:text-purple-400 shrink-0" />
+                            <span className="text-slate-900 dark:text-white">{msg.senderName || "Operador"}</span>
+                            <span className="text-[9px] bg-purple-100 dark:bg-purple-500/20 text-purple-800 dark:text-purple-300 px-1.5 py-0.2 rounded font-mono uppercase">
                               {msg.senderRole || "OPERADOR"}
                             </span>
                           </div>
-                          <span className="text-slate-400 font-mono text-[10px]">
+                          <span className="text-slate-500 dark:text-slate-400 font-mono text-[10px]">
                             {new Date(msg.createdAt).toLocaleString("pt-BR")}
                           </span>
                         </div>
 
-                        <p className="text-xs text-slate-100 whitespace-pre-wrap leading-relaxed">
+                        <p className="text-xs text-slate-800 dark:text-slate-100 whitespace-pre-wrap leading-relaxed font-normal">
                           {msg.content}
                         </p>
                       </div>
@@ -1657,19 +1683,18 @@ function SuperAdminSupportContent() {
             </div>
 
             {/* Composer Privativo da Equipe & Mentoria */}
-            <div className="p-4 border-t border-slate-800 bg-slate-50 dark:bg-[#070D1B]">
+            <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B]">
               <form onSubmit={handleSendTeamAction} className="space-y-2.5 max-w-3xl mx-auto">
                 {/* Alternador de Modo: Nota Técnica vs Mentoria da IA */}
                 <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center bg-white dark:bg-[#0B1224] p-1 rounded-xl border border-slate-800">
+                  <div className="flex items-center bg-white dark:bg-[#0B1224] p-1 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
                     <button
                       type="button"
                       onClick={() => setInternalMode('coach_ai')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                        internalMode === 'coach_ai'
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${internalMode === 'coach_ai'
                           ? 'bg-blue-600 text-white shadow-sm'
-                          : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-                      }`}
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                        }`}
                     >
                       <Bot size={13} className={internalMode === 'coach_ai' ? 'text-cyan-300' : 'text-slate-500'} />
                       <span>Treinar & Orientar Sofia (IA)</span>
@@ -1678,11 +1703,10 @@ function SuperAdminSupportContent() {
                     <button
                       type="button"
                       onClick={() => setInternalMode('note')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                        internalMode === 'note'
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${internalMode === 'note'
                           ? 'bg-purple-600 text-white shadow-sm'
-                          : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-                      }`}
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                        }`}
                     >
                       <Lock size={12} className={internalMode === 'note' ? 'text-purple-200' : 'text-slate-500'} />
                       <span>Nota Técnica Interna</span>
@@ -1696,16 +1720,16 @@ function SuperAdminSupportContent() {
 
                 {/* Banner de Mensagem Citada (se vindo do chat do cliente) */}
                 {quotedCoachMessage && (
-                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-blue-950/40 border border-blue-500/40 text-xs text-blue-200 animate-fadeIn">
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-500/40 text-xs text-blue-900 dark:text-blue-200 animate-fadeIn">
                     <div className="flex items-center gap-2 truncate">
-                      <GraduationCap size={14} className="text-cyan-400 shrink-0" />
-                      <span className="font-bold text-white shrink-0">Orientando sobre resposta da Sofia:</span>
-                      <span className="truncate italic text-slate-300 text-[11px]">&ldquo;{quotedCoachMessage.content}&rdquo;</span>
+                      <GraduationCap size={14} className="text-cyan-600 dark:text-cyan-400 shrink-0" />
+                      <span className="font-bold text-slate-900 dark:text-white shrink-0">Orientando sobre resposta da Sofia:</span>
+                      <span className="truncate italic text-slate-700 dark:text-slate-300 text-[11px]">&ldquo;{quotedCoachMessage.content}&rdquo;</span>
                     </div>
-                    <button 
+                    <button
                       type="button"
                       onClick={() => setQuotedCoachMessage(null)}
-                      className="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-colors shrink-0 ml-2 cursor-pointer"
+                      className="p-1 text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800 rounded transition-colors shrink-0 ml-2 cursor-pointer"
                       title="Remover citação"
                     >
                       <X size={13} />
@@ -1714,11 +1738,10 @@ function SuperAdminSupportContent() {
                 )}
 
                 {/* Caixa de Texto */}
-                <div className={`flex items-end gap-2 bg-white dark:bg-[#0B1224] border rounded-2xl p-2.5 transition-all ${
-                  internalMode === 'coach_ai'
-                    ? 'border-blue-500/50 focus-within:border-cyan-400 focus-within:ring-1 focus-within:ring-cyan-400/30'
-                    : 'border-purple-500/40 focus-within:border-purple-400 focus-within:ring-1 focus-within:ring-purple-400/30'
-                }`}>
+                <div className={`flex items-end gap-2 bg-white dark:bg-[#0B1224] border rounded-2xl p-2.5 transition-all shadow-sm ${internalMode === 'coach_ai'
+                    ? 'border-blue-300 dark:border-blue-500/50 focus-within:border-cyan-500 focus-within:ring-1 focus-within:ring-cyan-500/30'
+                    : 'border-purple-300 dark:border-purple-500/40 focus-within:border-purple-500 focus-within:ring-1 focus-within:ring-purple-500/30'
+                  }`}>
                   <textarea
                     value={teamMessage}
                     onChange={(e) => setTeamMessage(e.target.value)}
@@ -1734,17 +1757,16 @@ function SuperAdminSupportContent() {
                         : "Escreva um alinhamento interno ou nota técnica para os operadores..."
                     }
                     rows={2}
-                    className="flex-1 bg-transparent py-1 px-2 text-xs text-white placeholder:text-slate-500 outline-none resize-none max-h-32 custom-scrollbar"
+                    className="flex-1 bg-transparent py-1 px-2 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none resize-none max-h-32 custom-scrollbar"
                   />
 
                   <button
                     type="submit"
                     disabled={coachingAi || sendingTeamMessage || !teamMessage.trim()}
-                    className={`px-4 py-2.5 rounded-xl text-white font-bold text-xs flex items-center gap-1.5 transition-all disabled:opacity-40 shrink-0 cursor-pointer shadow-md ${
-                      internalMode === 'coach_ai'
+                    className={`px-4 py-2.5 rounded-xl text-white font-bold text-xs flex items-center gap-1.5 transition-all disabled:opacity-40 shrink-0 cursor-pointer shadow-md ${internalMode === 'coach_ai'
                         ? 'bg-blue-600 hover:bg-blue-500'
                         : 'bg-purple-600 hover:bg-purple-500'
-                    }`}
+                      }`}
                   >
                     {coachingAi || sendingTeamMessage ? (
                       <>
@@ -1760,7 +1782,7 @@ function SuperAdminSupportContent() {
                   </button>
                 </div>
 
-                <div className="flex items-center justify-between text-[10px] text-slate-400 px-2">
+                <div className="flex items-center justify-between text-[10px] text-slate-600 dark:text-slate-400 px-2">
                   <span className="flex items-center gap-1">
                     <Lock size={11} className="text-slate-500 shrink-0" />
                     <span>Visível exclusivamente para operadores master do Vallor.</span>
@@ -1777,7 +1799,7 @@ function SuperAdminSupportContent() {
         {/* ========================================================================= */}
         {activeSubView === 'ai_config' && (
           <div className="flex-1 bg-white dark:bg-[#0B1224] border border-slate-800 rounded-xl flex flex-col overflow-hidden shadow-xl">
-            
+
             {/* Header da Aba de Governança da IA */}
             <div className="p-4 border-b border-cyan-500/30 bg-gradient-to-r from-[#071322] via-[#0B1A2E] to-[#071322] flex flex-wrap items-center justify-between gap-3 shrink-0">
               <div className="flex items-center gap-3">
@@ -1787,11 +1809,10 @@ function SuperAdminSupportContent() {
                 <div>
                   <h2 className="text-sm font-bold text-white flex items-center gap-2">
                     Agente de IA Autônomo • Central de Atendimento
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono uppercase font-bold border ${
-                      aiConfig.isActive 
-                        ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40" 
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono uppercase font-bold border ${aiConfig.isActive
+                        ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
                         : "bg-slate-800 text-slate-400 border-slate-700"
-                    }`}>
+                      }`}>
                       {aiConfig.isActive ? "Operação Ativa" : "Pausado"}
                     </span>
                   </h2>
@@ -1832,109 +1853,106 @@ function SuperAdminSupportContent() {
             {/* Formulário de Configuração */}
             <div className="flex-1 overflow-y-auto p-5 custom-scrollbar bg-slate-50/60 dark:bg-[#070D1B]/60">
               <form id="ai-config-form" onSubmit={handleSaveAiConfig} className="max-w-4xl mx-auto space-y-6">
-                
+
                 {/* 1. Toggles de Automação */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  
+
                   {/* Toggle 1: Atendimento Ativo */}
-                  <label className={`p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-3 ${
-                    aiConfig.isActive 
-                      ? "bg-cyan-950/20 border-cyan-500/50 shadow-cyan-950/20 shadow-sm" 
-                      : "bg-white dark:bg-[#0B1224] border-slate-800 opacity-80"
-                  }`}>
+                  <label className={`p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-3 ${aiConfig.isActive
+                      ? "bg-cyan-50 dark:bg-cyan-950/20 border-cyan-400 dark:border-cyan-500/50 shadow-sm"
+                      : "bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800 opacity-90"
+                    }`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Bot size={16} className={aiConfig.isActive ? "text-cyan-400" : "text-slate-500"} />
-                        <span className="text-xs font-bold text-white">Atendimento Autônomo</span>
+                        <Bot size={16} className={aiConfig.isActive ? "text-cyan-600 dark:text-cyan-400" : "text-slate-400 dark:text-slate-500"} />
+                        <span className="text-xs font-bold text-slate-900 dark:text-white">Atendimento Autônomo</span>
                       </div>
-                      <input 
+                      <input
                         type="checkbox"
                         checked={aiConfig.isActive}
                         onChange={(e) => setAiConfig(prev => ({ ...prev, isActive: e.target.checked }))}
                         className="w-4 h-4 accent-cyan-500 cursor-pointer"
                       />
                     </div>
-                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                    <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
                       Responde instantaneamente a abertura de chamados e réplicas dos clientes com acolhimento humanizado.
                     </p>
                   </label>
 
                   {/* Toggle 2: Auto Handoff CRM */}
-                  <label className={`p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-3 ${
-                    aiConfig.autoHandoffCrm 
-                      ? "bg-blue-950/20 border-blue-500/50 shadow-blue-950/20 shadow-sm" 
-                      : "bg-white dark:bg-[#0B1224] border-slate-800 opacity-80"
-                  }`}>
+                  <label className={`p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-3 ${aiConfig.autoHandoffCrm
+                      ? "bg-blue-50 dark:bg-blue-950/20 border-blue-400 dark:border-blue-500/50 shadow-sm"
+                      : "bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800 opacity-90"
+                    }`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Cpu size={16} className={aiConfig.autoHandoffCrm ? "text-blue-400" : "text-slate-500"} />
-                        <span className="text-xs font-bold text-white">Handoff CRM / Backlog</span>
+                        <Cpu size={16} className={aiConfig.autoHandoffCrm ? "text-blue-600 dark:text-blue-400" : "text-slate-400 dark:text-slate-500"} />
+                        <span className="text-xs font-bold text-slate-900 dark:text-white">Handoff CRM / Backlog</span>
                       </div>
-                      <input 
+                      <input
                         type="checkbox"
                         checked={aiConfig.autoHandoffCrm}
                         onChange={(e) => setAiConfig(prev => ({ ...prev, autoHandoffCrm: e.target.checked }))}
                         className="w-4 h-4 accent-blue-500 cursor-pointer"
                       />
                     </div>
-                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                    <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
                       Detecta automaticamente upgrades de planos, novos recursos ou bugs e cria card no Kanban de Engenharia.
                     </p>
                   </label>
 
                   {/* Toggle 3: Auto Close & CSAT */}
-                  <label className={`p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-3 ${
-                    aiConfig.autoCloseSolved 
-                      ? "bg-emerald-950/20 border-emerald-500/50 shadow-emerald-950/20 shadow-sm" 
-                      : "bg-white dark:bg-[#0B1224] border-slate-800 opacity-80"
-                  }`}>
+                  <label className={`p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-3 ${aiConfig.autoCloseSolved
+                      ? "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-400 dark:border-emerald-500/50 shadow-sm"
+                      : "bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800 opacity-90"
+                    }`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Star size={16} className={aiConfig.autoCloseSolved ? "text-emerald-400" : "text-slate-500"} />
-                        <span className="text-xs font-bold text-white">Encerramento & CSAT</span>
+                        <Star size={16} className={aiConfig.autoCloseSolved ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400 dark:text-slate-500"} />
+                        <span className="text-xs font-bold text-slate-900 dark:text-white">Encerramento & CSAT</span>
                       </div>
-                      <input 
+                      <input
                         type="checkbox"
                         checked={aiConfig.autoCloseSolved}
                         onChange={(e) => setAiConfig(prev => ({ ...prev, autoCloseSolved: e.target.checked }))}
                         className="w-4 h-4 accent-emerald-500 cursor-pointer"
                       />
                     </div>
-                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                    <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
                       Detecta agradecimento ou confirmação de resolução, marca o ticket como RESOLVIDO e solicita nota de 1 a 5 estrelas.
                     </p>
                   </label>
                 </div>
 
                 {/* 2. Identidade & Modelo LLM */}
-                <div className="p-4 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800 space-y-3">
-                  <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                    <Sliders size={14} className="text-cyan-400" />
+                <div className="p-4 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 space-y-3 shadow-sm">
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                    <Sliders size={14} className="text-cyan-600 dark:text-cyan-400" />
                     <span>Identidade & Modelo Neural</span>
                   </h3>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                      <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                         Nome de Exibição do Agente
                       </label>
-                      <input 
+                      <input
                         type="text"
                         value={aiConfig.name}
                         onChange={(e) => setAiConfig(prev => ({ ...prev, name: e.target.value }))}
                         placeholder="Ex: Sofia - Suporte Vallor"
-                        className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 outline-none focus:border-cyan-500 transition-colors"
+                        className="w-full bg-white dark:bg-[#070D1B] border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:border-cyan-500 transition-colors shadow-sm"
                       />
                     </div>
 
                     <div>
-                      <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                      <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                         Modelo de Linguagem (LLM)
                       </label>
                       <select
                         value={aiConfig.model}
                         onChange={(e) => setAiConfig(prev => ({ ...prev, model: e.target.value }))}
-                        className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-cyan-500 transition-colors cursor-pointer"
+                        className="w-full bg-white dark:bg-[#070D1B] border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-cyan-500 transition-colors cursor-pointer shadow-sm"
                       >
                         <option value="gpt-4o-mini">gpt-4o-mini (Recomendado • Alta Velocidade & Precisão)</option>
                         <option value="gpt-4o">gpt-4o (Máxima Capacidade Cognitiva & Diagnóstico)</option>
@@ -1959,24 +1977,24 @@ function SuperAdminSupportContent() {
                   if (mentorRules.length === 0) return null;
 
                   return (
-                    <div className="p-4 rounded-xl bg-gradient-to-r from-cyan-950/40 via-blue-950/30 to-[#0B1224] border border-cyan-500/40 space-y-2 shadow-lg">
+                    <div className="p-4 rounded-xl bg-cyan-50/70 dark:bg-gradient-to-r dark:from-cyan-950/40 dark:via-blue-950/30 dark:to-[#0B1224] border border-cyan-300 dark:border-cyan-500/40 space-y-2 shadow-sm">
                       <div className="flex items-center justify-between">
-                        <h3 className="text-xs font-bold text-cyan-300 uppercase tracking-wider flex items-center gap-2">
-                          <CheckCircle2 size={15} className="text-cyan-400" />
+                        <h3 className="text-xs font-bold text-cyan-800 dark:text-cyan-300 uppercase tracking-wider flex items-center gap-2">
+                          <CheckCircle2 size={15} className="text-cyan-600 dark:text-cyan-400" />
                           <span>Diretrizes Aprendidas via Mentoria em Tempo Real</span>
                         </h3>
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-mono font-bold border border-cyan-500/30">
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-100 dark:bg-cyan-500/20 text-cyan-800 dark:text-cyan-300 font-mono font-bold border border-cyan-300 dark:border-cyan-500/30">
                           {mentorRules.length} regra(s) ativa(s)
                         </span>
                       </div>
-                      <p className="text-[11px] text-slate-400">
+                      <p className="text-[11px] text-slate-600 dark:text-slate-400">
                         Orientações assimiladas pela Sofia durante os chamados da Central. Elas estão incorporadas às instruções ativas e já são seguidas nos próximos atendimentos.
                       </p>
                       <div className="space-y-1.5 pt-1">
                         {mentorRules.map((rule, idx) => (
-                          <div key={idx} className="flex items-start gap-2 p-2.5 rounded-lg bg-slate-50/90 dark:bg-[#070D1B]/90 border border-cyan-500/20 text-xs text-slate-200">
-                            <span className="w-2 h-2 rounded-full bg-cyan-400 mt-1 shrink-0 animate-pulse" />
-                            <span className="font-mono text-xs leading-relaxed text-cyan-100">{rule}</span>
+                          <div key={idx} className="flex items-start gap-2 p-2.5 rounded-lg bg-white dark:bg-[#070D1B]/90 border border-cyan-200 dark:border-cyan-500/20 text-xs text-slate-800 dark:text-slate-200 shadow-sm">
+                            <span className="w-2 h-2 rounded-full bg-cyan-500 mt-1 shrink-0 animate-pulse" />
+                            <span className="font-mono text-xs leading-relaxed text-slate-800 dark:text-cyan-100">{rule}</span>
                           </div>
                         ))}
                       </div>
@@ -1985,67 +2003,69 @@ function SuperAdminSupportContent() {
                 })()}
 
                 {/* 3. Prompt do Sistema / Tom de Voz */}
-                <div className="p-4 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800 space-y-2">
+                <div className="p-4 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                      <Sparkles size={14} className="text-cyan-400" />
+                    <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                      <Sparkles size={14} className="text-cyan-600 dark:text-cyan-400" />
                       <span>Prompt de Personalidade & Tom de Voz</span>
                     </h3>
                     <span className="text-[10px] text-slate-500">Humanizado, acolhedor e corporativo</span>
                   </div>
-                  <p className="text-[11px] text-slate-400">
+                  <p className="text-[11px] text-slate-600 dark:text-slate-400">
                     Define como o agente se comunica com os clientes. Ele sempre chama pelo primeiro nome e adota postura resolutiva.
                   </p>
-                  <textarea 
+                  <textarea
                     rows={6}
                     value={aiConfig.prompt}
                     onChange={(e) => setAiConfig(prev => ({ ...prev, prompt: e.target.value }))}
                     placeholder="Instruções de personalidade e acolhimento..."
-                    className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-700 rounded-xl p-3 text-xs text-slate-100 placeholder-slate-500 outline-none focus:border-cyan-500 transition-colors font-mono leading-relaxed custom-scrollbar"
+                    className="w-full bg-white dark:bg-[#070D1B] border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:border-cyan-500 transition-colors font-mono leading-relaxed custom-scrollbar shadow-sm"
                   />
                 </div>
 
                 {/* 4. Base de Conhecimento RAG do Vallor */}
-                <div className="p-4 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800 space-y-2">
+                <div className="p-4 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                      <FileText size={14} className="text-blue-400" />
+                    <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                      <FileText size={14} className="text-blue-600 dark:text-blue-400" />
                       <span>Base de Conhecimento do Vallor (Manual dos Módulos)</span>
                     </h3>
                     <span className="text-[10px] text-slate-500">Manual operacional completo</span>
                   </div>
-                  <p className="text-[11px] text-slate-400">
+                  <p className="text-[11px] text-slate-600 dark:text-slate-400">
                     Instruções sobre conexão de WhatsApp (QR Code / Evolution), Whisper áudio, funis de CRM, propostas, contratos com assinatura digital, metas, VoIP e configurações gerais.
                   </p>
-                  <textarea 
+                  <textarea
                     rows={8}
                     value={aiConfig.knowledgeBase}
                     onChange={(e) => setAiConfig(prev => ({ ...prev, knowledgeBase: e.target.value }))}
                     placeholder="Documentação de arquitetura funcional e módulos para resposta aos clientes..."
-                    className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-700 rounded-xl p-3 text-xs text-slate-100 placeholder-slate-500 outline-none focus:border-blue-500 transition-colors font-mono leading-relaxed custom-scrollbar"
+                    className="w-full bg-white dark:bg-[#070D1B] border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:border-blue-500 transition-colors font-mono leading-relaxed custom-scrollbar shadow-sm"
                   />
                 </div>
 
                 {/* 5. Cancelas de Segurança (Anti-Leak Guardrails) */}
-                <div className="p-4 rounded-xl bg-white dark:bg-[#0B1224] border border-rose-900/40 space-y-2">
+                <div className="p-4 rounded-xl bg-white dark:bg-[#0B1224] border border-rose-300 dark:border-rose-900/40 space-y-2 shadow-sm">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-bold text-rose-300 uppercase tracking-wider flex items-center gap-2">
-                      <ShieldAlert size={14} className="text-rose-400" />
+                    <h3 className="text-xs font-bold text-rose-700 dark:text-rose-300 uppercase tracking-wider flex items-center gap-2">
+                      <ShieldAlert size={14} className="text-rose-600 dark:text-rose-400" />
                       <span>Cancelas Rígidas de Segurança (Anti-Vazamento)</span>
                     </h3>
-                    <span className="text-[10px] bg-rose-500/10 text-rose-300 px-2 py-0.5 rounded border border-rose-500/30 uppercase font-mono font-bold">
+                    <span className="text-[10px] bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300 px-2 py-0.5 rounded border border-rose-300 dark:border-rose-500/30 uppercase font-mono font-bold">
                       Blindagem
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-400">
+                  <p className="text-[11px] text-slate-600 dark:text-slate-400">
                     Regras inegociáveis para impedir que usuários extraiam dados de outros clientes, credenciais, senhas, chaves de API ou detalhes de código de backend.
                   </p>
-                  <textarea 
+                  <textarea
                     rows={6}
                     value={aiConfig.guardrails}
                     onChange={(e) => setAiConfig(prev => ({ ...prev, guardrails: e.target.value }))}
                     placeholder="Regras estritas de segurança e bloqueio..."
-                    className="w-full bg-slate-50 dark:bg-[#070D1B] border border-rose-900/40 rounded-xl p-3 text-xs text-rose-100 placeholder-slate-500 outline-none focus:border-rose-500 transition-colors font-mono leading-relaxed custom-scrollbar"
+                    className="w-full bg-white dark:bg-[#070D1B] border border-rose-300 dark:border-rose-900/40 rounded-xl p-3 text-xs text-slate-900 dark:text-rose-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:border-rose-500 transition-colors font-mono leading-relaxed custom-scrollbar shadow-sm"
+                  />
+                  className="w-full bg-slate-50 dark:bg-[#070D1B] border border-rose-900/40 rounded-xl p-3 text-xs text-rose-100 placeholder-slate-500 outline-none focus:border-rose-500 transition-colors font-mono leading-relaxed custom-scrollbar"
                   />
                 </div>
 
@@ -2073,34 +2093,32 @@ function SuperAdminSupportContent() {
       {/* MODAL DE VISUALIZAÇÃO COMPLETA DA DÚVIDA / CHAMADO */}
       {isDetailModalOpen && selectedTicket && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-white dark:bg-[#0F172A] border border-slate-800 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
-            
+          <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+
             {/* Header do Modal */}
-            <div className="p-4 border-b border-slate-800 bg-white dark:bg-[#0B1224] flex items-center justify-between">
+            <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0B1224] flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="p-2 rounded-lg bg-blue-600/20 text-blue-400">
+                <div className="p-2 rounded-lg bg-blue-600/20 text-blue-600 dark:text-blue-400">
                   <FileText size={18} />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs font-bold text-blue-400">
+                    <span className="font-mono text-xs font-bold text-blue-600 dark:text-blue-400">
                       #{selectedTicket.ticketNumber || selectedTicket.id.substring(0, 6).toUpperCase()}
                     </span>
-                    <span className={`text-[10px] font-bold px-2 py-0.2 rounded border uppercase ${
-                      STATUS_CONFIG[selectedTicket.status]?.bg || "bg-blue-500/10"
-                    } ${STATUS_CONFIG[selectedTicket.status]?.text || "text-blue-400"} ${
-                      STATUS_CONFIG[selectedTicket.status]?.border || "border-blue-500/30"
-                    }`}>
+                    <span className={`text-[10px] font-bold px-2 py-0.2 rounded border uppercase ${STATUS_CONFIG[selectedTicket.status]?.bg || "bg-blue-500/10"
+                      } ${STATUS_CONFIG[selectedTicket.status]?.text || "text-blue-400"} ${STATUS_CONFIG[selectedTicket.status]?.border || "border-blue-500/30"
+                      }`}>
                       {STATUS_CONFIG[selectedTicket.status]?.label || selectedTicket.status}
                     </span>
                   </div>
-                  <h3 className="text-sm font-bold text-white mt-0.5">{selectedTicket.subject}</h3>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">{selectedTicket.subject}</h3>
                 </div>
               </div>
 
               <button
                 onClick={() => setIsDetailModalOpen(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
+                className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
               >
                 <X size={18} />
               </button>
@@ -2108,26 +2126,26 @@ function SuperAdminSupportContent() {
 
             {/* Conteúdo do Modal */}
             <div className="p-6 overflow-y-auto space-y-4 custom-scrollbar text-xs">
-              
+
               {/* Metadados do Chamado */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800">
                 <div>
                   <span className="text-[10px] text-slate-500 block uppercase font-semibold">Empresa</span>
-                  <span className="font-bold text-white truncate block">{selectedTicket.tenant?.name || "Empresa"}</span>
+                  <span className="font-bold text-slate-900 dark:text-white truncate block">{selectedTicket.tenant?.name || "Empresa"}</span>
                 </div>
                 <div>
                   <span className="text-[10px] text-slate-500 block uppercase font-semibold">Solicitante</span>
-                  <span className="font-bold text-white truncate block">{selectedTicket.user?.name || "Cliente"}</span>
+                  <span className="font-bold text-slate-900 dark:text-white truncate block">{selectedTicket.user?.name || "Cliente"}</span>
                 </div>
                 <div>
                   <span className="text-[10px] text-slate-500 block uppercase font-semibold">Prioridade</span>
-                  <span className={`font-bold block ${PRIORITY_CONFIG[selectedTicket.priority]?.color || "text-blue-400"}`}>
+                  <span className={`font-bold block ${PRIORITY_CONFIG[selectedTicket.priority]?.color || "text-blue-600 dark:text-blue-400"}`}>
                     {PRIORITY_CONFIG[selectedTicket.priority]?.label || "Média"}
                   </span>
                 </div>
                 <div>
                   <span className="text-[10px] text-slate-500 block uppercase font-semibold">Categoria</span>
-                  <span className="font-bold text-white truncate block">
+                  <span className="font-bold text-slate-900 dark:text-white truncate block">
                     {CATEGORY_CONFIG[selectedTicket.category] || "Dúvida Técnica"}
                   </span>
                 </div>
@@ -2136,36 +2154,36 @@ function SuperAdminSupportContent() {
               {/* Texto Completo da Dúvida */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                    <HelpCircle size={14} className="text-blue-400" />
+                  <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                    <HelpCircle size={14} className="text-blue-600 dark:text-blue-400" />
                     <span>Descrição / Dúvida Completa Enviada</span>
                   </h4>
                   <button
                     onClick={handleCopyDescription}
-                    className="flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 font-semibold cursor-pointer transition-colors"
+                    className="flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-semibold cursor-pointer transition-colors"
                   >
-                    {copiedDescription ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+                    {copiedDescription ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
                     <span>{copiedDescription ? "Copiado!" : "Copiar Texto"}</span>
                   </button>
                 </div>
 
-                <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 text-slate-100 text-xs leading-relaxed whitespace-pre-wrap font-normal">
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 text-xs leading-relaxed whitespace-pre-wrap font-normal">
                   {selectedTicket.description || "Nenhuma descrição fornecida pelo solicitante."}
                 </div>
               </div>
 
               {/* Informações Complementares */}
-              <div className="flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-800/80">
+              <div className="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-400 pt-2 border-t border-slate-200 dark:border-slate-800/80">
                 <span>Criado em: {new Date(selectedTicket.createdAt).toLocaleString("pt-BR")}</span>
                 <span>Última atualização: {new Date(selectedTicket.updatedAt).toLocaleString("pt-BR")}</span>
               </div>
             </div>
 
             {/* Rodapé do Modal */}
-            <div className="p-3 border-t border-slate-800 bg-white dark:bg-[#0B1224] flex items-center justify-end gap-2">
+            <div className="p-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0B1224] flex items-center justify-end gap-2">
               <button
                 onClick={() => setIsDetailModalOpen(false)}
-                className="px-4 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition-colors cursor-pointer"
+                className="px-4 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-white text-xs font-semibold transition-colors cursor-pointer"
               >
                 Fechar
               </button>
