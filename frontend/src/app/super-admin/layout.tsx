@@ -17,7 +17,11 @@ import {
   Cpu,
   Bot,
   Menu,
-  X
+  X,
+  ChevronLeft,
+  ChevronRight,
+  PanelLeftClose,
+  PanelLeftOpen
 } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/lib/api";
@@ -46,6 +50,26 @@ export default function SuperAdminLayout({
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [unreadSupportCount, setUnreadSupportCount] = useState<number>(0);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("super_admin_sidebar_collapsed");
+      if (saved !== null) {
+        setIsCollapsed(saved === "true");
+      }
+    } catch (e) {}
+  }, []);
+
+  const toggleSidebar = () => {
+    setIsCollapsed(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem("super_admin_sidebar_collapsed", String(next));
+      } catch (e) {}
+      return next;
+    });
+  };
 
   // Busca contagem inicial de chamados pendentes
   const fetchPendingSupportCount = () => {
@@ -118,28 +142,67 @@ export default function SuperAdminLayout({
 
   return (
     <div className="h-screen flex w-full overflow-hidden bg-slate-50 dark:bg-[#070D1B] text-slate-900 dark:text-slate-100 font-sans">
-      {/* Sidebar do Super Admin Monocromática (Desktop) */}
-      <aside className="hidden md:flex md:w-64 bg-white dark:bg-[#0B1224] border-r border-slate-200 dark:border-slate-800 flex-col justify-between h-full transition-all duration-300 relative z-20 shrink-0">
-        
+      {/* Sidebar do Super Admin Monocromática (Desktop) com Suporte a Minimizar */}
+      <aside 
+        className={`hidden md:flex bg-white dark:bg-[#0B1224] border-r border-slate-200 dark:border-slate-800 flex-col justify-between h-full transition-[width] duration-200 ease-in-out relative z-20 shrink-0 ${
+          isCollapsed ? "md:w-[72px]" : "md:w-64"
+        }`}
+      >
         {/* Header da Sidebar */}
         <div>
-          <div className="h-16 flex items-center justify-center md:justify-start md:px-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B]">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-blue-600/15 border border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold shrink-0">
+          <div className={`h-16 flex items-center border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B] transition-all ${
+            isCollapsed ? "justify-center px-2" : "justify-between px-4"
+          }`}>
+            <div className={`flex items-center gap-2.5 overflow-hidden ${isCollapsed ? "justify-center" : ""}`}>
+              <div 
+                className="w-8 h-8 rounded-lg bg-blue-600/15 border border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold shrink-0 cursor-pointer"
+                title={isCollapsed ? "Expandir Console Super Admin" : "VALLOR MASTER"}
+                onClick={isCollapsed ? toggleSidebar : undefined}
+              >
                 <Layers size={18} />
               </div>
-              <div className="hidden md:flex flex-col">
-                <span className="font-black text-slate-900 dark:text-white text-sm tracking-wider uppercase">VALLOR MASTER</span>
-                <span className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold tracking-wider uppercase">Super Admin Console</span>
-              </div>
+              {!isCollapsed && (
+                <div className="flex flex-col overflow-hidden animate-in fade-in duration-150">
+                  <span className="font-black text-slate-900 dark:text-white text-sm tracking-wider uppercase truncate">VALLOR MASTER</span>
+                  <span className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold tracking-wider uppercase truncate">Super Admin</span>
+                </div>
+              )}
             </div>
+
+            {/* Botão de Minimizar / Expandir */}
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              className={`p-1.5 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0 ${
+                isCollapsed ? "mt-1 hidden" : "block"
+              }`}
+              title={isCollapsed ? "Expandir Menu Lateral" : "Minimizar Menu Lateral"}
+            >
+              <PanelLeftClose size={17} />
+            </button>
           </div>
 
+          {/* Botão flutuante de expandir quando a barra estiver minimizada */}
+          {isCollapsed && (
+            <div className="flex justify-center pt-2">
+              <button
+                type="button"
+                onClick={toggleSidebar}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                title="Expandir Menu Lateral"
+              >
+                <PanelLeftOpen size={17} />
+              </button>
+            </div>
+          )}
+
           {/* Navegação Principal */}
-          <nav className="p-3 flex flex-col gap-1.5 mt-2">
-            <p className="hidden md:block text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-widest px-2 mb-1">
-              Administração Global
-            </p>
+          <nav className={`p-2 flex flex-col gap-1 mt-1 ${isCollapsed ? "items-center" : ""}`}>
+            {!isCollapsed && (
+              <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-widest px-2 mb-1 animate-in fade-in duration-150">
+                Administração Global
+              </p>
+            )}
             
             {ADMIN_MENU.map((item) => {
               const isActive = 
@@ -152,20 +215,33 @@ export default function SuperAdminLayout({
                   key={item.href} 
                   href={item.href} 
                   prefetch={true}
-                  className={`flex items-center gap-3 p-2.5 rounded-lg transition-all duration-150 group relative
-                    ${isActive 
-                      ? 'bg-blue-50 dark:bg-blue-600/15 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30 font-semibold' 
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white border border-transparent'
-                    }`}
+                  title={isCollapsed ? item.name : undefined}
+                  className={`flex items-center rounded-lg transition-all duration-150 group relative ${
+                    isCollapsed 
+                      ? "w-10 h-10 justify-center p-0" 
+                      : "gap-3 p-2.5 w-full"
+                  } ${
+                    isActive 
+                      ? "bg-blue-50 dark:bg-blue-600/15 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30 font-semibold" 
+                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white border border-transparent"
+                  }`}
                 >
-                  <item.icon size={18} className={isActive ? 'text-blue-600 dark:text-blue-400' : 'group-hover:text-slate-900 dark:group-hover:text-slate-200 transition-colors'} />
-                  <span className={`hidden md:block text-xs ${isActive ? 'text-blue-950 dark:text-white font-bold' : ''}`}>
-                    {item.name}
-                  </span>
-                  {item.href === "/super-admin/support" && unreadSupportCount > 0 && (
-                    <span className="ml-auto hidden md:inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-500 text-white animate-pulse shadow-sm shadow-rose-500/50">
-                      {unreadSupportCount > 9 ? "9+" : unreadSupportCount}
+                  <item.icon size={18} className={`shrink-0 ${isActive ? "text-blue-600 dark:text-blue-400" : "group-hover:text-slate-900 dark:group-hover:text-slate-200 transition-colors"}`} />
+                  
+                  {!isCollapsed && (
+                    <span className={`text-xs truncate ${isActive ? "text-blue-950 dark:text-white font-bold" : ""}`}>
+                      {item.name}
                     </span>
+                  )}
+
+                  {item.href === "/super-admin/support" && unreadSupportCount > 0 && (
+                    !isCollapsed ? (
+                      <span className="ml-auto inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-500 text-white animate-pulse shadow-sm shadow-rose-500/50">
+                        {unreadSupportCount > 9 ? "9+" : unreadSupportCount}
+                      </span>
+                    ) : (
+                      <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-white dark:ring-[#0B1224] animate-pulse" />
+                    )
                   )}
                 </Link>
               );
@@ -174,21 +250,28 @@ export default function SuperAdminLayout({
         </div>
 
         {/* Rodapé do Super Admin */}
-        <div className="p-3 border-t border-slate-200 dark:border-slate-800 flex flex-col gap-2 bg-slate-50 dark:bg-[#070D1B]">
+        <div className={`p-2.5 border-t border-slate-200 dark:border-slate-800 flex flex-col gap-2 bg-slate-50 dark:bg-[#070D1B] ${
+          isCollapsed ? "items-center" : ""
+        }`}>
           <Link
             href="/dashboard"
-            className="hidden md:flex items-center justify-between p-2 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-700 transition-all text-xs font-medium"
+            title="Acessar CRM Operacional"
+            className={`flex items-center rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-700 transition-all text-xs font-medium ${
+              isCollapsed ? "w-10 h-10 justify-center p-0" : "justify-between p-2"
+            }`}
           >
-            <span>Acessar CRM Operacional</span>
-            <ArrowUpRight size={14} className="text-slate-400 dark:text-slate-500" />
+            {!isCollapsed && <span>Acessar CRM Operacional</span>}
+            <ArrowUpRight size={15} className="text-slate-400 dark:text-slate-500 shrink-0" />
           </Link>
 
           <div 
             onClick={() => setIsProfileModalOpen(true)}
-            className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer transition-all group"
+            className={`flex items-center rounded-lg bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer transition-all group ${
+              isCollapsed ? "w-10 h-10 justify-center p-0" : "justify-between p-2"
+            }`}
             title="Editar Perfil (Nome, Foto e Dados)"
           >
-            <div className="flex items-center gap-2 overflow-hidden" suppressHydrationWarning>
+            <div className={`flex items-center gap-2 overflow-hidden ${isCollapsed ? "justify-center" : ""}`} suppressHydrationWarning>
               <div className="w-8 h-8 rounded-full bg-blue-600/15 text-blue-600 dark:text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden shadow-sm" suppressHydrationWarning>
                 {currentUser?.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -197,26 +280,31 @@ export default function SuperAdminLayout({
                   currentUser?.name?.charAt(0)?.toUpperCase() || "SA"
                 )}
               </div>
-              <div className="hidden md:flex flex-col overflow-hidden" suppressHydrationWarning>
-                <div className="flex items-center gap-1" suppressHydrationWarning>
-                  <span className="text-xs font-bold text-slate-900 dark:text-white truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" suppressHydrationWarning>
-                    {currentUser?.name || "Super Admin"}
-                  </span>
-                  <Edit2 size={10} className="text-slate-400 dark:text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+              {!isCollapsed && (
+                <div className="flex flex-col overflow-hidden animate-in fade-in duration-150" suppressHydrationWarning>
+                  <div className="flex items-center gap-1" suppressHydrationWarning>
+                    <span className="text-xs font-bold text-slate-900 dark:text-white truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" suppressHydrationWarning>
+                      {currentUser?.name || "Super Admin"}
+                    </span>
+                    <Edit2 size={10} className="text-slate-400 dark:text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                  </div>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate" suppressHydrationWarning>{currentUser?.email || "admin@vallor.com"}</span>
                 </div>
-                <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate" suppressHydrationWarning>{currentUser?.email || "admin@vallor.com"}</span>
-              </div>
+              )}
             </div>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleLogout();
-              }}
-              title="Sair da Conta"
-              className="text-slate-400 hover:text-rose-500 p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
-            >
-              <LogOut size={15} />
-            </button>
+            
+            {!isCollapsed && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleLogout();
+                }}
+                title="Sair da Conta"
+                className="text-slate-400 hover:text-rose-500 p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
+              >
+                <LogOut size={15} />
+              </button>
+            )}
           </div>
         </div>
       </aside>
