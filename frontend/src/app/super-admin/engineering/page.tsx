@@ -60,26 +60,26 @@ export const dynamic = "force-dynamic";
 
 // Dicionários e Configurações Visuais
 const STAGES = [
-  { id: "CAPTURED", label: "Ideias Capturadas", icon: Inbox, color: "text-amber-600 dark:text-amber-400", border: "border-amber-200 dark:border-amber-500/30", bg: "bg-amber-50 dark:bg-amber-500/10" },
-  { id: "AI_ANALYSIS", label: "Em Análise por IA", icon: Bot, color: "text-purple-600 dark:text-purple-400", border: "border-purple-200 dark:border-purple-500/30", bg: "bg-purple-50 dark:bg-purple-500/10" },
-  { id: "IN_DEVELOPMENT", label: "Em Desenvolvimento", icon: Code, color: "text-blue-600 dark:text-blue-400", border: "border-blue-200 dark:border-blue-500/30", bg: "bg-blue-50 dark:bg-blue-500/10" },
-  { id: "DEPLOYED", label: "Deploy Realizado", icon: Rocket, color: "text-emerald-600 dark:text-emerald-400", border: "border-emerald-200 dark:border-emerald-500/30", bg: "bg-emerald-50 dark:bg-emerald-500/10" },
+  { id: "CAPTURED", label: "Ideias Capturadas", icon: Inbox, color: "text-amber-700 dark:text-amber-400", border: "border-amber-200 dark:border-amber-500/30", bg: "bg-amber-50 dark:bg-amber-500/10", dot: "bg-amber-500" },
+  { id: "AI_ANALYSIS", label: "Em Análise por IA", icon: Bot, color: "text-purple-700 dark:text-purple-400", border: "border-purple-200 dark:border-purple-500/30", bg: "bg-purple-50 dark:bg-purple-500/10", dot: "bg-purple-500" },
+  { id: "IN_DEVELOPMENT", label: "Em Desenvolvimento", icon: Code, color: "text-blue-700 dark:text-blue-400", border: "border-blue-200 dark:border-blue-500/30", bg: "bg-blue-50 dark:bg-blue-500/10", dot: "bg-blue-500" },
+  { id: "DEPLOYED", label: "Deploy Realizado", icon: Rocket, color: "text-emerald-700 dark:text-emerald-400", border: "border-emerald-200 dark:border-emerald-500/30", bg: "bg-emerald-50 dark:bg-emerald-500/10", dot: "bg-emerald-500" },
 ];
 
-const CATEGORIES: Record<string, { label: string; badge: string }> = {
-  FEATURE: { label: "Nova Feature", badge: "bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-500/30" },
-  API: { label: "Nova API / Webhook", badge: "bg-cyan-50 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-500/30" },
-  EXTENSION: { label: "Nova Extensão", badge: "bg-indigo-50 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-500/30" },
-  PERFORMANCE: { label: "Ajuste de Performance", badge: "bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-500/30" },
-  BUG_FIX: { label: "Correção de Bug", badge: "bg-rose-50 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-500/30" },
-  ARCHITECTURE: { label: "Arquitetura & Refactor", badge: "bg-purple-50 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-500/30" },
+const CATEGORIES: Record<string, { label: string; badge: string; dot: string }> = {
+  FEATURE: { label: "Nova Feature", badge: "bg-blue-50 dark:bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-500/30", dot: "bg-blue-500" },
+  API: { label: "Nova API / Webhook", badge: "bg-cyan-50 dark:bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-500/30", dot: "bg-cyan-500" },
+  EXTENSION: { label: "Nova Extensão", badge: "bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-500/30", dot: "bg-indigo-500" },
+  PERFORMANCE: { label: "Performance", badge: "bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-500/30", dot: "bg-amber-500" },
+  BUG_FIX: { label: "Correção de Bug", badge: "bg-rose-50 dark:bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-500/30", dot: "bg-rose-500" },
+  ARCHITECTURE: { label: "Arquitetura & Refactor", badge: "bg-purple-50 dark:bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-500/30", dot: "bg-purple-500" },
 };
 
-const PRIORITIES: Record<string, { label: string; color: string; badge: string }> = {
-  LOW: { label: "Baixa", color: "text-slate-500 dark:text-slate-400", badge: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700" },
-  MEDIUM: { label: "Média", color: "text-blue-600 dark:text-blue-400", badge: "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800" },
-  HIGH: { label: "Alta", color: "text-amber-600 dark:text-amber-400", badge: "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800" },
-  CRITICAL: { label: "Crítica", color: "text-rose-600 dark:text-rose-400", badge: "bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800" },
+const PRIORITIES: Record<string, { label: string; color: string; badge: string; dot: string }> = {
+  LOW: { label: "Baixa", color: "text-slate-500 dark:text-slate-400", badge: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700", dot: "bg-slate-400" },
+  MEDIUM: { label: "Média", color: "text-blue-700 dark:text-blue-400", badge: "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800", dot: "bg-blue-500" },
+  HIGH: { label: "Alta", color: "text-amber-700 dark:text-amber-400", badge: "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800", dot: "bg-amber-500" },
+  CRITICAL: { label: "Crítica", color: "text-rose-700 dark:text-rose-400", badge: "bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800", dot: "bg-rose-500" },
 };
 
 export default function EngineeringDashboard() {
@@ -1036,8 +1036,8 @@ export default function EngineeringDashboard() {
           {/* VISUALIZAÇÃO KANBAN (DRAG AND DROP) */}
           {viewMode === "kanban" ? (
             <DragDropContext onDragEnd={handleDragEnd}>
-              <div className="flex-1 overflow-x-auto p-4 md:px-6 bg-slate-50 dark:bg-[#070D1B]">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 min-w-[1050px] h-full items-start">
+              <div className="flex-1 min-h-0 overflow-auto p-4 md:px-6 bg-slate-50 dark:bg-[#070D1B] flex flex-col">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 min-w-[1050px] h-full min-h-[520px]">
                   {STAGES.map((col) => {
                     const colItems = items.filter((item) => item.stage === col.id);
                     const ColIcon = col.icon;
@@ -1048,7 +1048,7 @@ export default function EngineeringDashboard() {
                           <div
                             ref={provided.innerRef}
                             {...provided.droppableProps}
-                            className={`bg-slate-100/60 dark:bg-[#0B1224] border rounded-xl flex flex-col max-h-full overflow-hidden shadow-sm transition-all ${
+                            className={`bg-slate-100/60 dark:bg-[#0B1224] border rounded-xl flex flex-col h-full min-h-[480px] overflow-hidden shadow-sm transition-all ${
                               snapshot.isDraggingOver
                                 ? "border-cyan-500/60 bg-blue-50/50 dark:bg-[#0c162f] shadow-lg shadow-cyan-500/10"
                                 : "border-slate-200 dark:border-slate-800"
@@ -1069,16 +1069,16 @@ export default function EngineeringDashboard() {
                               </span>
                             </div>
 
-                            {/* Lista de Cards com Draggable */}
-                            <div className="p-3 flex flex-col gap-3 overflow-y-auto flex-1 min-h-[380px]">
+                            {/* Lista de Cards com Draggable - Rolagem Suave Garantida */}
+                            <div className="p-2.5 flex flex-col gap-2.5 overflow-y-auto flex-1 min-h-0 custom-scrollbar overscroll-contain">
                               {colItems.length === 0 ? (
                                 <div className="p-6 text-center border border-dashed border-slate-300 dark:border-slate-800/80 rounded-lg text-slate-500 text-xs my-auto">
                                   Arraste ou crie cards aqui
                                 </div>
                               ) : (
                                 colItems.map((item, index) => {
-                                  const catInfo = CATEGORIES[item.category] || { label: item.category, badge: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700" };
-                                  const prioInfo = PRIORITIES[item.priority] || { label: item.priority, badge: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700" };
+                                  const catInfo = CATEGORIES[item.category] || { label: item.category, badge: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700", dot: "bg-slate-400" };
+                                  const prioInfo = PRIORITIES[item.priority] || { label: item.priority, badge: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700", dot: "bg-slate-400" };
                                   const isAnalyzing = analyzingId === item.id;
                                   const checklistCount = Array.isArray(item.checklist) ? item.checklist.length : 0;
                                   const checklistDone = Array.isArray(item.checklist) ? item.checklist.filter((t: any) => t.done).length : 0;
@@ -1090,19 +1090,21 @@ export default function EngineeringDashboard() {
                                           ref={dragProvided.innerRef}
                                           {...dragProvided.draggableProps}
                                           {...dragProvided.dragHandleProps}
-                                          className={`p-3.5 bg-white dark:bg-[#0F172A] border rounded-xl transition-all shadow-sm flex flex-col gap-2.5 group cursor-grab active:cursor-grabbing ${
+                                          className={`p-3 bg-white dark:bg-[#0F172A] border rounded-xl transition-all shadow-sm flex flex-col gap-2 group cursor-grab active:cursor-grabbing ${
                                             dragSnapshot.isDragging
                                               ? "border-blue-500 dark:border-cyan-400 bg-slate-50 dark:bg-[#17233f] shadow-2xl scale-[1.02] ring-2 ring-blue-500/20 dark:ring-cyan-500/30"
                                               : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-md"
                                           }`}
                                         >
-                                          {/* Badges: Categoria & Prioridade */}
-                                          <div className="flex items-center justify-between gap-1">
-                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${catInfo.badge}`}>
-                                              {catInfo.label}
+                                          {/* Badges Padronizadas (Tags Corporativas sem Efeito Balão) */}
+                                          <div className="flex items-center justify-between gap-1.5 flex-wrap">
+                                            <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md border whitespace-nowrap ${catInfo.badge}`}>
+                                              <span className={`w-1.5 h-1.5 rounded-full ${catInfo.dot || "bg-blue-500"}`} />
+                                              <span>{catInfo.label}</span>
                                             </span>
-                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${prioInfo.badge}`}>
-                                              {prioInfo.label}
+                                            <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md border whitespace-nowrap ${prioInfo.badge}`}>
+                                              <span className={`w-1.5 h-1.5 rounded-full ${prioInfo.dot || "bg-amber-500"}`} />
+                                              <span>{prioInfo.label}</span>
                                             </span>
                                           </div>
 
@@ -1113,7 +1115,7 @@ export default function EngineeringDashboard() {
                                                 setSelectedItem(item);
                                                 setModalTab("overview");
                                               }}
-                                              className="text-xs font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-cyan-400 transition-all cursor-pointer leading-snug"
+                                              className="text-xs font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-cyan-400 transition-all cursor-pointer leading-snug line-clamp-2"
                                             >
                                               {item.title}
                                             </h4>
@@ -1141,7 +1143,7 @@ export default function EngineeringDashboard() {
                                           {checklistCount > 0 && (
                                             <div className="flex items-center gap-2 text-[10px] text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-[#070D1B] px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-800/80">
                                               <CheckSquare size={11} className={checklistDone === checklistCount ? "text-emerald-600 dark:text-emerald-400" : "text-blue-600 dark:text-blue-400"} />
-                                              <span>{checklistDone}/{checklistCount} tarefas concluídas</span>
+                                              <span>{checklistDone}/{checklistCount} tarefas</span>
                                               <div className="flex-1 bg-slate-200 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden ml-1">
                                                 <div
                                                   className="bg-blue-600 dark:bg-blue-500 h-full transition-all"
@@ -1284,8 +1286,8 @@ export default function EngineeringDashboard() {
                       </tr>
                     ) : (
                       sortedTableItems.map((item) => {
-                        const catInfo = CATEGORIES[item.category] || { label: item.category, badge: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700" };
-                        const prioInfo = PRIORITIES[item.priority] || { label: item.priority, badge: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700" };
+                        const catInfo = CATEGORIES[item.category] || { label: item.category, badge: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700", dot: "bg-slate-400" };
+                        const prioInfo = PRIORITIES[item.priority] || { label: item.priority, badge: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700", dot: "bg-slate-400" };
                         const stageInfo = STAGES.find((s) => s.id === item.stage) || STAGES[0];
 
                         return (
@@ -1305,41 +1307,49 @@ export default function EngineeringDashboard() {
                                 {item.description}
                               </div>
                             </td>
-                            <td className="p-3.5">
-                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${catInfo.badge}`}>
-                                {catInfo.label}
+                            {/* Categoria Padronizada (Tag Corporativa) */}
+                            <td className="p-3.5 whitespace-nowrap">
+                              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border shadow-none ${catInfo.badge}`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${catInfo.dot || "bg-blue-500"}`} />
+                                <span>{catInfo.label}</span>
                               </span>
                             </td>
-                            <td className="p-3.5">
-                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${prioInfo.badge}`}>
-                                {prioInfo.label}
+                            {/* Prioridade Padronizada (Tag Corporativa) */}
+                            <td className="p-3.5 whitespace-nowrap">
+                              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border shadow-none ${prioInfo.badge}`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${prioInfo.dot || "bg-amber-500"}`} />
+                                <span>{prioInfo.label}</span>
                               </span>
                             </td>
-                            <td className="p-3.5">
-                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${stageInfo.bg} ${stageInfo.border} ${stageInfo.color}`}>
-                                {stageInfo.label}
+                            {/* Estágio Padronizado (Tag Corporativa) */}
+                            <td className="p-3.5 whitespace-nowrap">
+                              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border shadow-none ${stageInfo.bg} ${stageInfo.border} ${stageInfo.color}`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${stageInfo.dot || "bg-amber-500"}`} />
+                                <span>{stageInfo.label}</span>
                               </span>
                             </td>
-                            <td className="p-3.5">
+                            {/* Impacto */}
+                            <td className="p-3.5 whitespace-nowrap">
                               {item.affectedCount > 1 ? (
-                                <span className="text-[10px] font-bold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 px-2 py-0.5 rounded-md">
-                                  {item.affectedCount} empresas
+                                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 px-2 py-0.5 rounded-md">
+                                  <Building2 size={12} />
+                                  <span>{item.affectedCount} empresas</span>
                                 </span>
                               ) : (
-                                <span className="text-[11px] text-slate-600 dark:text-slate-400 truncate max-w-[120px] block">
+                                <span className="text-[11px] text-slate-600 dark:text-slate-400 truncate max-w-[130px] block">
                                   {item.tenantName || "1 empresa"}
                                 </span>
                               )}
                             </td>
-                            <td className="p-3.5">
+                            <td className="p-3.5 whitespace-nowrap">
                               <span className="text-slate-700 dark:text-slate-300 font-medium text-[11px]">
                                 {item.assignedTo || "—"}
                               </span>
                             </td>
-                            <td className="p-3.5 text-slate-500 dark:text-slate-400 text-[11px]">
+                            <td className="p-3.5 whitespace-nowrap text-slate-500 dark:text-slate-400 text-[11px]">
                               {new Date(item.createdAt).toLocaleDateString('pt-BR')}
                             </td>
-                            <td className="p-3.5 text-right" onClick={(e) => e.stopPropagation()}>
+                            <td className="p-3.5 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                               <button
                                 onClick={() => {
                                   setSelectedItem(item);
