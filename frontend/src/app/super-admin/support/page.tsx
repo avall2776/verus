@@ -31,7 +31,6 @@ import {
   HelpCircle,
   Tag,
   Cpu,
-  Sparkles,
   MessageCircle,
   Eye,
   PanelRight,
@@ -1050,7 +1049,7 @@ function SuperAdminSupportContent() {
                         }`}
                         title="Abrir o Copiloto IA de Atendimento Híbrido"
                       >
-                        <Sparkles size={13} className={copilotLoading ? "animate-spin" : isCopilotOpen ? "text-white" : "text-slate-500 dark:text-slate-400"} />
+                        <Bot size={13} className={copilotLoading ? "animate-spin" : isCopilotOpen ? "text-white" : "text-slate-500 dark:text-slate-400"} />
                         <span>Copiloto</span>
                       </button>
 
@@ -1120,7 +1119,7 @@ function SuperAdminSupportContent() {
                       <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-200 dark:border-slate-800">
                         <div className="flex items-center gap-2">
                           <div className="p-1 rounded-md bg-blue-600 text-white font-bold">
-                            <Sparkles size={14} />
+                            <Bot size={14} />
                           </div>
                           <span className="text-xs font-bold text-slate-900 dark:text-white tracking-wide">
                             Copiloto IA de Atendimento
@@ -1140,11 +1139,6 @@ function SuperAdminSupportContent() {
                             onClick={() => setIsCopilotOpen(false)}
                             className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded transition-colors cursor-pointer"
                             title="Fechar Copiloto"
-                          >
-                            <X size={15} />
-                          </button>
-                        </div>
-                      </div>
                           >
                             <X size={15} />
                           </button>
@@ -1195,7 +1189,7 @@ function SuperAdminSupportContent() {
                               onClick={handleApplyAiSuggestion}
                               className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all cursor-pointer shadow-md active:scale-95"
                             >
-                              <Sparkles size={14} />
+                              <Bot size={14} />
                               <span>Usar Sugestão no Chat</span>
                             </button>
                           </div>
@@ -1339,7 +1333,7 @@ function SuperAdminSupportContent() {
                           className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-[#0B1224] hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors cursor-pointer shrink-0 shadow-sm"
                           title="Pedir sugestão ao Copiloto IA"
                         >
-                          <Sparkles size={14} className={copilotLoading ? "animate-spin text-blue-600 dark:text-blue-400" : "text-blue-600 dark:text-blue-400"} />
+                          <Bot size={14} className={copilotLoading ? "animate-spin text-blue-600 dark:text-blue-400" : "text-blue-600 dark:text-blue-400"} />
                           <span className="hidden sm:inline">Copiloto</span>
                         </button>
 
@@ -1366,16 +1360,6 @@ function SuperAdminSupportContent() {
                           className={`w-10 h-10 rounded-full text-white flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed shrink-0 cursor-pointer shadow-md active:scale-95 ${
                             isWhatsApp ? 'bg-[#00A884] hover:bg-[#008f6f]' : 'bg-blue-600 hover:bg-blue-500'
                           }`}
-                          title="Enviar resposta ao cliente (Enter)"
-                        >
-                          {sendingClientMessage ? (
-                            <Loader2 size={16} className="animate-spin" />
-                          ) : (
-                            <Send size={16} className="ml-0.5" />
-                          )}
-                        </button>
-                      </div>
-                            }`}
                           title="Enviar resposta ao cliente (Enter)"
                         >
                           {sendingClientMessage ? (
@@ -1487,7 +1471,7 @@ function SuperAdminSupportContent() {
           <div className="flex-1 bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col overflow-hidden shadow-xl">
 
             {/* Header da Subcategoria da Equipe */}
-            <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-gradient-to-r dark:from-[#0F172A] dark:to-[#0B1224] flex flex-wrap items-center justify-between gap-3 shrink-0">
+            <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0B1224] flex flex-wrap items-center justify-between gap-3 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-300 shrink-0">
                   <Bot size={20} className="text-cyan-600 dark:text-cyan-400" />
@@ -1762,22 +1746,22 @@ function SuperAdminSupportContent() {
           <div className="flex-1 bg-white dark:bg-[#0B1224] border border-slate-800 rounded-xl flex flex-col overflow-hidden shadow-xl">
 
             {/* Header da Aba de Governança da IA */}
-            <div className="p-4 border-b border-cyan-500/30 bg-gradient-to-r from-[#071322] via-[#0B1A2E] to-[#071322] flex flex-wrap items-center justify-between gap-3 shrink-0">
+            <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#071322] flex flex-wrap items-center justify-between gap-3 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-600/30 to-blue-600/30 border border-cyan-500/40 flex items-center justify-center text-cyan-300 shrink-0 shadow-lg">
+                <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-cyan-300 shrink-0 shadow-sm">
                   <Bot size={22} />
                 </div>
                 <div>
-                  <h2 className="text-sm font-bold text-white flex items-center gap-2">
+                  <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     Agente de IA Autônomo • Central de Atendimento
                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono uppercase font-bold border ${aiConfig.isActive
-                        ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
-                        : "bg-slate-800 text-slate-400 border-slate-700"
+                        ? "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/40"
+                        : "bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-400 border-slate-300 dark:border-slate-700"
                       }`}>
                       {aiConfig.isActive ? "Operação Ativa" : "Pausado"}
                     </span>
                   </h2>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
                     Acolhimento imediato, solução com base nos manuais do Vallor, cancelas de segurança e handoff ao CRM.
                   </p>
                 </div>
@@ -1788,10 +1772,10 @@ function SuperAdminSupportContent() {
                   type="button"
                   onClick={fetchAiConfig}
                   disabled={loadingAiConfig}
-                  className="px-3 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-xs font-semibold text-slate-300 hover:text-white transition-all flex items-center gap-1.5 cursor-pointer"
+                  className="px-3 py-2 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
                   title="Recarregar configurações do servidor"
                 >
-                  <RefreshCw size={13} className={loadingAiConfig ? "animate-spin text-cyan-400" : ""} />
+                  <RefreshCw size={13} className={loadingAiConfig ? "animate-spin text-cyan-500" : ""} />
                   <span className="hidden sm:inline">Recarregar</span>
                 </button>
 
@@ -1799,7 +1783,7 @@ function SuperAdminSupportContent() {
                   type="submit"
                   form="ai-config-form"
                   disabled={savingAiConfig}
-                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-bold text-xs flex items-center gap-2 transition-all shadow-lg cursor-pointer disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center gap-2 transition-all shadow-sm cursor-pointer disabled:opacity-50"
                 >
                   {savingAiConfig ? (
                     <Loader2 size={14} className="animate-spin" />
@@ -1938,13 +1922,13 @@ function SuperAdminSupportContent() {
                   if (mentorRules.length === 0) return null;
 
                   return (
-                    <div className="p-4 rounded-xl bg-cyan-50/70 dark:bg-gradient-to-r dark:from-cyan-950/40 dark:via-blue-950/30 dark:to-[#0B1224] border border-cyan-300 dark:border-cyan-500/40 space-y-2 shadow-sm">
+                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
                       <div className="flex items-center justify-between">
-                        <h3 className="text-xs font-bold text-cyan-800 dark:text-cyan-300 uppercase tracking-wider flex items-center gap-2">
+                        <h3 className="text-xs font-bold text-slate-800 dark:text-cyan-300 uppercase tracking-wider flex items-center gap-2">
                           <CheckCircle2 size={15} className="text-cyan-600 dark:text-cyan-400" />
                           <span>Diretrizes Aprendidas via Mentoria em Tempo Real</span>
                         </h3>
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-100 dark:bg-cyan-500/20 text-cyan-800 dark:text-cyan-300 font-mono font-bold border border-cyan-300 dark:border-cyan-500/30">
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-cyan-500/20 text-slate-800 dark:text-cyan-300 font-mono font-bold border border-slate-300 dark:border-cyan-500/30">
                           {mentorRules.length} regra(s) ativa(s)
                         </span>
                       </div>
@@ -1953,7 +1937,7 @@ function SuperAdminSupportContent() {
                       </p>
                       <div className="space-y-1.5 pt-1">
                         {mentorRules.map((rule, idx) => (
-                          <div key={idx} className="flex items-start gap-2 p-2.5 rounded-lg bg-white dark:bg-[#070D1B]/90 border border-cyan-200 dark:border-cyan-500/20 text-xs text-slate-800 dark:text-slate-200 shadow-sm">
+                          <div key={idx} className="flex items-start gap-2 p-2.5 rounded-lg bg-white dark:bg-[#070D1B]/90 border border-slate-200 dark:border-cyan-500/20 text-xs text-slate-800 dark:text-slate-200 shadow-sm">
                             <span className="w-2 h-2 rounded-full bg-cyan-500 mt-1 shrink-0 animate-pulse" />
                             <span className="font-mono text-xs leading-relaxed text-slate-800 dark:text-cyan-100">{rule}</span>
                           </div>
@@ -1967,7 +1951,7 @@ function SuperAdminSupportContent() {
                 <div className="p-4 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
                   <div className="flex items-center justify-between">
                     <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
-                      <Sparkles size={14} className="text-cyan-600 dark:text-cyan-400" />
+                      <Bot size={14} className="text-blue-600 dark:text-cyan-400" />
                       <span>Prompt de Personalidade & Tom de Voz</span>
                     </h3>
                     <span className="text-[10px] text-slate-500">Humanizado, acolhedor e corporativo</span>
@@ -2033,7 +2017,7 @@ function SuperAdminSupportContent() {
                   <button
                     type="submit"
                     disabled={savingAiConfig}
-                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-bold text-xs flex items-center gap-2 transition-all shadow-lg cursor-pointer disabled:opacity-50"
+                    className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center gap-2 transition-all shadow-md cursor-pointer disabled:opacity-50"
                   >
                     {savingAiConfig ? (
                       <Loader2 size={14} className="animate-spin" />
