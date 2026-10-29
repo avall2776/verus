@@ -60,19 +60,19 @@ export const dynamic = "force-dynamic";
 
 // Dicionários e Configurações Visuais
 const STAGES = [
-  { id: "CAPTURED", label: "Ideias Capturadas", icon: Inbox, color: "text-amber-700 dark:text-amber-400", border: "border-amber-200 dark:border-amber-500/30", bg: "bg-amber-50 dark:bg-amber-500/10", dot: "bg-amber-500" },
-  { id: "AI_ANALYSIS", label: "Em Análise por IA", icon: Bot, color: "text-purple-700 dark:text-purple-400", border: "border-purple-200 dark:border-purple-500/30", bg: "bg-purple-50 dark:bg-purple-500/10", dot: "bg-purple-500" },
-  { id: "IN_DEVELOPMENT", label: "Em Desenvolvimento", icon: Code, color: "text-blue-700 dark:text-blue-400", border: "border-blue-200 dark:border-blue-500/30", bg: "bg-blue-50 dark:bg-blue-500/10", dot: "bg-blue-500" },
-  { id: "DEPLOYED", label: "Deploy Realizado", icon: Rocket, color: "text-emerald-700 dark:text-emerald-400", border: "border-emerald-200 dark:border-emerald-500/30", bg: "bg-emerald-50 dark:bg-emerald-500/10", dot: "bg-emerald-500" },
+  { id: "CAPTURED", label: "Captura", fullLabel: "Ideias Capturadas", icon: Inbox, color: "text-amber-700 dark:text-amber-400", border: "border-amber-200 dark:border-amber-500/30", bg: "bg-amber-50 dark:bg-amber-500/10", dot: "bg-amber-500" },
+  { id: "AI_ANALYSIS", label: "Análise IA", fullLabel: "Em Análise por IA", icon: Bot, color: "text-purple-700 dark:text-purple-400", border: "border-purple-200 dark:border-purple-500/30", bg: "bg-purple-50 dark:bg-purple-500/10", dot: "bg-purple-500" },
+  { id: "IN_DEVELOPMENT", label: "Desenvolvimento", fullLabel: "Em Desenvolvimento", icon: Code, color: "text-blue-700 dark:text-blue-400", border: "border-blue-200 dark:border-blue-500/30", bg: "bg-blue-50 dark:bg-blue-500/10", dot: "bg-blue-500" },
+  { id: "DEPLOYED", label: "Deploy", fullLabel: "Deploy Concluído", icon: Rocket, color: "text-emerald-700 dark:text-emerald-400", border: "border-emerald-200 dark:border-emerald-500/30", bg: "bg-emerald-50 dark:bg-emerald-500/10", dot: "bg-emerald-500" },
 ];
 
 const CATEGORIES: Record<string, { label: string; badge: string; dot: string }> = {
-  FEATURE: { label: "Nova Feature", badge: "bg-blue-50 dark:bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-500/30", dot: "bg-blue-500" },
-  API: { label: "Nova API / Webhook", badge: "bg-cyan-50 dark:bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-500/30", dot: "bg-cyan-500" },
-  EXTENSION: { label: "Nova Extensão", badge: "bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-500/30", dot: "bg-indigo-500" },
-  PERFORMANCE: { label: "Performance", badge: "bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-500/30", dot: "bg-amber-500" },
-  BUG_FIX: { label: "Correção de Bug", badge: "bg-rose-50 dark:bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-500/30", dot: "bg-rose-500" },
-  ARCHITECTURE: { label: "Arquitetura & Refactor", badge: "bg-purple-50 dark:bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-500/30", dot: "bg-purple-500" },
+  FEATURE: { label: "Recurso", badge: "bg-blue-50 dark:bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-500/30", dot: "bg-blue-500" },
+  API: { label: "API & Webhook", badge: "bg-cyan-50 dark:bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-500/30", dot: "bg-cyan-500" },
+  EXTENSION: { label: "Extensão", badge: "bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-500/30", dot: "bg-indigo-500" },
+  PERFORMANCE: { label: "Otimização", badge: "bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-500/30", dot: "bg-amber-500" },
+  BUG_FIX: { label: "Correção", badge: "bg-rose-50 dark:bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-500/30", dot: "bg-rose-500" },
+  ARCHITECTURE: { label: "Arquitetura", badge: "bg-purple-50 dark:bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-500/30", dot: "bg-purple-500" },
 };
 
 const PRIORITIES: Record<string, { label: string; color: string; badge: string; dot: string }> = {
@@ -85,6 +85,7 @@ const PRIORITIES: Record<string, { label: string; color: string; badge: string; 
 export default function EngineeringDashboard() {
   const [activeTab, setActiveTab] = useState<"kanban" | "ai_chat" | "products">("kanban");
   const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
+  const [mobileActiveStage, setMobileActiveStage] = useState<string>("CAPTURED");
   const [items, setItems] = useState<any[]>([]);
   const [stats, setStats] = useState({
     total: 0,
@@ -701,55 +702,52 @@ export default function EngineeringDashboard() {
   });
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 dark:bg-[#070D1B] text-slate-100 overflow-hidden font-sans">
+    <div className="flex flex-col h-full bg-slate-50 dark:bg-[#070D1B] text-slate-900 dark:text-slate-100 overflow-hidden font-sans">
       {/* HEADER SUPERIOR */}
-      <header className="p-4 md:px-6 border-b border-slate-800 bg-white dark:bg-[#0B1224] flex flex-wrap items-center justify-between gap-4 shrink-0">
+      <header className="p-3 md:px-6 md:py-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B1224] flex flex-wrap items-center justify-between gap-3 shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0 shadow-sm shadow-cyan-500/10">
-            <Cpu size={22} />
+          <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-blue-50 dark:bg-cyan-500/10 border border-blue-200 dark:border-cyan-500/30 flex items-center justify-center text-blue-600 dark:text-cyan-400 shrink-0 shadow-sm">
+            <Cpu size={20} />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-base md:text-lg font-black text-white tracking-wide uppercase">
+              <h1 className="text-sm md:text-base font-bold text-slate-900 dark:text-white tracking-wide uppercase">
                 Engenharia de Produto
               </h1>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 font-bold uppercase">
-                Enterprise Hub
-              </span>
             </div>
-            <p className="text-xs text-slate-400">
-              Kanban Nível CRM, Drag & Drop nativo, IA Arquiteta Agêntica e Desduplicação de Suporte
+            <p className="hidden md:block text-xs text-slate-500 dark:text-slate-400">
+              Quadro Kanban, esteira de desenvolvimento, backlog e arquitetura de software
             </p>
           </div>
         </div>
 
         {/* CONTROLES DO TOPO: Alternador de Abas, Sincronizar Deploy & Nova Iniciativa */}
-        <div className="flex items-center gap-2.5 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
           {/* Alternador de Abas Principais */}
           <div className="flex items-center p-1 bg-slate-100 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 rounded-lg">
             <button
               onClick={() => setActiveTab("kanban")}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 md:px-3 rounded-md text-xs font-bold transition-all ${
                 activeTab === "kanban"
                   ? "bg-blue-600 text-white shadow-sm"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               <Layers size={14} />
-              <span>Pipeline & Backlog</span>
+              <span>Kanban</span>
             </button>
 
             <button
               onClick={() => setActiveTab("products")}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 md:px-3 rounded-md text-xs font-bold transition-all ${
                 activeTab === "products"
                   ? "bg-blue-600 text-white shadow-sm"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               <Cpu size={14} className={activeTab === "products" ? "text-white" : "text-slate-500 dark:text-cyan-400"} />
-              <span>Produtos / Roadmap</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+              <span>Roadmap</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-md font-mono ${
                 activeTab === "products" ? "bg-white/20 text-white" : "bg-slate-200 dark:bg-cyan-500/20 text-slate-700 dark:text-cyan-300"
               }`}>
                 {products.length || 5}
@@ -758,14 +756,14 @@ export default function EngineeringDashboard() {
 
             <button
               onClick={() => setActiveTab("ai_chat")}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 md:px-3 rounded-md text-xs font-bold transition-all ${
                 activeTab === "ai_chat"
                   ? "bg-blue-600 text-white shadow-sm"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               <Bot size={14} className={activeTab === "ai_chat" ? "text-white" : "text-slate-500 dark:text-purple-400"} />
-              <span>IA Arquiteto-Chefe</span>
+              <span>Arquiteto IA</span>
             </button>
           </div>
 
@@ -776,27 +774,27 @@ export default function EngineeringDashboard() {
               <button
                 onClick={handleSyncDeploy}
                 disabled={syncingDeploy}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-600/15 hover:bg-emerald-100 dark:hover:bg-emerald-600/25 border border-emerald-300 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-sm"
-                title="Mover tarefas em desenvolvimento para 'Deploy Realizado'"
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-600/15 hover:bg-emerald-100 dark:hover:bg-emerald-600/25 border border-emerald-300 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-sm"
+                title="Mover tarefas em desenvolvimento para 'Deploy Concluído'"
               >
                 <Rocket size={14} className={syncingDeploy ? "animate-spin" : ""} />
-                <span className="hidden sm:inline">Sincronizar Deploy</span>
+                <span>Sincronizar Deploy</span>
               </button>
 
               {/* Botão Nova Iniciativa */}
               <button
                 onClick={() => setIsCreateModalOpen(true)}
-                className="flex items-center gap-2 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer"
               >
                 <Plus size={15} />
-                <span>Nova Frente</span>
+                <span>Nova Iniciativa</span>
               </button>
             </>
           ) : activeTab === "products" ? (
             <div className="flex items-center gap-2">
               <span className="hidden sm:inline-flex items-center gap-1.5 text-[11px] font-mono px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30">
                 <ShieldCheck size={12} className="text-emerald-600 dark:text-emerald-400" />
-                <span>Zero Mocks • Sandboxes Isoladas</span>
+                <span>Sandboxes Isoladas</span>
               </span>
               <button
                 onClick={fetchProducts}
@@ -812,7 +810,7 @@ export default function EngineeringDashboard() {
             <div className="flex items-center gap-2">
               <span className="hidden sm:inline-flex items-center gap-1.5 text-[11px] font-mono px-2.5 py-1 rounded-lg bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30">
                 <Bot size={12} className="text-purple-600 dark:text-purple-400" />
-                <span>OpenAI GPT-4o & Whisper</span>
+                <span>OpenAI GPT-4o</span>
               </span>
               <button
                 onClick={handleClearChat}
@@ -829,120 +827,170 @@ export default function EngineeringDashboard() {
 
       {/* MÉTRICAS DE TOPO (KPIs) - Visíveis apenas no Pipeline & Backlog */}
       {activeTab === "kanban" && (
-        <section className="px-4 md:px-6 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#091020] grid grid-cols-2 md:grid-cols-5 gap-3 shrink-0">
-          <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 flex items-center justify-between shadow-sm">
-            <div>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider">Total Iniciativas</p>
-              <p className="text-lg font-black text-slate-900 dark:text-white">{stats.total}</p>
+        <>
+          {/* Versão Compacta Mobile (Barra Horizontal com Scroll) */}
+          <div className="flex sm:hidden items-center gap-2 overflow-x-auto p-2.5 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#091020] shrink-0">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0 text-xs">
+              <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Total:</span>
+              <span className="font-bold text-slate-900 dark:text-white">{stats.total}</span>
             </div>
-            <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300">
-              <Layers size={16} />
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 shrink-0 text-xs">
+              <span className="text-[10px] uppercase font-bold text-amber-700 dark:text-amber-400">Captura:</span>
+              <span className="font-bold text-amber-700 dark:text-amber-300">{stats.captured}</span>
             </div>
-          </div>
-
-          <div className="bg-white dark:bg-[#0B1224] border border-amber-200 dark:border-amber-500/20 rounded-xl p-2.5 flex items-center justify-between shadow-sm">
-            <div>
-              <p className="text-[10px] text-amber-700 dark:text-amber-400 uppercase font-bold tracking-wider">Capturadas</p>
-              <p className="text-lg font-black text-amber-700 dark:text-amber-300">{stats.captured}</p>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/30 shrink-0 text-xs">
+              <span className="text-[10px] uppercase font-bold text-purple-700 dark:text-purple-400">Análise IA:</span>
+              <span className="font-bold text-purple-700 dark:text-purple-300">{stats.aiAnalysis}</span>
             </div>
-            <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
-              <Inbox size={16} />
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 shrink-0 text-xs">
+              <span className="text-[10px] uppercase font-bold text-blue-700 dark:text-blue-400">Dev:</span>
+              <span className="font-bold text-blue-700 dark:text-blue-300">{stats.inDevelopment}</span>
             </div>
-          </div>
-
-          <div className="bg-white dark:bg-[#0B1224] border border-purple-200 dark:border-purple-500/20 rounded-xl p-2.5 flex items-center justify-between shadow-sm">
-            <div>
-              <p className="text-[10px] text-purple-700 dark:text-purple-400 uppercase font-bold tracking-wider">Em Análise IA</p>
-              <p className="text-lg font-black text-purple-700 dark:text-purple-300">{stats.aiAnalysis}</p>
-            </div>
-            <div className="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/30 flex items-center justify-center text-purple-600 dark:text-purple-400">
-              <Bot size={16} />
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 shrink-0 text-xs">
+              <span className="text-[10px] uppercase font-bold text-emerald-700 dark:text-emerald-400">Deploy:</span>
+              <span className="font-bold text-emerald-700 dark:text-emerald-300">{stats.deployed}</span>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-[#0B1224] border border-blue-200 dark:border-blue-500/20 rounded-xl p-2.5 flex items-center justify-between shadow-sm">
-            <div>
-              <p className="text-[10px] text-blue-700 dark:text-blue-400 uppercase font-bold tracking-wider">Em Desenvolvimento</p>
-              <p className="text-lg font-black text-blue-700 dark:text-blue-300">{stats.inDevelopment}</p>
+          {/* Versão Desktop (Grid de 5 Colunas) */}
+          <section className="hidden sm:grid px-4 md:px-6 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#091020] grid-cols-2 md:grid-cols-5 gap-3 shrink-0">
+            <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 flex items-center justify-between shadow-sm">
+              <div>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider">Total Iniciativas</p>
+                <p className="text-lg font-black text-slate-900 dark:text-white">{stats.total}</p>
+              </div>
+              <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300">
+                <Layers size={16} />
+              </div>
             </div>
-            <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
-              <Code size={16} />
-            </div>
-          </div>
 
-          <div className="bg-white dark:bg-[#0B1224] border border-emerald-200 dark:border-emerald-500/20 rounded-xl p-2.5 flex items-center justify-between col-span-2 md:col-span-1 shadow-sm">
-            <div>
-              <p className="text-[10px] text-emerald-700 dark:text-emerald-400 uppercase font-bold tracking-wider">Deploy Realizado</p>
-              <p className="text-lg font-black text-emerald-700 dark:text-emerald-300">{stats.deployed}</p>
+            <div className="bg-white dark:bg-[#0B1224] border border-amber-200 dark:border-amber-500/20 rounded-xl p-2.5 flex items-center justify-between shadow-sm">
+              <div>
+                <p className="text-[10px] text-amber-700 dark:text-amber-400 uppercase font-bold tracking-wider">Captura</p>
+                <p className="text-lg font-black text-amber-700 dark:text-amber-300">{stats.captured}</p>
+              </div>
+              <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                <Inbox size={16} />
+              </div>
             </div>
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-              <Rocket size={16} />
+
+            <div className="bg-white dark:bg-[#0B1224] border border-purple-200 dark:border-purple-500/20 rounded-xl p-2.5 flex items-center justify-between shadow-sm">
+              <div>
+                <p className="text-[10px] text-purple-700 dark:text-purple-400 uppercase font-bold tracking-wider">Análise IA</p>
+                <p className="text-lg font-black text-purple-700 dark:text-purple-300">{stats.aiAnalysis}</p>
+              </div>
+              <div className="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/30 flex items-center justify-center text-purple-600 dark:text-purple-400">
+                <Bot size={16} />
+              </div>
             </div>
-          </div>
-        </section>
+
+            <div className="bg-white dark:bg-[#0B1224] border border-blue-200 dark:border-blue-500/20 rounded-xl p-2.5 flex items-center justify-between shadow-sm">
+              <div>
+                <p className="text-[10px] text-blue-700 dark:text-blue-400 uppercase font-bold tracking-wider">Desenvolvimento</p>
+                <p className="text-lg font-black text-blue-700 dark:text-blue-300">{stats.inDevelopment}</p>
+              </div>
+              <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                <Code size={16} />
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-[#0B1224] border border-emerald-200 dark:border-emerald-500/20 rounded-xl p-2.5 flex items-center justify-between col-span-2 md:col-span-1 shadow-sm">
+              <div>
+                <p className="text-[10px] text-emerald-700 dark:text-emerald-400 uppercase font-bold tracking-wider">Deploy Concluído</p>
+                <p className="text-lg font-black text-emerald-700 dark:text-emerald-300">{stats.deployed}</p>
+              </div>
+              <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                <Rocket size={16} />
+              </div>
+            </div>
+          </section>
+        </>
       )}
 
       {/* MÉTRICAS DE TOPO (KPIs) - Produtos e Módulos em R&D */}
       {activeTab === "products" && (
-        <section className="px-4 md:px-6 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#091020] grid grid-cols-2 md:grid-cols-5 gap-3 shrink-0">
-          <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 flex items-center justify-between shadow-sm">
-            <div>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider">Total em R&D</p>
-              <p className="text-lg font-black text-slate-900 dark:text-white">{products.length}</p>
+        <>
+          {/* Mobile Strip */}
+          <div className="flex sm:hidden items-center gap-2 overflow-x-auto p-2.5 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#091020] shrink-0">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0 text-xs">
+              <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Total:</span>
+              <span className="font-bold text-slate-900 dark:text-white">{products.length}</span>
             </div>
-            <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300">
-              <Cpu size={16} />
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 shrink-0 text-xs">
+              <span className="text-[10px] uppercase font-bold text-amber-700 dark:text-amber-400">Planejamento:</span>
+              <span className="font-bold text-amber-700 dark:text-amber-300">{products.filter((p) => p.status === "EM_PLANEJAMENTO").length}</span>
             </div>
-          </div>
-
-          <div className="bg-white dark:bg-[#0B1224] border border-amber-200 dark:border-amber-500/20 rounded-xl p-2.5 flex items-center justify-between shadow-sm">
-            <div>
-              <p className="text-[10px] text-amber-700 dark:text-amber-400 uppercase font-bold tracking-wider">Em Planejamento</p>
-              <p className="text-lg font-black text-amber-700 dark:text-amber-300">
-                {products.filter((p) => p.status === "EM_PLANEJAMENTO").length}
-              </p>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 shrink-0 text-xs">
+              <span className="text-[10px] uppercase font-bold text-blue-700 dark:text-blue-400">Dev:</span>
+              <span className="font-bold text-blue-700 dark:text-blue-300">{products.filter((p) => p.status === "EM_DESENVOLVIMENTO").length}</span>
             </div>
-            <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
-              <Clock size={16} />
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 shrink-0 text-xs">
+              <span className="text-[10px] uppercase font-bold text-emerald-700 dark:text-emerald-400">Produção:</span>
+              <span className="font-bold text-emerald-700 dark:text-emerald-300">{products.filter((p) => p.status === "EM_PRODUCAO").length}</span>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-[#0B1224] border border-blue-200 dark:border-blue-500/20 rounded-xl p-2.5 flex items-center justify-between shadow-sm">
-            <div>
-              <p className="text-[10px] text-blue-700 dark:text-blue-400 uppercase font-bold tracking-wider">Em Desenvolvimento</p>
-              <p className="text-lg font-black text-blue-700 dark:text-blue-300">
-                {products.filter((p) => p.status === "EM_DESENVOLVIMENTO").length}
-              </p>
+          {/* Desktop Grid */}
+          <section className="hidden sm:grid px-4 md:px-6 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#091020] grid-cols-2 md:grid-cols-5 gap-3 shrink-0">
+            <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 flex items-center justify-between shadow-sm">
+              <div>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider">Total em R&D</p>
+                <p className="text-lg font-black text-slate-900 dark:text-white">{products.length}</p>
+              </div>
+              <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300">
+                <Cpu size={16} />
+              </div>
             </div>
-            <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
-              <Code size={16} />
-            </div>
-          </div>
 
-          <div className="bg-white dark:bg-[#0B1224] border border-purple-200 dark:border-purple-500/20 rounded-xl p-2.5 flex items-center justify-between shadow-sm">
-            <div>
-              <p className="text-[10px] text-purple-700 dark:text-purple-400 uppercase font-bold tracking-wider">Em Homologação</p>
-              <p className="text-lg font-black text-purple-700 dark:text-purple-300">
-                {products.filter((p) => p.status === "EM_HOMOLOGACAO").length}
-              </p>
+            <div className="bg-white dark:bg-[#0B1224] border border-amber-200 dark:border-amber-500/20 rounded-xl p-2.5 flex items-center justify-between shadow-sm">
+              <div>
+                <p className="text-[10px] text-amber-700 dark:text-amber-400 uppercase font-bold tracking-wider">Em Planejamento</p>
+                <p className="text-lg font-black text-amber-700 dark:text-amber-300">
+                  {products.filter((p) => p.status === "EM_PLANEJAMENTO").length}
+                </p>
+              </div>
+              <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                <Clock size={16} />
+              </div>
             </div>
-            <div className="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/30 flex items-center justify-center text-purple-600 dark:text-purple-400">
-              <Activity size={16} />
-            </div>
-          </div>
 
-          <div className="bg-white dark:bg-[#0B1224] border border-emerald-200 dark:border-emerald-500/20 rounded-xl p-2.5 flex items-center justify-between col-span-2 md:col-span-1 shadow-sm">
-            <div>
-              <p className="text-[10px] text-emerald-700 dark:text-emerald-400 uppercase font-bold tracking-wider">Em Produção</p>
-              <p className="text-lg font-black text-emerald-700 dark:text-emerald-300">
-                {products.filter((p) => p.status === "EM_PRODUCAO").length}
-              </p>
+            <div className="bg-white dark:bg-[#0B1224] border border-blue-200 dark:border-blue-500/20 rounded-xl p-2.5 flex items-center justify-between shadow-sm">
+              <div>
+                <p className="text-[10px] text-blue-700 dark:text-blue-400 uppercase font-bold tracking-wider">Em Desenvolvimento</p>
+                <p className="text-lg font-black text-blue-700 dark:text-blue-300">
+                  {products.filter((p) => p.status === "EM_DESENVOLVIMENTO").length}
+                </p>
+              </div>
+              <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                <Code size={16} />
+              </div>
             </div>
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-              <Rocket size={16} />
+
+            <div className="bg-white dark:bg-[#0B1224] border border-purple-200 dark:border-purple-500/20 rounded-xl p-2.5 flex items-center justify-between shadow-sm">
+              <div>
+                <p className="text-[10px] text-purple-700 dark:text-purple-400 uppercase font-bold tracking-wider">Em Homologação</p>
+                <p className="text-lg font-black text-purple-700 dark:text-purple-300">
+                  {products.filter((p) => p.status === "EM_HOMOLOGACAO").length}
+                </p>
+              </div>
+              <div className="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/30 flex items-center justify-center text-purple-600 dark:text-purple-400">
+                <Activity size={16} />
+              </div>
             </div>
-          </div>
-        </section>
+
+            <div className="bg-white dark:bg-[#0B1224] border border-emerald-200 dark:border-emerald-500/20 rounded-xl p-2.5 flex items-center justify-between col-span-2 md:col-span-1 shadow-sm">
+              <div>
+                <p className="text-[10px] text-emerald-700 dark:text-emerald-400 uppercase font-bold tracking-wider">Em Produção</p>
+                <p className="text-lg font-black text-emerald-700 dark:text-emerald-300">
+                  {products.filter((p) => p.status === "EM_PRODUCAO").length}
+                </p>
+              </div>
+              <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                <Rocket size={16} />
+              </div>
+            </div>
+          </section>
+        </>
       )}
 
       {/* CONTEÚDO PRINCIPAL: TAB 1 (KANBAN/TABELA) OU TAB 2 (PRODUTOS) OU TAB 3 (AI CHAT) */}
@@ -989,33 +1037,33 @@ export default function EngineeringDashboard() {
               </div>
 
               {/* Filtro Categoria */}
-              <div className="flex items-center gap-1.5 bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1 shadow-sm">
+              <div className="flex items-center gap-1.5 bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 shadow-sm">
                 <Filter size={12} className="text-slate-400" />
-                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Categoria:</span>
+                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase hidden sm:inline">Categoria:</span>
                 <select
                   value={categoryFilter}
                   onChange={(e) => setCategoryFilter(e.target.value)}
                   className="bg-transparent text-xs font-semibold text-slate-800 dark:text-white outline-none cursor-pointer"
                 >
-                  <option value="ALL" className="bg-white dark:bg-[#0B1224] text-slate-900 dark:text-white">Todas</option>
-                  <option value="FEATURE" className="bg-white dark:bg-[#0B1224] text-slate-900 dark:text-white">Nova Feature</option>
-                  <option value="API" className="bg-white dark:bg-[#0B1224] text-slate-900 dark:text-white">Nova API</option>
-                  <option value="EXTENSION" className="bg-white dark:bg-[#0B1224] text-slate-900 dark:text-white">Nova Extensão</option>
-                  <option value="PERFORMANCE" className="bg-white dark:bg-[#0B1224] text-slate-900 dark:text-white">Performance</option>
-                  <option value="BUG_FIX" className="bg-white dark:bg-[#0B1224] text-slate-900 dark:text-white">Bug Fix</option>
+                  <option value="ALL" className="bg-white dark:bg-[#0B1224] text-slate-900 dark:text-white">Todas Categorias</option>
+                  <option value="FEATURE" className="bg-white dark:bg-[#0B1224] text-slate-900 dark:text-white">Recursos</option>
+                  <option value="API" className="bg-white dark:bg-[#0B1224] text-slate-900 dark:text-white">APIs & Webhooks</option>
+                  <option value="EXTENSION" className="bg-white dark:bg-[#0B1224] text-slate-900 dark:text-white">Extensões</option>
+                  <option value="PERFORMANCE" className="bg-white dark:bg-[#0B1224] text-slate-900 dark:text-white">Otimizações</option>
+                  <option value="BUG_FIX" className="bg-white dark:bg-[#0B1224] text-slate-900 dark:text-white">Correções</option>
                   <option value="ARCHITECTURE" className="bg-white dark:bg-[#0B1224] text-slate-900 dark:text-white">Arquitetura</option>
                 </select>
               </div>
 
               {/* Filtro Prioridade */}
-              <div className="flex items-center gap-1.5 bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1 shadow-sm">
-                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Prioridade:</span>
+              <div className="flex items-center gap-1.5 bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 shadow-sm">
+                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase hidden sm:inline">Prioridade:</span>
                 <select
                   value={priorityFilter}
                   onChange={(e) => setPriorityFilter(e.target.value)}
                   className="bg-transparent text-xs font-semibold text-slate-800 dark:text-white outline-none cursor-pointer"
                 >
-                  <option value="ALL" className="bg-white dark:bg-[#0B1224] text-slate-900 dark:text-white">Todas</option>
+                  <option value="ALL" className="bg-white dark:bg-[#0B1224] text-slate-900 dark:text-white">Todas Prioridades</option>
                   <option value="LOW" className="bg-white dark:bg-[#0B1224] text-slate-900 dark:text-white">Baixa</option>
                   <option value="MEDIUM" className="bg-white dark:bg-[#0B1224] text-slate-900 dark:text-white">Média</option>
                   <option value="HIGH" className="bg-white dark:bg-[#0B1224] text-slate-900 dark:text-white">Alta</option>
@@ -1036,11 +1084,44 @@ export default function EngineeringDashboard() {
           {/* VISUALIZAÇÃO KANBAN (DRAG AND DROP) */}
           {viewMode === "kanban" ? (
             <DragDropContext onDragEnd={handleDragEnd}>
-              <div className="flex-1 min-h-0 overflow-auto p-4 md:px-6 bg-slate-50 dark:bg-[#070D1B] flex flex-col">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 min-w-[1050px] h-full min-h-[520px]">
+              {/* Seletor de Estágios Mobile (Pílulas Rápidas para Navegação Fluida no Celular) */}
+              <div className="flex md:hidden items-center gap-1.5 px-3 py-2 bg-white dark:bg-[#0B1224] border-b border-slate-200 dark:border-slate-800 overflow-x-auto shrink-0">
+                {STAGES.map((s) => {
+                  const count = items.filter((i) => i.stage === s.id).length;
+                  const isActive = mobileActiveStage === s.id;
+                  const StageIcon = s.icon;
+                  return (
+                    <button
+                      key={s.id}
+                      onClick={() => setMobileActiveStage(s.id)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold shrink-0 transition-all cursor-pointer ${
+                        isActive
+                          ? "bg-blue-600 text-white shadow-sm"
+                          : "bg-slate-100 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700/60"
+                      }`}
+                    >
+                      <StageIcon size={13} className={isActive ? "text-white" : s.color} />
+                      <span>{s.label}</span>
+                      <span
+                        className={`text-[10px] px-1.5 py-0.2 rounded font-mono ${
+                          isActive
+                            ? "bg-white/20 text-white"
+                            : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
+                        }`}
+                      >
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="flex-1 min-h-0 overflow-auto p-3 md:p-6 bg-slate-50 dark:bg-[#070D1B] flex flex-col">
+                <div className="flex flex-col md:grid md:grid-cols-4 gap-4 w-full md:min-w-[1050px] h-full">
                   {STAGES.map((col) => {
                     const colItems = items.filter((item) => item.stage === col.id);
                     const ColIcon = col.icon;
+                    const isColActiveOnMobile = mobileActiveStage === col.id;
 
                     return (
                       <Droppable droppableId={col.id} key={col.id}>
@@ -1048,9 +1129,11 @@ export default function EngineeringDashboard() {
                           <div
                             ref={provided.innerRef}
                             {...provided.droppableProps}
-                            className={`bg-slate-100/60 dark:bg-[#0B1224] border rounded-xl flex flex-col h-full min-h-[480px] overflow-hidden shadow-sm transition-all ${
+                            className={`bg-slate-100/60 dark:bg-[#0B1224] border rounded-xl flex-col h-full overflow-hidden shadow-sm transition-all ${
+                              isColActiveOnMobile ? "flex w-full flex-1 min-h-0" : "hidden md:flex md:h-full md:min-h-0"
+                            } ${
                               snapshot.isDraggingOver
-                                ? "border-cyan-500/60 bg-blue-50/50 dark:bg-[#0c162f] shadow-lg shadow-cyan-500/10"
+                                ? "border-blue-500 dark:border-cyan-500/60 bg-blue-50/50 dark:bg-[#0c162f] shadow-lg shadow-cyan-500/10"
                                 : "border-slate-200 dark:border-slate-800"
                             }`}
                           >
@@ -1061,7 +1144,7 @@ export default function EngineeringDashboard() {
                                   <ColIcon size={14} className={col.color} />
                                 </div>
                                 <h3 className="text-xs font-bold text-slate-900 dark:text-white tracking-wide">
-                                  {col.label}
+                                  {col.fullLabel || col.label}
                                 </h3>
                               </div>
                               <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold border border-slate-200 dark:border-slate-700 shadow-sm">
@@ -1972,7 +2055,7 @@ export default function EngineeringDashboard() {
         </div>
       )}
 
-      {/* MODAL: + NOVA FRENTE TÉCNICA (MANUAL) */}
+      {/* MODAL: + NOVA INICIATIVA TÉCNICA (MANUAL) */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in-95">
@@ -1982,7 +2065,7 @@ export default function EngineeringDashboard() {
                   <Plus size={16} />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">Nova Frente de Engenharia</h3>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">Nova Iniciativa de Engenharia</h3>
                   <p className="text-[11px] text-slate-600 dark:text-slate-400">Crie uma nova iniciativa ou requisito técnico para o backlog</p>
                 </div>
               </div>
@@ -2019,12 +2102,12 @@ export default function EngineeringDashboard() {
                     onChange={(e) => setFormCategory(e.target.value)}
                     className="w-full bg-white dark:bg-[#070D1B] border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-blue-500 cursor-pointer"
                   >
-                    <option value="FEATURE" className="bg-white dark:bg-[#070D1B] text-slate-900 dark:text-white">Nova Feature</option>
-                    <option value="API" className="bg-white dark:bg-[#070D1B] text-slate-900 dark:text-white">Nova API / Webhook</option>
-                    <option value="EXTENSION" className="bg-white dark:bg-[#070D1B] text-slate-900 dark:text-white">Nova Extensão</option>
-                    <option value="PERFORMANCE" className="bg-white dark:bg-[#070D1B] text-slate-900 dark:text-white">Ajuste de Performance</option>
-                    <option value="BUG_FIX" className="bg-white dark:bg-[#070D1B] text-slate-900 dark:text-white">Correção de Bug</option>
-                    <option value="ARCHITECTURE" className="bg-white dark:bg-[#070D1B] text-slate-900 dark:text-white">Arquitetura & Refactor</option>
+                    <option value="FEATURE" className="bg-white dark:bg-[#070D1B] text-slate-900 dark:text-white">Recurso</option>
+                    <option value="API" className="bg-white dark:bg-[#070D1B] text-slate-900 dark:text-white">API & Webhook</option>
+                    <option value="EXTENSION" className="bg-white dark:bg-[#070D1B] text-slate-900 dark:text-white">Extensão</option>
+                    <option value="PERFORMANCE" className="bg-white dark:bg-[#070D1B] text-slate-900 dark:text-white">Otimização</option>
+                    <option value="BUG_FIX" className="bg-white dark:bg-[#070D1B] text-slate-900 dark:text-white">Correção</option>
+                    <option value="ARCHITECTURE" className="bg-white dark:bg-[#070D1B] text-slate-900 dark:text-white">Arquitetura</option>
                   </select>
                 </div>
 
@@ -2055,10 +2138,10 @@ export default function EngineeringDashboard() {
                     onChange={(e) => setFormStage(e.target.value)}
                     className="w-full bg-white dark:bg-[#070D1B] border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-blue-500 cursor-pointer"
                   >
-                    <option value="CAPTURED" className="bg-white dark:bg-[#070D1B] text-slate-900 dark:text-white">Ideias Capturadas</option>
-                    <option value="AI_ANALYSIS" className="bg-white dark:bg-[#070D1B] text-slate-900 dark:text-white">Em Análise por IA</option>
-                    <option value="IN_DEVELOPMENT" className="bg-white dark:bg-[#070D1B] text-slate-900 dark:text-white">Em Desenvolvimento</option>
-                    <option value="DEPLOYED" className="bg-white dark:bg-[#070D1B] text-slate-900 dark:text-white">Deploy Realizado</option>
+                    <option value="CAPTURED" className="bg-white dark:bg-[#070D1B] text-slate-900 dark:text-white">Captura</option>
+                    <option value="AI_ANALYSIS" className="bg-white dark:bg-[#070D1B] text-slate-900 dark:text-white">Análise IA</option>
+                    <option value="IN_DEVELOPMENT" className="bg-white dark:bg-[#070D1B] text-slate-900 dark:text-white">Desenvolvimento</option>
+                    <option value="DEPLOYED" className="bg-white dark:bg-[#070D1B] text-slate-900 dark:text-white">Deploy Concluído</option>
                   </select>
                 </div>
 
