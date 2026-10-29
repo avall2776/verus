@@ -335,7 +335,7 @@ export class OperatorsService {
   }
 
   /**
-   * Desativação ou remoção segura do operador com desatribuição de chamados abertos.
+   * Remoção definitiva do operador com desatribuição segura de todos os vínculos e chamados.
    */
   async deleteOperator(id: string) {
     const operator = await this.prisma.user.findUnique({
@@ -346,18 +346,82 @@ export class OperatorsService {
       throw new NotFoundException('Operador não encontrado.');
     }
 
-    // Desatribuir tickets abertos para não órfãos na fila
+    if (operator.isSuperAdmin || operator.role === 'SUPER_ADMIN') {
+      throw new BadRequestException('Não é permitido excluir o usuário Super Administrador.');
+    }
+
+    // 1. Desatribuir tickets de suporte abertos ou vinculados
     await this.prisma.supportTicket.updateMany({
-      where: { assignedToId: id, status: { in: ['OPEN', 'IN_PROGRESS', 'WAITING_CLIENT'] } },
+      where: { assignedToId: id },
       data: { assignedToId: null },
-    });
+    }).catch(() => {});
 
-    // Desativar conta
-    await this.prisma.user.update({
+    await this.prisma.supportTicket.updateMany({
+      where: { userId: id },
+      data: { userId: null },
+    }).catch(() => {});
+
+    // 2. Desatribuir mensagens de ticket
+    await this.prisma.ticketMessage.updateMany({
+      where: { senderId: id },
+      data: { senderId: null },
+    }).catch(() => {});
+
+    // 3. Desatribuir conversas de chat do operador
+    await this.prisma.conversation.updateMany({
+      where: { assignedTo: id },
+      data: { assignedTo: null },
+    }).catch(() => {});
+
+    // 4. Desatribuir oportunidades (Deals / CRM)
+    await this.prisma.deal.updateMany({
+      where: { assignedTo: id },
+      data: { assignedTo: null },
+    }).catch(() => {});
+
+    // 5. Desatribuir cartões e clientes de marketing
+    await this.prisma.marketingCard.updateMany({
+      where: { assignedUserId: id },
+      data: { assignedUserId: null },
+    }).catch(() => {});
+
+    await this.prisma.marketingClient.updateMany({
+      where: { assignedUserId: id },
+      data: { assignedUserId: null },
+    }).catch(() => {});
+
+    // 6. Excluir vínculos de departamento
+    await this.prisma.userDepartment.deleteMany({
+      where: { userId: id },
+    }).catch(() => {});
+
+    // 7. Excluir metas do operador
+    await this.prisma.goal.deleteMany({
+      where: { userId: id },
+    }).catch(() => {});
+
+    // 8. Excluir mensagens internas de equipe
+    await this.prisma.teamMessage.deleteMany({
+      where: { OR: [{ senderId: id }, { receiverId: id }] },
+    }).catch(() => {});
+
+    // 9. Desvincular pesquisas CSAT
+    await this.prisma.csatSurvey.updateMany({
+      where: { userId: id },
+      data: { userId: null },
+    }).catch(() => {});
+
+    // 10. Excluir registros de horas de marketing
+    await this.prisma.marketingTimeLog.deleteMany({
+      where: { userId: id },
+    }).catch(() => {});
+
+    // 11. Excluir definitivamente o operador
+    await this.prisma.user.delete({
       where: { id },
-      data: { isActive: false, isOnline: false },
     });
 
-    return { success: true, message: 'Operador desativado e chamados em aberto liberados na fila.' };
+    this.logger.log(`Operador [${operator.name} - ${operator.email}] excluído definitivamente do sistema.`);
+    return { success: true, message: 'Operador excluído definitivamente com sucesso.' };
   }
 }

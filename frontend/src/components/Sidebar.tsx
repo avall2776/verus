@@ -35,7 +35,6 @@ import {
   Keyboard,
   ShieldCheck,
   Building2,
-  MonitorSmartphone,
   Megaphone,
   KanbanSquare as LayoutKanban,
   Briefcase,
@@ -1149,17 +1148,6 @@ export default function Sidebar() {
                 {/* Opção Super Admin (se aplicável) */}
                 {(currentUser?.isSuperAdmin || currentUser?.role === 'SUPER_ADMIN') && (
                   <>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsUserMenuOpen(false);
-                        window.dispatchEvent(new CustomEvent("open_device_sandbox"));
-                      }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-emerald-500/10 transition-colors text-left font-semibold"
-                    >
-                      <MonitorSmartphone size={15} />
-                      <span>Simulador de Telas</span>
-                    </button>
                     <button
                       type="button"
                       onClick={() => {

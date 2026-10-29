@@ -17,14 +17,12 @@ import {
   Cpu,
   Bot,
   Menu,
-  X,
-  MonitorSmartphone
+  X
 } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/lib/api";
 import UserProfileModal from "@/components/modals/UserProfileModal";
 import SuperAdminSupportNotifier from "@/components/support/SuperAdminSupportNotifier";
-import DeviceSandboxModal from "@/components/super-admin/DeviceSandboxModal";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 
 const ADMIN_MENU = [
@@ -48,25 +46,6 @@ export default function SuperAdminLayout({
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [unreadSupportCount, setUnreadSupportCount] = useState<number>(0);
-  const [isSandboxOpen, setIsSandboxOpen] = useState(false);
-
-  // Listener para atalho global de teclado (Alt + S) e evento open_device_sandbox
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.altKey && (e.key === "s" || e.key === "S")) {
-        e.preventDefault();
-        setIsSandboxOpen((prev) => !prev);
-      }
-    };
-    const handleOpenSandbox = () => setIsSandboxOpen(true);
-
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("open_device_sandbox", handleOpenSandbox);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("open_device_sandbox", handleOpenSandbox);
-    };
-  }, []);
 
   // Busca contagem inicial de chamados pendentes
   const fetchPendingSupportCount = () => {
@@ -191,19 +170,6 @@ export default function SuperAdminLayout({
                 </Link>
               );
             })}
-
-            {/* Botão de Auditoria e Simulador de Telas */}
-            <div className="pt-2 mt-1 border-t border-slate-200 dark:border-slate-800/60">
-              <button
-                type="button"
-                onClick={() => setIsSandboxOpen(true)}
-                className="w-full flex items-center gap-3 p-2.5 rounded-lg text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 hover:border-emerald-300 dark:hover:border-emerald-500/50 transition-all font-semibold text-left cursor-pointer group"
-                title="Auditar telas em Celular, Tablet e Desktop (Alt + S)"
-              >
-                <MonitorSmartphone size={18} className="text-emerald-600 dark:text-emerald-400 shrink-0 group-hover:scale-110 transition-transform" />
-                <span className="hidden md:block text-xs">Simulador de Telas</span>
-              </button>
-            </div>
           </nav>
         </div>
 
@@ -278,17 +244,6 @@ export default function SuperAdminLayout({
             {/* Botão de Alternância de Tema no Topo do Super Admin */}
             <ThemeToggle variant="pill" className="hidden sm:flex" />
             <ThemeToggle variant="icon" className="sm:hidden" />
-
-            {/* Botão de Simulador de Telas */}
-            <button
-              type="button"
-              onClick={() => setIsSandboxOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30 text-xs font-semibold transition-all shadow-sm active:scale-95 cursor-pointer"
-              title="Simulador de Viewports (Celular, Tablet e Desktop) - Alt + S"
-            >
-              <MonitorSmartphone size={14} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-              <span className="hidden sm:inline">Simulador de Telas</span>
-            </button>
 
             {/* Badge de Status da Infra */}
             <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 rounded-full">
@@ -373,21 +328,6 @@ export default function SuperAdminLayout({
                 <div className="pt-2 mt-1 border-t border-slate-200 dark:border-slate-800/60">
                   <ThemeToggle variant="menu-item" />
                 </div>
-
-                {/* Botão de Auditoria e Simulador de Telas (Mobile Drawer) */}
-                <div className="pt-2 mt-1 border-t border-slate-200 dark:border-slate-800/60">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsMobileMenuOpen(false);
-                      setIsSandboxOpen(true);
-                    }}
-                    className="w-full flex items-center gap-3 p-2.5 rounded-lg text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 transition-all font-semibold text-left cursor-pointer"
-                  >
-                    <MonitorSmartphone size={18} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-                    <span className="text-xs">Simulador de Telas</span>
-                  </button>
-                </div>
               </nav>
             </div>
 
@@ -451,13 +391,6 @@ export default function SuperAdminLayout({
 
       {/* Notificador Flutuante em Tempo Real com Som de Suporte */}
       <SuperAdminSupportNotifier />
-
-      {/* Modal Executiva do Simulador de Viewport (Montada sob demanda para Super Admin) */}
-      <DeviceSandboxModal
-        isOpen={isSandboxOpen}
-        onClose={() => setIsSandboxOpen(false)}
-        initialPath="/vallor/inbox"
-      />
     </div>
   );
 }

@@ -2,10 +2,9 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Menu, ShieldAlert, ShieldCheck, ArrowLeft, MonitorSmartphone, Building2, ChevronDown, Check } from "lucide-react";
+import { Menu, ShieldAlert, ShieldCheck, ArrowLeft, Building2, ChevronDown, Check } from "lucide-react";
 import NotificationsPopover from "@/components/notifications/NotificationsPopover";
 import GlobalSearchBar from "@/components/search/GlobalSearchBar";
-import DeviceSandboxModal from "@/components/super-admin/DeviceSandboxModal";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import { useMobileMenu } from "@/contexts/MobileMenuContext";
 import { getStoredUserSync, clearUserCache } from "@/lib/userCache";
@@ -15,7 +14,6 @@ export default function Topbar() {
   const { toggleMenu } = useMobileMenu();
   const [targetTenantId, setTargetTenantId] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [isSandboxOpen, setIsSandboxOpen] = useState(false);
   const [isTenantDropdownOpen, setIsTenantDropdownOpen] = useState(false);
   const [isSwitchingTenant, setIsSwitchingTenant] = useState(false);
   const tenantDropdownRef = useRef<HTMLDivElement>(null);
@@ -28,31 +26,12 @@ export default function Topbar() {
       }
     };
 
-    const handleOpenSandbox = () => {
-      setIsSandboxOpen(true);
-    };
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Atalho rápido: Alt + S para abrir o simulador
-      if (e.altKey && (e.key === "s" || e.key === "S")) {
-        const user = getStoredUserSync();
-        if (user?.isSuperAdmin === true || user?.role === "SUPER_ADMIN") {
-          e.preventDefault();
-          setIsSandboxOpen((prev) => !prev);
-        }
-      }
-    };
-
     syncState();
     window.addEventListener("tenant_switched", syncState);
     window.addEventListener("user_updated", syncState);
-    window.addEventListener("open_device_sandbox", handleOpenSandbox);
-    window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("tenant_switched", syncState);
       window.removeEventListener("user_updated", syncState);
-      window.removeEventListener("open_device_sandbox", handleOpenSandbox);
-      window.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
 
@@ -178,19 +157,6 @@ export default function Topbar() {
           </div>
         )}
 
-        {/* Simulador Multi-Dispositivo (Exclusivo Super Admin Master) */}
-        {isSuperAdmin && (
-          <button
-            type="button"
-            onClick={() => setIsSandboxOpen(true)}
-            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-900/90 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 text-xs font-medium transition-all shadow-sm active:scale-95 cursor-pointer"
-            title="Simulador de Viewports (Celular, Tablet e Desktop) - Alt + S"
-          >
-            <MonitorSmartphone size={14} className="text-emerald-500 dark:text-emerald-400 shrink-0" />
-            <span className="hidden md:inline">Simulador</span>
-          </button>
-        )}
-
         {/* Atalho Super Admin / Sair do Modo Suporte */}
         {targetTenantId ? (
           <button
@@ -222,14 +188,6 @@ export default function Topbar() {
         <NotificationsPopover />
       </div>
 
-      {/* Modal Executiva do Simulador de Viewport (Montada apenas quando ativada pelo Master) */}
-      {isSuperAdmin && (
-        <DeviceSandboxModal
-          isOpen={isSandboxOpen}
-          onClose={() => setIsSandboxOpen(false)}
-          initialPath={typeof window !== "undefined" ? window.location.pathname : "/vallor/inbox"}
-        />
-      )}
     </header>
   );
 }

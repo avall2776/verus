@@ -731,15 +731,17 @@ function SuperAdminSupportContent() {
                 setActiveSubView('ai_config');
                 fetchAiConfig();
               }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${activeSubView === 'ai_config'
-                  ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md'
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                activeSubView === 'ai_config'
+                  ? 'bg-blue-600 text-white shadow-md'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-slate-800/60'
-                }`}
+              }`}
             >
               <Bot size={14} className={aiConfig.isActive ? "text-cyan-500 dark:text-cyan-300" : "text-slate-500 dark:text-slate-400"} />
               <span>Agente IA de Suporte</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${aiConfig.isActive ? 'bg-cyan-100 dark:bg-cyan-950 text-cyan-800 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-500/40' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-400'
-                }`}>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                aiConfig.isActive ? 'bg-cyan-100 dark:bg-cyan-950 text-cyan-800 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-500/40' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-400'
+              }`}>
                 {aiConfig.isActive ? "ATIVO" : "OFF"}
               </span>
             </button>
@@ -911,10 +913,7 @@ function SuperAdminSupportContent() {
             )}
 
             {/* COLUNA 2: JANELA DE ATENDIMENTO */}
-            <div className={`${!selectedTicket ? 'hidden md:flex' : 'flex'} flex-1 w-full bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-xl flex-col overflow-hidden relative shadow-2xl transition-all duration-200`}>
-
-              {/* Textura Sutil no Padrão do Layout */}
-              <div className="absolute inset-0 opacity-[0.025] pointer-events-none z-0 bg-[radial-gradient(#38bdf8_1px,transparent_1px)] [background-size:20px_20px]" />
+            <div className={`${!selectedTicket ? 'hidden md:flex' : 'flex'} flex-1 w-full bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-xl flex-col overflow-hidden relative shadow-lg transition-all duration-200`}>
 
               {selectedTicket ? (
                 <>
@@ -982,13 +981,13 @@ function SuperAdminSupportContent() {
                       </div>
                     </div>
 
-                    {/* Bloco Direito: Botões de Ação Compactos e Organizados */}
+                    {/* Bloco Direito: Botões de Ação Limpos e Padronizados */}
                     <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
 
                       {/* BADGE CSAT (se avaliado pelo cliente) */}
                       {selectedTicket.satisfactionRating && (
                         <div
-                          className="flex items-center gap-1 bg-amber-50 dark:bg-amber-500/10 border border-amber-300 dark:border-amber-500/30 px-2 py-1 rounded-lg text-xs font-bold text-amber-800 dark:text-amber-300 shrink-0"
+                          className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-1 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-300 shrink-0"
                           title={selectedTicket.satisfactionFeedback ? `Avaliação do Cliente: "${selectedTicket.satisfactionFeedback}"` : "Avaliação CSAT registrada"}
                         >
                           <Star size={12} className="fill-amber-500 text-amber-500" />
@@ -999,10 +998,10 @@ function SuperAdminSupportContent() {
                       {/* BADGE DEMANDA ENGENHARIA/CRM */}
                       {selectedTicket.aiHandoffDemandId && (
                         <div
-                          className="hidden lg:flex items-center gap-1 bg-cyan-50 dark:bg-cyan-500/10 border border-cyan-300 dark:border-cyan-500/30 px-2 py-1 rounded-lg text-xs font-bold text-cyan-800 dark:text-cyan-300 shrink-0"
+                          className="hidden lg:flex items-center gap-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-1 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-300 shrink-0"
                           title="Demanda catalogada no Backlog de Engenharia"
                         >
-                          <Cpu size={12} className="text-cyan-600 dark:text-cyan-400" />
+                          <Cpu size={12} className="text-slate-500 dark:text-slate-400" />
                           <span>Demanda</span>
                         </div>
                       )}
@@ -1012,10 +1011,7 @@ function SuperAdminSupportContent() {
                         type="button"
                         onClick={handleToggleTicketAi}
                         disabled={togglingTicketAi}
-                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border shadow-sm shrink-0 ${selectedTicket.isAiPaused
-                            ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-500/40 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60"
-                            : "bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-500/40 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60"
-                          }`}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold transition-colors cursor-pointer shrink-0 shadow-sm"
                         title={
                           selectedTicket.isAiPaused
                             ? "A IA está pausada para este chamado. Clique para reativar as respostas da IA."
@@ -1047,13 +1043,14 @@ function SuperAdminSupportContent() {
                             setIsCopilotOpen(prev => !prev);
                           }
                         }}
-                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-sm shrink-0 ${isCopilotOpen
-                            ? "bg-cyan-500 text-slate-950 ring-2 ring-cyan-400/50 font-black"
-                            : "bg-cyan-50 dark:bg-cyan-950/30 border border-cyan-300 dark:border-cyan-500/30 text-cyan-800 dark:text-cyan-300 hover:bg-cyan-100 dark:hover:bg-cyan-900/40"
-                          }`}
+                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer shadow-sm shrink-0 border ${
+                          isCopilotOpen
+                            ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                            : "bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                        }`}
                         title="Abrir o Copiloto IA de Atendimento Híbrido"
                       >
-                        <Sparkles size={13} className={copilotLoading ? "animate-spin" : isCopilotOpen ? "text-slate-950" : "text-cyan-600 dark:text-cyan-400"} />
+                        <Sparkles size={13} className={copilotLoading ? "animate-spin" : isCopilotOpen ? "text-white" : "text-slate-500 dark:text-slate-400"} />
                         <span>Copiloto</span>
                       </button>
 
@@ -1061,10 +1058,10 @@ function SuperAdminSupportContent() {
                       <button
                         type="button"
                         onClick={() => setIsDetailModalOpen(true)}
-                        className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold transition-all cursor-pointer shrink-0 shadow-sm"
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold transition-colors cursor-pointer shrink-0 shadow-sm"
                         title="Ler a solicitação original completa do cliente"
                       >
-                        <FileText size={13} className="text-blue-600 dark:text-blue-400" />
+                        <FileText size={13} className="text-slate-500 dark:text-slate-400" />
                         <span className="hidden sm:inline">Dúvida</span>
                       </button>
 
@@ -1073,10 +1070,10 @@ function SuperAdminSupportContent() {
                         type="button"
                         onClick={handleSendToEngineering}
                         disabled={sendingToEngineering}
-                        className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold transition-all cursor-pointer shrink-0 shadow-sm"
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold transition-colors cursor-pointer shrink-0 shadow-sm"
                         title="Enviar para o Kanban de Engenharia de Produto"
                       >
-                        <Cpu size={13} className="text-cyan-600 dark:text-cyan-400" />
+                        <Cpu size={13} className="text-slate-500 dark:text-slate-400" />
                         <span className="hidden sm:inline">{sendingToEngineering ? "..." : "Engenharia"}</span>
                       </button>
 
@@ -1105,9 +1102,9 @@ function SuperAdminSupportContent() {
                             toggleSidePanel();
                           }
                         }}
-                        className={`flex items-center gap-1 px-2 py-1.5 rounded-lg border transition-colors cursor-pointer text-xs font-semibold shrink-0 shadow-sm ${showSidePanel
-                            ? "bg-blue-50 dark:bg-blue-600/20 border-blue-300 dark:border-blue-500/40 text-blue-700 dark:text-blue-300"
-                            : "bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
+                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg border transition-colors cursor-pointer text-xs font-semibold shrink-0 shadow-sm ${showSidePanel
+                            ? "bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
+                            : "bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                           }`}
                         title={showSidePanel ? "Ocultar painel Raio-X" : "Exibir painel Raio-X"}
                       >
@@ -1117,19 +1114,16 @@ function SuperAdminSupportContent() {
                     </div>
                   </div>
 
-                  {/* PAINEL RETRÁTIL DO COPILOTO IA DE ATENDIMENTO HÍBRIDO */}
+                  {/* PAINEL RETRÁTIL DO COPILOTO IA DE ATENDIMENTO HÍBRIDO (SEM GRADIENTES) */}
                   {isCopilotOpen && (
-                    <div className="border-b border-cyan-500/30 bg-gradient-to-r from-[#071322] via-[#0B1A2E] to-[#071322] p-4 z-10 shadow-lg relative animate-fadeIn shrink-0">
-                      <div className="flex items-center justify-between pb-2 mb-2 border-b border-cyan-500/20">
+                    <div className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B] p-4 z-10 shadow-sm relative animate-fadeIn shrink-0">
+                      <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-200 dark:border-slate-800">
                         <div className="flex items-center gap-2">
-                          <div className="p-1 rounded-md bg-cyan-500 text-slate-950 font-bold">
+                          <div className="p-1 rounded-md bg-blue-600 text-white font-bold">
                             <Sparkles size={14} />
                           </div>
-                          <span className="text-xs font-bold text-white tracking-wide">
-                            Copiloto IA de Atendimento Híbrido
-                          </span>
-                          <span className="text-[10px] bg-cyan-950/60 text-cyan-300 border border-cyan-500/30 px-2 py-0.2 rounded-full font-mono">
-                            Sugestão Técnica para o Atendente
+                          <span className="text-xs font-bold text-slate-900 dark:text-white tracking-wide">
+                            Copiloto IA de Atendimento
                           </span>
                         </div>
 
@@ -1137,15 +1131,20 @@ function SuperAdminSupportContent() {
                           <button
                             onClick={handleTriggerAiCopilot}
                             disabled={copilotLoading}
-                            className="flex items-center gap-1 text-[11px] font-bold text-cyan-300 hover:text-cyan-200 transition-colors cursor-pointer px-2 py-0.5 rounded bg-white dark:bg-[#0B1224] border border-cyan-500/30"
+                            className="flex items-center gap-1 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer px-2 py-0.5 rounded bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 shadow-sm"
                           >
                             <RefreshCw size={11} className={copilotLoading ? "animate-spin" : ""} />
                             <span>{copilotLoading ? "Analisando..." : "Regerar Sugestão"}</span>
                           </button>
                           <button
                             onClick={() => setIsCopilotOpen(false)}
-                            className="text-slate-400 hover:text-white p-1 rounded transition-colors cursor-pointer"
+                            className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded transition-colors cursor-pointer"
                             title="Fechar Copiloto"
+                          >
+                            <X size={15} />
+                          </button>
+                        </div>
+                      </div>
                           >
                             <X size={15} />
                           </button>
@@ -1272,87 +1271,52 @@ function SuperAdminSupportContent() {
                               </div>
                             )}
 
-                            {/* Balão de Mensagem */}
-                            <div className={`flex flex-col max-w-[85%] sm:max-w-[70%] md:max-w-[65%] ${isOperator ? 'self-end items-end' : 'self-start items-start'} relative group my-1`}>
-                              <div className={`text-xs shadow-md relative pt-2.5 pb-2 px-3.5 min-w-[140px] leading-relaxed rounded-2xl ${isAi
-                                  ? 'bg-gradient-to-br from-[#0c223c] to-[#081729] text-slate-100 rounded-tr-sm border border-cyan-500/40 ring-1 ring-cyan-500/20'
-                                  : isWhatsApp
-                                    ? isOperator
-                                      ? 'bg-[#D9FDD3] dark:bg-[#005C4B] text-[#111B21] dark:text-[#E9EDEF] rounded-tr-sm border border-[#bbf2b2] dark:border-[#005C4B]'
-                                      : 'bg-white dark:bg-[#202C33] text-[#111B21] dark:text-[#E9EDEF] rounded-tl-sm border border-slate-200 dark:border-transparent'
-                                    : isOperator
-                                      ? 'bg-blue-50 dark:bg-[#13233e] text-slate-900 dark:text-slate-100 rounded-tr-sm border border-blue-200 dark:border-blue-500/30'
-                                      : 'bg-white dark:bg-[#1E293B] text-slate-900 dark:text-slate-100 rounded-tl-sm border border-slate-200 dark:border-slate-700/60 shadow-sm'
-                                }`}>
+                            {/* Balão de Mensagem (Acompanha 100% o tema ativo, sem degradês) */}
+                            <div className={`flex flex-col max-w-[85%] sm:max-w-[70%] md:max-w-[65%] ${isOperator ? 'self-end items-end' : 'self-start items-start'} relative my-1`}>
+                              <div className={`text-xs shadow-sm relative pt-2 pb-1.5 px-3 min-w-[130px] leading-relaxed rounded-2xl ${
+                                isWhatsApp
+                                  ? isOperator
+                                    ? 'bg-[#D9FDD3] dark:bg-[#005C4B] text-[#111B21] dark:text-[#E9EDEF] rounded-tr-sm border border-[#bbf2b2] dark:border-[#005C4B]'
+                                    : 'bg-white dark:bg-[#202C33] text-[#111B21] dark:text-[#E9EDEF] rounded-tl-sm border border-slate-200 dark:border-transparent'
+                                  : isOperator
+                                    ? 'bg-slate-100 dark:bg-[#13233e] text-slate-900 dark:text-slate-100 rounded-tr-sm border border-slate-200 dark:border-blue-500/30'
+                                    : 'bg-white dark:bg-[#1E293B] text-slate-900 dark:text-slate-100 rounded-tl-sm border border-slate-200 dark:border-slate-700/60 shadow-sm'
+                              }`}>
 
-                                {/* Nome do Remetente */}
-                                <div className={`flex items-center justify-between gap-3 text-[10px] font-bold mb-1 pb-0.5 border-b ${isAi ? 'border-cyan-500/20' : isWhatsApp ? 'border-black/5 dark:border-white/10' : 'border-slate-200 dark:border-white/10'
-                                  }`}>
+                                {/* Nome do Remetente Discreto */}
+                                <div className="flex items-center justify-between gap-3 text-[10px] font-bold mb-1 pb-0.5 border-b border-black/5 dark:border-white/10">
                                   <span className={
-                                    isAi
-                                      ? "text-cyan-300 flex items-center gap-1.5"
-                                      : isWhatsApp
-                                        ? isOperator
-                                          ? "text-[#008069] dark:text-[#25D366]"
-                                          : "text-[#128C7E] dark:text-[#00A884]"
-                                        : isOperator
-                                          ? "text-blue-700 dark:text-blue-300"
-                                          : "text-slate-700 dark:text-slate-300"
+                                    isWhatsApp
+                                      ? isOperator 
+                                        ? "text-[#008069] dark:text-[#25D366]" 
+                                        : "text-[#128C7E] dark:text-[#00A884]"
+                                      : isOperator 
+                                        ? "text-blue-700 dark:text-blue-300" 
+                                        : "text-slate-700 dark:text-slate-300"
                                   }>
-                                    {isAi && <Bot size={12} className="text-cyan-300 shrink-0" />}
-                                    {msg.senderName || (isAi ? "Sofia - Suporte Vallor" : isOperator ? "Suporte Vallor" : "Cliente")}
+                                    {msg.senderName || (isAi ? "Sofia (Suporte Vallor)" : isOperator ? "Suporte Vallor" : "Cliente")}
                                   </span>
-                                  <span className={`font-mono text-[9px] px-1 py-0.2 rounded uppercase ${isAi
-                                      ? "bg-cyan-950 text-cyan-300 border border-cyan-500/40"
-                                      : isWhatsApp
-                                        ? isOperator
-                                          ? "text-[#008069] dark:text-[#25D366]"
-                                          : "text-slate-500 dark:text-slate-400"
-                                        : isOperator
-                                          ? "text-blue-700 dark:text-blue-300/80"
-                                          : "text-slate-600 dark:text-slate-400"
-                                    }`}>
-                                    {isAi ? "IA Autônoma" : isOperator ? "Operador" : "Cliente"}
+                                  <span className="text-[9px] font-medium text-slate-500 dark:text-slate-400">
+                                    {isAi ? "Suporte IA" : isOperator ? "Equipe" : "Cliente"}
                                   </span>
                                 </div>
 
                                 {/* Texto da Mensagem */}
-                                <p className={`whitespace-pre-wrap leading-relaxed font-normal ${isAi ? 'text-slate-100' : isWhatsApp ? 'text-[#111B21] dark:text-[#E9EDEF]' : 'text-slate-900 dark:text-slate-100'
-                                  }`}>
+                                <p className={`whitespace-pre-wrap leading-relaxed font-normal ${
+                                  isWhatsApp ? 'text-[#111B21] dark:text-[#E9EDEF]' : 'text-slate-900 dark:text-slate-100'
+                                }`}>
                                   {msg.content}
                                 </p>
 
-                                {/* Horário e Check ou Sparkles para IA */}
+                                {/* Horário e Check limpos */}
                                 <div className="flex items-center justify-end gap-1 text-[10px] mt-1">
                                   <span className={isWhatsApp ? "text-[#667781] dark:text-[#8696A0]" : "text-slate-500 dark:text-slate-400"}>
                                     {new Date(msg.createdAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                                   </span>
-                                  {isAi ? (
-                                    <span title="Gerado por IA Autônoma">
-                                      <Sparkles size={12} className="text-cyan-300" />
-                                    </span>
-                                  ) : isOperator ? (
+                                  {isOperator && (
                                     <CheckCheck size={13} className={isWhatsApp ? "text-[#53BDEB]" : "text-blue-600 dark:text-blue-400"} />
-                                  ) : null}
+                                  )}
                                 </div>
-
-                                {/* Botão Executivo de Mentoria sobre a Resposta da Sofia */}
-                                {isAi && (
-                                  <div className="pt-1.5 mt-1.5 border-t border-cyan-500/20 flex items-center justify-between gap-2">
-                                    <button
-                                      type="button"
-                                      onClick={() => handleStartCoachingFromMessage(msg)}
-                                      className="text-[10px] font-semibold text-cyan-300 hover:text-white flex items-center gap-1 transition-colors cursor-pointer py-0.5 px-1.5 rounded bg-cyan-950/60 hover:bg-cyan-900/70 border border-cyan-500/30"
-                                      title="Orientar a Sofia sobre esta resposta no canal interno de treinamento"
-                                    >
-                                      <GraduationCap size={11} className="text-cyan-400" />
-                                      <span>Orientar / Treinar Sofia</span>
-                                    </button>
-                                    <span className="text-[9px] text-cyan-400/80 font-mono">
-                                      Resposta Autônoma
-                                    </span>
-                                  </div>
-                                )}
                               </div>
                             </div>
                           </div>
@@ -1362,35 +1326,21 @@ function SuperAdminSupportContent() {
                     <div ref={messagesEndRef} />
                   </div>
 
-                  {/* 4. COMPOSER NO PADRÃO DO LAYOUT */}
+                  {/* 4. COMPOSER NO PADRÃO DO LAYOUT (ENXUTO E LIMPO) */}
                   <div className="p-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B] z-10 relative shrink-0">
                     {/* Formulário de Envio */}
                     <form onSubmit={handleSendClientMessage} className="space-y-1.5">
                       <div className="flex items-center gap-2">
-                        {/* Botão Treinar IA */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setInternalMode('coach_ai');
-                            setActiveSubView('team_chat');
-                          }}
-                          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 border border-blue-300 dark:border-blue-500/30 text-xs font-semibold text-blue-700 dark:text-blue-300 transition-all cursor-pointer shrink-0 shadow-sm"
-                          title="Abrir o canal de treinamento da equipe para orientar a Sofia"
-                        >
-                          <Bot size={14} className="text-cyan-600 dark:text-cyan-400" />
-                          <span className="hidden sm:inline">Treinar IA</span>
-                        </button>
-
-                        {/* Botão Copiloto IA (Sugerir IA) */}
+                        {/* Botão Copiloto Discreto */}
                         <button
                           type="button"
                           onClick={handleTriggerAiCopilot}
                           disabled={copilotLoading}
-                          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-cyan-50 dark:bg-cyan-950/40 hover:bg-cyan-100 dark:hover:bg-cyan-900/50 border border-cyan-300 dark:border-cyan-500/30 text-xs font-semibold text-cyan-800 dark:text-cyan-300 transition-all cursor-pointer shrink-0 shadow-sm"
-                          title="Pedir para o Copiloto IA formular a resposta técnica"
+                          className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-[#0B1224] hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors cursor-pointer shrink-0 shadow-sm"
+                          title="Pedir sugestão ao Copiloto IA"
                         >
-                          <Sparkles size={14} className={copilotLoading ? "animate-spin text-cyan-600 dark:text-cyan-400" : "text-cyan-600 dark:text-cyan-400"} />
-                          <span className="hidden sm:inline">Sugerir IA</span>
+                          <Sparkles size={14} className={copilotLoading ? "animate-spin text-blue-600 dark:text-blue-400" : "text-blue-600 dark:text-blue-400"} />
+                          <span className="hidden sm:inline">Copiloto</span>
                         </button>
 
                         {/* Caixa de Texto */}
@@ -1409,11 +1359,22 @@ function SuperAdminSupportContent() {
                           className="flex-1 bg-white dark:bg-[#0B1224] py-2 px-3 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 border border-slate-300 dark:border-slate-800 rounded-xl outline-none resize-none max-h-32 custom-scrollbar focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition-all shadow-sm"
                         />
 
-                        {/* Botão Enviar Circular Azul */}
+                        {/* Botão Enviar Circular */}
                         <button
                           type="submit"
                           disabled={sendingClientMessage || !clientMessage.trim()}
-                          className={`w-10 h-10 rounded-full text-white flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed shrink-0 cursor-pointer shadow-lg active:scale-95 ${isWhatsApp ? 'bg-[#00A884] hover:bg-[#008f6f] shadow-[#00A884]/20' : 'bg-blue-600 hover:bg-blue-500 shadow-blue-600/20'
+                          className={`w-10 h-10 rounded-full text-white flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed shrink-0 cursor-pointer shadow-md active:scale-95 ${
+                            isWhatsApp ? 'bg-[#00A884] hover:bg-[#008f6f]' : 'bg-blue-600 hover:bg-blue-500'
+                          }`}
+                          title="Enviar resposta ao cliente (Enter)"
+                        >
+                          {sendingClientMessage ? (
+                            <Loader2 size={16} className="animate-spin" />
+                          ) : (
+                            <Send size={16} className="ml-0.5" />
+                          )}
+                        </button>
+                      </div>
                             }`}
                           title="Enviar resposta ao cliente (Enter)"
                         >
@@ -1583,21 +1544,21 @@ function SuperAdminSupportContent() {
                   if (isSofiaResponse) {
                     return (
                       <div key={msg.id || idx} className="max-w-2xl mx-auto w-full animate-fadeIn">
-                        <div className="p-4 rounded-xl bg-gradient-to-br from-[#0c223c]/90 to-[#081729]/95 border border-cyan-500/40 space-y-2 shadow-lg ring-1 ring-cyan-500/20">
-                          <div className="flex items-center justify-between text-[11px] font-bold text-cyan-300 border-b border-cyan-500/20 pb-1.5">
+                        <div className="p-4 rounded-xl bg-slate-100 dark:bg-[#0c223c] border border-slate-300 dark:border-cyan-500/40 space-y-2 shadow-sm">
+                          <div className="flex items-center justify-between text-[11px] font-bold text-slate-700 dark:text-cyan-300 border-b border-slate-200 dark:border-cyan-500/20 pb-1.5">
                             <div className="flex items-center gap-2">
-                              <Bot size={15} className="text-cyan-400 shrink-0" />
-                              <span className="text-white">{msg.senderName || "Sofia - Suporte Vallor"}</span>
-                              <span className="text-[9px] bg-cyan-950 text-cyan-300 border border-cyan-500/40 px-1.5 py-0.2 rounded font-mono font-bold uppercase">
+                              <Bot size={15} className="text-cyan-600 dark:text-cyan-400 shrink-0" />
+                              <span className="text-slate-900 dark:text-white">{msg.senderName || "Sofia - Suporte Vallor"}</span>
+                              <span className="text-[9px] bg-slate-200 dark:bg-cyan-950 text-slate-800 dark:text-cyan-300 border border-slate-300 dark:border-cyan-500/40 px-1.5 py-0.2 rounded font-mono font-bold uppercase">
                                 Diretriz Assimilada
                               </span>
                             </div>
-                            <span className="text-slate-400 font-mono text-[10px]">
+                            <span className="text-slate-500 dark:text-slate-400 font-mono text-[10px]">
                               {new Date(msg.createdAt).toLocaleString("pt-BR")}
                             </span>
                           </div>
 
-                          <p className="text-xs text-slate-100 whitespace-pre-wrap leading-relaxed font-mono text-[11px]">
+                          <p className="text-xs text-slate-800 dark:text-slate-100 whitespace-pre-wrap leading-relaxed font-mono text-[11px]">
                             {msg.content}
                           </p>
 
@@ -2064,8 +2025,6 @@ function SuperAdminSupportContent() {
                     onChange={(e) => setAiConfig(prev => ({ ...prev, guardrails: e.target.value }))}
                     placeholder="Regras estritas de segurança e bloqueio..."
                     className="w-full bg-white dark:bg-[#070D1B] border border-rose-300 dark:border-rose-900/40 rounded-xl p-3 text-xs text-slate-900 dark:text-rose-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:border-rose-500 transition-colors font-mono leading-relaxed custom-scrollbar shadow-sm"
-                  />
-                  className="w-full bg-slate-50 dark:bg-[#070D1B] border border-rose-900/40 rounded-xl p-3 text-xs text-rose-100 placeholder-slate-500 outline-none focus:border-rose-500 transition-colors font-mono leading-relaxed custom-scrollbar"
                   />
                 </div>
 

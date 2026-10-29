@@ -25,7 +25,8 @@ import {
   Check, 
   PhoneCall,
   ExternalLink,
-  ChevronRight
+  ChevronRight,
+  Trash2
 } from "lucide-react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
@@ -82,6 +83,10 @@ export default function SuperAdminOperatorsPage() {
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedOperator, setSelectedOperator] = useState<Operator | null>(null);
+
+  // Exclusão Definitiva de Operador
+  const [operatorToDelete, setOperatorToDelete] = useState<Operator | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Modal Espiar Conversa
   const [isSpyModalOpen, setIsSpyModalOpen] = useState(false);
@@ -267,6 +272,23 @@ export default function SuperAdminOperatorsPage() {
     } catch (err: any) {
       console.error(err);
       toast.error("Erro ao alterar status do operador.");
+    }
+  };
+
+  // Exclusão Definitiva de Operador
+  const handleConfirmDelete = async () => {
+    if (!operatorToDelete) return;
+    setIsDeleting(true);
+    try {
+      await api.delete(`/operators/${operatorToDelete.id}`);
+      toast.success(`Operador "${operatorToDelete.name}" excluído definitivamente com sucesso.`);
+      setOperatorToDelete(null);
+      fetchOperators();
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.response?.data?.message || "Erro ao excluir operador.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -597,6 +619,18 @@ export default function SuperAdminOperatorsPage() {
                           >
                             <Lock size={13} />
                           </button>
+
+                          {/* Botão Excluir Definitivamente */}
+                          {op.role !== "SUPER_ADMIN" && (
+                            <button
+                              type="button"
+                              onClick={() => setOperatorToDelete(op)}
+                              className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950/60 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-200 dark:border-slate-700 hover:border-rose-300 dark:hover:border-rose-500/40 transition-colors cursor-pointer"
+                              title="Excluir Atendente Definitivamente"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -1142,6 +1176,71 @@ export default function SuperAdminOperatorsPage() {
                 className="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition-colors cursor-pointer"
               >
                 Fechar Inspeção
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 4: CONFIRMAÇÃO DE EXCLUSÃO DE OPERADOR */}
+      {operatorToDelete && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-[#0B1224] border border-rose-500/30 p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-500 shrink-0">
+                <Trash2 size={24} />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-base font-bold text-slate-950 dark:text-white">
+                  Excluir Atendente Definitivamente
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Esta ação é irreversível. O colaborador será removido do sistema, seus acessos revogados e desvinculado dos chamados e tarefas.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500 dark:text-slate-400">Nome:</span>
+                <span className="font-semibold text-slate-900 dark:text-white">{operatorToDelete.name}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500 dark:text-slate-400">E-mail:</span>
+                <span className="font-mono text-slate-700 dark:text-slate-300">{operatorToDelete.email}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500 dark:text-slate-400">Função:</span>
+                <span className="text-slate-700 dark:text-slate-300">{operatorToDelete.roleTitle || operatorToDelete.role}</span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setOperatorToDelete(null)}
+                disabled={isDeleting}
+                className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
+                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-all shadow-md shadow-rose-600/30 flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+              >
+                {isDeleting ? (
+                  <>
+                    <RefreshCw size={13} className="animate-spin" />
+                    <span>Excluindo...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={13} />
+                    <span>Confirmar Exclusão</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
