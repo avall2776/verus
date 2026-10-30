@@ -100,6 +100,8 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
       `);
       await this.prisma.$executeRawUnsafe(`
         ALTER TABLE "whatsapp_status_posts" ADD COLUMN IF NOT EXISTS "mediaUrl" TEXT;
+        ALTER TABLE "whatsapp_status_posts" ADD COLUMN IF NOT EXISTS "mediaType" TEXT DEFAULT 'image';
+        ALTER TABLE "whatsapp_status_views" ADD COLUMN IF NOT EXISTS "mediaType" TEXT DEFAULT 'image';
       `);
       await this.prisma.$executeRawUnsafe(`
         CREATE TABLE IF NOT EXISTS "whatsapp_status_views" (
@@ -219,12 +221,14 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
         }
         const viewsTotal = Number(p.viewsTotal) || 0;
         const viewsToday = Number(p.viewsToday) || 0;
+        const mediaType = p.mediaType || (String(safeMediaUrl || '').includes('video') || String(safeMediaUrl || '').endsWith('.mp4') ? 'video' : 'image');
         return {
           id: p.id,
           messageId: p.messageId,
           title: p.title,
           category: p.category,
           mediaUrl: safeMediaUrl,
+          mediaType,
           postedAt: p.postedAt,
           postedAtRelative: relative,
           postedAtDate: dateFormatted,
@@ -320,13 +324,20 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
     data: {
       title: string;
       category: string;
-      imageBase64: string;
+      imageBase64?: string;
+      videoBase64?: string;
+      mediaBase64?: string;
+      mediaType?: 'image' | 'video';
       scheduledAt?: string;
     }
   ) {
-    if (!data.title || !data.imageBase64) {
-      throw new BadRequestException('Título/Legenda e imagem são obrigatórios para publicar o Story.');
+    const rawMedia = data.mediaBase64 || data.videoBase64 || data.imageBase64;
+    if (!data.title || !rawMedia) {
+      throw new BadRequestException('Título/Legenda e arquivo de mídia (imagem ou vídeo) são obrigatórios para publicar o Story.');
     }
+
+    const isVideo = data.mediaType === 'video' || rawMedia.startsWith('data:video') || rawMedia.includes('.mp4');
+    const mediaType = isVideo ? 'video' : 'image';
 
     const postId = `story_${Date.now()}_${randomUUID().substring(0, 6)}`;
     const category = data.category || 'Geral';
@@ -349,28 +360,29 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
     }
 
     let whatsappMessageId = `story_msg_${Date.now()}`;
-    let evolutionMediaContent = data.imageBase64;
-    let browserMediaUrl = data.imageBase64.startsWith('data:')
-      ? data.imageBase64
-      : data.imageBase64.startsWith('http')
-      ? data.imageBase64
-      : `data:image/jpeg;base64,${data.imageBase64}`;
+    let evolutionMediaContent = rawMedia;
+    let browserMediaUrl = rawMedia.startsWith('data:')
+      ? rawMedia
+      : rawMedia.startsWith('http')
+      ? rawMedia
+      : `data:${isVideo ? 'video/mp4' : 'image/jpeg'};base64,${rawMedia}`;
 
     // Tenta upload para gerar URL pública caso o Supabase Storage esteja ativo
-    if (this.storageService && data.imageBase64) {
+    if (this.storageService && rawMedia) {
       try {
-        const matches = data.imageBase64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+        const matches = rawMedia.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
         let buffer: Buffer;
-        let mimetype = 'image/jpeg';
+        let mimetype = isVideo ? 'video/mp4' : 'image/jpeg';
         if (matches && matches.length === 3) {
           mimetype = matches[1];
           buffer = Buffer.from(matches[2], 'base64');
         } else {
-          buffer = Buffer.from(data.imageBase64, 'base64');
+          buffer = Buffer.from(rawMedia, 'base64');
         }
 
+        const ext = isVideo ? 'mp4' : 'jpg';
         const uploadRes = await this.storageService.uploadFile(
-          { buffer, originalname: `story_${Date.now()}.jpg`, mimetype },
+          { buffer, originalname: `story_${Date.now()}.${ext}`, mimetype },
           'stories'
         );
 
@@ -459,19 +471,19 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
             `${serverUrl}/message/sendStatus/${instanceName}`,
             {
               statusMessage: {
-                type: 'image',
+                type: mediaType,
                 content: evolutionMediaContent,
                 caption: data.title,
                 allContacts: false,
                 statusJidList,
               },
             },
-            { headers, timeout: 20000 }
+            { headers, timeout: 35000 }
           );
 
           if (statusRes.data?.key?.id) {
             whatsappMessageId = statusRes.data.key.id;
-            this.logger.log(`[Radar Stories] Story publicado no WhatsApp via Evolution API! MsgID: ${whatsappMessageId}`);
+            this.logger.log(`[Radar Stories] Story (${mediaType}) publicado no WhatsApp via Evolution API! MsgID: ${whatsappMessageId}`);
           }
         } catch (firstErr: any) {
           // Fallback: se algum contato sem sessão Signal causar erro na lista maior, dispara com os contatos principais ativos
@@ -486,18 +498,18 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
             `${serverUrl}/message/sendStatus/${instanceName}`,
             {
               statusMessage: {
-                type: 'image',
+                type: mediaType,
                 content: evolutionMediaContent,
                 caption: data.title,
                 allContacts: false,
                 statusJidList: Array.from(new Set(coreJids)),
               },
             },
-            { headers, timeout: 20000 }
+            { headers, timeout: 35000 }
           );
           if (retryRes.data?.key?.id) {
             whatsappMessageId = retryRes.data.key.id;
-            this.logger.log(`[Radar Stories] Story publicado no WhatsApp (retry core sessions)! MsgID: ${whatsappMessageId}`);
+            this.logger.log(`[Radar Stories] Story (${mediaType}) publicado no WhatsApp (retry core sessions)! MsgID: ${whatsappMessageId}`);
           }
         }
       } catch (evoErr: any) {
@@ -505,21 +517,22 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
       }
     }
 
-    // 2. Registra o post em whatsapp_status_posts com imagem 100% compatível com o navegador (nunca salva 172.16.0.1)
+    // 2. Registra o post em whatsapp_status_posts com imagem/vídeo 100% compatível com o navegador (nunca salva 172.16.0.1)
     await this.prisma.$executeRawUnsafe(
       `INSERT INTO "whatsapp_status_posts" 
-       ("id", "tenantId", "messageId", "title", "category", "mediaUrl", "postedAt")
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+       ("id", "tenantId", "messageId", "title", "category", "mediaUrl", "mediaType", "postedAt")
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
       postId,
       tenantId,
       whatsappMessageId,
       data.title,
       category,
       browserMediaUrl,
+      mediaType,
       data.scheduledAt ? new Date(data.scheduledAt) : new Date()
     );
 
-    this.logger.log(`[Radar Stories] Novo Story registrado: "${data.title}" [${category}] (ID: ${postId})`);
+    this.logger.log(`[Radar Stories] Novo Story registrado: "${data.title}" [${category}] [${mediaType}] (ID: ${postId})`);
 
     if (this.chatGateway) {
       this.chatGateway.emitStoryPosted(tenantId, {
@@ -527,6 +540,7 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
         title: data.title,
         category,
         mediaUrl: browserMediaUrl,
+        mediaType,
       });
     }
 

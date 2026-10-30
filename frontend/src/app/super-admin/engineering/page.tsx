@@ -47,7 +47,8 @@ import {
   CreditCard,
   Briefcase,
   Play,
-  Activity
+  Activity,
+  Film
 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import api from "@/lib/api";
@@ -55,6 +56,7 @@ import { toast } from "sonner";
 import MarkdownRenderer from "@/components/ui/MarkdownRenderer";
 import ProductSandboxModal from "@/components/super-admin/ProductSandboxModal";
 import SoftphoneModal from "@/components/voip/SoftphoneModal";
+import MotionStudioView from "@/components/motion-studio/MotionStudioView";
 
 export const dynamic = "force-dynamic";
 
@@ -83,7 +85,7 @@ const PRIORITIES: Record<string, { label: string; color: string; badge: string; 
 };
 
 export default function EngineeringDashboard() {
-  const [activeTab, setActiveTab] = useState<"kanban" | "ai_chat" | "products">("kanban");
+  const [activeTab, setActiveTab] = useState<"kanban" | "ai_chat" | "products" | "motion_studio">("kanban");
   const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
   const [mobileActiveStage, setMobileActiveStage] = useState<string>("CAPTURED");
   const [items, setItems] = useState<any[]>([]);
@@ -765,6 +767,23 @@ export default function EngineeringDashboard() {
               <Bot size={14} className={activeTab === "ai_chat" ? "text-white" : "text-slate-500 dark:text-purple-400"} />
               <span>Arquiteto IA</span>
             </button>
+
+            <button
+              onClick={() => setActiveTab("motion_studio")}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 md:px-3 rounded-md text-xs font-bold transition-all ${
+                activeTab === "motion_studio"
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              }`}
+            >
+              <Film size={14} className={activeTab === "motion_studio" ? "text-white" : "text-slate-500 dark:text-[#00D2FF]"} />
+              <span>Motion Studio</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-md font-mono ${
+                activeTab === "motion_studio" ? "bg-white/20 text-white" : "bg-cyan-100 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300"
+              }`}>
+                R&D
+              </span>
+            </button>
           </div>
 
           {/* Controles Exclusivos da Aba Kanban / Produtos / IA */}
@@ -806,7 +825,7 @@ export default function EngineeringDashboard() {
                 <span className="hidden sm:inline">Recarregar</span>
               </button>
             </div>
-          ) : (
+          ) : activeTab === "ai_chat" ? (
             <div className="flex items-center gap-2">
               <span className="hidden sm:inline-flex items-center gap-1.5 text-[11px] font-mono px-2.5 py-1 rounded-lg bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30">
                 <Bot size={12} className="text-purple-600 dark:text-purple-400" />
@@ -820,6 +839,13 @@ export default function EngineeringDashboard() {
                 <Trash2 size={13} />
                 <span className="hidden sm:inline">Limpar Chat</span>
               </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <span className="hidden sm:inline-flex items-center gap-1.5 text-[11px] font-mono px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-[#00D2FF] border border-blue-200 dark:border-blue-500/30">
+                <Film size={12} className="text-[#00D2FF]" />
+                <span>60 FPS Motion Engine (R&D)</span>
+              </span>
             </div>
           )}
         </div>
@@ -1692,7 +1718,7 @@ export default function EngineeringDashboard() {
             )}
           </div>
         </div>
-      ) : (
+      ) : activeTab === "ai_chat" ? (
         /* TAB 3: CHAT DEDICADO COM A IA (FULLSCREEN CHATGPT / OPENAI STYLE) */
         <div className="flex-1 flex flex-col min-h-0 bg-slate-50 dark:bg-[#070D1B] overflow-hidden">
           {/* SUB-HEADER ELEGANTE DO AGENTE IA */}
@@ -2052,6 +2078,11 @@ export default function EngineeringDashboard() {
               </p>
             </div>
           </div>
+        </div>
+      ) : (
+        /* TAB 4: MOTION STUDIO R&D EM DESENVOLVIMENTO */
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden bg-[#050814]">
+          <MotionStudioView />
         </div>
       )}
 

@@ -27,6 +27,8 @@ import {
   BadgeAlert,
   CheckCircle2,
   ShieldCheck,
+  Video,
+  Film,
   PlayCircle,
   Tractor,
   Sprout,
@@ -121,6 +123,7 @@ interface ActiveStoryPost {
   title: string;
   category: string;
   mediaUrl?: string;
+  mediaType?: "image" | "video" | string;
   postedAt: string;
   postedAtRelative: string;
   postedAtDate: string;
@@ -134,6 +137,7 @@ interface LightboxMedia {
   title: string;
   category: string;
   mediaUrl?: string;
+  mediaType?: "image" | "video" | string;
   exactDate?: string;
   exactTime?: string;
   viewsCount?: number;
@@ -253,6 +257,7 @@ export default function RadarStoriesPage() {
   const [publishCategory, setPublishCategory] = useState<string>("Maquinários");
   const [publishImageBase64, setPublishImageBase64] = useState<string>("");
   const [publishImagePreview, setPublishImagePreview] = useState<string>("");
+  const [publishMediaType, setPublishMediaType] = useState<"image" | "video">("image");
   const [publishMode, setPublishMode] = useState<"now" | "schedule">("now");
   const [publishScheduleDate, setPublishScheduleDate] = useState<string>("");
   const [isPublishing, setIsPublishing] = useState<boolean>(false);
@@ -297,24 +302,43 @@ export default function RadarStoriesPage() {
     });
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      toast.error("Por favor, selecione um arquivo de imagem (JPEG, PNG ou WebP).");
+
+    if (file.type.startsWith("video/")) {
+      if (file.size > 20 * 1024 * 1024) {
+        toast.error("O vídeo para Story deve ter no máximo 20MB.");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result as string;
+        setPublishMediaType("video");
+        setPublishImageBase64(dataUrl);
+        setPublishImagePreview(dataUrl);
+      };
+      reader.readAsDataURL(file);
       return;
     }
-    if (file.size > 15 * 1024 * 1024) {
-      toast.error("A imagem deve ter no máximo 15MB.");
+
+    if (file.type.startsWith("image/")) {
+      if (file.size > 15 * 1024 * 1024) {
+        toast.error("A imagem deve ter no máximo 15MB.");
+        return;
+      }
+      try {
+        const compressedBase64 = await compressImageFile(file);
+        setPublishMediaType("image");
+        setPublishImageBase64(compressedBase64);
+        setPublishImagePreview(compressedBase64);
+      } catch {
+        toast.error("Erro ao processar a imagem.");
+      }
       return;
     }
-    try {
-      const compressedBase64 = await compressImageFile(file);
-      setPublishImageBase64(compressedBase64);
-      setPublishImagePreview(compressedBase64);
-    } catch {
-      toast.error("Erro ao processar a imagem.");
-    }
+
+    toast.error("Por favor, selecione um arquivo de imagem (JPEG, PNG) ou vídeo (MP4).");
   };
 
   const handlePublishStory = async (e: React.FormEvent) => {
@@ -324,7 +348,7 @@ export default function RadarStoriesPage() {
       return;
     }
     if (!publishImageBase64) {
-      toast.error("Selecione uma imagem para o Story.");
+      toast.error("Selecione uma imagem ou vídeo para o Story.");
       return;
     }
     try {
@@ -333,6 +357,8 @@ export default function RadarStoriesPage() {
         title: publishTitle.trim(),
         category: publishCategory,
         imageBase64: publishImageBase64,
+        mediaBase64: publishImageBase64,
+        mediaType: publishMediaType,
         scheduledAt: publishMode === "schedule" && publishScheduleDate ? publishScheduleDate : undefined,
       });
       toast.success(
@@ -344,6 +370,7 @@ export default function RadarStoriesPage() {
       setPublishTitle("");
       setPublishImageBase64("");
       setPublishImagePreview("");
+      setPublishMediaType("image");
       fetchActivePosts();
       fetchMetrics();
     } catch (err: any) {
@@ -1128,6 +1155,7 @@ export default function RadarStoriesPage() {
                     title: post.title,
                     category: post.category,
                     mediaUrl: post.mediaUrl,
+                    mediaType: post.mediaType || (post.mediaUrl?.includes("video") || post.mediaUrl?.endsWith(".mp4") ? "video" : "image"),
                     exactDate: post.postedAtDate,
                     exactTime: post.postedAtTime,
                     viewsCount: post.viewsCount,
@@ -1135,7 +1163,7 @@ export default function RadarStoriesPage() {
                 }
                 className="group relative rounded-xl border border-slate-200 dark:border-slate-800/80 bg-slate-50/60 dark:bg-[#070D1B] p-3 flex flex-col gap-2.5 hover:border-blue-500/50 hover:shadow-md transition-all cursor-pointer"
               >
-                {/* Topo do Card: Miniatura / Imagem em Formato Vertical de Story (9:16) */}
+                {/* Topo do Card: Miniatura / Imagem / Vídeo em Formato Vertical de Story (9:16) */}
                 <div className="relative w-full aspect-[9/16] rounded-xl overflow-hidden bg-slate-950 border border-slate-200/80 dark:border-slate-800 flex items-center justify-center shadow-inner">
                   {/* Barra superior de status do Story (estilo WhatsApp) */}
                   <div className="absolute top-2.5 left-2.5 right-2.5 flex gap-1 z-10 pointer-events-none">
@@ -1143,11 +1171,28 @@ export default function RadarStoriesPage() {
                   </div>
 
                   {post.mediaUrl ? (
-                    <img
-                      src={post.mediaUrl}
-                      alt={post.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
+                    post.mediaType === "video" || post.mediaUrl?.includes("video") || post.mediaUrl?.endsWith(".mp4") ? (
+                      <div className="relative w-full h-full flex items-center justify-center">
+                        <video
+                          src={post.mediaUrl}
+                          muted
+                          playsInline
+                          preload="metadata"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                          <div className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white border border-white/20 shadow-lg group-hover:scale-110 transition-transform">
+                            <PlayCircle className="w-6 h-6 fill-white/20 text-white" />
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <img
+                        src={post.mediaUrl}
+                        alt={post.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    )
                   ) : (
                     <div className="flex flex-col items-center justify-center gap-1.5 text-slate-400 p-3 text-center">
                       {getCategoryIcon(post.category)}
@@ -1165,6 +1210,13 @@ export default function RadarStoriesPage() {
                     {getCategoryIcon(post.category)}
                     <span>{post.category}</span>
                   </div>
+                  {/* Badge de Vídeo se for vídeo */}
+                  {(post.mediaType === "video" || post.mediaUrl?.includes("video") || post.mediaUrl?.endsWith(".mp4")) && (
+                    <div className="absolute top-4 right-2.5 px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-600/90 backdrop-blur-md text-white border border-blue-400/30 flex items-center gap-1 z-10 shadow-sm">
+                      <Film className="w-3 h-3" />
+                      <span>VÍDEO</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Dados do Story */}
@@ -2543,18 +2595,30 @@ export default function RadarStoriesPage() {
             {/* Mídia do Story em Dimensão 9:16 Real com preenchimento fiel e sem distorção */}
             <div className="relative w-full h-full bg-black overflow-hidden flex items-center justify-center">
               {lightboxMedia.mediaUrl ? (
-                <>
-                  <img
-                    src={lightboxMedia.mediaUrl}
-                    alt=""
-                    className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-40 scale-110 pointer-events-none"
-                  />
-                  <img
-                    src={lightboxMedia.mediaUrl}
-                    alt={lightboxMedia.title}
-                    className="relative z-10 w-full h-full object-contain"
-                  />
-                </>
+                lightboxMedia.mediaType === "video" || lightboxMedia.mediaUrl.includes("video") || lightboxMedia.mediaUrl.endsWith(".mp4") ? (
+                  <div className="relative z-10 w-full h-full flex items-center justify-center bg-black">
+                    <video
+                      src={lightboxMedia.mediaUrl}
+                      controls
+                      autoPlay
+                      playsInline
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <img
+                      src={lightboxMedia.mediaUrl}
+                      alt=""
+                      className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-40 scale-110 pointer-events-none"
+                    />
+                    <img
+                      src={lightboxMedia.mediaUrl}
+                      alt={lightboxMedia.title}
+                      className="relative z-10 w-full h-full object-contain"
+                    />
+                  </>
+                )
               ) : (
                 <div className="flex flex-col items-center justify-center gap-3 text-slate-400 p-8 text-center relative z-10">
                   <div className="w-16 h-16 rounded-2xl bg-slate-800/90 border border-slate-700 flex items-center justify-center text-slate-300">
@@ -2861,24 +2925,38 @@ export default function RadarStoriesPage() {
                       {/* Mídia do Story */}
                       {publishImagePreview ? (
                         <>
-                          <img
-                            src={publishImagePreview}
-                            alt=""
-                            className="absolute inset-0 w-full h-full object-cover blur-xl opacity-40 scale-110 pointer-events-none"
-                          />
-                          <img
-                            src={publishImagePreview}
-                            alt="Preview do Story"
-                            className="relative z-10 w-full h-full object-contain"
-                          />
+                          {publishMediaType === "video" ? (
+                            <div className="relative z-10 w-full h-full flex items-center justify-center bg-black">
+                              <video
+                                src={publishImagePreview}
+                                controls
+                                playsInline
+                                className="w-full h-full object-contain"
+                              />
+                            </div>
+                          ) : (
+                            <>
+                              <img
+                                src={publishImagePreview}
+                                alt=""
+                                className="absolute inset-0 w-full h-full object-cover blur-xl opacity-40 scale-110 pointer-events-none"
+                              />
+                              <img
+                                src={publishImagePreview}
+                                alt="Preview do Story"
+                                className="relative z-10 w-full h-full object-contain"
+                              />
+                            </>
+                          )}
                           <button
                             type="button"
                             onClick={() => {
                               setPublishImageBase64("");
                               setPublishImagePreview("");
+                              setPublishMediaType("image");
                             }}
                             className="absolute top-12 right-3 p-1.5 rounded-full bg-black/70 hover:bg-black text-white transition-colors z-30 cursor-pointer shadow-lg"
-                            title="Remover foto"
+                            title="Remover mídia"
                           >
                             <X className="w-4 h-4" />
                           </button>
@@ -2886,19 +2964,19 @@ export default function RadarStoriesPage() {
                       ) : (
                         <label className="absolute inset-0 flex flex-col items-center justify-center gap-2.5 p-4 text-center cursor-pointer hover:bg-slate-800/60 transition-colors">
                           <div className="w-14 h-20 rounded-xl border-2 border-dashed border-blue-500/50 bg-blue-500/10 text-blue-400 flex flex-col items-center justify-center gap-1 shadow-inner">
-                            <ImageIcon className="w-6 h-6" />
+                            <Video className="w-6 h-6" />
                             <span className="text-[10px] font-bold">9:16</span>
                           </div>
                           <span className="text-xs font-semibold text-slate-200">
-                            Clique para escolher a imagem
+                            Clique para escolher foto ou vídeo
                           </span>
                           <span className="text-[10px] text-slate-400">
-                            Dimensão Vertical 9:16 (1080×1920)
+                            Vertical 9:16 (Foto ou Vídeo MP4 até 20MB)
                           </span>
                           <input
                             type="file"
-                            accept="image/*"
-                            onChange={handleImageUpload}
+                            accept="image/*,video/mp4,video/quicktime,video/webm"
+                            onChange={handleMediaUpload}
                             className="hidden"
                           />
                         </label>
@@ -2923,11 +3001,11 @@ export default function RadarStoriesPage() {
                   {publishImagePreview && (
                     <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-blue-500 hover:border-blue-500 text-xs font-semibold cursor-pointer transition-colors shadow-sm">
                       <Upload className="w-3.5 h-3.5 text-blue-500" />
-                      <span>Substituir imagem</span>
+                      <span>Substituir {publishMediaType === "video" ? "vídeo" : "foto"}</span>
                       <input
                         type="file"
-                        accept="image/*"
-                        onChange={handleImageUpload}
+                        accept="image/*,video/mp4,video/quicktime,video/webm"
+                        onChange={handleMediaUpload}
                         className="hidden"
                       />
                     </label>
@@ -2940,15 +3018,15 @@ export default function RadarStoriesPage() {
                   <div className="p-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 text-xs text-slate-600 dark:text-slate-300 flex items-start gap-2.5">
                     <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
                     <span className="text-[11px] leading-relaxed">
-                      <strong>Transmissão Direta:</strong> A imagem é enviada com alta fidelidade para o canal corporativo do WhatsApp (status@broadcast) sem salvar dados pesados no PostgreSQL.
+                      <strong>Transmissão Direta:</strong> A mídia (foto ou vídeo) é enviada com alta fidelidade para o canal corporativo do WhatsApp (status@broadcast) sem sobrecarregar o banco de dados.
                     </span>
                   </div>
 
-                  {/* Upload seletor se ainda não houver imagem */}
+                  {/* Upload seletor se ainda não houver imagem/vídeo */}
                   {!publishImagePreview && (
                     <div>
                       <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
-                        1. Imagem do Story (Dimensão 9:16):
+                        1. Mídia do Story (Imagem ou Vídeo MP4 vertical 9:16):
                       </label>
                       <label className="flex items-center gap-3 p-3.5 rounded-xl border-2 border-dashed border-blue-500/30 hover:border-blue-500/70 bg-blue-50/20 dark:bg-blue-950/20 cursor-pointer transition-colors">
                         <div className="w-9 h-9 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
@@ -2956,16 +3034,16 @@ export default function RadarStoriesPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">
-                            Escolher arquivo do computador
+                            Escolher foto ou vídeo do computador
                           </span>
                           <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate">
-                            JPG, PNG ou WebP vertical (até 8MB)
+                            JPG, PNG ou Vídeo MP4 vertical (até 20MB)
                           </span>
                         </div>
                         <input
                           type="file"
-                          accept="image/*"
-                          onChange={handleImageUpload}
+                          accept="image/*,video/mp4,video/quicktime,video/webm"
+                          onChange={handleMediaUpload}
                           className="hidden"
                         />
                       </label>

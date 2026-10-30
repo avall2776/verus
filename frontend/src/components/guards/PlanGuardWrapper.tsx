@@ -29,6 +29,17 @@ export default function PlanGuardWrapper({ children }: PlanGuardWrapperProps) {
 
   // Escuta atualizações e bloqueios em background sem travar a navegação entre rotas
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const isEmbed = window.location.search.includes("embed=true") || window.self !== window.top;
+      if (isEmbed) {
+        document.body.classList.add("embed-mode");
+      } else {
+        document.body.classList.remove("embed-mode");
+      }
+    }
+  }, [pathname]);
+
+  useEffect(() => {
     const handleBlockedEvent = (e: any) => {
       handleTenantBlocked(e.detail?.message);
     };

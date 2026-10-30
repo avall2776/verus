@@ -1020,9 +1020,10 @@ export class WebhooksController {
             } catch {}
           }
 
+          const isVideo = Boolean(messageObj?.videoMessage);
           let highResDataUri: string | null = null;
-          if (fullBase64 && typeof fullBase64 === 'string' && fullBase64.length > 500 && !messageObj?.videoMessage) {
-            const mime = messageObj?.imageMessage?.mimetype || 'image/jpeg';
+          if (fullBase64 && typeof fullBase64 === 'string' && fullBase64.length > 500) {
+            const mime = isVideo ? (messageObj?.videoMessage?.mimetype || 'video/mp4') : (messageObj?.imageMessage?.mimetype || 'image/jpeg');
             highResDataUri = fullBase64.startsWith('data:') ? fullBase64 : `data:${mime};base64,${fullBase64}`;
           }
 
@@ -1051,6 +1052,7 @@ export class WebhooksController {
             mediaUrl = thumbnailBase64;
           }
 
+          const mediaType = isVideo ? 'video' : 'image';
           const tsVal = data?.messageTimestamp?.low || data?.messageTimestamp;
           const postedDate = tsVal ? new Date(Number(tsVal) * 1000) : new Date();
 
@@ -1079,25 +1081,27 @@ export class WebhooksController {
             const newMediaLen = mediaUrl ? mediaUrl.length : 0;
             const bestMedia = newMediaLen > curMediaLen ? mediaUrl : existing[0].mediaUrl;
             await this.prisma.$executeRawUnsafe(
-              `UPDATE "whatsapp_status_posts" SET "messageId" = $1, "mediaUrl" = $2 WHERE "id" = $3`,
+              `UPDATE "whatsapp_status_posts" SET "messageId" = $1, "mediaUrl" = $2, "mediaType" = $3 WHERE "id" = $4`,
               key.id,
               bestMedia,
+              mediaType,
               existing[0].id
             );
           } else {
             finalPostId = `post_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
             await this.prisma.$executeRawUnsafe(
-              `INSERT INTO "whatsapp_status_posts" ("id", "tenantId", "messageId", "title", "category", "mediaUrl", "postedAt")
-               VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+              `INSERT INTO "whatsapp_status_posts" ("id", "tenantId", "messageId", "title", "category", "mediaUrl", "mediaType", "postedAt")
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
               finalPostId,
               tenantId,
               key.id,
               caption.slice(0, 150),
               category,
               mediaUrl,
+              mediaType,
               postedDate
             );
-            this.logger.log(`[Radar Stories] Novo Story postado detectado no WhatsApp: [${key.id}] "${caption}" (${category})`);
+            this.logger.log(`[Radar Stories] Novo Story postado detectado no WhatsApp: [${key.id}] "${caption}" (${category}) [${mediaType}]`);
           }
 
           this.chatGateway.emitStoryPosted(tenantId, {
@@ -1105,6 +1109,7 @@ export class WebhooksController {
             title: caption,
             category,
             mediaUrl,
+            mediaType,
           });
         }
       }

@@ -21,7 +21,8 @@ import {
   ChevronLeft,
   ChevronRight,
   PanelLeftClose,
-  PanelLeftOpen
+  PanelLeftOpen,
+  Film
 } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/lib/api";
@@ -36,6 +37,7 @@ const ADMIN_MENU = [
   { name: "Central de Atendimento", icon: Headphones, href: "/super-admin/support" },
   { name: "Equipe & Operadores", icon: Users, href: "/super-admin/operators" },
   { name: "Engenharia", icon: Cpu, href: "/super-admin/engineering" },
+  { name: "Motion Studio", icon: Film, href: "/super-admin/motion-studio" },
   { name: "Planos e Permissões", icon: ShieldCheck, href: "/super-admin/planos" },
 ];
 
