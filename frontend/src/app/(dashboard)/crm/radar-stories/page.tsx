@@ -131,6 +131,7 @@ interface ActiveStoryPost {
   viewsCount: number;
   viewsTotal?: number;
   viewsToday?: number;
+  isLive?: boolean;
 }
 
 interface LightboxMedia {
@@ -250,6 +251,9 @@ export default function RadarStoriesPage() {
   // Modal de Tutorial Interativo para Gestores
   const [isTutorialOpen, setIsTutorialOpen] = useState<boolean>(false);
   const [tutorialStep, setTutorialStep] = useState<number>(1);
+
+  // Modo de exibição da Vitrine: apenas os ativos (últimas 24h) ou histórico geral completo
+  const [postFilterMode, setPostFilterMode] = useState<"active" | "all">("active");
 
   // Modal de Publicação e Agendamento de Stories (Sem Blobs no Banco)
   const [isPublishModalOpen, setIsPublishModalOpen] = useState<boolean>(false);
@@ -411,11 +415,12 @@ export default function RadarStoriesPage() {
     }
   };
 
-  // Carregar stories ativos das últimas 24h
-  const fetchActivePosts = async () => {
+  // Carregar stories ativos das últimas 24h ou histórico geral
+  const fetchActivePosts = async (overrideMode?: "active" | "all") => {
     try {
       setLoadingActivePosts(true);
-      const res = await api.get("/crm/radar-stories/active-posts");
+      const mode = overrideMode || postFilterMode;
+      const res = await api.get(`/crm/radar-stories/active-posts?mode=${mode}`);
       setActivePosts(res.data || []);
     } catch (err: any) {
       console.error("Erro ao carregar active posts:", err);
@@ -1096,10 +1101,10 @@ export default function RadarStoriesPage() {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-sm font-bold text-slate-900 dark:text-white">
-                  Vitrine de Stories Ativos (Últimas 24h)
+                  {postFilterMode === "active" ? "Vitrine de Stories Ativos (Últimas 24h)" : "Histórico Geral de Stories Publicados"}
                 </h2>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-                  {activePosts.length} no ar
+                  {activePosts.length} {postFilterMode === "active" ? "no ar" : "stories no histórico"}
                 </span>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -1108,19 +1113,50 @@ export default function RadarStoriesPage() {
             </div>
           </div>
 
-          <button
-            onClick={() => setIsPublishModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors shadow-sm self-start sm:self-auto cursor-pointer"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Publicar Story</span>
-          </button>
+          <div className="flex items-center gap-2.5 self-start sm:self-auto flex-wrap">
+            <div className="flex items-center p-1 rounded-xl bg-slate-100 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 text-xs">
+              <button
+                onClick={() => {
+                  setPostFilterMode("active");
+                  fetchActivePosts("active");
+                }}
+                className={`px-3 py-1 rounded-lg font-semibold transition-all cursor-pointer ${
+                  postFilterMode === "active"
+                    ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-xs"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                No Ar (24h)
+              </button>
+              <button
+                onClick={() => {
+                  setPostFilterMode("all");
+                  fetchActivePosts("all");
+                }}
+                className={`px-3 py-1 rounded-lg font-semibold transition-all cursor-pointer ${
+                  postFilterMode === "all"
+                    ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-xs"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                Histórico Geral
+              </button>
+            </div>
+
+            <button
+              onClick={() => setIsPublishModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors shadow-sm cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Publicar Story</span>
+            </button>
+          </div>
         </div>
 
         {loadingActivePosts ? (
           <div className="py-8 flex items-center justify-center gap-2 text-slate-400 text-xs">
             <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
-            <span>Carregando stories ativos do WhatsApp...</span>
+            <span>Carregando stories do WhatsApp...</span>
           </div>
         ) : activePosts.length === 0 ? (
           <div className="p-5 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
@@ -1130,7 +1166,7 @@ export default function RadarStoriesPage() {
               </div>
               <div>
                 <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                  Nenhum Story ativo nas últimas 24h
+                  {postFilterMode === "active" ? "Nenhum Story ativo nas últimas 24h" : "Nenhum Story encontrado no histórico"}
                 </h4>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400">
                   Poste agora diretamente pelo sistema ou pelo aplicativo do WhatsApp para rastrear visualizações.
@@ -1146,7 +1182,7 @@ export default function RadarStoriesPage() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3.5">
             {activePosts.map((post) => (
               <div
                 key={post.id}
@@ -1210,13 +1246,20 @@ export default function RadarStoriesPage() {
                     {getCategoryIcon(post.category)}
                     <span>{post.category}</span>
                   </div>
-                  {/* Badge de Vídeo se for vídeo */}
-                  {(post.mediaType === "video" || post.mediaUrl?.includes("video") || post.mediaUrl?.endsWith(".mp4")) && (
-                    <div className="absolute top-4 right-2.5 px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-600/90 backdrop-blur-md text-white border border-blue-400/30 flex items-center gap-1 z-10 shadow-sm">
-                      <Film className="w-3 h-3" />
-                      <span>VÍDEO</span>
-                    </div>
-                  )}
+                  {/* Badges de Status / Vídeo */}
+                  <div className="absolute top-4 right-2.5 flex items-center gap-1 z-10">
+                    {post.isLive === false && (
+                      <span className="px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-slate-900/90 backdrop-blur-md text-slate-300 border border-slate-700 shadow-sm">
+                        24h Concluído
+                      </span>
+                    )}
+                    {(post.mediaType === "video" || post.mediaUrl?.includes("video") || post.mediaUrl?.endsWith(".mp4")) && (
+                      <div className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-600/90 backdrop-blur-md text-white border border-blue-400/30 flex items-center gap-1 shadow-sm">
+                        <Film className="w-3 h-3" />
+                        <span>VÍDEO</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Dados do Story */}
@@ -1423,7 +1466,8 @@ export default function RadarStoriesPage() {
                 onChange={(e) => setSelectedStatus(e.target.value)}
                 className="w-full sm:w-auto py-1.5 px-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B] text-xs text-slate-700 dark:text-slate-200 outline-none cursor-pointer truncate"
               >
-                <option value="all">Status no CRM</option>
+                <option value="all">Status no CRM (Todos)</option>
+                <option value="new_leads">🔥 Novos Leads de Story</option>
                 <option value="active_client">Clientes Ativos</option>
                 <option value="open_deal">Em Negociação</option>
                 <option value="prospect">Potenciais Compradores</option>

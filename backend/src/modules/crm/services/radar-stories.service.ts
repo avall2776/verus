@@ -190,11 +190,15 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
-   * Retorna os Stories ativos postados nas últimas 24h (ciclo real do Status do WhatsApp) com a contagem real de visualizações
+   * Retorna os Stories ativos postados nas últimas 24h ou todo o histórico acumulado
    */
-  async getActivePosts(tenantId: string) {
+  async getActivePosts(tenantId: string, mode: string = 'active') {
     try {
+      const isHistory = mode === 'history' || mode === 'all';
       const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const timeFilter = isHistory ? new Date(0) : twentyFourHoursAgo;
+      const limit = isHistory ? 100 : 50;
+
       const posts = await this.prisma.$queryRawUnsafe<any[]>(
         `SELECT p.*, 
                 COUNT(DISTINCT v.phone)::int as "viewsTotal",
@@ -207,9 +211,10 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
          WHERE p."tenantId" = $1 AND p."postedAt" >= $2
          GROUP BY p.id
          ORDER BY p."postedAt" DESC
-         LIMIT 20`,
+         LIMIT $3`,
         tenantId,
-        twentyFourHoursAgo
+        timeFilter,
+        limit
       );
 
       return (posts || []).map((p) => {
@@ -222,6 +227,8 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
         const viewsTotal = Number(p.viewsTotal) || 0;
         const viewsToday = Number(p.viewsToday) || 0;
         const mediaType = p.mediaType || (String(safeMediaUrl || '').includes('video') || String(safeMediaUrl || '').endsWith('.mp4') ? 'video' : 'image');
+        const isLive = new Date(p.postedAt).getTime() >= (Date.now() - 24 * 60 * 60 * 1000);
+
         return {
           id: p.id,
           messageId: p.messageId,
@@ -236,6 +243,7 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
           viewsCount: viewsTotal,
           viewsTotal,
           viewsToday,
+          isLive,
         };
       });
     } catch (err: any) {
@@ -842,6 +850,49 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
         realPhone.length >= 10 && realPhone.length <= 13
           ? `Contato WhatsApp (${realPhone.slice(-4)})`
           : `Produtor Rural (${cleanDigits.slice(-4)})`;
+    }
+
+    // Auto-cadastro de Novos Leads que visualizaram o Story (Impulsionamento / Visualizador Externo)
+    if (!contactId && realPhone.length >= 10 && realPhone.length <= 13) {
+      try {
+        const autoName = realName && !realName.startsWith('Contato WhatsApp') && !realName.startsWith('Produtor Rural')
+          ? realName
+          : `Lead Story (${realPhone.slice(-4)})`;
+        const newLead = await this.prisma.contact.upsert({
+          where: {
+            tenantId_phone: {
+              tenantId,
+              phone: realPhone,
+            },
+          },
+          update: {
+            ...(cleanDigits.length > 13 ? { whatsappLid: `${cleanDigits}@lid` } : {}),
+          },
+          create: {
+            tenantId,
+            name: autoName,
+            phone: realPhone,
+            source: 'Radar Stories (WhatsApp Status)',
+            tags: ['Lead Story', 'Impulsionamento WhatsApp'],
+            whatsappLid: cleanDigits.length > 13 ? `${cleanDigits}@lid` : undefined,
+            address: city || undefined,
+          },
+        });
+        contactId = newLead.id;
+        if (!realName || realName.startsWith('Contato WhatsApp') || realName.startsWith('Produtor Rural')) {
+          realName = newLead.name;
+        }
+        this.logger.log(`[Radar Stories] Novo Lead registrado automaticamente via Story: ${realName} (${realPhone})`);
+      } catch (upsertErr: any) {
+        const existing = await this.prisma.contact.findFirst({
+          where: { tenantId, phone: realPhone },
+          select: { id: true, name: true },
+        });
+        if (existing) {
+          contactId = existing.id;
+          if (existing.name) realName = existing.name;
+        }
+      }
     }
 
     return {
@@ -1720,7 +1771,13 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
     // Ordena priorizando quem tem maior score de intenção de compra e visualização mais recente
     let filtered = list;
     if (filter?.status && filter.status !== 'all') {
-      filtered = filtered.filter((item) => item.crmStatus === filter.status);
+      if (filter.status === 'new_leads') {
+        filtered = filtered.filter(
+          (item) => item.crmStatus === 'prospect' || item.intentLabel?.toLowerCase().includes('lead')
+        );
+      } else {
+        filtered = filtered.filter((item) => item.crmStatus === filter.status);
+      }
     }
     if (filter?.category && filter.category !== 'all') {
       filtered = filtered.filter((item) => item.storyMedia.category === filter.category);

@@ -17,8 +17,8 @@ export class RadarStoriesController {
   }
 
   @Get('active-posts')
-  async getActivePosts(@CurrentTenant() tenantId: string) {
-    return this.radarStoriesService.getActivePosts(tenantId);
+  async getActivePosts(@CurrentTenant() tenantId: string, @Query('mode') mode?: string) {
+    return this.radarStoriesService.getActivePosts(tenantId, mode);
   }
 
   @Patch('posts/:id')
