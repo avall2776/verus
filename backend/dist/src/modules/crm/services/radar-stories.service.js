@@ -1076,7 +1076,7 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
            WHERE v."tenantId" = $1
            ORDER BY v."viewedAt" DESC
            LIMIT 120`, tenantId),
-                this.prisma.$queryRawUnsafe(`SELECT "messageId", "title", "mediaUrl"
+                this.prisma.$queryRawUnsafe(`SELECT "messageId", "title", "mediaUrl", "mediaType", "thumbnailUrl"
            FROM "whatsapp_status_posts"
            WHERE "tenantId" = $1`, tenantId),
                 this.prisma.$queryRawUnsafe(`SELECT "phone", COUNT(*)::int as cnt
@@ -1086,15 +1086,13 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
             ]);
             if (!rawViews || rawViews.length === 0)
                 return [];
-            const postMediaByMsgId = new Map();
-            const postMediaByTitle = new Map();
+            const postByMsgId = new Map();
+            const postByTitle = new Map();
             for (const p of activePosts || []) {
-                if (p.mediaUrl && !String(p.mediaUrl).includes('172.16.0.1')) {
-                    if (p.messageId)
-                        postMediaByMsgId.set(String(p.messageId), p.mediaUrl);
-                    if (p.title)
-                        postMediaByTitle.set(String(p.title), p.mediaUrl);
-                }
+                if (p.messageId)
+                    postByMsgId.set(String(p.messageId), p);
+                if (p.title)
+                    postByTitle.set(String(p.title), p);
             }
             const weekCountByPhone = new Map();
             for (const r of weekCountsRows || []) {
@@ -1313,9 +1311,11 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
                     viewsCountWeek,
                     timeFormatted,
                 });
-                const resolvedThumb = postMediaByMsgId.get(String(view.statusMessageId)) ||
-                    postMediaByTitle.get(String(view.storyTitle)) ||
-                    (view.mediaUrl && !String(view.mediaUrl).includes('172.16.0.1') ? view.mediaUrl : undefined);
+                const matchedPost = postByMsgId.get(String(view.statusMessageId)) ||
+                    postByTitle.get(String(view.storyTitle));
+                const effectiveMediaType = matchedPost?.mediaType || (String(view.mediaUrl || '').includes('video') ? 'video' : 'image');
+                const resolvedMedia = matchedPost?.mediaUrl || (view.mediaUrl && !String(view.mediaUrl).includes('172.16.0.1') ? view.mediaUrl : undefined);
+                const resolvedThumb = matchedPost?.thumbnailUrl || (effectiveMediaType === 'image' ? resolvedMedia : undefined);
                 list.push({
                     id: view.id,
                     contactId: primaryContact?.id || view.contactId || view.id,
@@ -1348,12 +1348,14 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
                         id: view.statusMessageId || view.id,
                         title: view.storyTitle || 'Status Corporativo WhatsApp',
                         category: view.category || 'Maquinários',
+                        mediaUrl: resolvedMedia,
+                        thumbnailUrl: resolvedThumb,
+                        mediaType: effectiveMediaType,
                         viewedAt: relative,
                         exactDate: dateFormatted,
                         exactTime: timeFormatted,
                         viewsCountWeek,
                         interestLevel,
-                        thumbnailUrl: resolvedThumb,
                     },
                 });
             }

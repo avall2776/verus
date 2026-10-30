@@ -54,7 +54,9 @@ export interface StoryViewerItem {
     exactTime: string; // HH:mm:ss
     viewsCountWeek: number;
     interestLevel: 'Alta Frequência' | 'Frequência Moderada' | 'Visualização Recente' | 'Aguardando Visualização';
+    mediaUrl?: string;
     thumbnailUrl?: string;
+    mediaType?: string;
   };
 }
 
@@ -1424,7 +1426,7 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
           tenantId
         ),
         this.prisma.$queryRawUnsafe<any[]>(
-          `SELECT "messageId", "title", "mediaUrl"
+          `SELECT "messageId", "title", "mediaUrl", "mediaType", "thumbnailUrl"
            FROM "whatsapp_status_posts"
            WHERE "tenantId" = $1`,
           tenantId
@@ -1440,14 +1442,12 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
 
       if (!rawViews || rawViews.length === 0) return [];
 
-      // Mapa de fotos reais dos posts para enriquecer as miniaturas das visualizações
-      const postMediaByMsgId = new Map<string, string>();
-      const postMediaByTitle = new Map<string, string>();
+      // Mapa de mídias e capas reais dos posts para enriquecer as miniaturas das visualizações
+      const postByMsgId = new Map<string, any>();
+      const postByTitle = new Map<string, any>();
       for (const p of activePosts || []) {
-        if (p.mediaUrl && !String(p.mediaUrl).includes('172.16.0.1')) {
-          if (p.messageId) postMediaByMsgId.set(String(p.messageId), p.mediaUrl);
-          if (p.title) postMediaByTitle.set(String(p.title), p.mediaUrl);
-        }
+        if (p.messageId) postByMsgId.set(String(p.messageId), p);
+        if (p.title) postByTitle.set(String(p.title), p);
       }
 
       const weekCountByPhone = new Map<string, number>();
@@ -1719,10 +1719,13 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
           timeFormatted,
         });
 
-        const resolvedThumb =
-          postMediaByMsgId.get(String(view.statusMessageId)) ||
-          postMediaByTitle.get(String(view.storyTitle)) ||
-          (view.mediaUrl && !String(view.mediaUrl).includes('172.16.0.1') ? view.mediaUrl : undefined);
+        const matchedPost =
+          postByMsgId.get(String(view.statusMessageId)) ||
+          postByTitle.get(String(view.storyTitle));
+
+        const effectiveMediaType = matchedPost?.mediaType || (String(view.mediaUrl || '').includes('video') ? 'video' : 'image');
+        const resolvedMedia = matchedPost?.mediaUrl || (view.mediaUrl && !String(view.mediaUrl).includes('172.16.0.1') ? view.mediaUrl : undefined);
+        const resolvedThumb = matchedPost?.thumbnailUrl || (effectiveMediaType === 'image' ? resolvedMedia : undefined);
 
         list.push({
           id: view.id,
@@ -1756,12 +1759,14 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
             id: view.statusMessageId || view.id,
             title: view.storyTitle || 'Status Corporativo WhatsApp',
             category: view.category || 'Maquinários',
+            mediaUrl: resolvedMedia,
+            thumbnailUrl: resolvedThumb,
+            mediaType: effectiveMediaType,
             viewedAt: relative,
             exactDate: dateFormatted,
             exactTime: timeFormatted,
             viewsCountWeek,
             interestLevel,
-            thumbnailUrl: resolvedThumb,
           },
         });
       }

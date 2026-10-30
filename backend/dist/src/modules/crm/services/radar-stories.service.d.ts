@@ -49,7 +49,9 @@ export interface StoryViewerItem {
         exactTime: string;
         viewsCountWeek: number;
         interestLevel: 'Alta Frequência' | 'Frequência Moderada' | 'Visualização Recente' | 'Aguardando Visualização';
+        mediaUrl?: string;
         thumbnailUrl?: string;
+        mediaType?: string;
     };
 }
 export declare class RadarStoriesService implements OnModuleInit, OnModuleDestroy {

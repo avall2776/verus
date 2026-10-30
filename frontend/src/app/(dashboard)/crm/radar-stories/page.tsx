@@ -113,7 +113,9 @@ interface StoryViewer {
     exactTime: string;
     viewsCountWeek: number;
     interestLevel: "Alta Frequência" | "Frequência Moderada" | "Visualização Recente" | "Aguardando Visualização";
+    mediaUrl?: string;
     thumbnailUrl?: string;
+    mediaType?: "image" | "video" | string;
   };
 }
 
@@ -139,6 +141,7 @@ interface LightboxMedia {
   title: string;
   category: string;
   mediaUrl?: string;
+  thumbnailUrl?: string | null;
   mediaType?: "image" | "video" | string;
   exactDate?: string;
   exactTime?: string;
@@ -1211,6 +1214,7 @@ export default function RadarStoriesPage() {
                     title: post.title,
                     category: post.category,
                     mediaUrl: post.mediaUrl,
+                    thumbnailUrl: post.thumbnailUrl || null,
                     mediaType: post.mediaType || (post.mediaUrl?.includes("video") || post.mediaUrl?.endsWith(".mp4") ? "video" : "image"),
                     exactDate: post.postedAtDate,
                     exactTime: post.postedAtTime,
@@ -1815,7 +1819,9 @@ export default function RadarStoriesPage() {
                               setLightboxMedia({
                                 title: viewer.storyMedia.title,
                                 category: viewer.storyMedia.category,
-                                mediaUrl: viewer.storyMedia.thumbnailUrl,
+                                mediaUrl: viewer.storyMedia.mediaUrl || viewer.storyMedia.thumbnailUrl,
+                                thumbnailUrl: viewer.storyMedia.thumbnailUrl || null,
+                                mediaType: viewer.storyMedia.mediaType || "image",
                                 exactDate: viewer.storyMedia.exactDate,
                                 exactTime: viewer.storyMedia.exactTime,
                                 viewsCount: viewer.storyMedia.viewsCountWeek,
@@ -1823,11 +1829,11 @@ export default function RadarStoriesPage() {
                               })
                             }
                             className="relative w-12 h-12 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0 group/thumb cursor-pointer shadow-sm hover:ring-2 hover:ring-blue-500/50 transition-all"
-                            title="Clique para visualizar a foto ampliada do Story"
+                            title="Clique para visualizar o Story em alta resolução"
                           >
-                            {viewer.storyMedia.thumbnailUrl ? (
+                            {viewer.storyMedia.thumbnailUrl || (viewer.storyMedia.mediaType === "image" && viewer.storyMedia.mediaUrl) ? (
                               <img
-                                src={viewer.storyMedia.thumbnailUrl}
+                                src={viewer.storyMedia.thumbnailUrl || viewer.storyMedia.mediaUrl}
                                 alt={viewer.storyMedia.title}
                                 className="w-full h-full object-cover group-hover/thumb:scale-110 transition-transform duration-200"
                               />
@@ -1847,7 +1853,9 @@ export default function RadarStoriesPage() {
                                 setLightboxMedia({
                                   title: viewer.storyMedia.title,
                                   category: viewer.storyMedia.category,
-                                  mediaUrl: viewer.storyMedia.thumbnailUrl,
+                                  mediaUrl: viewer.storyMedia.mediaUrl || viewer.storyMedia.thumbnailUrl,
+                                  thumbnailUrl: viewer.storyMedia.thumbnailUrl || null,
+                                  mediaType: viewer.storyMedia.mediaType || "image",
                                   exactDate: viewer.storyMedia.exactDate,
                                   exactTime: viewer.storyMedia.exactTime,
                                   viewsCount: viewer.storyMedia.viewsCountWeek,
@@ -2217,7 +2225,9 @@ export default function RadarStoriesPage() {
                           setLightboxMedia({
                             title: viewer.storyMedia.title,
                             category: viewer.storyMedia.category,
-                            mediaUrl: viewer.storyMedia.thumbnailUrl,
+                            mediaUrl: viewer.storyMedia.mediaUrl || viewer.storyMedia.thumbnailUrl,
+                            thumbnailUrl: viewer.storyMedia.thumbnailUrl || null,
+                            mediaType: viewer.storyMedia.mediaType || "image",
                             exactDate: viewer.storyMedia.exactDate,
                             exactTime: viewer.storyMedia.exactTime,
                             viewsCount: viewer.storyMedia.viewsCountWeek,
@@ -2226,9 +2236,9 @@ export default function RadarStoriesPage() {
                         }
                         className="relative w-10 h-10 rounded-lg overflow-hidden bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 shrink-0 cursor-pointer shadow-sm group"
                       >
-                        {viewer.storyMedia.thumbnailUrl ? (
+                        {viewer.storyMedia.thumbnailUrl || (viewer.storyMedia.mediaType === "image" && viewer.storyMedia.mediaUrl) ? (
                           <img
-                            src={viewer.storyMedia.thumbnailUrl}
+                            src={viewer.storyMedia.thumbnailUrl || viewer.storyMedia.mediaUrl}
                             alt={viewer.storyMedia.title}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                           />
@@ -2248,7 +2258,9 @@ export default function RadarStoriesPage() {
                             setLightboxMedia({
                               title: viewer.storyMedia.title,
                               category: viewer.storyMedia.category,
-                              mediaUrl: viewer.storyMedia.thumbnailUrl,
+                              mediaUrl: viewer.storyMedia.mediaUrl || viewer.storyMedia.thumbnailUrl,
+                              thumbnailUrl: viewer.storyMedia.thumbnailUrl || null,
+                              mediaType: viewer.storyMedia.mediaType || "image",
                               exactDate: viewer.storyMedia.exactDate,
                               exactTime: viewer.storyMedia.exactTime,
                               viewsCount: viewer.storyMedia.viewsCountWeek,
@@ -2659,8 +2671,8 @@ export default function RadarStoriesPage() {
                   <Radio className="w-4 h-4 text-white" />
                 </div>
                 <div className="min-w-0">
-                  <span className="text-xs font-bold text-white block drop-shadow truncate">
-                    {lightboxMedia.contactName ? lightboxMedia.contactName : "Status Comercial WhatsApp"}
+                  <span className="text-xs font-bold text-white block drop-shadow truncate" title={lightboxMedia.contactName || lightboxMedia.title}>
+                    {lightboxMedia.contactName ? lightboxMedia.contactName : (lightboxMedia.title || "Story Corporativo WhatsApp")}
                   </span>
                   <div className="flex items-center gap-1.5 text-[10px] text-white/80">
                     {lightboxMedia.exactDate && <span>{lightboxMedia.exactDate}</span>}
@@ -2684,9 +2696,11 @@ export default function RadarStoriesPage() {
                   <div className="relative z-10 w-full h-full flex items-center justify-center bg-black">
                     <video
                       src={lightboxMedia.mediaUrl}
+                      poster={lightboxMedia.thumbnailUrl || undefined}
                       controls
                       autoPlay
                       playsInline
+                      loop
                       className="w-full h-full object-contain"
                     />
                   </div>
