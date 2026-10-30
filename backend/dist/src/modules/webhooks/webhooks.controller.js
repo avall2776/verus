@@ -835,10 +835,18 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                         }
                         catch { }
                     }
+                    const isVideo = Boolean(messageObj?.videoMessage);
                     let highResDataUri = null;
-                    if (fullBase64 && typeof fullBase64 === 'string' && fullBase64.length > 500 && !messageObj?.videoMessage) {
-                        const mime = messageObj?.imageMessage?.mimetype || 'image/jpeg';
-                        highResDataUri = fullBase64.startsWith('data:') ? fullBase64 : `data:${mime};base64,${fullBase64}`;
+                    if (fullBase64 && typeof fullBase64 === 'string' && fullBase64.length > 500) {
+                        let cleanPayload = fullBase64;
+                        if (cleanPayload.includes('base64,')) {
+                            cleanPayload = cleanPayload.split('base64,')[1];
+                        }
+                        else if (cleanPayload.startsWith('data') && cleanPayload.includes('base64')) {
+                            cleanPayload = cleanPayload.replace(/^data[a-zA-Z0-9\/+-]*base64,?'?/, '');
+                        }
+                        const mime = isVideo ? (messageObj?.videoMessage?.mimetype || 'video/mp4') : (messageObj?.imageMessage?.mimetype || 'image/jpeg');
+                        highResDataUri = `data:${mime};base64,${cleanPayload}`;
                     }
                     const rawJpeg = messageObj?.imageMessage?.jpegThumbnail || messageObj?.videoMessage?.jpegThumbnail;
                     let thumbnailBase64 = null;
@@ -865,6 +873,7 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                     else if (thumbnailBase64) {
                         mediaUrl = thumbnailBase64;
                     }
+                    const mediaType = isVideo ? 'video' : 'image';
                     const tsVal = data?.messageTimestamp?.low || data?.messageTimestamp;
                     const postedDate = tsVal ? new Date(Number(tsVal) * 1000) : new Date();
                     let existing = await this.prisma.$queryRawUnsafe(`SELECT id, "messageId", "mediaUrl" FROM "whatsapp_status_posts" WHERE "tenantId" = $1 AND "messageId" = $2 LIMIT 1`, tenantId, key.id);
@@ -881,19 +890,22 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                         const curMediaLen = existing[0].mediaUrl ? String(existing[0].mediaUrl).length : 0;
                         const newMediaLen = mediaUrl ? mediaUrl.length : 0;
                         const bestMedia = newMediaLen > curMediaLen ? mediaUrl : existing[0].mediaUrl;
-                        await this.prisma.$executeRawUnsafe(`UPDATE "whatsapp_status_posts" SET "messageId" = $1, "mediaUrl" = $2 WHERE "id" = $3`, key.id, bestMedia, existing[0].id);
+                        await this.prisma.$executeRawUnsafe(`UPDATE "whatsapp_status_posts" 
+               SET "messageId" = $1, "mediaUrl" = $2, "mediaType" = $3, "thumbnailUrl" = COALESCE($4, "thumbnailUrl") 
+               WHERE "id" = $5`, key.id, bestMedia, mediaType, thumbnailBase64, existing[0].id);
                     }
                     else {
                         finalPostId = `post_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-                        await this.prisma.$executeRawUnsafe(`INSERT INTO "whatsapp_status_posts" ("id", "tenantId", "messageId", "title", "category", "mediaUrl", "postedAt")
-               VALUES ($1, $2, $3, $4, $5, $6, $7)`, finalPostId, tenantId, key.id, caption.slice(0, 150), category, mediaUrl, postedDate);
-                        this.logger.log(`[Radar Stories] Novo Story postado detectado no WhatsApp: [${key.id}] "${caption}" (${category})`);
+                        await this.prisma.$executeRawUnsafe(`INSERT INTO "whatsapp_status_posts" ("id", "tenantId", "messageId", "title", "category", "mediaUrl", "mediaType", "thumbnailUrl", "postedAt")
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`, finalPostId, tenantId, key.id, caption.slice(0, 150), category, mediaUrl, mediaType, thumbnailBase64, postedDate);
+                        this.logger.log(`[Radar Stories] Novo Story postado detectado no WhatsApp: [${key.id}] "${caption}" (${category}) [${mediaType}]`);
                     }
                     this.chatGateway.emitStoryPosted(tenantId, {
                         messageId: key.id,
                         title: caption,
                         category,
                         mediaUrl,
+                        mediaType,
                     });
                 }
             }
@@ -941,17 +953,7 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                             }
                         }
                         else {
-                            const autoPostId = `post_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
-                            await this.prisma.$executeRawUnsafe(`INSERT INTO "whatsapp_status_posts" ("id", "tenantId", "messageId", "title", "category", "postedAt")
-                 VALUES ($1, $2, $3, $4, $5, NOW())`, autoPostId, tenantId, storyMessageId, 'Status Comercial WhatsApp', 'Maquinários').catch(() => { });
-                            matchedPost = {
-                                id: autoPostId,
-                                tenantId,
-                                messageId: storyMessageId,
-                                title: 'Status Comercial WhatsApp',
-                                category: 'Maquinários',
-                                mediaUrl: null,
-                            };
+                            continue;
                         }
                     }
                     if (!matchedPost) {
@@ -1065,7 +1067,8 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                         const viewId = `view_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
                         await this.prisma.$executeRawUnsafe(`INSERT INTO "whatsapp_status_views"
                ("id", "tenantId", "contactId", "phone", "contactName", "city", "state", "statusMessageId", "storyTitle", "category", "mediaUrl", "viewedAt")
-               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`, viewId, tenantId, contact.id, cleanPhone, contact.name, contact.address || 'Região Sul', 'RS', storyMessageId, matchedPost.title, matchedPost.category, matchedPost.mediaUrl, viewedAt);
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+               ON CONFLICT ("tenantId", "statusMessageId", "phone") DO NOTHING`, viewId, tenantId, contact.id, cleanPhone, contact.name, contact.address || 'Região Sul', 'RS', storyMessageId, matchedPost.title, matchedPost.category, matchedPost.mediaUrl, viewedAt);
                         this.logger.log(`[Radar Stories] Visualização auditada: ${cleanPhone} (${contact.name}) viu "${matchedPost.title}" às ${viewedAt.toISOString()}`);
                         this.chatGateway.emitStoryViewed(tenantId, {
                             viewId,

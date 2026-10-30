@@ -236,6 +236,7 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
           category: p.category,
           mediaUrl: safeMediaUrl,
           mediaType,
+          thumbnailUrl: p.thumbnailUrl || null,
           postedAt: p.postedAt,
           postedAtRelative: relative,
           postedAtDate: dateFormatted,

@@ -2,19 +2,7 @@ import { QuickRepliesService, CreateQuickReplyDto, UpdateQuickReplyDto } from '.
 export declare class QuickRepliesController {
     private readonly quickRepliesService;
     constructor(quickRepliesService: QuickRepliesService);
-    getQuickReplies(tenantId: string): Promise<{
-        id: string;
-        tenantId: string;
-        createdAt: Date;
-        updatedAt: Date;
-        content: string;
-        type: string;
-        mediaUrl: string | null;
-        title: string | null;
-        fileName: string | null;
-        shortcut: string;
-        mediaDriveId: string | null;
-    }[]>;
+    getQuickReplies(tenantId: string): Promise<any[]>;
     getGoogleDriveStatus(tenantId: string): Promise<{
         connected: boolean;
         email: string;

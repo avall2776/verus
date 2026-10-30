@@ -405,6 +405,32 @@ let ChatService = ChatService_1 = class ChatService {
         this.chatGateway.emitConversationUpdated(tenantId, updated);
         return updated;
     }
+    async returnToBot(tenantId, conversationId) {
+        const conversation = await this.prisma.conversation.findUnique({
+            where: { id: conversationId }
+        });
+        if (!conversation || conversation.tenantId !== tenantId) {
+            throw new common_1.NotFoundException('Conversa não encontrada.');
+        }
+        const updated = await this.prisma.conversation.update({
+            where: { id: conversationId },
+            data: {
+                status: 'bot_active',
+                assignedTo: null,
+                updatedAt: new Date()
+            },
+            include: {
+                contact: true,
+                department: true,
+                messages: {
+                    orderBy: { createdAt: 'desc' },
+                    take: 1
+                }
+            }
+        });
+        this.chatGateway.emitConversationUpdated(tenantId, updated);
+        return updated;
+    }
     async reopenConversation(tenantId, conversationId) {
         const conversation = await this.prisma.conversation.findUnique({
             where: { id: conversationId }
@@ -879,10 +905,20 @@ let ChatService = ChatService_1 = class ChatService {
                 });
             }
         }
-        await this.prisma.conversation.update({
-            where: { id: conversationId },
-            data: { updatedAt: new Date() }
-        });
+        if (!isInternal && (conversation.status === 'bot_active' || conversation.status === 'waiting')) {
+            const updatedConv = await this.prisma.conversation.update({
+                where: { id: conversationId },
+                data: { status: 'human_takeover', updatedAt: new Date() },
+                include: { contact: true, department: true }
+            });
+            this.chatGateway.emitConversationUpdated(tenantId, updatedConv);
+        }
+        else {
+            await this.prisma.conversation.update({
+                where: { id: conversationId },
+                data: { updatedAt: new Date() }
+            });
+        }
         this.chatGateway.emitNewMessage(tenantId, msg);
         return msg;
     }
@@ -987,7 +1023,7 @@ let ChatService = ChatService_1 = class ChatService {
                 data: {
                     tenantId,
                     contactId,
-                    status: 'bot_active',
+                    status: 'human_takeover',
                     assignedTo: userId
                 }
             });

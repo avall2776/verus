@@ -18,22 +18,28 @@ export declare class RadarStoriesController {
             percentage: number;
         }[];
     }>;
-    getActivePosts(tenantId: string): Promise<{
+    getActivePosts(tenantId: string, mode?: string): Promise<{
         id: any;
         messageId: any;
         title: any;
         category: any;
         mediaUrl: any;
+        mediaType: any;
+        thumbnailUrl: any;
         postedAt: any;
         postedAtRelative: string;
         postedAtDate: string;
         postedAtTime: string;
         viewsCount: number;
+        viewsTotal: number;
+        viewsToday: number;
+        isLive: boolean;
     }[]>;
     updatePost(tenantId: string, postId: string, body: {
         title?: string;
         category?: string;
         mediaUrl?: string;
+        mediaType?: string;
         postedAt?: string;
     }): Promise<{
         success: boolean;
@@ -44,11 +50,16 @@ export declare class RadarStoriesController {
             title: any;
             category: any;
             mediaUrl: any;
+            mediaType: any;
+            thumbnailUrl: any;
             postedAt: any;
             postedAtRelative: string;
             postedAtDate: string;
             postedAtTime: string;
             viewsCount: number;
+            viewsTotal: number;
+            viewsToday: number;
+            isLive: boolean;
         }[];
     }>;
     deletePost(tenantId: string, postId: string): Promise<{
@@ -147,11 +158,16 @@ export declare class RadarStoriesController {
             title: any;
             category: any;
             mediaUrl: any;
+            mediaType: any;
+            thumbnailUrl: any;
             postedAt: any;
             postedAtRelative: string;
             postedAtDate: string;
             postedAtTime: string;
             viewsCount: number;
+            viewsTotal: number;
+            viewsToday: number;
+            isLive: boolean;
         }[];
         syncedViewsCount: number;
     }>;

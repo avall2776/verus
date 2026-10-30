@@ -456,7 +456,10 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
         if (fromMe) {
             conversation = await this.prisma.conversation.update({
                 where: { id: conversation.id },
-                data: { updatedAt: new Date() }
+                data: {
+                    status: 'human_takeover',
+                    updatedAt: new Date()
+                }
             });
             try {
                 const jobId = `ai_reply_${conversation.id}`;
@@ -465,11 +468,12 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
                     const state = await existingJob.getState();
                     if (state === 'delayed' || state === 'waiting') {
                         await existingJob.remove();
-                        this.logger.log(`[fromMe] IA interrompida para a conversa [${conversation.id}] pois o atendente respondeu via WhatsApp`);
+                        this.logger.log(`[fromMe] IA cancelada para a conversa [${conversation.id}] pois o atendente chamou/respondeu via WhatsApp`);
                     }
                 }
             }
             catch (err) { }
+            this.chatGateway.emitConversationUpdated(tenantId, conversation);
         }
         else if (conversation.status === 'resolved' || conversation.status === 'closed') {
             conversation = await this.prisma.conversation.update({
@@ -553,20 +557,42 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
         if (fromMe) {
             return { status: 'success_outbound_synced', messageId: savedMessage.id };
         }
+        const isHumanHandled = conversation.status === 'human_takeover' ||
+            conversation.status === 'open' ||
+            conversation.status === 'in_progress' ||
+            Boolean(conversation.assignedTo);
+        if (isHumanHandled) {
+            const lastActivityTime = conversation.updatedAt ? new Date(conversation.updatedAt).getTime() : 0;
+            const hoursSinceLastActivity = (Date.now() - lastActivityTime) / (1000 * 60 * 60);
+            if (hoursSinceLastActivity >= 24 && isAiActiveForTenant) {
+                this.logger.log(`[Auto-Timeout 24h] Conversa [${conversation.id}] sob atendimento humano inativa há ${hoursSinceLastActivity.toFixed(1)}h. Reativando IA para novo atendimento.`);
+                conversation = await this.prisma.conversation.update({
+                    where: { id: conversation.id },
+                    data: { status: 'bot_active', assignedTo: null, updatedAt: new Date() }
+                });
+                this.chatGateway.emitConversationUpdated(tenantId, conversation);
+            }
+            else {
+                this.logger.log(`[Human Protected] Conversa [${conversation.id}] sob atendimento humano ativo (status: ${conversation.status}, assignedTo: ${conversation.assignedTo}, última atividade há ${hoursSinceLastActivity.toFixed(1)}h). IA silenciada.`);
+                return { status: 'success_human_protected', messageId: savedMessage.id };
+            }
+        }
         if (!isAiActiveForTenant) {
             this.logger.log(`Conversa [${conversation.id}] mantida para atendimento humano. O auto-atendimento por IA está DESLIGADO nas Configurações da Empresa.`);
             if (conversation.status === 'bot_active') {
-                await this.prisma.conversation.update({
+                conversation = await this.prisma.conversation.update({
                     where: { id: conversation.id },
-                    data: { status: 'waiting' }
+                    data: { status: 'waiting', updatedAt: new Date() }
                 });
+                this.chatGateway.emitConversationUpdated(tenantId, conversation);
             }
+            return { status: 'success_ai_disabled_tenant', messageId: savedMessage.id };
         }
         else {
             if (conversation.status !== 'bot_active') {
                 conversation = await this.prisma.conversation.update({
                     where: { id: conversation.id },
-                    data: { status: 'bot_active' }
+                    data: { status: 'bot_active', updatedAt: new Date() }
                 });
                 this.chatGateway.emitConversationUpdated(tenantId, conversation);
             }

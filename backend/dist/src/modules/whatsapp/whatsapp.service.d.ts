@@ -229,6 +229,8 @@ export declare class WhatsappService implements OnModuleInit, OnModuleDestroy {
     }>;
     extractPhotoId(url: string | null | undefined): string | null;
     normalizeContactName(s: string | null | undefined): string;
+    isGenericContactName(name: string | null | undefined): boolean;
+    formatFriendlyPhone(phone: string | null | undefined): string;
     resolveContactFromEvolution(tenantId: string, instanceName?: string, remoteJid?: string, pushName?: string, profilePictureUrl?: string | null): Promise<{
         realPhone: string | null;
         realName: string | null;

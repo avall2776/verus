@@ -297,15 +297,58 @@ let OperatorsService = OperatorsService_1 = class OperatorsService {
         if (!operator) {
             throw new common_1.NotFoundException('Operador não encontrado.');
         }
+        if (operator.isSuperAdmin || operator.role === 'SUPER_ADMIN') {
+            throw new common_1.BadRequestException('Não é permitido excluir o usuário Super Administrador.');
+        }
         await this.prisma.supportTicket.updateMany({
-            where: { assignedToId: id, status: { in: ['OPEN', 'IN_PROGRESS', 'WAITING_CLIENT'] } },
+            where: { assignedToId: id },
             data: { assignedToId: null },
-        });
-        await this.prisma.user.update({
+        }).catch(() => { });
+        await this.prisma.supportTicket.updateMany({
+            where: { userId: id },
+            data: { userId: null },
+        }).catch(() => { });
+        await this.prisma.ticketMessage.updateMany({
+            where: { senderId: id },
+            data: { senderId: null },
+        }).catch(() => { });
+        await this.prisma.conversation.updateMany({
+            where: { assignedTo: id },
+            data: { assignedTo: null },
+        }).catch(() => { });
+        await this.prisma.deal.updateMany({
+            where: { assignedTo: id },
+            data: { assignedTo: null },
+        }).catch(() => { });
+        await this.prisma.marketingCard.updateMany({
+            where: { assignedUserId: id },
+            data: { assignedUserId: null },
+        }).catch(() => { });
+        await this.prisma.marketingClient.updateMany({
+            where: { assignedUserId: id },
+            data: { assignedUserId: null },
+        }).catch(() => { });
+        await this.prisma.userDepartment.deleteMany({
+            where: { userId: id },
+        }).catch(() => { });
+        await this.prisma.goal.deleteMany({
+            where: { userId: id },
+        }).catch(() => { });
+        await this.prisma.teamMessage.deleteMany({
+            where: { OR: [{ senderId: id }, { receiverId: id }] },
+        }).catch(() => { });
+        await this.prisma.csatSurvey.updateMany({
+            where: { userId: id },
+            data: { userId: null },
+        }).catch(() => { });
+        await this.prisma.marketingTimeLog.deleteMany({
+            where: { userId: id },
+        }).catch(() => { });
+        await this.prisma.user.delete({
             where: { id },
-            data: { isActive: false, isOnline: false },
         });
-        return { success: true, message: 'Operador desativado e chamados em aberto liberados na fila.' };
+        this.logger.log(`Operador [${operator.name} - ${operator.email}] excluído definitivamente do sistema.`);
+        return { success: true, message: 'Operador excluído definitivamente com sucesso.' };
     }
 };
 exports.OperatorsService = OperatorsService;

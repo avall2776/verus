@@ -123,6 +123,7 @@ interface ActiveStoryPost {
   title: string;
   category: string;
   mediaUrl?: string;
+  thumbnailUrl?: string | null;
   mediaType?: "image" | "video" | string;
   postedAt: string;
   postedAtRelative: string;
@@ -821,10 +822,10 @@ export default function RadarStoriesPage() {
         prev.map((v) =>
           v.id === viewer.id
             ? {
-                ...v,
-                crmStatus: newStatus as any,
-                crmStatusLabel: labelMap[newStatus] || v.crmStatusLabel,
-              }
+              ...v,
+              crmStatus: newStatus as any,
+              crmStatusLabel: labelMap[newStatus] || v.crmStatusLabel,
+            }
             : v
         )
       );
@@ -1141,11 +1142,10 @@ export default function RadarStoriesPage() {
                   setPostFilterMode("active");
                   fetchActivePosts("active");
                 }}
-                className={`px-3 py-1 rounded-lg font-semibold transition-all cursor-pointer ${
-                  postFilterMode === "active"
+                className={`px-3 py-1 rounded-lg font-semibold transition-all cursor-pointer ${postFilterMode === "active"
                     ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-xs"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                }`}
+                  }`}
               >
                 No Ar (24h)
               </button>
@@ -1154,11 +1154,10 @@ export default function RadarStoriesPage() {
                   setPostFilterMode("all");
                   fetchActivePosts("all");
                 }}
-                className={`px-3 py-1 rounded-lg font-semibold transition-all cursor-pointer ${
-                  postFilterMode === "all"
+                className={`px-3 py-1 rounded-lg font-semibold transition-all cursor-pointer ${postFilterMode === "all"
                     ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-xs"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                }`}
+                  }`}
               >
                 Histórico Geral
               </button>
@@ -1229,32 +1228,40 @@ export default function RadarStoriesPage() {
 
                   {post.mediaUrl ? (
                     post.mediaType === "video" || post.mediaUrl?.includes("video") || post.mediaUrl?.endsWith(".mp4") ? (
-                      <div 
+                      <div
                         className="relative w-full h-full flex items-center justify-center bg-black"
                         onMouseEnter={(e) => {
                           const vid = e.currentTarget.querySelector('video');
-                          if (vid) vid.play().catch(() => {});
+                          if (vid) vid.play().catch(() => { });
                         }}
                         onMouseLeave={(e) => {
                           const vid = e.currentTarget.querySelector('video');
                           if (vid) {
                             vid.pause();
-                            try { vid.currentTime = 0.1; } catch {}
+                            try { vid.currentTime = 0.1; } catch { }
                           }
                         }}
                       >
                         <video
                           src={post.mediaUrl}
+                          poster={post.thumbnailUrl || undefined}
                           muted
                           playsInline
                           preload="auto"
                           onLoadedMetadata={(e) => {
                             try {
                               e.currentTarget.currentTime = 0.1;
-                            } catch {}
+                            } catch { }
                           }}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
+                        {post.thumbnailUrl && (
+                          <img
+                            src={post.thumbnailUrl}
+                            alt={post.title}
+                            className="absolute inset-0 w-full h-full object-cover pointer-events-none group-hover:opacity-0 transition-opacity duration-200"
+                          />
+                        )}
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
                           <div className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white border border-white/20 shadow-lg group-hover:scale-110 transition-transform">
                             <PlayCircle className="w-6 h-6 fill-white/20 text-white" />
@@ -1303,7 +1310,10 @@ export default function RadarStoriesPage() {
 
                 {/* Dados do Story */}
                 <div className="flex-1 flex flex-col justify-between gap-1.5">
-                  <h4 className="text-xs font-bold text-slate-900 dark:text-white line-clamp-1 group-hover:text-blue-500 transition-colors">
+                  <h4
+                    className="text-xs font-bold text-slate-900 dark:text-white line-clamp-2 leading-snug group-hover:text-blue-500 transition-colors"
+                    title={post.title}
+                  >
                     {post.title}
                   </h4>
                   <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
@@ -1453,9 +1463,8 @@ export default function RadarStoriesPage() {
                   </div>
                   <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                     <div
-                      className={`h-full rounded-full ${
-                        idx === 0 ? "bg-emerald-500" : idx === 1 ? "bg-blue-600" : idx === 2 ? "bg-amber-500" : "bg-purple-500"
-                      }`}
+                      className={`h-full rounded-full ${idx === 0 ? "bg-emerald-500" : idx === 1 ? "bg-blue-600" : idx === 2 ? "bg-amber-500" : "bg-purple-500"
+                        }`}
                       style={{ width: `${Math.max(cat.percentage, 0)}%` }}
                     />
                   </div>
@@ -1549,18 +1558,16 @@ export default function RadarStoriesPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveFilterTab(tab.id)}
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
-                  activeFilterTab === tab.id
+                className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${activeFilterTab === tab.id
                     ? "bg-blue-600 text-white shadow-sm shadow-blue-500/20"
                     : "bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800"
-                }`}
+                  }`}
               >
                 <span>{tab.label}</span>
-                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
-                  activeFilterTab === tab.id
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${activeFilterTab === tab.id
                     ? "bg-white/20 text-white"
                     : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200"
-                }`}>
+                  }`}>
                   {tab.count}
                 </span>
               </button>
@@ -1700,9 +1707,8 @@ export default function RadarStoriesPage() {
                   return (
                     <tr
                       key={viewer.id}
-                      className={`hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors ${
-                        isSelected ? "bg-blue-500/5 dark:bg-blue-500/10" : ""
-                      }`}
+                      className={`hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors ${isSelected ? "bg-blue-500/5 dark:bg-blue-500/10" : ""
+                        }`}
                     >
                       {/* Checkbox de Seleção */}
                       <td className="py-4 px-3 text-center align-middle">
@@ -1889,19 +1895,18 @@ export default function RadarStoriesPage() {
                             <select
                               value={viewer.crmStatus}
                               onChange={(e) => handleUpdateViewerClassification(viewer, e.target.value)}
-                              className={`appearance-none pl-8 pr-7 py-1.5 rounded-full text-xs font-bold border outline-none cursor-pointer transition-all shadow-sm ${
-                                viewer.crmStatus === "active_client"
+                              className={`appearance-none pl-8 pr-7 py-1.5 rounded-full text-xs font-bold border outline-none cursor-pointer transition-all shadow-sm ${viewer.crmStatus === "active_client"
                                   ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:border-emerald-400 dark:bg-emerald-950/40"
                                   : viewer.crmStatus === "open_deal"
-                                  ? "bg-amber-500/10 text-amber-400 border-amber-500/30 hover:border-amber-400 dark:bg-amber-950/40"
-                                  : viewer.crmStatus === "internal_team"
-                                  ? "bg-slate-500/15 text-slate-300 border-slate-500/30 hover:border-slate-400 dark:bg-slate-800/60"
-                                  : viewer.crmStatus === "non_commercial"
-                                  ? "bg-rose-500/10 text-rose-400 border-rose-500/30 hover:border-rose-400 dark:bg-rose-950/40"
-                                  : viewer.crmStatus === "inactive_client"
-                                  ? "bg-purple-500/10 text-purple-400 border-purple-500/30 hover:border-purple-400 dark:bg-purple-950/40"
-                                  : "bg-blue-500/10 text-blue-400 border-blue-500/30 hover:border-blue-400 dark:bg-blue-950/40"
-                              }`}
+                                    ? "bg-amber-500/10 text-amber-400 border-amber-500/30 hover:border-amber-400 dark:bg-amber-950/40"
+                                    : viewer.crmStatus === "internal_team"
+                                      ? "bg-slate-500/15 text-slate-300 border-slate-500/30 hover:border-slate-400 dark:bg-slate-800/60"
+                                      : viewer.crmStatus === "non_commercial"
+                                        ? "bg-rose-500/10 text-rose-400 border-rose-500/30 hover:border-rose-400 dark:bg-rose-950/40"
+                                        : viewer.crmStatus === "inactive_client"
+                                          ? "bg-purple-500/10 text-purple-400 border-purple-500/30 hover:border-purple-400 dark:bg-purple-950/40"
+                                          : "bg-blue-500/10 text-blue-400 border-blue-500/30 hover:border-blue-400 dark:bg-blue-950/40"
+                                }`}
                               title="Clique para alterar a classificação comercial deste contato"
                             >
                               <option value="active_client" className="bg-slate-900 text-emerald-400 font-semibold">Cliente Comprador</option>
@@ -1935,15 +1940,14 @@ export default function RadarStoriesPage() {
                           {viewer.intentLabel && viewer.crmStatus !== "internal_team" && (
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <span
-                                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-bold border ${
-                                  viewer.crmStatus === "non_commercial"
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-bold border ${viewer.crmStatus === "non_commercial"
                                     ? "bg-slate-500/10 text-slate-400 border-slate-500/25"
                                     : (viewer.intentScore || 0) >= 85
-                                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/25"
-                                    : (viewer.intentScore || 0) >= 70
-                                    ? "bg-amber-500/10 text-amber-400 border-amber-500/25"
-                                    : "bg-blue-500/10 text-blue-400 border-blue-500/25"
-                                }`}
+                                      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/25"
+                                      : (viewer.intentScore || 0) >= 70
+                                        ? "bg-amber-500/10 text-amber-400 border-amber-500/25"
+                                        : "bg-blue-500/10 text-blue-400 border-blue-500/25"
+                                  }`}
                               >
                                 {viewer.crmStatus === "non_commercial" ? (
                                   <BadgeAlert className="w-3.5 h-3.5 shrink-0 text-slate-400" />
@@ -2091,11 +2095,10 @@ export default function RadarStoriesPage() {
                 return (
                   <div
                     key={viewer.id}
-                    className={`p-3.5 rounded-xl border transition-all ${
-                      isSelected
+                    className={`p-3.5 rounded-xl border transition-all ${isSelected
                         ? "bg-blue-500/10 border-blue-500/40 dark:bg-blue-500/15"
                         : "bg-slate-50/70 dark:bg-slate-900/60 border-slate-200/80 dark:border-slate-800"
-                    }`}
+                      }`}
                   >
                     {/* Header do Card Mobile: Checkbox, Nome, Status CRM */}
                     <div className="flex items-start justify-between gap-2">
@@ -2139,17 +2142,16 @@ export default function RadarStoriesPage() {
 
                       {/* Badge Status CRM */}
                       <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border shrink-0 ${
-                          viewer.crmStatus === "active_client"
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border shrink-0 ${viewer.crmStatus === "active_client"
                             ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/25"
                             : viewer.crmStatus === "open_deal"
-                            ? "bg-amber-500/10 text-amber-400 border-amber-500/25"
-                            : viewer.crmStatus === "internal_team"
-                            ? "bg-slate-500/15 text-slate-300 border-slate-500/30"
-                            : viewer.crmStatus === "inactive_client"
-                            ? "bg-purple-500/10 text-purple-400 border-purple-500/25"
-                            : "bg-blue-500/10 text-blue-400 border-blue-500/25"
-                        }`}
+                              ? "bg-amber-500/10 text-amber-400 border-amber-500/25"
+                              : viewer.crmStatus === "internal_team"
+                                ? "bg-slate-500/15 text-slate-300 border-slate-500/30"
+                                : viewer.crmStatus === "inactive_client"
+                                  ? "bg-purple-500/10 text-purple-400 border-purple-500/25"
+                                  : "bg-blue-500/10 text-blue-400 border-blue-500/25"
+                          }`}
                       >
                         {viewer.crmStatus === "active_client" ? (
                           <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
@@ -2777,11 +2779,10 @@ export default function RadarStoriesPage() {
                 <button
                   key={item.step}
                   onClick={() => setTutorialStep(item.step)}
-                  className={`py-3 px-2 flex items-center justify-center gap-1.5 transition-colors border-b-2 cursor-pointer ${
-                    tutorialStep === item.step
+                  className={`py-3 px-2 flex items-center justify-center gap-1.5 transition-colors border-b-2 cursor-pointer ${tutorialStep === item.step
                       ? "border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/20 font-bold"
                       : "border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-300"
-                  }`}
+                    }`}
                 >
                   {item.icon}
                   <span className="hidden sm:inline">{item.title}</span>
@@ -3183,11 +3184,10 @@ export default function RadarStoriesPage() {
                       <button
                         type="button"
                         onClick={() => setPublishMode("now")}
-                        className={`py-2.5 px-3 rounded-xl border font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                          publishMode === "now"
+                        className={`py-2.5 px-3 rounded-xl border font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${publishMode === "now"
                             ? "border-blue-600 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 shadow-sm"
                             : "border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900/40"
-                        }`}
+                          }`}
                       >
                         <Send className="w-3.5 h-3.5" />
                         <span>Postar Imediatamente</span>
@@ -3196,11 +3196,10 @@ export default function RadarStoriesPage() {
                       <button
                         type="button"
                         onClick={() => setPublishMode("schedule")}
-                        className={`py-2.5 px-3 rounded-xl border font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                          publishMode === "schedule"
+                        className={`py-2.5 px-3 rounded-xl border font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${publishMode === "schedule"
                             ? "border-blue-600 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 shadow-sm"
                             : "border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900/40"
-                        }`}
+                          }`}
                       >
                         <Calendar className="w-3.5 h-3.5" />
                         <span>Agendar Horário</span>
@@ -3710,17 +3709,16 @@ export default function RadarStoriesPage() {
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] uppercase font-bold text-slate-400">Classificação Comercial no CRM:</span>
                   <span
-                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border ${
-                      selectedViewerForDetails.crmStatus === "active_client"
+                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border ${selectedViewerForDetails.crmStatus === "active_client"
                         ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/25"
                         : selectedViewerForDetails.crmStatus === "open_deal"
-                        ? "bg-amber-500/10 text-amber-400 border-amber-500/25"
-                        : selectedViewerForDetails.crmStatus === "internal_team"
-                        ? "bg-slate-500/15 text-slate-300 border-slate-500/30"
-                        : selectedViewerForDetails.crmStatus === "inactive_client"
-                        ? "bg-purple-500/10 text-purple-400 border-purple-500/25"
-                        : "bg-blue-500/10 text-blue-400 border-blue-500/25"
-                    }`}
+                          ? "bg-amber-500/10 text-amber-400 border-amber-500/25"
+                          : selectedViewerForDetails.crmStatus === "internal_team"
+                            ? "bg-slate-500/15 text-slate-300 border-slate-500/30"
+                            : selectedViewerForDetails.crmStatus === "inactive_client"
+                              ? "bg-purple-500/10 text-purple-400 border-purple-500/25"
+                              : "bg-blue-500/10 text-blue-400 border-blue-500/25"
+                      }`}
                   >
                     {selectedViewerForDetails.crmStatus === "active_client" ? (
                       <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
@@ -3816,11 +3814,10 @@ export default function RadarStoriesPage() {
                     {selectedViewerForDetails.chatMessages.map((msg) => (
                       <div
                         key={msg.id}
-                        className={`p-2.5 rounded-lg border text-[11px] leading-relaxed ${
-                          msg.direction === "INBOUND"
+                        className={`p-2.5 rounded-lg border text-[11px] leading-relaxed ${msg.direction === "INBOUND"
                             ? "bg-white dark:bg-[#070D1B] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 mr-6"
                             : "bg-blue-600/10 border-blue-500/25 text-blue-900 dark:text-blue-200 ml-6"
-                        }`}
+                          }`}
                       >
                         <div className="flex items-center justify-between text-[9.5px] font-bold mb-0.5 opacity-75">
                           <span>{msg.direction === "INBOUND" ? selectedViewerForDetails.name : "Equipe Verto (Sistema)"}</span>
@@ -4210,15 +4207,14 @@ export default function RadarStoriesPage() {
                         </div>
 
                         <div className="flex items-center gap-2 shrink-0">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                            v.crmStatus === "open_deal"
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${v.crmStatus === "open_deal"
                               ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
                               : v.crmStatus === "active_client"
-                              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
-                              : v.crmStatus === "non_commercial"
-                              ? "bg-rose-500/10 text-rose-400 border-rose-500/30"
-                              : "bg-blue-500/10 text-blue-400 border-blue-500/30"
-                          }`}>
+                                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                                : v.crmStatus === "non_commercial"
+                                  ? "bg-rose-500/10 text-rose-400 border-rose-500/30"
+                                  : "bg-blue-500/10 text-blue-400 border-blue-500/30"
+                            }`}>
                             {v.crmStatusLabel}
                           </span>
                           <button

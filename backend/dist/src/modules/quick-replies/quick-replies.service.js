@@ -74,13 +74,61 @@ let QuickRepliesService = class QuickRepliesService {
                 orderBy: { shortcut: 'asc' },
             });
         }
-        return replies;
+        const formatReply = (r) => {
+            let mediaFiles = [];
+            let imageCount = 0;
+            let videoCount = 0;
+            let docCount = 0;
+            if (r.mediaUrl) {
+                const trimmed = r.mediaUrl.trim();
+                if (trimmed.startsWith('[')) {
+                    try {
+                        const parsed = JSON.parse(trimmed);
+                        if (Array.isArray(parsed)) {
+                            mediaFiles = parsed;
+                            imageCount = mediaFiles.filter((m) => m.type === 'image').length;
+                            videoCount = mediaFiles.filter((m) => m.type === 'video').length;
+                            docCount = mediaFiles.filter((m) => m.type === 'document').length;
+                        }
+                    }
+                    catch {
+                    }
+                }
+                if (mediaFiles.length === 0 && r.type !== 'text') {
+                    const type = r.type || 'image';
+                    mediaFiles = [{
+                            url: r.mediaUrl,
+                            driveId: r.mediaDriveId || undefined,
+                            type,
+                            fileName: r.fileName || 'arquivo',
+                        }];
+                    if (type === 'image')
+                        imageCount = 1;
+                    else if (type === 'video')
+                        videoCount = 1;
+                    else if (type === 'document')
+                        docCount = 1;
+                }
+            }
+            return {
+                ...r,
+                mediaFiles,
+                imageCount,
+                videoCount,
+                docCount,
+            };
+        };
+        return replies.map(formatReply);
     }
     async create(tenantId, data) {
         const rawShortcut = data.shortcut || '';
         const formattedShortcut = rawShortcut.startsWith('/') ? rawShortcut.trim() : `/${rawShortcut.trim()}`;
-        const mediaUrl = data.mediaUrl ? data.mediaUrl.trim() : null;
-        const mediaDriveId = mediaUrl ? (0, google_drive_helper_1.extractGoogleDriveId)(mediaUrl) : (data.mediaDriveId || null);
+        let mediaUrl = data.mediaUrl ? data.mediaUrl.trim() : null;
+        let mediaDriveId = mediaUrl ? (0, google_drive_helper_1.extractGoogleDriveId)(mediaUrl) : (data.mediaDriveId || null);
+        if (Array.isArray(data.mediaFiles) && data.mediaFiles.length > 0) {
+            mediaUrl = JSON.stringify(data.mediaFiles);
+            mediaDriveId = data.mediaFiles[0].driveId || (data.mediaFiles[0].url ? (0, google_drive_helper_1.extractGoogleDriveId)(data.mediaFiles[0].url) : null);
+        }
         let resolvedType = data.type || 'text';
         if (mediaUrl && (!data.type || data.type === 'text')) {
             resolvedType = (0, google_drive_helper_1.detectMediaType)(data.fileName || mediaUrl);
@@ -118,12 +166,22 @@ let QuickRepliesService = class QuickRepliesService {
         if (data.type !== undefined) {
             updatePayload.type = data.type;
         }
-        if (data.mediaUrl !== undefined) {
+        if (Array.isArray(data.mediaFiles) && data.mediaFiles.length > 0) {
+            updatePayload.mediaUrl = JSON.stringify(data.mediaFiles);
+            updatePayload.mediaDriveId = data.mediaFiles[0].driveId || (data.mediaFiles[0].url ? (0, google_drive_helper_1.extractGoogleDriveId)(data.mediaFiles[0].url) : null);
+            if (data.fileName) {
+                updatePayload.fileName = data.fileName.trim();
+            }
+            else {
+                updatePayload.fileName = data.mediaFiles[0].fileName || null;
+            }
+        }
+        else if (data.mediaUrl !== undefined) {
             const mediaUrl = data.mediaUrl ? data.mediaUrl.trim() : null;
             updatePayload.mediaUrl = mediaUrl;
             updatePayload.mediaDriveId = mediaUrl ? (0, google_drive_helper_1.extractGoogleDriveId)(mediaUrl) : null;
         }
-        if (data.fileName !== undefined) {
+        if (data.fileName !== undefined && !Array.isArray(data.mediaFiles)) {
             updatePayload.fileName = data.fileName ? data.fileName.trim() : null;
         }
         return this.prisma.quickReply.update({

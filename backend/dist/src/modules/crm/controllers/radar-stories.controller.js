@@ -26,8 +26,8 @@ let RadarStoriesController = class RadarStoriesController {
     async getMetrics(tenantId) {
         return this.radarStoriesService.getMetrics(tenantId);
     }
-    async getActivePosts(tenantId) {
-        return this.radarStoriesService.getActivePosts(tenantId);
+    async getActivePosts(tenantId, mode) {
+        return this.radarStoriesService.getActivePosts(tenantId, mode);
     }
     async updatePost(tenantId, postId, body) {
         return this.radarStoriesService.updatePost(tenantId, postId, body);
@@ -86,8 +86,9 @@ __decorate([
 __decorate([
     (0, common_1.Get)('active-posts'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Query)('mode')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], RadarStoriesController.prototype, "getActivePosts", null);
 __decorate([

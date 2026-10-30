@@ -64,6 +64,9 @@ let ChatController = class ChatController {
     async release(tenantId, conversationId) {
         return this.chatService.releaseConversation(tenantId, conversationId);
     }
+    async returnToBot(tenantId, conversationId) {
+        return this.chatService.returnToBot(tenantId, conversationId);
+    }
     async resolve(tenantId, conversationId) {
         return this.chatService.releaseConversation(tenantId, conversationId);
     }
@@ -256,6 +259,14 @@ __decorate([
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], ChatController.prototype, "release", null);
+__decorate([
+    (0, common_1.Patch)(':id/return-to-bot'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], ChatController.prototype, "returnToBot", null);
 __decorate([
     (0, common_1.Patch)(':id/resolve'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),

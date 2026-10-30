@@ -1087,17 +1087,20 @@ export class WebhooksController {
             const newMediaLen = mediaUrl ? mediaUrl.length : 0;
             const bestMedia = newMediaLen > curMediaLen ? mediaUrl : existing[0].mediaUrl;
             await this.prisma.$executeRawUnsafe(
-              `UPDATE "whatsapp_status_posts" SET "messageId" = $1, "mediaUrl" = $2, "mediaType" = $3 WHERE "id" = $4`,
+              `UPDATE "whatsapp_status_posts" 
+               SET "messageId" = $1, "mediaUrl" = $2, "mediaType" = $3, "thumbnailUrl" = COALESCE($4, "thumbnailUrl") 
+               WHERE "id" = $5`,
               key.id,
               bestMedia,
               mediaType,
+              thumbnailBase64,
               existing[0].id
             );
           } else {
             finalPostId = `post_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
             await this.prisma.$executeRawUnsafe(
-              `INSERT INTO "whatsapp_status_posts" ("id", "tenantId", "messageId", "title", "category", "mediaUrl", "mediaType", "postedAt")
-               VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+              `INSERT INTO "whatsapp_status_posts" ("id", "tenantId", "messageId", "title", "category", "mediaUrl", "mediaType", "thumbnailUrl", "postedAt")
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
               finalPostId,
               tenantId,
               key.id,
@@ -1105,6 +1108,7 @@ export class WebhooksController {
               category,
               mediaUrl,
               mediaType,
+              thumbnailBase64,
               postedDate
             );
             this.logger.log(`[Radar Stories] Novo Story postado detectado no WhatsApp: [${key.id}] "${caption}" (${category}) [${mediaType}]`);
@@ -1180,24 +1184,8 @@ export class WebhooksController {
                 matchedPost.messageId = storyMessageId;
               }
             } else {
-              const autoPostId = `post_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
-              await this.prisma.$executeRawUnsafe(
-                `INSERT INTO "whatsapp_status_posts" ("id", "tenantId", "messageId", "title", "category", "postedAt")
-                 VALUES ($1, $2, $3, $4, $5, NOW())`,
-                autoPostId,
-                tenantId,
-                storyMessageId,
-                'Status Comercial WhatsApp',
-                'Maquinários'
-              ).catch(() => {});
-              matchedPost = {
-                id: autoPostId,
-                tenantId,
-                messageId: storyMessageId,
-                title: 'Status Comercial WhatsApp',
-                category: 'Maquinários',
-                mediaUrl: null,
-              };
+              // Se não há post recente cadastrado para este tenant, não cria post fantasma
+              continue;
             }
           }
 

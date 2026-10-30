@@ -39,11 +39,11 @@ export declare class AgencyMarketingController {
         description: string | null;
         priority: string;
         checklist: import("@prisma/client/runtime/library").JsonValue | null;
-        marketingClientId: string;
         format: string;
         position: number;
         dueDate: Date | null;
         publishDate: Date | null;
+        marketingClientId: string;
         assignedUserId: string | null;
     })[]>;
     createCard(tenantId: string, dto: CreateMarketingCardDto): Promise<{
@@ -72,11 +72,11 @@ export declare class AgencyMarketingController {
         description: string | null;
         priority: string;
         checklist: import("@prisma/client/runtime/library").JsonValue | null;
-        marketingClientId: string;
         format: string;
         position: number;
         dueDate: Date | null;
         publishDate: Date | null;
+        marketingClientId: string;
         assignedUserId: string | null;
     }>;
     reorderCards(tenantId: string, body: {
@@ -115,11 +115,11 @@ export declare class AgencyMarketingController {
         description: string | null;
         priority: string;
         checklist: import("@prisma/client/runtime/library").JsonValue | null;
-        marketingClientId: string;
         format: string;
         position: number;
         dueDate: Date | null;
         publishDate: Date | null;
+        marketingClientId: string;
         assignedUserId: string | null;
     }>;
     deleteCard(tenantId: string, id: string): Promise<{
@@ -212,11 +212,11 @@ export declare class AgencyMarketingController {
             description: string | null;
             priority: string;
             checklist: import("@prisma/client/runtime/library").JsonValue | null;
-            marketingClientId: string;
             format: string;
             position: number;
             dueDate: Date | null;
             publishDate: Date | null;
+            marketingClientId: string;
             assignedUserId: string | null;
         })[];
     } & {
@@ -256,11 +256,11 @@ export declare class AgencyMarketingController {
             description: string | null;
             priority: string;
             checklist: import("@prisma/client/runtime/library").JsonValue | null;
-            marketingClientId: string;
             format: string;
             position: number;
             dueDate: Date | null;
             publishDate: Date | null;
+            marketingClientId: string;
             assignedUserId: string | null;
         })[];
     } & {
@@ -407,11 +407,11 @@ export declare class AgencyMarketingController {
         description: string | null;
         priority: string;
         checklist: import("@prisma/client/runtime/library").JsonValue | null;
-        marketingClientId: string;
         format: string;
         position: number;
         dueDate: Date | null;
         publishDate: Date | null;
+        marketingClientId: string;
         assignedUserId: string | null;
     })[]>;
     logTime(tenantId: string, req: any, dto: TimeClockDto): Promise<{

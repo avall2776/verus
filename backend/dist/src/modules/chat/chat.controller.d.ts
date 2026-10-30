@@ -362,6 +362,60 @@ export declare class ChatController {
         assignedTo: string | null;
         status: string;
     }>;
+    returnToBot(tenantId: string, conversationId: string): Promise<{
+        contact: {
+            id: string;
+            name: string;
+            phone: string | null;
+            email: string | null;
+            avatarUrl: string | null;
+            cep: string | null;
+            address: string | null;
+            source: string;
+            tags: string[];
+            tenantId: string;
+            whatsappLid: string | null;
+            createdAt: Date;
+            updatedAt: Date;
+        };
+        messages: {
+            id: string;
+            tenantId: string;
+            createdAt: Date;
+            contactId: string;
+            status: string;
+            providerMessageId: string | null;
+            content: string;
+            type: string;
+            mediaUrl: string | null;
+            audioTranscription: string | null;
+            quotedMessage: import("@prisma/client/runtime/library").JsonValue | null;
+            reactions: import("@prisma/client/runtime/library").JsonValue | null;
+            isInternal: boolean;
+            fromMe: boolean;
+            direction: string;
+            senderType: string;
+            scheduledAt: Date | null;
+            conversationId: string;
+        }[];
+        department: {
+            id: string;
+            name: string;
+            tenantId: string;
+            createdAt: Date;
+            updatedAt: Date;
+            color: string | null;
+        };
+    } & {
+        id: string;
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        contactId: string;
+        departmentId: string | null;
+        assignedTo: string | null;
+        status: string;
+    }>;
     resolve(tenantId: string, conversationId: string): Promise<{
         contact: {
             id: string;

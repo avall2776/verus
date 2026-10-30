@@ -36,6 +36,14 @@ let AiProcessor = AiProcessor_1 = class AiProcessor extends bullmq_1.WorkerHost 
         if (!conversation) {
             throw new Error(`Conversa ${conversationId} não encontrada.`);
         }
+        const isHumanHandled = conversation.status === 'human_takeover' ||
+            conversation.status === 'open' ||
+            conversation.status === 'in_progress' ||
+            Boolean(conversation.assignedTo);
+        if (isHumanHandled) {
+            this.logger.warn(`[AiProcessor] Conversa [${conversationId}] sob controle humano (status: ${conversation.status}, assignedTo: ${conversation.assignedTo}). Abortando IA.`);
+            return { status: 'aborted', reason: 'human_takeover_active' };
+        }
         if (conversation.status !== 'bot_active') {
             await this.prisma.conversation.update({
                 where: { id: conversationId },
@@ -302,7 +310,7 @@ let AiProcessor = AiProcessor_1 = class AiProcessor extends bullmq_1.WorkerHost 
             }
             const updatedConv = await this.prisma.conversation.update({
                 where: { id: conversationId },
-                data: { status: 'bot_active', assignedTo },
+                data: { status: 'open', assignedTo },
                 include: { contact: true }
             });
             this.chatGateway.emitConversationUpdated(tenantId, updatedConv);

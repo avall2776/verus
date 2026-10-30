@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "remotion:studio": "remotion preview src/remotion/index.ts",
-    "remotion:render": "remotion render src/remotion/index.ts VallorReels out/vallor_master_15s.mp4",
+    "remotion:render": "remotion render src/remotion/index.ts VallorRadarStoriesReels out/vallor_radar_stories_48s.mp4",
+    "remotion:render:radar": "remotion render src/remotion/index.ts VallorRadarStoriesReels out/vallor_radar_stories_48s.mp4",
+    "remotion:render:master15s": "remotion render src/remotion/index.ts VallorReels out/vallor_master_15s.mp4",
     "remotion:render:scene1": "remotion render src/remotion/index.ts Scene1Quick out/vallor_cena1.mp4"
   },
   "dependencies": {

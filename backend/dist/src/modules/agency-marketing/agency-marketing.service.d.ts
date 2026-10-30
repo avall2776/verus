@@ -39,11 +39,11 @@ export declare class AgencyMarketingService {
         description: string | null;
         priority: string;
         checklist: import("@prisma/client/runtime/library").JsonValue | null;
-        marketingClientId: string;
         format: string;
         position: number;
         dueDate: Date | null;
         publishDate: Date | null;
+        marketingClientId: string;
         assignedUserId: string | null;
     })[]>;
     createCard(tenantId: string, dto: CreateMarketingCardDto): Promise<{
@@ -72,11 +72,11 @@ export declare class AgencyMarketingService {
         description: string | null;
         priority: string;
         checklist: import("@prisma/client/runtime/library").JsonValue | null;
-        marketingClientId: string;
         format: string;
         position: number;
         dueDate: Date | null;
         publishDate: Date | null;
+        marketingClientId: string;
         assignedUserId: string | null;
     }>;
     updateCard(tenantId: string, cardId: string, dto: UpdateMarketingCardDto): Promise<{
@@ -105,11 +105,11 @@ export declare class AgencyMarketingService {
         description: string | null;
         priority: string;
         checklist: import("@prisma/client/runtime/library").JsonValue | null;
-        marketingClientId: string;
         format: string;
         position: number;
         dueDate: Date | null;
         publishDate: Date | null;
+        marketingClientId: string;
         assignedUserId: string | null;
     }>;
     reorderCards(tenantId: string, items: Array<{
@@ -210,11 +210,11 @@ export declare class AgencyMarketingService {
             description: string | null;
             priority: string;
             checklist: import("@prisma/client/runtime/library").JsonValue | null;
-            marketingClientId: string;
             format: string;
             position: number;
             dueDate: Date | null;
             publishDate: Date | null;
+            marketingClientId: string;
             assignedUserId: string | null;
         })[];
     } & {
@@ -365,11 +365,11 @@ export declare class AgencyMarketingService {
         description: string | null;
         priority: string;
         checklist: import("@prisma/client/runtime/library").JsonValue | null;
-        marketingClientId: string;
         format: string;
         position: number;
         dueDate: Date | null;
         publishDate: Date | null;
+        marketingClientId: string;
         assignedUserId: string | null;
     })[]>;
     logTime(tenantId: string, userId: string, dto: TimeClockDto, ipAddress?: string, userAgent?: string): Promise<{

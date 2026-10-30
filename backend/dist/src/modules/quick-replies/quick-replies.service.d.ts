@@ -7,6 +7,12 @@ export interface CreateQuickReplyDto {
     mediaUrl?: string;
     mediaDriveId?: string;
     fileName?: string;
+    mediaFiles?: Array<{
+        url: string;
+        driveId?: string;
+        type: string;
+        fileName: string;
+    }>;
 }
 export interface UpdateQuickReplyDto {
     shortcut?: string;
@@ -16,23 +22,17 @@ export interface UpdateQuickReplyDto {
     mediaUrl?: string;
     mediaDriveId?: string;
     fileName?: string;
+    mediaFiles?: Array<{
+        url: string;
+        driveId?: string;
+        type: string;
+        fileName: string;
+    }>;
 }
 export declare class QuickRepliesService {
     private prisma;
     constructor(prisma: PrismaService);
-    findAll(tenantId: string): Promise<{
-        id: string;
-        tenantId: string;
-        createdAt: Date;
-        updatedAt: Date;
-        content: string;
-        type: string;
-        mediaUrl: string | null;
-        title: string | null;
-        fileName: string | null;
-        shortcut: string;
-        mediaDriveId: string | null;
-    }[]>;
+    findAll(tenantId: string): Promise<any[]>;
     create(tenantId: string, data: CreateQuickReplyDto): Promise<{
         id: string;
         tenantId: string;

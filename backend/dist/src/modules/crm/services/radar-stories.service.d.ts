@@ -67,17 +67,22 @@ export declare class RadarStoriesService implements OnModuleInit, OnModuleDestro
     onModuleDestroy(): void;
     private startBackgroundSync;
     syncAllActiveTenants(): Promise<void>;
-    getActivePosts(tenantId: string): Promise<{
+    getActivePosts(tenantId: string, mode?: string): Promise<{
         id: any;
         messageId: any;
         title: any;
         category: any;
         mediaUrl: any;
+        mediaType: any;
+        thumbnailUrl: any;
         postedAt: any;
         postedAtRelative: string;
         postedAtDate: string;
         postedAtTime: string;
         viewsCount: number;
+        viewsTotal: number;
+        viewsToday: number;
+        isLive: boolean;
     }[]>;
     getRecentViewersPhones(tenantId: string): Promise<{
         phones: string[];
@@ -96,7 +101,10 @@ export declare class RadarStoriesService implements OnModuleInit, OnModuleDestro
     publishStory(tenantId: string, data: {
         title: string;
         category: string;
-        imageBase64: string;
+        imageBase64?: string;
+        videoBase64?: string;
+        mediaBase64?: string;
+        mediaType?: 'image' | 'video';
         scheduledAt?: string;
     }): Promise<{
         success: boolean;
@@ -117,11 +125,16 @@ export declare class RadarStoriesService implements OnModuleInit, OnModuleDestro
             title: any;
             category: any;
             mediaUrl: any;
+            mediaType: any;
+            thumbnailUrl: any;
             postedAt: any;
             postedAtRelative: string;
             postedAtDate: string;
             postedAtTime: string;
             viewsCount: number;
+            viewsTotal: number;
+            viewsToday: number;
+            isLive: boolean;
         }[];
         syncedViewsCount: number;
     }>;
@@ -242,6 +255,7 @@ export declare class RadarStoriesService implements OnModuleInit, OnModuleDestro
         title?: string;
         category?: string;
         mediaUrl?: string;
+        mediaType?: string;
         postedAt?: string;
     }): Promise<{
         success: boolean;
@@ -252,11 +266,16 @@ export declare class RadarStoriesService implements OnModuleInit, OnModuleDestro
             title: any;
             category: any;
             mediaUrl: any;
+            mediaType: any;
+            thumbnailUrl: any;
             postedAt: any;
             postedAtRelative: string;
             postedAtDate: string;
             postedAtTime: string;
             viewsCount: number;
+            viewsTotal: number;
+            viewsToday: number;
+            isLive: boolean;
         }[];
     }>;
     updateViewerContact(tenantId: string, viewId: string, data: {
