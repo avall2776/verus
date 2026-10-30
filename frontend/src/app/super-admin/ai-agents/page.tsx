@@ -895,7 +895,7 @@ export default function SuperAdminAiAgentsPage() {
                     name="aiName"
                     value={config.aiName}
                     onChange={handleChange}
-                    placeholder="Ex: Vitor (IA)"
+                    placeholder="Ex: Sofia (IA)"
                     className="w-full bg-white dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:border-blue-500 transition-colors shadow-sm"
                   />
                   <p className="text-[11px] text-slate-600 dark:text-slate-400 font-medium">
@@ -953,28 +953,28 @@ export default function SuperAdminAiAgentsPage() {
             </div>
 
             {/* SEÇÃO 1.5: CANAL DE TREINAMENTO & MENTORIA DA IA DO CLIENTE */}
-            <div className="rounded-2xl bg-white dark:bg-[#0B1224] border border-cyan-300 dark:border-cyan-500/40 p-6 space-y-5 shadow-sm">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-cyan-200 dark:border-cyan-500/20 pb-4">
+            <div className="rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 p-6 space-y-5 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800/80 pb-4">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-10 h-10 rounded-xl bg-cyan-100 dark:bg-cyan-600/20 border border-cyan-300 dark:border-cyan-500/30 flex items-center justify-center text-cyan-700 dark:text-cyan-300 shrink-0">
-                    <GraduationCap size={22} className="text-cyan-600 dark:text-cyan-400" />
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+                    <GraduationCap size={22} />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
                       <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
                         Treinamento & Mentoria do Agente
                       </h2>
-                      <span className="text-[10px] bg-cyan-50 dark:bg-cyan-950 text-cyan-800 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-500/40 px-2 py-0.5 rounded-full font-mono uppercase flex items-center gap-1 font-bold">
+                      <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-md font-mono uppercase flex items-center gap-1 font-semibold">
                         <Lock size={10} /> Canal Interno
                       </span>
                     </div>
                     <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-                      Ensine e oriente <strong className="text-slate-900 dark:text-white">{config.aiName || "Sofia"}</strong> para a empresa <strong className="text-slate-900 dark:text-white">{selectedTenant?.name || "selecionada"}</strong>. As diretrizes são assimiladas na camada ideal (Roteiro, Conhecimento ou Cancelas) e passam a valer imediatamente no WhatsApp e no Simulador.
+                      Ensine e oriente a IA para a empresa <strong className="text-slate-900 dark:text-white">{selectedTenant?.name || "selecionada"}</strong>. As diretrizes são assimiladas na camada ideal (Roteiro, Conhecimento ou Cancelas) e passam a valer imediatamente no WhatsApp e no Simulador.
                     </p>
                   </div>
                 </div>
 
-                <span className="text-[11px] font-mono text-cyan-800 dark:text-cyan-400 bg-cyan-100 dark:bg-cyan-950/80 border border-cyan-300 dark:border-cyan-500/40 px-3 py-1 rounded-xl shrink-0 font-bold">
+                <span className="text-[11px] font-mono text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1 rounded-lg shrink-0 font-semibold">
                   {trainingLogs.length} diretriz(es) aprendida(s)
                 </span>
               </div>
@@ -982,7 +982,7 @@ export default function SuperAdminAiAgentsPage() {
               {/* Banner de Garantia */}
               <div className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-700 dark:text-slate-300">
                 <div className="flex items-center gap-2">
-                  <ShieldCheck size={14} className="text-cyan-600 dark:text-cyan-400 shrink-0" />
+                  <ShieldCheck size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
                   <span>Ambiente de Curadoria: O Curador Neural distribui seu alinhamento entre Persona, Base de Conhecimento e Cancelas de forma segura sem apagar o conteúdo existente.</span>
                 </div>
               </div>
@@ -990,9 +990,9 @@ export default function SuperAdminAiAgentsPage() {
               {/* Caixa de Entrada de Treinamento */}
               <form onSubmit={handleCoachAgent} className="space-y-3">
                 {quotedTrainingText && (
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-cyan-50 dark:bg-cyan-950/40 border border-cyan-200 dark:border-cyan-500/40 text-xs text-cyan-900 dark:text-cyan-200 animate-fadeIn">
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-xs text-blue-900 dark:text-blue-200 animate-fadeIn">
                     <div className="flex items-center gap-2 truncate">
-                      <GraduationCap size={14} className="text-cyan-600 dark:text-cyan-400 shrink-0" />
+                      <GraduationCap size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
                       <span className="font-bold text-slate-900 dark:text-white shrink-0">Orientando sobre resposta do simulador:</span>
                       <span className="truncate italic text-slate-600 dark:text-slate-300 text-[11px]">&ldquo;{quotedTrainingText}&rdquo;</span>
                     </div>
@@ -1007,7 +1007,7 @@ export default function SuperAdminAiAgentsPage() {
                   </div>
                 )}
 
-                <div className="flex flex-col gap-2.5 bg-white dark:bg-[#070D1B] border border-cyan-300 dark:border-cyan-500/40 focus-within:border-cyan-500 dark:focus-within:border-cyan-400 focus-within:ring-1 focus-within:ring-cyan-400/30 rounded-2xl p-3 transition-all shadow-sm">
+                <div className="flex flex-col gap-2.5 bg-white dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 focus-within:border-blue-500 dark:focus-within:border-blue-400 rounded-xl p-3 transition-all shadow-sm">
                   <textarea
                     ref={trainingInputRef}
                     value={trainingFeedback}
@@ -1018,7 +1018,7 @@ export default function SuperAdminAiAgentsPage() {
                         handleCoachAgent();
                       }
                     }}
-                    placeholder={`Diga à ${config.aiName || "Sofia"} o que ela deve ajustar, retirar, acrescentar na base ou como conduzir melhor o atendimento aos leads desta empresa...`}
+                    placeholder={`Diga à IA o que ela deve ajustar, retirar, acrescentar na base ou como conduzir melhor o atendimento aos leads desta empresa...`}
                     rows={3}
                     className="w-full bg-transparent py-1 px-2 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none resize-none custom-scrollbar"
                   />
@@ -1031,7 +1031,7 @@ export default function SuperAdminAiAgentsPage() {
                     <button
                       type="submit"
                       disabled={trainingAi || !trainingFeedback.trim()}
-                      className="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white rounded-xl text-xs font-bold transition-all disabled:opacity-40 flex items-center gap-1.5 cursor-pointer shadow-md shrink-0"
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold transition-all disabled:opacity-40 flex items-center gap-1.5 cursor-pointer shadow-sm shrink-0"
                     >
                       {trainingAi ? (
                         <>
@@ -1040,8 +1040,8 @@ export default function SuperAdminAiAgentsPage() {
                         </>
                       ) : (
                         <>
-                          <Sparkles size={13} className="text-cyan-200" />
-                          <span>Ensinar {config.aiName || "Sofia"}</span>
+                          <Sparkles size={13} />
+                          <span>Ensinar IA</span>
                         </>
                       )}
                     </button>
@@ -1052,12 +1052,12 @@ export default function SuperAdminAiAgentsPage() {
               {/* Histórico de Diretrizes Aprendidas */}
               {loadingTrainingLogs ? (
                 <div className="py-6 text-center text-slate-500 text-xs flex items-center justify-center gap-2">
-                  <Loader2 size={14} className="animate-spin text-cyan-400" />
+                  <Loader2 size={14} className="animate-spin text-blue-500" />
                   <span>Carregando histórico de aprendizado do robô...</span>
                 </div>
               ) : trainingLogs.length > 0 ? (
                 <div className="space-y-3 pt-2">
-                  <span className="block text-xs font-semibold text-slate-300">
+                  <span className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
                     Diretrizes Recentes Assimiladas por este Agente
                   </span>
 
@@ -1065,40 +1065,40 @@ export default function SuperAdminAiAgentsPage() {
                     {trainingLogs.map((log) => (
                       <div
                         key={log.id}
-                        className="p-3.5 rounded-xl bg-gradient-to-br from-[#0c223c]/80 to-[#081729]/90 border border-cyan-500/30 space-y-2 shadow-sm"
+                        className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm"
                       >
-                        <div className="flex items-center justify-between text-[11px] font-bold text-cyan-300 border-b border-cyan-500/20 pb-1.5">
+                        <div className="flex items-center justify-between text-[11px] font-bold text-slate-800 dark:text-slate-200 border-b border-slate-200/80 dark:border-slate-800 pb-1.5">
                           <div className="flex items-center gap-2">
-                            <Bot size={14} className="text-cyan-400 shrink-0" />
-                            <span className="text-white">{config.aiName || "Sofia"}</span>
-                            <span className="text-[9px] bg-cyan-950 text-cyan-300 border border-cyan-500/40 px-1.5 py-0.5 rounded font-mono uppercase font-bold">
+                            <Bot size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                            <span className="text-slate-900 dark:text-white font-bold">{config.aiName || "Agente IA"}</span>
+                            <span className="text-[10px] bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 px-2 py-0.5 rounded-md font-mono uppercase font-semibold">
                               {log.categoryLabel || "Diretriz Assimilada"}
                             </span>
                           </div>
-                          <span className="text-slate-400 font-mono text-[10px]" suppressHydrationWarning>
+                          <span className="text-slate-500 dark:text-slate-400 font-mono text-[10px]" suppressHydrationWarning>
                             {new Date(log.createdAt).toLocaleString("pt-BR")}
                           </span>
                         </div>
 
                         {log.quotedText && (
-                          <div className="p-2 rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-cyan-500/20 text-[11px] text-slate-300 italic border-l-2 border-l-cyan-400">
-                            <span className="text-[10px] text-cyan-400 font-bold block not-italic uppercase mb-0.5">
+                          <div className="p-2.5 rounded-lg bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 text-[11px] text-slate-700 dark:text-slate-300 italic border-l-2 border-l-blue-600 dark:border-l-blue-400">
+                            <span className="text-[10px] text-blue-600 dark:text-blue-400 font-bold block not-italic uppercase mb-0.5">
                               Trecho Discutido:
                             </span>
                             &ldquo;{log.quotedText}&rdquo;
                           </div>
                         )}
 
-                        <div className="text-xs text-slate-100 space-y-1">
-                          <p className="font-semibold text-cyan-200 text-[11px]">
+                        <div className="text-xs text-slate-800 dark:text-slate-100 space-y-1">
+                          <p className="font-semibold text-slate-900 dark:text-blue-300 text-[11px]">
                             Orientação: &ldquo;{log.feedback}&rdquo;
                           </p>
-                          <p className="text-[11px] text-slate-300 leading-relaxed font-mono whitespace-pre-wrap">
+                          <p className="text-[11px] text-slate-700 dark:text-slate-300 leading-relaxed font-mono whitespace-pre-wrap">
                             {log.explanation}
                           </p>
                         </div>
 
-                        <div className="pt-1.5 border-t border-cyan-500/20 flex items-center justify-between text-[10px] text-cyan-400">
+                        <div className="pt-1.5 border-t border-slate-200/80 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-600 dark:text-slate-400">
                           <span>Diretriz ativa: &ldquo;{log.learnedRule}&rdquo;</span>
                           <span className="text-slate-500 font-mono">{log.userName || "Super Admin"}</span>
                         </div>
@@ -1109,8 +1109,8 @@ export default function SuperAdminAiAgentsPage() {
               ) : (
                 <div className="py-6 text-center text-slate-500 text-xs flex flex-col items-center max-w-md mx-auto">
                   <Lock size={22} className="opacity-30 mb-1.5 text-slate-400" />
-                  <p className="text-slate-300 font-semibold mb-0.5">Nenhuma diretriz cadastrada ainda para este agente.</p>
-                  <p className="text-slate-500 text-[11px]">
+                  <p className="text-slate-700 dark:text-slate-300 font-semibold mb-0.5">Nenhuma diretriz cadastrada ainda para este agente.</p>
+                  <p className="text-slate-500 dark:text-slate-400 text-[11px]">
                     Use o campo acima ou o simulador ao lado para orientar a IA sobre novas regras de negócio, correções e conduta de atendimento.
                   </p>
                 </div>
@@ -1118,40 +1118,40 @@ export default function SuperAdminAiAgentsPage() {
             </div>
 
             {/* SEÇÃO 1.8: RADAR DE SENTIMENTOS & OPORTUNIDADES DE APRENDIZADO CONTÍNUO (FASE 86) */}
-            <div className="rounded-2xl bg-white dark:bg-[#0B1224] border border-amber-500/30 p-6 space-y-5 shadow-xl shadow-amber-950/20 ring-1 ring-amber-500/10">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-amber-500/20 pb-4">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-10 h-10 rounded-xl bg-amber-600/20 border border-amber-500/30 flex items-center justify-center text-amber-300 shrink-0">
-                    <HeartPulse size={22} className="text-amber-400" />
+            <div className="rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 p-6 space-y-5 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800/80 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+                    <HeartPulse size={20} />
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                      <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
                         Radar de Sentimentos & Ciclo de Aprendizado
                       </h2>
-                      <span className="text-[10px] bg-amber-50 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-500/40 px-2 py-0.5 rounded-full font-mono uppercase flex items-center gap-1 font-bold">
-                        <Sparkles size={10} /> Fase 86 • Human-in-the-Loop
+                      <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 px-2.5 py-0.5 rounded-md font-mono uppercase font-semibold">
+                        Fase 86 • Human-in-the-Loop
                       </span>
                     </div>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                       Monitoramento emocional em tempo real no WhatsApp. Transforme atritos, queixas de robô e avaliações baixas em evolução permanente da IA com 1 clique.
                     </p>
                   </div>
                 </div>
 
-                {/* Badges de Métricas */}
+                {/* Badges de Métricas / Filtros */}
                 <div className="flex items-center gap-2 shrink-0">
                   <button
                     type="button"
                     onClick={() => setIncidentStatusFilter("PENDENTE")}
-                    className={`px-2.5 py-1 rounded-xl text-[11px] font-mono font-bold border transition-colors cursor-pointer flex items-center gap-1.5 ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer flex items-center gap-2 shadow-sm ${
                       incidentStatusFilter === "PENDENTE"
-                        ? "bg-amber-500/20 border-amber-400 text-amber-300"
-                        : "bg-slate-900 border-slate-800 text-slate-400 hover:text-white"
+                        ? "bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-600 text-amber-900 dark:text-amber-200"
+                        : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
                     }`}
                   >
-                    <span>Pendentes:</span>
-                    <span className="px-1.5 py-0.2 rounded bg-amber-500/30 text-amber-200">
+                    <span>Pendências:</span>
+                    <span className="px-1.5 py-0.2 rounded-md bg-amber-100 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 font-mono text-[11px] font-bold">
                       {incidentMetrics.pending}
                     </span>
                   </button>
@@ -1159,14 +1159,14 @@ export default function SuperAdminAiAgentsPage() {
                   <button
                     type="button"
                     onClick={() => setIncidentStatusFilter("ASSIMILADO")}
-                    className={`px-2.5 py-1 rounded-xl text-[11px] font-mono font-bold border transition-colors cursor-pointer flex items-center gap-1.5 ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer flex items-center gap-2 shadow-sm ${
                       incidentStatusFilter === "ASSIMILADO"
-                        ? "bg-emerald-500/20 border-emerald-400 text-emerald-300"
-                        : "bg-slate-900 border-slate-800 text-slate-400 hover:text-white"
+                        ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-600 text-emerald-900 dark:text-emerald-200"
+                        : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
                     }`}
                   >
-                    <span>Assimilados:</span>
-                    <span className="px-1.5 py-0.2 rounded bg-emerald-500/30 text-emerald-200">
+                    <span>Assimiladas:</span>
+                    <span className="px-1.5 py-0.2 rounded-md bg-emerald-100 dark:bg-emerald-900/60 text-emerald-900 dark:text-emerald-200 font-mono text-[11px] font-bold">
                       {incidentMetrics.assimilated}
                     </span>
                   </button>
@@ -1174,14 +1174,14 @@ export default function SuperAdminAiAgentsPage() {
                   <button
                     type="button"
                     onClick={() => setIncidentStatusFilter("ALL")}
-                    className={`px-2.5 py-1 rounded-xl text-[11px] font-mono font-bold border transition-colors cursor-pointer flex items-center gap-1.5 ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer flex items-center gap-2 shadow-sm ${
                       incidentStatusFilter === "ALL"
-                        ? "bg-cyan-500/20 border-cyan-400 text-cyan-300"
-                        : "bg-slate-900 border-slate-800 text-slate-400 hover:text-white"
+                        ? "bg-blue-50 dark:bg-blue-950/40 border-blue-300 dark:border-blue-600 text-blue-900 dark:text-blue-200"
+                        : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
                     }`}
                   >
-                    <span>Todos:</span>
-                    <span className="px-1.5 py-0.2 rounded bg-cyan-500/30 text-cyan-200">
+                    <span>Todas:</span>
+                    <span className="px-1.5 py-0.2 rounded-md bg-blue-100 dark:bg-blue-900/60 text-blue-900 dark:text-blue-200 font-mono text-[11px] font-bold">
                       {incidentMetrics.total}
                     </span>
                   </button>
@@ -1191,7 +1191,7 @@ export default function SuperAdminAiAgentsPage() {
               {/* Lista de Incidentes de Aprendizado */}
               {loadingIncidents ? (
                 <div className="py-8 text-center text-slate-500 text-xs flex items-center justify-center gap-2">
-                  <Loader2 size={16} className="animate-spin text-amber-400" />
+                  <Loader2 size={16} className="animate-spin text-blue-500" />
                   <span>Sincronizando radar emocional e incidentes...</span>
                 </div>
               ) : incidents.length > 0 ? (
@@ -1205,10 +1205,10 @@ export default function SuperAdminAiAgentsPage() {
                         key={inc.id}
                         className={`p-4 rounded-xl border transition-all space-y-3 ${
                           isPending
-                            ? "bg-amber-50/70 dark:bg-gradient-to-br dark:from-[#1c1409]/70 dark:to-[#0F1420] border-amber-300 dark:border-amber-500/40 shadow-sm"
+                            ? "bg-amber-50/70 dark:bg-amber-950/20 border-amber-300 dark:border-amber-700/60 shadow-sm"
                             : isAssimilated
-                            ? "bg-emerald-50/70 dark:bg-[#0A151C]/60 border-emerald-300 dark:border-emerald-500/30"
-                            : "bg-slate-100/70 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800 opacity-60"
+                            ? "bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-700/60"
+                            : "bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800 opacity-60"
                         }`}
                       >
                         {/* Header do Incidente */}
@@ -1216,26 +1216,26 @@ export default function SuperAdminAiAgentsPage() {
                           <div className="flex flex-wrap items-center gap-2">
                             {/* Tag de Sentimento */}
                             {inc.sentimento === "HOSTIL_RECLAMACAO" ? (
-                              <span className="text-[10px] bg-rose-50 dark:bg-red-950 text-rose-800 dark:text-red-300 border border-rose-300 dark:border-red-500/40 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
-                                <Flame size={11} className="text-rose-600 dark:text-red-400" /> Reclamação Hostil
+                              <span className="text-[10px] bg-rose-50 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800 px-2 py-0.5 rounded-md font-semibold flex items-center gap-1">
+                                <Flame size={11} className="text-rose-600 dark:text-rose-400" /> Reclamação Hostil
                               </span>
                             ) : inc.sentimento === "FRUSTRADO_IRRITADO" ? (
-                              <span className="text-[10px] bg-amber-50 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-500/40 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                              <span className="text-[10px] bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 px-2 py-0.5 rounded-md font-semibold flex items-center gap-1">
                                 <AlertTriangle size={11} className="text-amber-600 dark:text-amber-400" /> Cliente Frustrado/Irritado
                               </span>
                             ) : inc.tipoIncidente === "NOTA_BAIXA_CSAT" ? (
-                              <span className="text-[10px] bg-rose-50 dark:bg-rose-950 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-500/40 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                              <span className="text-[10px] bg-rose-50 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800 px-2 py-0.5 rounded-md font-semibold flex items-center gap-1">
                                 <ThumbsDown size={11} className="text-rose-600 dark:text-rose-400" /> CSAT Baixo (1-2 Estrelas)
                               </span>
                             ) : (
-                              <span className="text-[10px] bg-blue-50 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-500/40 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                              <span className="text-[10px] bg-blue-50 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800 px-2 py-0.5 rounded-md font-semibold flex items-center gap-1">
                                 <Info size={11} className="text-blue-600 dark:text-blue-400" /> Dúvida Crítica
                               </span>
                             )}
 
                             {/* Tag de Robô */}
                             {inc.reclamouDeBot && (
-                              <span className="text-[10px] bg-purple-50 dark:bg-purple-950 text-purple-800 dark:text-purple-300 border border-purple-300 dark:border-purple-500/40 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                              <span className="text-[10px] bg-purple-50 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800 px-2 py-0.5 rounded-md font-semibold flex items-center gap-1">
                                 <Bot size={11} className="text-purple-600 dark:text-purple-400" /> Reclamou de Robô / IA
                               </span>
                             )}
@@ -1291,8 +1291,8 @@ export default function SuperAdminAiAgentsPage() {
                         <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-200 dark:border-white/5">
                           <div>
                             {isAssimilated ? (
-                              <span className="text-[11px] text-emerald-400 font-semibold flex items-center gap-1.5">
-                                <CheckCircle size={13} className="text-emerald-400" />
+                              <span className="text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold flex items-center gap-1.5">
+                                <CheckCircle size={13} className="text-emerald-600 dark:text-emerald-400" />
                                 Diretriz assimilada por {inc.assimiladoPor || "Super Admin"}
                                 {inc.assimiladoEm && (
                                   <span className="text-[10px] text-slate-500 font-mono" suppressHydrationWarning>
@@ -1305,7 +1305,7 @@ export default function SuperAdminAiAgentsPage() {
                                 Incidente descartado
                               </span>
                             ) : (
-                              <span className="text-[10px] text-amber-300 font-medium flex items-center gap-1">
+                              <span className="text-[10px] text-amber-700 dark:text-amber-300 font-medium flex items-center gap-1">
                                 <Clock size={11} /> Aguardando aprovação do gestor para ser assimilada
                               </span>
                             )}
@@ -1317,7 +1317,7 @@ export default function SuperAdminAiAgentsPage() {
                                 type="button"
                                 onClick={() => handleDismissIncident(inc.id)}
                                 disabled={dismissingIncidentId === inc.id || applyingIncidentId === inc.id}
-                                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl text-[11px] font-semibold transition-colors disabled:opacity-40 cursor-pointer"
+                                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-semibold transition-colors disabled:opacity-40 cursor-pointer border border-slate-200 dark:border-slate-700"
                               >
                                 {dismissingIncidentId === inc.id ? "Descartando..." : "Descartar"}
                               </button>
@@ -1326,7 +1326,7 @@ export default function SuperAdminAiAgentsPage() {
                                 type="button"
                                 onClick={() => handleApplyIncident(inc)}
                                 disabled={applyingIncidentId === inc.id || dismissingIncidentId === inc.id}
-                                className="px-4 py-1.5 bg-gradient-to-r from-amber-600 via-emerald-600 to-teal-600 hover:from-amber-500 hover:to-teal-500 text-white rounded-xl text-xs font-bold transition-all disabled:opacity-40 flex items-center gap-1.5 cursor-pointer shadow-md"
+                                className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold transition-all disabled:opacity-40 flex items-center gap-1.5 cursor-pointer shadow-sm"
                               >
                                 {applyingIncidentId === inc.id ? (
                                   <>
@@ -1335,7 +1335,7 @@ export default function SuperAdminAiAgentsPage() {
                                   </>
                                 ) : (
                                   <>
-                                    <Zap size={13} className="text-amber-200" />
+                                    <Zap size={13} />
                                     <span>Aprovar & Ensinar com 1 Clique</span>
                                   </>
                                 )}
@@ -1348,14 +1348,14 @@ export default function SuperAdminAiAgentsPage() {
                   })}
                 </div>
               ) : (
-                <div className="py-6 text-center text-slate-500 text-xs flex flex-col items-center max-w-md mx-auto">
-                  <CheckCircle2 size={24} className="text-emerald-400 mb-1.5 opacity-80" />
-                  <p className="text-slate-300 font-semibold mb-0.5">
+                <div className="py-8 text-center text-xs flex flex-col items-center max-w-md mx-auto">
+                  <CheckCircle2 size={24} className="text-emerald-600 dark:text-emerald-400 mb-2 opacity-90" />
+                  <p className="text-slate-800 dark:text-slate-200 font-bold mb-1">
                     {incidentStatusFilter === "PENDENTE"
                       ? "Nenhum incidente de atrito pendente!"
                       : "Nenhum registro encontrado neste filtro."}
                   </p>
-                  <p className="text-slate-500 text-[11px]">
+                  <p className="text-slate-600 dark:text-slate-400 text-[11px] leading-relaxed">
                     {incidentStatusFilter === "PENDENTE"
                       ? "O agente está acolhendo os leads com excelente tom emocional. Caso algum cliente expresse atrito ou reclame de robô no WhatsApp, o incidente aparecerá aqui com sugestão de diretriz para aprovação com 1 clique."
                       : "Alterne os filtros acima para ver outros status de incidentes e feedbacks."}
