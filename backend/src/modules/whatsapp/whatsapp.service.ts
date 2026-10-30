@@ -1597,6 +1597,55 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
+   * Identifica de forma segura se o nome de um contato é temporário, genérico ou nulo.
+   * Se for nome humano real (ex: "Wagner", "Carlos Silva", "Fazenda Bela Vista"), retorna false.
+   */
+  public isGenericContactName(name: string | null | undefined): boolean {
+    if (!name) return true;
+    const trimmed = name.trim();
+    if (!trimmed || trimmed === '.' || trimmed === '-' || trimmed === '..' || trimmed === '...' || trimmed === '_') return true;
+    const lower = trimmed.toLowerCase();
+    if (lower === 'cliente whatsapp' || lower === 'cliente verto' || lower === 'cliente' || lower === 'sem nome' || lower === 'contato') return true;
+    if (trimmed.startsWith('WhatsApp (') || trimmed.startsWith('Contato WhatsApp (') || trimmed.startsWith('WhatsApp -') || trimmed === 'WhatsApp (Contato Direto)') return true;
+    if (trimmed.includes('@lid')) return true;
+    // Se o nome for apenas números com 8 ou mais dígitos (ex: telefone gravado no campo nome)
+    const digitsOnly = trimmed.replace(/\D/g, '');
+    if (digitsOnly.length >= 8 && digitsOnly.length === trimmed.replace(/[\s\+\-\(\)]/g, '').length) return true;
+    return false;
+  }
+
+  /**
+   * Formata um número E.164 em formato legível brasileiro para exibição amigável
+   * Ex: 5554996124131 -> WhatsApp (+55 54 99612-4131)
+   */
+  public formatFriendlyPhone(phone: string | null | undefined): string {
+    if (!phone) return 'Contato WhatsApp';
+    const clean = phone.replace(/\D/g, '');
+    if (clean.length === 13 && clean.startsWith('55')) {
+      const ddd = clean.slice(2, 4);
+      const p1 = clean.slice(4, 9);
+      const p2 = clean.slice(9);
+      return `WhatsApp (+55 ${ddd} ${p1}-${p2})`;
+    }
+    if (clean.length === 12 && clean.startsWith('55')) {
+      const ddd = clean.slice(2, 4);
+      const p1 = clean.slice(4, 8);
+      const p2 = clean.slice(8);
+      return `WhatsApp (+55 ${ddd} ${p1}-${p2})`;
+    }
+    if (clean.length === 11) {
+      const ddd = clean.slice(0, 2);
+      const p1 = clean.slice(2, 7);
+      const p2 = clean.slice(7);
+      return `WhatsApp (${ddd} ${p1}-${p2})`;
+    }
+    if (clean.length >= 10 && clean.length <= 13) {
+      return `WhatsApp (${clean})`;
+    }
+    return phone.includes('@lid') ? 'WhatsApp (Contato Direto)' : `WhatsApp (${phone})`;
+  }
+
+  /**
    * Resolve de forma síncrona o número real e nome salvo na agenda do celular
    * para contatos que chegam com identificador interno @lid (ex: 173680038539435@lid).
    */
@@ -1823,8 +1872,14 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
             { phone: null },
             { name: 'Cliente WhatsApp' },
             { name: 'Cliente Verto' },
+            { name: 'Cliente' },
+            { name: '.' },
+            { name: '-' },
+            { name: { startsWith: 'Contato WhatsApp' } },
+            { name: { startsWith: 'WhatsApp (' } },
           ],
         },
+        take: 100,
       });
 
       if (!lidContacts.length) return 0;
@@ -1835,21 +1890,13 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
       for (const contact of lidContacts) {
         const digits = (contact.phone || '').replace(/\D/g, '');
         const hasValidPhone = digits.length >= 10 && digits.length <= 13 && !contact.phone?.includes('@lid');
-        const isGenericName = !contact.name ||
-          contact.name === '.' ||
-          contact.name === '-' ||
-          contact.name === contact.phone ||
-          contact.name === `WhatsApp (${contact.phone})` ||
-          contact.name === 'Cliente WhatsApp' ||
-          contact.name === 'Cliente Verto' ||
-          contact.name.includes('@lid') ||
-          (contact.name.length >= 8 && /^\d+$/.test(contact.name.replace(/\D/g, '')));
+        const isGenericName = this.isGenericContactName(contact.name);
 
         if (hasValidPhone && !isGenericName) {
           continue;
         }
 
-        const resolution = await this.resolveContactFromEvolution(
+        let resolution = await this.resolveContactFromEvolution(
           tenantId,
           targetInstanceName,
           contact.whatsappLid || contact.phone || undefined,
@@ -1857,14 +1904,40 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
           contact.avatarUrl
         );
 
-        if (resolution.realPhone || (resolution.realName && resolution.realName !== contact.name)) {
+        // Se tem telefone real válido mas nome genérico (ex: '.' ou 'Cliente'), consulta perfil oficial na Meta
+        if (hasValidPhone && targetInstanceName && (!resolution.realName || this.isGenericContactName(resolution.realName))) {
+          const profile = await this.fetchProfileFromEvolution(targetInstanceName, digits, tenantId);
+          if (profile?.name && !this.isGenericContactName(profile.name)) {
+            resolution.realName = profile.name;
+          }
+          if (profile?.picture && !resolution.avatarUrl && !contact.avatarUrl) {
+            resolution.avatarUrl = profile.picture;
+          }
+        }
+
+        // Se o nome continuar genérico ou ponto '.', formata de forma amigável com o telefone limpo
+        let finalResolvedName = resolution.realName;
+        if (this.isGenericContactName(finalResolvedName)) {
+          if (hasValidPhone || resolution.realPhone) {
+            finalResolvedName = this.formatFriendlyPhone(resolution.realPhone || contact.phone);
+          }
+        }
+
+        if (resolution.realPhone || (finalResolvedName && finalResolvedName !== contact.name)) {
           if (resolution.realPhone && resolution.realPhone !== contact.phone) {
-            // Verifica se já existe outro contato com este número real no mesmo tenant
+            const cleanResDigits = resolution.realPhone.replace(/\D/g, '');
+            const last8 = cleanResDigits.slice(-8);
+
+            // Verifica se já existe outro contato com este número real no mesmo tenant (com ou sem 9º dígito)
             const existingRealContact = await this.prisma.contact.findFirst({
               where: {
                 tenantId,
-                phone: resolution.realPhone,
                 id: { not: contact.id },
+                OR: [
+                  { phone: resolution.realPhone },
+                  { phone: cleanResDigits },
+                  ...(last8.length === 8 ? [{ phone: { endsWith: last8 } }] : []),
+                ],
               },
             });
 
@@ -1920,7 +1993,7 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
                 data: { contactId: existingRealContact.id },
               }).catch(() => {});
 
-              // 4. Enriquece o contato real
+              // 4. Enriquece o contato real sem perder nome já salvo
               const realUpdate: any = {};
               if (!existingRealContact.whatsappLid) {
                 realUpdate.whatsappLid = contact.whatsappLid || contact.phone;
@@ -1928,19 +2001,17 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
               if (!existingRealContact.avatarUrl && (resolution.avatarUrl || contact.avatarUrl)) {
                 realUpdate.avatarUrl = resolution.avatarUrl || contact.avatarUrl;
               }
-              const isRealNameGeneric = !existingRealContact.name ||
-                existingRealContact.name === 'Cliente WhatsApp' ||
-                existingRealContact.name === existingRealContact.phone ||
-                existingRealContact.name.startsWith('WhatsApp');
-              if (isRealNameGeneric && resolution.realName) {
-                realUpdate.name = resolution.realName;
+              const isRealNameGeneric = this.isGenericContactName(existingRealContact.name);
+              if (isRealNameGeneric && finalResolvedName && !this.isGenericContactName(finalResolvedName)) {
+                realUpdate.name = finalResolvedName;
               }
 
               if (Object.keys(realUpdate).length > 0) {
-                await this.prisma.contact.update({
+                const updated = await this.prisma.contact.update({
                   where: { id: existingRealContact.id },
                   data: realUpdate,
                 });
+                this.chatGateway.emitContactUpdated(tenantId, updated);
               }
 
               // 5. Exclui com segurança o contato LID duplicado
@@ -1956,19 +2027,20 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
             updateData.phone = resolution.realPhone;
             updateData.whatsappLid = contact.whatsappLid || contact.phone;
           }
-          if (resolution.realName && isGenericName) {
-            updateData.name = resolution.realName;
+          if (finalResolvedName && finalResolvedName !== contact.name && (isGenericName || !this.isGenericContactName(finalResolvedName))) {
+            updateData.name = finalResolvedName;
           }
           if (resolution.avatarUrl && !contact.avatarUrl) {
             updateData.avatarUrl = resolution.avatarUrl;
           }
 
           if (Object.keys(updateData).length > 0) {
-            await this.prisma.contact.update({
+            const updated = await this.prisma.contact.update({
               where: { id: contact.id },
               data: updateData,
             });
 
+            this.chatGateway.emitContactUpdated(tenantId, updated);
             this.logger.log(`[LID Resolution Retroativa] Contato [${contact.id}] atualizado: ${JSON.stringify(updateData)}`);
             resolvedCount++;
           }
@@ -1984,7 +2056,7 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
 
   /**
    * Sincroniza em lote a agenda completa de contatos da Evolution API (Baileys) para o banco de dados.
-   * Cria contatos faltantes e enriquece nomes e avatares de contatos existentes.
+   * Cria contatos faltantes e enriquece nomes e avatares de contatos existentes sem duplicar.
    */
   async syncContactsFromEvolution(tenantId: string, instanceName?: string): Promise<{ created: number; updated: number }> {
     try {
@@ -2014,12 +2086,16 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
       });
 
       const phoneToContact = new Map<string, typeof dbContacts[0]>();
+      const last8ToContact = new Map<string, typeof dbContacts[0]>();
       const lidToContact = new Map<string, typeof dbContacts[0]>();
 
       for (const c of dbContacts) {
         if (c.phone) {
           const cleanP = c.phone.replace(/\D/g, '');
           phoneToContact.set(cleanP, c);
+          if (cleanP.length >= 10 && cleanP.length <= 13) {
+            last8ToContact.set(cleanP.slice(-8), c);
+          }
           if (c.phone.includes('lid') || cleanP.length > 13) {
             lidToContact.set(cleanP, c);
           }
@@ -2041,54 +2117,72 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
 
         if (isLid) {
           const existing = lidToContact.get(cleanDigits);
-          if (existing && pushName && (!existing.name || existing.name === existing.phone || existing.name.includes('@lid') || /^\d+$/.test(existing.name))) {
-            await this.prisma.contact.update({
+          if (existing && pushName && !this.isGenericContactName(pushName) && this.isGenericContactName(existing.name)) {
+            const updated = await this.prisma.contact.update({
               where: { id: existing.id },
               data: {
                 name: pushName,
                 whatsappLid: id,
                 ...(avatarUrl && !existing.avatarUrl ? { avatarUrl } : {})
               }
-            }).catch(() => {});
-            updatedCount++;
+            }).catch(() => null);
+            if (updated) {
+              this.chatGateway.emitContactUpdated(tenantId, updated);
+              updatedCount++;
+            }
           }
           continue;
         }
 
         if (cleanDigits.length < 10 || cleanDigits.length > 13) continue;
 
-        const existing = phoneToContact.get(cleanDigits);
-        if (existing) {
-          const isGenericName = !existing.name ||
-            existing.name === '.' ||
-            existing.name === '-' ||
-            existing.name === existing.phone ||
-            existing.name === `WhatsApp (${existing.phone})` ||
-            existing.name === 'Cliente WhatsApp' ||
-            existing.name === 'Cliente Verto' ||
-            existing.name.toLowerCase() === 'cliente' ||
-            (existing.name.length >= 8 && /^\d+$/.test(existing.name.replace(/\D/g, '')));
+        // Busca exata ou por 8 dígitos (nono dígito do Brasil)
+        let existing = phoneToContact.get(cleanDigits);
+        if (!existing && cleanDigits.length >= 10 && cleanDigits.length <= 13) {
+          existing = last8ToContact.get(cleanDigits.slice(-8));
+        }
 
-          if (pushName && isGenericName) {
-            await this.prisma.contact.update({
-              where: { id: existing.id },
-              data: {
-                name: pushName,
-                ...(avatarUrl && !existing.avatarUrl ? { avatarUrl } : {})
+        if (existing) {
+          const isGenericName = this.isGenericContactName(existing.name);
+
+          // Atualiza se o contato tinha nome genérico e a agenda tem nome real
+          if (isGenericName) {
+            const finalName = (pushName && !this.isGenericContactName(pushName)) 
+              ? pushName 
+              : this.formatFriendlyPhone(existing.phone || cleanDigits);
+
+            if (finalName && finalName !== existing.name) {
+              const updated = await this.prisma.contact.update({
+                where: { id: existing.id },
+                data: {
+                  name: finalName,
+                  ...(avatarUrl && !existing.avatarUrl ? { avatarUrl } : {})
+                }
+              }).catch(() => null);
+              if (updated) {
+                this.chatGateway.emitContactUpdated(tenantId, updated);
+                updatedCount++;
               }
-            }).catch(() => {});
-            updatedCount++;
+            }
           }
         } else {
+          // Cria contato limpo com formato amigável se não tiver pushName real
+          const finalName = (pushName && !this.isGenericContactName(pushName))
+            ? pushName
+            : this.formatFriendlyPhone(cleanDigits);
+
           toCreate.push({
             tenantId,
-            name: pushName || `WhatsApp (${cleanDigits})`,
+            name: finalName,
             phone: cleanDigits,
             avatarUrl: avatarUrl || null,
             source: 'WhatsApp',
             tags: [],
           });
-          phoneToContact.set(cleanDigits, { id: 'temp', name: pushName, phone: cleanDigits, avatarUrl, whatsappLid: null });
+          phoneToContact.set(cleanDigits, { id: 'temp', name: finalName, phone: cleanDigits, avatarUrl, whatsappLid: null });
+          if (cleanDigits.length >= 10 && cleanDigits.length <= 13) {
+            last8ToContact.set(cleanDigits.slice(-8), { id: 'temp', name: finalName, phone: cleanDigits, avatarUrl, whatsappLid: null });
+          }
         }
       }
 
