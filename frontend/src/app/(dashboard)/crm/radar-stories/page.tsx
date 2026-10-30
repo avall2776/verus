@@ -1229,13 +1229,31 @@ export default function RadarStoriesPage() {
 
                   {post.mediaUrl ? (
                     post.mediaType === "video" || post.mediaUrl?.includes("video") || post.mediaUrl?.endsWith(".mp4") ? (
-                      <div className="relative w-full h-full flex items-center justify-center">
+                      <div 
+                        className="relative w-full h-full flex items-center justify-center bg-black"
+                        onMouseEnter={(e) => {
+                          const vid = e.currentTarget.querySelector('video');
+                          if (vid) vid.play().catch(() => {});
+                        }}
+                        onMouseLeave={(e) => {
+                          const vid = e.currentTarget.querySelector('video');
+                          if (vid) {
+                            vid.pause();
+                            try { vid.currentTime = 0.1; } catch {}
+                          }
+                        }}
+                      >
                         <video
                           src={post.mediaUrl}
                           muted
                           playsInline
-                          preload="metadata"
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
+                          preload="auto"
+                          onLoadedMetadata={(e) => {
+                            try {
+                              e.currentTarget.currentTime = 0.1;
+                            } catch {}
+                          }}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
                           <div className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white border border-white/20 shadow-lg group-hover:scale-110 transition-transform">

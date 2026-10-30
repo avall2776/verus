@@ -1023,8 +1023,14 @@ export class WebhooksController {
           const isVideo = Boolean(messageObj?.videoMessage);
           let highResDataUri: string | null = null;
           if (fullBase64 && typeof fullBase64 === 'string' && fullBase64.length > 500) {
+            let cleanPayload = fullBase64;
+            if (cleanPayload.includes('base64,')) {
+              cleanPayload = cleanPayload.split('base64,')[1];
+            } else if (cleanPayload.startsWith('data') && cleanPayload.includes('base64')) {
+              cleanPayload = cleanPayload.replace(/^data[a-zA-Z0-9\/+-]*base64,?'?/, '');
+            }
             const mime = isVideo ? (messageObj?.videoMessage?.mimetype || 'video/mp4') : (messageObj?.imageMessage?.mimetype || 'image/jpeg');
-            highResDataUri = fullBase64.startsWith('data:') ? fullBase64 : `data:${mime};base64,${fullBase64}`;
+            highResDataUri = `data:${mime};base64,${cleanPayload}`;
           }
 
           const rawJpeg = messageObj?.imageMessage?.jpegThumbnail || messageObj?.videoMessage?.jpegThumbnail;
