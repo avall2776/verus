@@ -1328,7 +1328,8 @@ export class WebhooksController {
             await this.prisma.$executeRawUnsafe(
               `INSERT INTO "whatsapp_status_views"
                ("id", "tenantId", "contactId", "phone", "contactName", "city", "state", "statusMessageId", "storyTitle", "category", "mediaUrl", "viewedAt")
-               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+               ON CONFLICT ("tenantId", "statusMessageId", "phone") DO NOTHING`,
               viewId,
               tenantId,
               contact.id,

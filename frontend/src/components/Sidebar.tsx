@@ -43,6 +43,7 @@ import {
   Network,
   Compass,
   Radio,
+  Film,
   KeyRound,
   CreditCard,
   PackageCheck,
@@ -106,6 +107,7 @@ const NAV_GROUPS = [
     items: [
       { name: "Oportunidades", icon: Kanban, href: "/crm" },
       { name: "Radar de Stories", icon: Radio, href: "/crm/radar-stories" },
+      { name: "Motion Studio", icon: Film, href: "/motion-studio" },
       { name: "Propostas Comerciais", icon: FileText, href: "/proposals" },
       { name: "Contratos", icon: ScrollText, href: "/contracts" },
       { name: "Metas Comerciais", icon: Target, href: "/dashboard/goals" },
@@ -583,6 +585,10 @@ export default function Sidebar() {
       if (menus?.radar_stories !== undefined) return menus.radar_stories;
       if (subPerms?.crm_enabled !== undefined) return subPerms.crm_enabled;
       return perms.crm !== false;
+    }
+
+    if (base === '/motion-studio') {
+      return true;
     }
 
     if (base === '/proposals') {

@@ -126,6 +126,8 @@ interface ActiveStoryPost {
   postedAtDate: string;
   postedAtTime: string;
   viewsCount: number;
+  viewsTotal?: number;
+  viewsToday?: number;
 }
 
 interface LightboxMedia {
@@ -942,7 +944,7 @@ export default function RadarStoriesPage() {
         >
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 group-hover:text-blue-500 transition-colors">
-              Visualizações Confirmadas (Hoje)
+              Visualizadores Únicos (Hoje)
             </span>
             <div className="flex items-center gap-1.5">
               <span className="text-[10px] text-blue-500 font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
@@ -958,7 +960,7 @@ export default function RadarStoriesPage() {
               {metrics?.kpis.totalViewsToday || 0}
             </div>
             <div className="text-xs text-blue-500 font-semibold mt-1 flex items-center justify-between">
-              <span>{metrics?.kpis.totalViewsWeek || 0} visualizações nos últimos 7 dias</span>
+              <span>{metrics?.kpis.totalViewsWeek || 0} visualizadores únicos no ciclo</span>
               <span className="text-[10px] text-slate-400 group-hover:text-blue-400 font-mono">Ver detalhes →</span>
             </div>
           </div>
@@ -1175,9 +1177,22 @@ export default function RadarStoriesPage() {
                       <Clock className="w-3 h-3 text-slate-400" />
                       <span>{post.postedAtRelative}</span>
                     </span>
-                    <span className="flex items-center gap-1 font-bold text-blue-500">
+                    <span
+                      className="flex items-center gap-1 font-bold text-blue-500"
+                      title={`Visualizadores únicos individuais: ${post.viewsToday ?? 0} hoje e ${post.viewsTotal ?? post.viewsCount} no total`}
+                    >
                       <Eye className="w-3 h-3" />
-                      <span>{post.viewsCount} visualizações</span>
+                      <span>
+                        {post.viewsToday !== undefined ? (
+                          <span className="flex items-center gap-1">
+                            <span className="text-emerald-600 dark:text-emerald-400">{post.viewsToday} hoje</span>
+                            <span className="text-slate-300 dark:text-slate-600">•</span>
+                            <span>{post.viewsTotal ?? post.viewsCount} total</span>
+                          </span>
+                        ) : (
+                          <span>{post.viewsCount} visualizações</span>
+                        )}
+                      </span>
                     </span>
                   </div>
 

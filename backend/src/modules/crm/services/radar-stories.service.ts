@@ -195,7 +195,10 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
       const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
       const posts = await this.prisma.$queryRawUnsafe<any[]>(
         `SELECT p.*, 
-                COUNT(DISTINCT v.id)::int as "viewsCount"
+                COUNT(DISTINCT v.phone)::int as "viewsTotal",
+                COUNT(DISTINCT v.phone) FILTER (
+                  WHERE v."viewedAt" >= (NOW() AT TIME ZONE 'America/Sao_Paulo')::date AT TIME ZONE 'America/Sao_Paulo'
+                )::int as "viewsToday"
          FROM "whatsapp_status_posts" p
          LEFT JOIN "whatsapp_status_views" v 
            ON (v."tenantId" = p."tenantId" AND (v."statusMessageId" = p."messageId" OR (v."storyTitle" = p."title" AND v."viewedAt" >= p."postedAt")))
@@ -214,6 +217,8 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
         if (safeMediaUrl && String(safeMediaUrl).includes('172.16.0.1:3001')) {
           safeMediaUrl = String(safeMediaUrl).replace('http://172.16.0.1:3001', '/api-backend');
         }
+        const viewsTotal = Number(p.viewsTotal) || 0;
+        const viewsToday = Number(p.viewsToday) || 0;
         return {
           id: p.id,
           messageId: p.messageId,
@@ -224,7 +229,9 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
           postedAtRelative: relative,
           postedAtDate: dateFormatted,
           postedAtTime: timeFormatted,
-          viewsCount: Number(p.viewsCount) || 0,
+          viewsCount: viewsTotal,
+          viewsTotal,
+          viewsToday,
         };
       });
     } catch (err: any) {
@@ -685,10 +692,11 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
           const resolved = await this.resolveViewerIdentity(tenantId, instanceName, viewerJid);
           const viewId = `view_sync_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
-          await this.prisma.$executeRawUnsafe(
+          const inserted = await this.prisma.$executeRawUnsafe(
             `INSERT INTO "whatsapp_status_views"
              ("id", "tenantId", "contactId", "phone", "contactName", "city", "state", "statusMessageId", "storyTitle", "category", "mediaUrl", "viewedAt")
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+             ON CONFLICT ("tenantId", "statusMessageId", "phone") DO NOTHING`,
             viewId,
             tenantId,
             resolved.contactId,
@@ -702,7 +710,9 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
             matchedPost.mediaUrl,
             new Date(dtMs)
           );
-          syncedViewsCount++;
+          if (inserted > 0) {
+            syncedViewsCount++;
+          }
         }
       }
     } catch (e: any) {
@@ -887,7 +897,16 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
    */
   private formatDateTime(date: Date) {
     const d = new Date(date);
-    const dateFormatted = new Intl.DateTimeFormat('pt-BR', {
+
+    // Formatações sob o fuso horário oficial de Brasília
+    const nowSpStr = new Intl.DateTimeFormat('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    }).format(new Date());
+
+    const targetSpStr = new Intl.DateTimeFormat('pt-BR', {
       timeZone: 'America/Sao_Paulo',
       day: '2-digit',
       month: '2-digit',
@@ -901,19 +920,33 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
       second: '2-digit',
     }).format(d);
 
+    // Ontem em Brasília
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdaySpStr = new Intl.DateTimeFormat('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    }).format(yesterday);
+
     const diffMinutes = Math.floor((Date.now() - d.getTime()) / (1000 * 60));
+    const timeShort = timeFormatted.slice(0, 5);
     let relative = 'Agora';
+
     if (diffMinutes < 1) {
       relative = 'Agora mesmo';
-    } else if (diffMinutes < 60) {
+    } else if (diffMinutes < 60 && nowSpStr === targetSpStr) {
       relative = `Há ${diffMinutes} min`;
-    } else if (diffMinutes < 1440) {
-      relative = `Hoje às ${timeFormatted.slice(0, 5)}`;
+    } else if (nowSpStr === targetSpStr) {
+      relative = `Hoje às ${timeShort}`;
+    } else if (yesterdaySpStr === targetSpStr) {
+      relative = `Ontem às ${timeShort}`;
     } else {
-      relative = `${dateFormatted} às ${timeFormatted.slice(0, 5)}`;
+      relative = `${targetSpStr.slice(0, 5)} às ${timeShort}`;
     }
 
-    return { dateFormatted, timeFormatted, relative };
+    return { dateFormatted: targetSpStr, timeFormatted, relative };
   }
 
   /**
@@ -1163,16 +1196,20 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
         .catch(() => 0),
       this.prisma
         .$queryRawUnsafe<any[]>(
-          `SELECT count(*)::int as count FROM "whatsapp_status_views" WHERE "tenantId" = $1 AND "viewedAt" >= $2`,
-          tenantId,
-          todayStart
+          `SELECT count(DISTINCT phone)::int as count 
+           FROM "whatsapp_status_views" 
+           WHERE "tenantId" = $1 
+             AND "viewedAt" >= (NOW() AT TIME ZONE 'America/Sao_Paulo')::date AT TIME ZONE 'America/Sao_Paulo'`,
+          tenantId
         )
         .catch(() => [{ count: 0 }]),
       this.prisma
         .$queryRawUnsafe<any[]>(
-          `SELECT count(*)::int as count FROM "whatsapp_status_views" WHERE "tenantId" = $1 AND "viewedAt" >= $2`,
-          tenantId,
-          sevenDaysAgo
+          `SELECT count(DISTINCT phone)::int as count 
+           FROM "whatsapp_status_views" 
+           WHERE "tenantId" = $1 
+             AND "viewedAt" >= NOW() - INTERVAL '7 days'`,
+          tenantId
         )
         .catch(() => [{ count: 0 }]),
       this.prisma
