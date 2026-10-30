@@ -2552,7 +2552,7 @@ Gere a abordagem comercial personalizada em JSON.`;
   async updatePost(
     tenantId: string,
     postId: string,
-    data: { title?: string; category?: string; mediaUrl?: string; postedAt?: string }
+    data: { title?: string; category?: string; mediaUrl?: string; mediaType?: string; postedAt?: string }
   ) {
     const existing = await this.prisma.$queryRawUnsafe<any[]>(
       `SELECT * FROM "whatsapp_status_posts" WHERE "tenantId" = $1 AND "id" = $2 LIMIT 1`,
@@ -2579,6 +2579,10 @@ Gere a abordagem comercial personalizada em JSON.`;
     if (data.mediaUrl !== undefined) {
       updates.push(`"mediaUrl" = $${paramIdx++}`);
       values.push(data.mediaUrl);
+    }
+    if (data.mediaType !== undefined) {
+      updates.push(`"mediaType" = $${paramIdx++}`);
+      values.push(data.mediaType);
     }
     if (data.postedAt !== undefined) {
       updates.push(`"postedAt" = $${paramIdx++}`);

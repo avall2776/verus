@@ -25,7 +25,7 @@ export class RadarStoriesController {
   async updatePost(
     @CurrentTenant() tenantId: string,
     @Param('id') postId: string,
-    @Body() body: { title?: string; category?: string; mediaUrl?: string; postedAt?: string },
+    @Body() body: { title?: string; category?: string; mediaUrl?: string; mediaType?: string; postedAt?: string },
   ) {
     return this.radarStoriesService.updatePost(tenantId, postId, body);
   }

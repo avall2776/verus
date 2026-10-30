@@ -2001,6 +2001,23 @@ function InboxContent() {
     }
   };
 
+  const [isReturningToBot, setIsReturningToBot] = useState(false);
+  const handleReturnToBot = async () => {
+    if (!activeChat || isReturningToBot) return;
+    try {
+      setIsReturningToBot(true);
+      await api.patch(`/conversations/${activeChat}/return-to-bot`);
+      toast.success("Atendimento devolvido com sucesso para a IA!");
+      refetchConversations();
+      refetchCounts();
+    } catch (error: any) {
+      console.error("Erro ao devolver para IA", error);
+      toast.error(error.response?.data?.message || "Erro ao devolver para IA");
+    } finally {
+      setIsReturningToBot(false);
+    }
+  };
+
   const handleReopen = async () => {
     if (!activeChat) return;
     try {
@@ -3270,6 +3287,24 @@ function InboxContent() {
                       <CheckCircle2 size={12} className="text-emerald-500" />
                       <span>Finalizar</span>
                     </button>
+
+                    {/* Botão Devolver IA */}
+                    {(activeContactData.status === 'human_takeover' || activeContactData.status === 'open' || activeContactData.status === 'in_progress') && (
+                      <button 
+                        type="button"
+                        onClick={handleReturnToBot} 
+                        disabled={isReturningToBot}
+                        className={`text-[11px] font-semibold px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shrink-0 shadow-sm ${
+                          isWhatsApp
+                            ? 'bg-[#202C33] hover:bg-[#2A3942] text-purple-300 border border-purple-500/30'
+                            : 'bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 dark:bg-purple-950/40 dark:hover:bg-purple-900/60 dark:text-purple-300 dark:border-purple-800'
+                        }`}
+                        title="Devolver atendimento para a IA"
+                      >
+                        <Bot size={12} className="text-purple-400" />
+                        <span>{isReturningToBot ? 'Devolvendo...' : 'Devolver IA'}</span>
+                      </button>
+                    )}
                   </div>
                 )}
 

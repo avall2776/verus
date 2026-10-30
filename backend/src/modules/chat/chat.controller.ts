@@ -121,6 +121,14 @@ export class ChatController {
     return this.chatService.releaseConversation(tenantId, conversationId);
   }
 
+  @Patch(':id/return-to-bot')
+  async returnToBot(
+    @CurrentTenant() tenantId: string,
+    @Param('id') conversationId: string,
+  ) {
+    return this.chatService.returnToBot(tenantId, conversationId);
+  }
+
   @Patch(':id/resolve')
   async resolve(
     @CurrentTenant() tenantId: string,

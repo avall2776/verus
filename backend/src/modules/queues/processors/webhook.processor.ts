@@ -499,10 +499,13 @@ export class WebhookProcessor extends WorkerHost {
     });
 
     if (fromMe) {
-      // Mensagem enviada diretamente pelo celular WhatsApp da empresa: atualiza data da conversa
+      // Mensagem enviada diretamente pelo celular WhatsApp da empresa: trava a conversa em atendimento humano
       conversation = await this.prisma.conversation.update({
         where: { id: conversation.id },
-        data: { updatedAt: new Date() }
+        data: { 
+          status: 'human_takeover',
+          updatedAt: new Date() 
+        }
       });
 
       // Cancela imediatamente qualquer resposta pendente da IA para não falar por cima do humano
@@ -513,10 +516,13 @@ export class WebhookProcessor extends WorkerHost {
           const state = await existingJob.getState();
           if (state === 'delayed' || state === 'waiting') {
             await existingJob.remove();
-            this.logger.log(`[fromMe] IA interrompida para a conversa [${conversation.id}] pois o atendente respondeu via WhatsApp`);
+            this.logger.log(`[fromMe] IA cancelada para a conversa [${conversation.id}] pois o atendente chamou/respondeu via WhatsApp`);
           }
         }
       } catch (err) {}
+
+      // Emite atualização do status para human_takeover no front-end em tempo real
+      this.chatGateway.emitConversationUpdated(tenantId, conversation);
     } else if (conversation.status === 'resolved' || conversation.status === 'closed') {
       // Reabre a mesma conversa na Fila Aguardando
       conversation = await this.prisma.conversation.update({
@@ -618,21 +624,55 @@ export class WebhookProcessor extends WorkerHost {
       return { status: 'success_outbound_synced', messageId: savedMessage.id };
     }
 
-    // 6. Integração com Fase 4: Despachar para fila de IA APENAS se o auto-atendimento estiver LIGADO nas configurações da empresa
+    // 6. Proteção ao Atendimento Humano vs Auto-Atendimento por IA
+    const isHumanHandled =
+      conversation.status === 'human_takeover' ||
+      conversation.status === 'open' ||
+      conversation.status === 'in_progress' ||
+      Boolean(conversation.assignedTo);
+
+    if (isHumanHandled) {
+      // Calcula o tempo de inatividade desde a última mensagem trocada na conversa
+      const lastActivityTime = conversation.updatedAt ? new Date(conversation.updatedAt).getTime() : 0;
+      const hoursSinceLastActivity = (Date.now() - lastActivityTime) / (1000 * 60 * 60);
+
+      // REGRA DE SEGURANÇA 24 HORAS (PADRÃO DE MERCADO):
+      // Se o atendente conversou com o cliente e ESQUECEU a conversa aberta, após 24h de inatividade
+      // o ciclo humano anterior é encerrado automaticamente e a IA assume o novo contato para não deixar o cliente no vácuo!
+      if (hoursSinceLastActivity >= 24 && isAiActiveForTenant) {
+        this.logger.log(
+          `[Auto-Timeout 24h] Conversa [${conversation.id}] sob atendimento humano inativa há ${hoursSinceLastActivity.toFixed(1)}h. Reativando IA para novo atendimento.`
+        );
+        conversation = await this.prisma.conversation.update({
+          where: { id: conversation.id },
+          data: { status: 'bot_active', assignedTo: null, updatedAt: new Date() }
+        });
+        this.chatGateway.emitConversationUpdated(tenantId, conversation);
+      } else {
+        // Atendimento humano ativo (menos de 24h): A IA se cala e NÃO se intromete!
+        this.logger.log(
+          `[Human Protected] Conversa [${conversation.id}] sob atendimento humano ativo (status: ${conversation.status}, assignedTo: ${conversation.assignedTo}, última atividade há ${hoursSinceLastActivity.toFixed(1)}h). IA silenciada.`
+        );
+        return { status: 'success_human_protected', messageId: savedMessage.id };
+      }
+    }
+
     if (!isAiActiveForTenant) {
       this.logger.log(`Conversa [${conversation.id}] mantida para atendimento humano. O auto-atendimento por IA está DESLIGADO nas Configurações da Empresa.`);
       if (conversation.status === 'bot_active') {
-        await this.prisma.conversation.update({
+        conversation = await this.prisma.conversation.update({
           where: { id: conversation.id },
-          data: { status: 'waiting' }
+          data: { status: 'waiting', updatedAt: new Date() }
         });
+        this.chatGateway.emitConversationUpdated(tenantId, conversation);
       }
+      return { status: 'success_ai_disabled_tenant', messageId: savedMessage.id };
     } else {
       // Auto-atendimento por IA ativo: garante bot_active para manter o fluxo contínuo
       if (conversation.status !== 'bot_active') {
         conversation = await this.prisma.conversation.update({
           where: { id: conversation.id },
-          data: { status: 'bot_active' }
+          data: { status: 'bot_active', updatedAt: new Date() }
         });
         this.chatGateway.emitConversationUpdated(tenantId, conversation);
       }

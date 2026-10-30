@@ -452,6 +452,36 @@ export class ChatService {
     return updated;
   }
 
+  async returnToBot(tenantId: string, conversationId: string) {
+    const conversation = await this.prisma.conversation.findUnique({
+      where: { id: conversationId }
+    });
+
+    if (!conversation || conversation.tenantId !== tenantId) {
+      throw new NotFoundException('Conversa não encontrada.');
+    }
+
+    const updated = await this.prisma.conversation.update({
+      where: { id: conversationId },
+      data: { 
+        status: 'bot_active',
+        assignedTo: null,
+        updatedAt: new Date()
+      },
+      include: {
+        contact: true,
+        department: true,
+        messages: {
+          orderBy: { createdAt: 'desc' },
+          take: 1
+        }
+      }
+    });
+
+    this.chatGateway.emitConversationUpdated(tenantId, updated);
+    return updated;
+  }
+
   async reopenConversation(tenantId: string, conversationId: string) {
     const conversation = await this.prisma.conversation.findUnique({
       where: { id: conversationId }
@@ -1053,11 +1083,21 @@ export class ChatService {
       }
     }
 
-    // Mantém a conversa ativa sem travar a IA em transbordo
-    await this.prisma.conversation.update({
-      where: { id: conversationId },
-      data: { updatedAt: new Date() }
-    });
+    // Se o atendente humano enviou uma mensagem para o cliente (e não é nota interna),
+    // trava a conversa em atendimento humano (human_takeover) e silencia a IA
+    if (!isInternal && (conversation.status === 'bot_active' || conversation.status === 'waiting')) {
+      const updatedConv = await this.prisma.conversation.update({
+        where: { id: conversationId },
+        data: { status: 'human_takeover', updatedAt: new Date() },
+        include: { contact: true, department: true }
+      });
+      this.chatGateway.emitConversationUpdated(tenantId, updatedConv);
+    } else {
+      await this.prisma.conversation.update({
+        where: { id: conversationId },
+        data: { updatedAt: new Date() }
+      });
+    }
 
     // Emite a mensagem via WebSocket para atualizar todos os atendentes
     this.chatGateway.emitNewMessage(tenantId, msg);
@@ -1183,7 +1223,7 @@ export class ChatService {
         data: {
           tenantId,
           contactId,
-          status: 'bot_active',
+          status: 'human_takeover',
           assignedTo: userId
         }
       });

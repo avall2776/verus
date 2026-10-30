@@ -34,6 +34,18 @@ export class AiProcessor extends WorkerHost {
       throw new Error(`Conversa ${conversationId} não encontrada.`);
     }
 
+    // Trava de Atendimento Humano: Se a conversa foi assumida ou está com operador humano, aborta imediatamente!
+    const isHumanHandled =
+      conversation.status === 'human_takeover' ||
+      conversation.status === 'open' ||
+      conversation.status === 'in_progress' ||
+      Boolean(conversation.assignedTo);
+
+    if (isHumanHandled) {
+      this.logger.warn(`[AiProcessor] Conversa [${conversationId}] sob controle humano (status: ${conversation.status}, assignedTo: ${conversation.assignedTo}). Abortando IA.`);
+      return { status: 'aborted', reason: 'human_takeover_active' };
+    }
+
     if (conversation.status !== 'bot_active') {
       await this.prisma.conversation.update({
         where: { id: conversationId },
@@ -360,14 +372,14 @@ export class AiProcessor extends WorkerHost {
         }
       }
 
-      // Atualiza atendente atribuído sem travar a IA
+      // Transfere o atendimento para o consultor humano e silencia a IA
       const updatedConv = await this.prisma.conversation.update({
         where: { id: conversationId },
-        data: { status: 'bot_active', assignedTo },
+        data: { status: 'open', assignedTo },
         include: { contact: true }
       });
 
-      // Emissão em tempo real para o Inbox mantendo o bot ativo
+      // Emissão em tempo real para o Inbox transferindo para atendimento humano
       this.chatGateway.emitConversationUpdated(tenantId, updatedConv);
 
       // Emissão do alerta rico de Handoff para o Front-end (Toast executivo de transbordo)
