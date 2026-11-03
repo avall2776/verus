@@ -8,7 +8,7 @@ import {
   CheckCircle2, ShieldCheck, Eye, ArrowUpDown, Tag as TagIcon,
   Users, RefreshCw, Briefcase, AlertCircle,
   Target, Layers, Lock, Copy, Check,
-  TrendingUp, Zap
+  TrendingUp, Zap, BadgeCheck, Building2, MapPin, FileText, FileCheck2
 } from "lucide-react";
 import api from "@/lib/api";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -29,6 +29,20 @@ interface Contact {
   name: string;
   phone?: string | null;
   email?: string | null;
+  cpfCnpj?: string | null;
+  razaoSocial?: string | null;
+  nomeFantasia?: string | null;
+  inscricaoEstadual?: string | null;
+  cep?: string | null;
+  address?: string | null;
+  number?: string | null;
+  complement?: string | null;
+  neighborhood?: string | null;
+  city?: string | null;
+  state?: string | null;
+  isFaturado?: boolean;
+  totalFaturado?: number;
+  dataHealthScore?: number;
   source: string;
   avatarUrl?: string | null;
   tags: string[];
@@ -75,6 +89,7 @@ export default function ContactsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sourceFilter, setSourceFilter] = useState<string>("all");
   const [dealsFilter, setDealsFilter] = useState<string>("all");
+  const [healthFilter, setHealthFilter] = useState<"all" | "complete" | "faturado" | "pending">("all");
   const [showFilterBar, setShowFilterBar] = useState(false);
 
   // Paginação
@@ -132,6 +147,8 @@ export default function ContactsPage() {
     let hotCount = 0;
     let totalPipelineValue = 0;
     let coldCount = 0;
+    let completeHealthCount = 0;
+    let faturadosCount = 0;
 
     contacts.forEach(c => {
       const isClient = c.isClient || c.statusCategory === 'won' || c.tags.includes('Cliente');
@@ -144,6 +161,13 @@ export default function ContactsPage() {
       } else if (c.statusCategory === 'cold' || c.tags.includes('Frio')) {
         coldCount++;
       }
+
+      if ((c.dataHealthScore || 0) >= 75 || !!(c.cpfCnpj && c.cep)) {
+        completeHealthCount++;
+      }
+      if (c.isFaturado || (c.totalFaturado || 0) > 0) {
+        faturadosCount++;
+      }
     });
 
     return {
@@ -152,7 +176,9 @@ export default function ContactsPage() {
       totalWonRevenue,
       hotCount,
       totalPipelineValue,
-      coldCount
+      coldCount,
+      completeHealthCount,
+      faturadosCount
     };
   }, [contacts]);
 
@@ -165,8 +191,10 @@ export default function ContactsPage() {
         const matchesName = contact.name?.toLowerCase().includes(query);
         const matchesPhone = contact.phone?.toLowerCase().includes(query);
         const matchesEmail = contact.email?.toLowerCase().includes(query);
+        const matchesCpf = contact.cpfCnpj?.toLowerCase().includes(query);
+        const matchesCity = contact.city?.toLowerCase().includes(query);
         const matchesId = contact.id?.toLowerCase().includes(query);
-        if (!matchesName && !matchesPhone && !matchesEmail && !matchesId) {
+        if (!matchesName && !matchesPhone && !matchesEmail && !matchesCpf && !matchesCity && !matchesId) {
           return false;
         }
       }
@@ -204,14 +232,28 @@ export default function ContactsPage() {
         if (contact.deals && contact.deals.length > 0) return false;
       }
 
+      // 5. Filtro de Saúde Cadastral / Faturamento Omie
+      if (healthFilter !== "all") {
+        if (healthFilter === "complete") {
+          const isComplete = (contact.dataHealthScore || 0) >= 75 || !!(contact.cpfCnpj && contact.cep);
+          if (!isComplete) return false;
+        } else if (healthFilter === "faturado") {
+          const isFaturado = contact.isFaturado || (contact.totalFaturado || 0) > 0 || (contact.totalWonValue || 0) > 0;
+          if (!isFaturado) return false;
+        } else if (healthFilter === "pending") {
+          const isComplete = (contact.dataHealthScore || 0) >= 75 || !!(contact.cpfCnpj && contact.cep);
+          if (isComplete) return false;
+        }
+      }
+
       return true;
     });
-  }, [contacts, searchTerm, statusFilter, sourceFilter, dealsFilter]);
+  }, [contacts, searchTerm, statusFilter, sourceFilter, dealsFilter, healthFilter]);
 
   // Reseta para a primeira página ao filtrar
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, sourceFilter, dealsFilter]);
+  }, [searchTerm, statusFilter, sourceFilter, dealsFilter, healthFilter]);
 
   // Paginação calculada
   const totalPages = Math.ceil(filteredContacts.length / itemsPerPage) || 1;
@@ -252,7 +294,7 @@ export default function ContactsPage() {
 
     setIsGeneratingMetaCsv(true);
     try {
-      const csvRows = ["email,phone,fn,ln,country,value"];
+      const csvRows = ["email,phone,fn,ln,ct,st,zip,country,value"];
 
       for (const c of targetContacts) {
         let rawPhone = (c.phone || '').replace(/\D/g, '');
@@ -272,12 +314,21 @@ export default function ContactsPage() {
         const fnHash = fn ? await sha256Browser(fn) : '';
         const lnHash = ln ? await sha256Browser(ln) : '';
 
+        const rawCity = (c.city || '').trim().toLowerCase();
+        const ctHash = rawCity ? await sha256Browser(rawCity) : '';
+
+        const rawState = (c.state || '').trim().toLowerCase();
+        const stHash = rawState ? await sha256Browser(rawState) : '';
+
+        const rawZip = (c.cep || '').replace(/\D/g, '');
+        const zipHash = rawZip.length === 8 ? await sha256Browser(rawZip) : '';
+
         const countryHash = await sha256Browser('br');
 
         const val = Number(c.totalWonValue || c.totalActivePipelineValue || 0);
         const valueStr = val > 0 ? val.toFixed(2) : '';
 
-        csvRows.push(`${emailHash},${phoneHash},${fnHash},${lnHash},${countryHash},${valueStr}`);
+        csvRows.push(`${emailHash},${phoneHash},${fnHash},${lnHash},${ctHash},${stHash},${zipHash},${countryHash},${valueStr}`);
       }
 
       const fileContent = csvRows.join("\n");
@@ -684,6 +735,64 @@ export default function ContactsPage() {
         </div>
       </div>
 
+      {/* 2.5 SEGMENTAÇÃO RÁPIDA DE INTELIGÊNCIA CADASTRAL & OMIE ERP */}
+      <div className="flex flex-wrap items-center gap-2 pt-1 pb-1">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mr-1 flex items-center gap-1.5">
+          <Filter size={12} className="text-cyan-500 dark:text-cyan-400" />
+          Segmentos:
+        </span>
+
+        <button
+          onClick={() => setHealthFilter("all")}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+            healthFilter === "all"
+              ? "bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-white border-slate-300 dark:border-slate-600 shadow-sm"
+              : "bg-white dark:bg-slate-900/40 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-200"
+          }`}
+        >
+          <span>Todos ({contacts.length.toLocaleString('pt-BR')})</span>
+        </button>
+
+        <button
+          onClick={() => setHealthFilter(healthFilter === "complete" ? "all" : "complete")}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+            healthFilter === "complete"
+              ? "bg-cyan-50 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border-cyan-300 dark:border-cyan-500/50 shadow-sm"
+              : "bg-white dark:bg-slate-900/40 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-cyan-50/50 dark:hover:bg-slate-800/60 hover:text-cyan-600 dark:hover:text-cyan-400"
+          }`}
+          title="Contatos com CPF/CNPJ, endereço fiscal e dados completos"
+        >
+          <ShieldCheck size={13} className="text-cyan-500 dark:text-cyan-400" />
+          <span>Fichas Completas ({metrics.completeHealthCount.toLocaleString('pt-BR')})</span>
+        </button>
+
+        <button
+          onClick={() => setHealthFilter(healthFilter === "faturado" ? "all" : "faturado")}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+            healthFilter === "faturado"
+              ? "bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-500/50 shadow-sm"
+              : "bg-white dark:bg-slate-900/40 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-emerald-50/50 dark:hover:bg-slate-800/60 hover:text-emerald-600 dark:hover:text-emerald-400"
+          }`}
+          title="Clientes com compras e faturamento no Omie ERP"
+        >
+          <BadgeCheck size={13} className="text-emerald-500 dark:text-emerald-400" />
+          <span>Faturados Omie ({metrics.faturadosCount.toLocaleString('pt-BR')})</span>
+        </button>
+
+        <button
+          onClick={() => setHealthFilter(healthFilter === "pending" ? "all" : "pending")}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium border transition-all cursor-pointer ${
+            healthFilter === "pending"
+              ? "bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-500/50 shadow-sm"
+              : "bg-white dark:bg-slate-900/40 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-amber-50/50 dark:hover:bg-slate-800/60 hover:text-amber-600 dark:hover:text-amber-400"
+          }`}
+          title="Leads com cadastro pendente de endereço ou CPF"
+        >
+          <FileText size={13} className="text-slate-400" />
+          <span>Cadastro Pendente</span>
+        </button>
+      </div>
+
       {/* 3. BARRA EXPANSÍVEL DE FILTROS AVANÇADOS */}
       {showFilterBar && (
         <div className="p-4 rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap items-center gap-4 animate-in slide-in-from-top-2 duration-200">
@@ -824,25 +933,42 @@ export default function ContactsPage() {
                               <span>{contact.name?.charAt(0).toUpperCase() || "C"}</span>
                             )}
                           </div>
-                          <div className="min-w-[160px] max-w-[240px]">
+                          <div className="min-w-[160px] max-w-[260px]">
                             <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
-                              <span>{contact.name}</span>
-                              {isClient && (
-                                <span title="Cliente Confirmado (Já comprou)">
-                                  <ShieldCheck size={14} className="text-emerald-500 shrink-0" />
+                              <span className="truncate">{contact.name}</span>
+                              {(isClient || contact.isFaturado) && (
+                                <span title="Cliente Confirmado (Faturado)">
+                                  <BadgeCheck size={14} className="text-emerald-500 shrink-0" />
                                 </span>
                               )}
                             </div>
-                            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
-                              ID: #{contact.id.slice(0, 8)}
-                            </span>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
+                                #{contact.id.slice(0, 8)}
+                              </span>
+                              {(contact.dataHealthScore || 0) >= 75 || (contact.cpfCnpj && contact.cep) ? (
+                                <span 
+                                  title="Ficha Cadastral Completa (100%)" 
+                                  className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[9px] font-bold bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/30 shrink-0"
+                                >
+                                  <ShieldCheck size={10} className="text-cyan-500 dark:text-cyan-400" /> Ficha 100%
+                                </span>
+                              ) : (
+                                <span 
+                                  title="Cadastro Básico (Pendente de CPF/Endereço)" 
+                                  className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[9px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 shrink-0"
+                                >
+                                  <FileText size={9} className="text-slate-400" /> Básico
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </td>
 
-                      {/* Contato Info: Telefone / Email */}
+                      {/* Contato Info: Telefone / Email / CPF / Cidade */}
                       <td className="py-3.5 px-4">
-                        <div className="flex flex-col gap-0.5 min-w-[150px]">
+                        <div className="flex flex-col gap-0.5 min-w-[160px]">
                           <div className="flex items-center gap-1.5 text-xs text-slate-800 dark:text-slate-200 font-medium">
                             <Phone size={12} className="text-emerald-500 shrink-0" />
                             <span>
@@ -853,8 +979,20 @@ export default function ContactsPage() {
                           </div>
                           <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 truncate">
                             <Mail size={11} className="text-slate-400 shrink-0" />
-                            <span>{contact.email || 'N/A'}</span>
+                            <span className="truncate">{contact.email || 'N/A'}</span>
                           </div>
+                          {contact.cpfCnpj && (
+                            <div className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
+                              <Building2 size={10} className="text-slate-400 shrink-0" />
+                              <span className="truncate">Doc: {contact.cpfCnpj}</span>
+                            </div>
+                          )}
+                          {contact.city && contact.state && (
+                            <div className="flex items-center gap-1 text-[10px] text-cyan-600 dark:text-cyan-400/90 font-medium">
+                              <MapPin size={10} className="text-cyan-500 shrink-0" />
+                              <span className="truncate">{contact.city}, {contact.state}</span>
+                            </div>
+                          )}
                         </div>
                       </td>
 
@@ -1357,6 +1495,113 @@ export default function ContactsPage() {
                     <span className="text-xs font-bold">
                       {selectedContact.email || 'Não informado'}
                     </span>
+                  </div>
+                </div>
+
+                {/* 2.5 Ficha Cadastral & Fiscal Completa (Omie ERP) */}
+                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/40 space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800/80 pb-2.5">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 dark:text-cyan-400 flex items-center justify-center">
+                        <Building2 size={14} />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                          Ficha Cadastral & Fiscal
+                        </h4>
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                          Dados sincronizados com Omie ERP & Receita Federal
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {(selectedContact.dataHealthScore || 0) >= 75 || (selectedContact.cpfCnpj && selectedContact.cep) ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/30">
+                          <ShieldCheck size={11} /> FICHA COMPLETA (100%)
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-300 dark:border-slate-700">
+                          <FileText size={11} /> CADASTRO PENDENTE
+                        </span>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const legalText = `DADOS PARA CONTRATO / PROPOSTA VALLOR:
+RAZÃO SOCIAL: ${selectedContact.razaoSocial || selectedContact.name}
+NOME FANTASIA: ${selectedContact.nomeFantasia || selectedContact.name}
+CPF/CNPJ: ${selectedContact.cpfCnpj || 'Não informado'}
+INSCRIÇÃO ESTADUAL: ${selectedContact.inscricaoEstadual || 'ISENTO'}
+ENDEREÇO: ${selectedContact.address || ''}${selectedContact.number ? ', Nº ' + selectedContact.number : ''}${selectedContact.complement ? ' (' + selectedContact.complement + ')' : ''}
+BAIRRO: ${selectedContact.neighborhood || ''}
+CIDADE/UF: ${selectedContact.city || ''} / ${selectedContact.state || ''}
+CEP: ${selectedContact.cep || ''}
+TELEFONE: ${selectedContact.phone || ''}
+E-MAIL: ${selectedContact.email || ''}`;
+
+                          navigator.clipboard.writeText(legalText);
+                          toast.success("Dados cadastrais copiados com sucesso para contrato!");
+                        }}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30 transition-colors cursor-pointer"
+                        title="Copiar dados cadastrais formatados para colar na proposta ou minuta contratual"
+                      >
+                        <Copy size={11} />
+                        <span>Copiar p/ Contrato</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Grid de Dados Cadastrais */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 text-xs">
+                    <div className="p-2.5 rounded-lg bg-white dark:bg-[#121824] border border-slate-200 dark:border-slate-800/80">
+                      <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 block uppercase">
+                        Razão Social
+                      </span>
+                      <span className="font-bold text-slate-900 dark:text-white truncate block" title={selectedContact.razaoSocial || selectedContact.name}>
+                        {selectedContact.razaoSocial || selectedContact.name}
+                      </span>
+                    </div>
+
+                    <div className="p-2.5 rounded-lg bg-white dark:bg-[#121824] border border-slate-200 dark:border-slate-800/80">
+                      <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 block uppercase">
+                        CPF / CNPJ
+                      </span>
+                      <span className="font-bold font-mono text-slate-900 dark:text-white block">
+                        {selectedContact.cpfCnpj || 'Não cadastrado'}
+                      </span>
+                    </div>
+
+                    <div className="p-2.5 rounded-lg bg-white dark:bg-[#121824] border border-slate-200 dark:border-slate-800/80">
+                      <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 block uppercase">
+                        Inscrição Estadual (IE)
+                      </span>
+                      <span className="font-bold text-slate-900 dark:text-white block">
+                        {selectedContact.inscricaoEstadual || 'Isento / Não informada'}
+                      </span>
+                    </div>
+
+                    <div className="p-2.5 rounded-lg bg-white dark:bg-[#121824] border border-slate-200 dark:border-slate-800/80 sm:col-span-2">
+                      <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 block uppercase">
+                        Endereço Completo & Bairro
+                      </span>
+                      <span className="font-medium text-slate-800 dark:text-slate-200 block truncate" title={`${selectedContact.address || ''}${selectedContact.number ? ', ' + selectedContact.number : ''} ${selectedContact.neighborhood ? ' - ' + selectedContact.neighborhood : ''}`}>
+                        {selectedContact.address ? (
+                          `${selectedContact.address}${selectedContact.number ? ', Nº ' + selectedContact.number : ''}${selectedContact.neighborhood ? ' - ' + selectedContact.neighborhood : ''}`
+                        ) : 'Endereço não informado'}
+                      </span>
+                    </div>
+
+                    <div className="p-2.5 rounded-lg bg-white dark:bg-[#121824] border border-slate-200 dark:border-slate-800/80">
+                      <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 block uppercase">
+                        Cidade / UF / CEP
+                      </span>
+                      <span className="font-bold text-cyan-600 dark:text-cyan-400 block">
+                        {selectedContact.city ? `${selectedContact.city} / ${selectedContact.state || ''}` : 'Cidade não cadastrada'}
+                        {selectedContact.cep && <span className="text-[10px] font-mono text-slate-400 block font-normal">CEP: {selectedContact.cep}</span>}
+                      </span>
+                    </div>
                   </div>
                 </div>
 

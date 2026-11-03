@@ -193,9 +193,21 @@ model Contact {
   phone             String?
   email             String?
   avatarUrl         String?
+  cpfCnpj           String?
+  razaoSocial       String?
+  nomeFantasia      String?
+  inscricaoEstadual String?
   cep               String?
   address           String?
-  source            String // WhatsApp, Instagram, Web
+  number            String?
+  complement        String?
+  neighborhood      String?
+  city              String?
+  state             String?
+  isFaturado        Boolean              @default(false)
+  totalFaturado     Float                @default(0)
+  dataHealthScore   Int                  @default(0)
+  source            String // WhatsApp, Instagram, Web, Omie ERP
   tags              String[] // Quente, Frio
   tenantId          String
   whatsappLid       String? // Identificador privado do WhatsApp (@lid)
@@ -215,6 +227,9 @@ model Contact {
   @@unique([tenantId, phone])
   @@index([tenantId])
   @@index([tenantId, whatsappLid])
+  @@index([tenantId, cpfCnpj])
+  @@index([tenantId, isFaturado])
+  @@index([tenantId, city, state])
 }
 
 model Conversation {
