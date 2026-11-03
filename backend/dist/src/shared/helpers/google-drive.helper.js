@@ -121,25 +121,31 @@ async function downloadDriveFileBuffer(driveFileId, apiKey) {
             console.warn(`[DRIVE_HELPER] Falha ao baixar via Google Drive API Key (${apiErr.message}). Tentando fallback UC...`);
         }
     }
-    try {
-        const ucUrl = `https://drive.google.com/uc?export=download&id=${driveFileId}&confirm=t`;
-        const res = await axios_1.default.get(ucUrl, {
-            responseType: 'arraybuffer',
-            timeout: 25000,
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            },
-        });
-        const contentType = res.headers['content-type'] || '';
-        if (!contentType.includes('text/html')) {
-            return {
-                buffer: Buffer.from(res.data),
-                mimeType: contentType || 'application/octet-stream',
-            };
+    const directUrls = [
+        `https://drive.usercontent.google.com/download?id=${driveFileId}&export=download&confirm=t`,
+        `https://drive.google.com/uc?export=download&id=${driveFileId}&confirm=t`,
+    ];
+    for (const directUrl of directUrls) {
+        try {
+            const res = await axios_1.default.get(directUrl, {
+                responseType: 'arraybuffer',
+                timeout: 25000,
+                maxRedirects: 5,
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                    Accept: '*/*',
+                },
+            });
+            const contentType = res.headers['content-type'] || '';
+            if (!contentType.includes('text/html') && res.data && res.data.length > 500) {
+                return {
+                    buffer: Buffer.from(res.data),
+                    mimeType: contentType || 'application/octet-stream',
+                };
+            }
         }
-    }
-    catch (ucErr) {
-        console.warn(`[DRIVE_HELPER] Falha no fallback UC: ${ucErr.message}`);
+        catch (directErr) {
+        }
     }
     try {
         const lh3Url = `https://lh3.googleusercontent.com/d/${driveFileId}`;

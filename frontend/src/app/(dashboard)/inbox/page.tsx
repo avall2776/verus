@@ -1170,11 +1170,11 @@ function InboxContent() {
         const isFirst = i === 0;
 
         // Legenda no primeiro envio para acompanhar o pacote
-        const content = isFirst ? (item.content || item.title || '') : '';
+        const content = isFirst ? (item.content || item.title || item.shortcut || '') : '';
         const filename = m.fileName || (mType === 'document' ? 'catalogo.pdf' : mType === 'video' ? 'video.mp4' : 'imagem.jpg');
 
         const payload: any = {
-          content,
+          content: content || undefined,
           isInternal: isInternalMode,
           type: mType,
           mediaUrl: m.url,
@@ -3246,15 +3246,15 @@ function InboxContent() {
               {/* Ações Alinhadas à Direita (Padrão WhatsApp Web + VERSUS) */}
               <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 ml-1.5">
                 {isResolved ? (
-                  <div className="flex items-center gap-1 sm:gap-1.5 mr-0.5 sm:mr-1">
-                    <span className={`hidden sm:inline-flex ${isWhatsApp ? 'text-[#8696A0] bg-[#202C33] border-[#222D34]' : 'text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700/80'} text-[11px] font-semibold px-2 py-0.5 border rounded-lg items-center gap-1`}>
+                  <div className="hidden md:flex items-center gap-1.5 mr-1 shrink-0">
+                    <span className={`inline-flex ${isWhatsApp ? 'text-[#8696A0] bg-[#202C33] border-[#222D34]' : 'text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700/80'} text-[11px] font-semibold px-2 py-0.5 border rounded-lg items-center gap-1`}>
                       <Lock size={11} className="text-slate-400" />
                       Finalizado
                     </span>
                     <button 
                       onClick={handleReopen} 
                       disabled={isReopening}
-                      className={`${isWhatsApp ? 'bg-[#00A884] hover:bg-[#02906F]' : 'bg-blue-600 hover:bg-blue-500'} text-white text-[11px] font-bold px-2 sm:px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50 shrink-0 shadow-sm`}
+                      className={`${isWhatsApp ? 'bg-[#00A884] hover:bg-[#02906F]' : 'bg-blue-600 hover:bg-blue-500'} text-white text-[11px] font-bold px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50 shrink-0 shadow-sm`}
                       title="Reabrir atendimento"
                     >
                       <ArrowRightLeft size={11} />
@@ -3262,7 +3262,7 @@ function InboxContent() {
                     </button>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-1 sm:gap-1.5 mr-0.5 sm:mr-1 shrink-0">
+                  <div className="hidden md:flex items-center gap-1.5 mr-1 shrink-0">
                     {/* Botão Assumir */}
                     <button 
                       onClick={() => handleTakeover()} 
@@ -3646,6 +3646,91 @@ function InboxContent() {
               </div>
             </div>
 
+            {/* Barra de Ações Rápidas no Mobile (Assumir, Transferir, Finalizar, Devolver IA) com Scroll Suave e Alto Contraste */}
+            {!isResolved ? (
+              <div className="md:hidden flex items-center gap-2 px-3 py-2 bg-slate-50 dark:bg-[#070D1B] border-b border-slate-200 dark:border-slate-800/80 overflow-x-auto no-scrollbar shrink-0 shadow-xs z-20">
+                {/* Botão Assumir */}
+                <button 
+                  type="button"
+                  onClick={() => handleTakeover()} 
+                  className={`text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shrink-0 shadow-sm whitespace-nowrap active:scale-95 ${
+                    activeContactData.status === 'human_takeover'
+                      ? 'bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500'
+                      : isWhatsApp
+                        ? 'bg-[#00A884] hover:bg-[#02906F]'
+                        : 'bg-blue-600 hover:bg-blue-500'
+                  }`}
+                  title="Assumir o atendimento"
+                >
+                  <UserCheck size={13} />
+                  <span>Assumir</span>
+                </button>
+
+                {/* Botão Transferir */}
+                <button 
+                  type="button"
+                  onClick={() => loadDepartmentsAndShowTransfer()} 
+                  className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shrink-0 shadow-sm whitespace-nowrap active:scale-95 ${
+                    isWhatsApp
+                      ? 'bg-[#202C33] hover:bg-[#2A3942] text-[#E9EDEF] border border-[#222D34]'
+                      : 'bg-white hover:bg-slate-100 text-slate-800 border border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700'
+                  }`}
+                  title="Transferir para outro atendente ou setor"
+                >
+                  <ArrowRightLeft size={13} className={isWhatsApp ? "text-[#8696A0]" : "text-blue-500"} />
+                  <span>Transferir</span>
+                </button>
+
+                {/* Botão Finalizar */}
+                <button 
+                  type="button"
+                  onClick={handleRelease} 
+                  className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shrink-0 shadow-sm whitespace-nowrap active:scale-95 ${
+                    isWhatsApp
+                      ? 'bg-[#202C33] hover:bg-[#2A3942] text-[#E9EDEF] border border-[#222D34]'
+                      : 'bg-white hover:bg-slate-100 text-slate-800 border border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700'
+                  }`}
+                  title="Finalizar atendimento"
+                >
+                  <CheckCircle2 size={13} className="text-emerald-500" />
+                  <span>Finalizar</span>
+                </button>
+
+                {/* Botão Devolver IA */}
+                {(activeContactData.status === 'human_takeover' || activeContactData.status === 'open' || activeContactData.status === 'in_progress') && (
+                  <button 
+                    type="button"
+                    onClick={handleReturnToBot} 
+                    disabled={isReturningToBot}
+                    className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shrink-0 shadow-sm whitespace-nowrap active:scale-95 ${
+                      isWhatsApp
+                        ? 'bg-[#202C33] hover:bg-[#2A3942] text-purple-300 border border-purple-500/30'
+                        : 'bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800'
+                    }`}
+                    title="Devolver atendimento para a IA"
+                  >
+                    <Bot size={13} className="text-purple-500 dark:text-purple-400" />
+                    <span>{isReturningToBot ? 'Devolvendo...' : 'Devolver IA'}</span>
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="md:hidden flex items-center justify-between px-3 py-2 bg-slate-50 dark:bg-[#070D1B] border-b border-slate-200 dark:border-slate-800/80 shrink-0">
+                <span className="text-xs text-slate-600 dark:text-slate-400 font-semibold flex items-center gap-1.5">
+                  <Lock size={12} className="text-slate-400" /> Atendimento Finalizado
+                </span>
+                <button
+                  type="button"
+                  onClick={handleReopen}
+                  disabled={isReopening}
+                  className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 shadow-sm active:scale-95"
+                >
+                  <ArrowRightLeft size={12} />
+                  <span>{isReopening ? 'Reabrindo...' : 'Reabrir'}</span>
+                </button>
+              </div>
+            )}
+
             {/* Barra de Busca na Conversa (WhatsApp Web) */}
             {showSearchInChat && (
               <div className="bg-white dark:bg-[#0B1224] border-b border-slate-200 dark:border-slate-800/80 px-4 py-2.5 flex items-center gap-3 z-20 animate-in slide-in-from-top-1 duration-150">
@@ -3906,6 +3991,11 @@ function InboxContent() {
                                       const target = e.currentTarget;
                                       if (driveId && !target.src.includes('drive-stream')) {
                                         target.src = `/api-backend/media/drive-stream/${driveId}?name=imagem.jpg`;
+                                      } else {
+                                        target.style.display = 'none';
+                                        if (target.parentElement) {
+                                          target.parentElement.innerHTML = '<div class="flex items-center gap-2 p-3 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-400 text-xs"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg><span>Mídia indisponível</span></div>';
+                                        }
                                       }
                                     }}
                                   />
@@ -3917,11 +4007,15 @@ function InboxContent() {
                                   </div>
                                 </div>
                               ) : (
-                                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 text-xs">
-                                  <ImageIcon size={18} className="shrink-0 opacity-50 text-slate-400" />
+                                <div className={`flex items-center gap-2.5 p-3 rounded-xl border text-xs shadow-sm ${
+                                  isMe
+                                    ? 'bg-white border-slate-200/90 text-slate-900'
+                                    : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400'
+                                }`}>
+                                  <ImageIcon size={18} className={`shrink-0 ${isMe ? 'text-slate-600' : 'opacity-50 text-slate-400'}`} />
                                   <div className="flex flex-col min-w-0">
-                                    <span className="font-semibold text-slate-700 dark:text-slate-300">Imagem expirada do WhatsApp</span>
-                                    <span className="text-[10px] text-slate-400">Mídia expirada no servidor original do WhatsApp</span>
+                                    <span className={`font-bold ${isMe ? 'text-slate-900' : 'text-slate-700 dark:text-slate-300'}`}>Imagem expirada do WhatsApp</span>
+                                    <span className={`text-[10px] ${isMe ? 'text-slate-600 font-medium' : 'text-slate-400'}`}>Mídia expirada no servidor original do WhatsApp</span>
                                   </div>
                                 </div>
                               )}
@@ -3951,7 +4045,7 @@ function InboxContent() {
                                       const target = e.currentTarget;
                                       const driveId = extractGoogleDriveId(msg.mediaUrl);
                                       if (driveId && target.parentElement) {
-                                        target.parentElement.innerHTML = `<iframe src="https://drive.google.com/file/d/${driveId}/preview" class="w-full h-56 rounded-xl border-0" allow="autoplay"></iframe>`;
+                                        target.parentElement.innerHTML = `<div class="p-4 flex flex-col items-center justify-center gap-2 text-center bg-slate-900/95 text-white rounded-xl border border-white/10 shadow-lg"><div class="flex items-center gap-2 text-cyan-400 text-xs font-bold"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>Vídeo Google Drive</div><p class="text-[11px] text-slate-300">Reprodução em aba externa para visualização integral</p><a href="https://drive.google.com/file/d/${driveId}/view?usp=sharing" target="_blank" rel="noopener noreferrer" class="mt-1 px-4 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold transition-all shadow-md flex items-center gap-1.5">Abrir Vídeo ↗</a></div>`;
                                         return;
                                       }
                                       target.style.display = 'none';
@@ -3964,11 +4058,15 @@ function InboxContent() {
                                   </video>
                                 </div>
                               ) : (
-                                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 text-xs">
-                                  <Video size={18} className="shrink-0 opacity-50" />
+                                <div className={`flex items-center gap-2.5 p-3 rounded-xl border text-xs shadow-sm ${
+                                  isMe
+                                    ? 'bg-white border-slate-200/90 text-slate-900'
+                                    : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400'
+                                }`}>
+                                  <Video size={18} className={`shrink-0 ${isMe ? 'text-slate-600' : 'opacity-50'}`} />
                                   <div className="flex flex-col min-w-0">
-                                    <span className="font-semibold text-slate-700 dark:text-slate-300">Vídeo expirado do WhatsApp</span>
-                                    <span className="text-[10px] text-slate-400">Arquivo expirou no servidor da Meta</span>
+                                    <span className={`font-bold ${isMe ? 'text-slate-900' : 'text-slate-700 dark:text-slate-300'}`}>Vídeo expirado do WhatsApp</span>
+                                    <span className={`text-[10px] ${isMe ? 'text-slate-600 font-medium' : 'text-slate-400'}`}>Arquivo expirou no servidor da Meta</span>
                                   </div>
                                 </div>
                               )}
@@ -4014,19 +4112,28 @@ function InboxContent() {
                                 <VersusAudioPlayer
                                   src={getAudioSrc(msg.mediaUrl)}
                                   downloadName={`audio_${msg.id || Date.now()}.ogg`}
+                                  isOutbound={isMe}
                                 />
                               ) : msg.mediaUrl?.includes('mmg.whatsapp.net') ? (
-                                <div className="flex items-center gap-2.5 p-3 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 text-xs shadow-sm">
-                                  <Volume2 size={16} className="shrink-0 opacity-50 text-slate-400" />
+                                <div className={`flex items-center gap-2.5 p-3 rounded-2xl border text-xs shadow-sm ${
+                                  isMe
+                                    ? 'bg-white border-slate-200/90 text-slate-900'
+                                    : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400'
+                                }`}>
+                                  <Volume2 size={16} className={`shrink-0 ${isMe ? 'text-slate-600' : 'opacity-50 text-slate-400'}`} />
                                   <div className="flex flex-col min-w-0">
-                                    <span className="font-semibold text-slate-700 dark:text-slate-300">Áudio expirado do WhatsApp</span>
-                                    <span className="text-[10px] text-slate-400">Arquivo criptografado expirou no servidor da Meta</span>
+                                    <span className={`font-bold ${isMe ? 'text-slate-900' : 'text-slate-700 dark:text-slate-300'}`}>Áudio expirado do WhatsApp</span>
+                                    <span className={`text-[10px] ${isMe ? 'text-slate-600 font-medium' : 'text-slate-400'}`}>Arquivo criptografado expirou no servidor da Meta</span>
                                   </div>
                                 </div>
                               ) : (
-                                <div className="flex items-center gap-2 p-3 rounded-2xl bg-amber-50 dark:bg-[#0B1224] border border-amber-300 dark:border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs shadow-md">
-                                  <Volume2 size={16} className="shrink-0 animate-pulse text-amber-500 dark:text-amber-400" />
-                                  <span>Processando áudio recebido...</span>
+                                <div className={`flex items-center gap-2 p-3 rounded-2xl border text-xs shadow-md ${
+                                  isMe
+                                    ? 'bg-white border-slate-200/90 text-slate-900'
+                                    : 'bg-amber-50 dark:bg-[#0B1224] border-amber-300 dark:border-amber-500/30 text-amber-800 dark:text-amber-300'
+                                }`}>
+                                  <Volume2 size={16} className={`shrink-0 animate-pulse ${isMe ? 'text-blue-600' : 'text-amber-500 dark:text-amber-400'}`} />
+                                  <span className={isMe ? 'font-semibold text-slate-900' : ''}>Processando áudio recebido...</span>
                                 </div>
                               )}
 
@@ -4042,19 +4149,31 @@ function InboxContent() {
                                           [audioKey]: !prev[audioKey]
                                         }));
                                       }}
-                                      className="flex items-center gap-1.5 text-[11px] font-semibold text-blue-600 hover:text-blue-700 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors cursor-pointer self-start"
+                                      className={`flex items-center gap-1.5 text-[11px] font-bold transition-colors cursor-pointer self-start ${
+                                        isMe
+                                          ? 'text-white hover:text-white/80 bg-white/20 hover:bg-white/30 border border-white/25 px-2 py-0.5 rounded-lg'
+                                          : 'text-blue-600 hover:text-blue-700 dark:text-cyan-400 dark:hover:text-cyan-300'
+                                      }`}
                                     >
                                       <FileText size={12} className="shrink-0" />
                                       <span>{expandedTranscriptions[audioKey] ? 'Ocultar transcrição' : 'Ver transcrição'}</span>
                                     </button>
 
                                     {expandedTranscriptions[audioKey] && (
-                                      <div className="bg-slate-100 dark:bg-black/40 rounded-xl p-2.5 text-xs text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-cyan-500/30 animate-in fade-in slide-in-from-top-1 shadow-inner">
-                                        <div className="flex items-center gap-1 text-[10px] text-blue-600 dark:text-cyan-400 font-bold uppercase tracking-wider mb-1">
+                                      <div className={`rounded-xl p-2.5 text-xs animate-in fade-in slide-in-from-top-1 shadow-inner ${
+                                        isMe
+                                          ? 'bg-white text-slate-900 border border-slate-200 shadow-md'
+                                          : 'bg-slate-100 dark:bg-black/40 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-cyan-500/30'
+                                      }`}>
+                                        <div className={`flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider mb-1 ${
+                                          isMe ? 'text-blue-600' : 'text-blue-600 dark:text-cyan-400'
+                                        }`}>
                                           <Sparkles size={11} />
                                           <span>Transcrição por IA</span>
                                         </div>
-                                        <p className="italic text-slate-700 dark:text-slate-300 leading-relaxed text-[11px]">
+                                        <p className={`italic leading-relaxed text-[11px] ${
+                                          isMe ? 'text-slate-800 font-medium' : 'text-slate-700 dark:text-slate-300'
+                                        }`}>
                                           "{msg.audioTranscription}"
                                         </p>
                                       </div>
@@ -4065,7 +4184,11 @@ function InboxContent() {
                                     type="button"
                                     disabled={transcribingMessageIds[msg.id]}
                                     onClick={() => handleTranscribeAudio(msg.id)}
-                                    className="flex items-center gap-1.5 text-[11px] font-semibold text-blue-600 hover:text-blue-700 dark:text-cyan-400 dark:hover:text-cyan-300 disabled:opacity-50 transition-colors cursor-pointer self-start mt-0.5"
+                                    className={`flex items-center gap-1.5 text-[11px] font-bold disabled:opacity-50 transition-colors cursor-pointer self-start mt-0.5 ${
+                                      isMe
+                                        ? 'text-white hover:text-white/80 bg-white/20 hover:bg-white/30 border border-white/25 px-2.5 py-1 rounded-lg backdrop-blur-sm'
+                                        : 'text-blue-600 hover:text-blue-700 dark:text-cyan-400 dark:hover:text-cyan-300'
+                                    }`}
                                     title="Transcrever áudio sob demanda com IA"
                                   >
                                     {transcribingMessageIds[msg.id] ? (

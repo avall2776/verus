@@ -196,6 +196,7 @@ let MessagingService = MessagingService_1 = class MessagingService {
             this.logger.log(`Disparando mensagem Evolution API [${evoConfig.instanceName}] para ${cleanPhone}...`);
             const reqBody = {
                 number: cleanPhone,
+                text: content,
                 options: {
                     delay: 1200,
                     presence: 'composing',
@@ -208,13 +209,34 @@ let MessagingService = MessagingService_1 = class MessagingService {
             if (quoted) {
                 reqBody.quoted = quoted;
             }
-            const response = await axios_1.default.post(url, reqBody, {
-                headers: {
-                    apikey: evoConfig.apiKey,
-                    'Content-Type': 'application/json',
-                },
-                timeout: 15000,
-            });
+            let response;
+            let lastErr;
+            for (let attempt = 1; attempt <= 3; attempt++) {
+                try {
+                    response = await axios_1.default.post(url, reqBody, {
+                        headers: {
+                            apikey: evoConfig.apiKey,
+                            'Content-Type': 'application/json',
+                        },
+                        timeout: 15000,
+                    });
+                    break;
+                }
+                catch (postErr) {
+                    lastErr = postErr;
+                    const isNetworkGlitch = !postErr.response ||
+                        postErr.code === 'ECONNRESET' ||
+                        postErr.code === 'ETIMEDOUT' ||
+                        postErr.message?.includes('socket hang up') ||
+                        postErr.response?.status >= 500;
+                    if (attempt < 3 && isNetworkGlitch) {
+                        this.logger.warn(`Evolution API socket instável (tentativa ${attempt}/3). Retentando envio para ${cleanPhone} em 750ms...`);
+                        await new Promise((r) => setTimeout(r, 750));
+                        continue;
+                    }
+                    throw postErr;
+                }
+            }
             const messageId = response.data?.key?.id || response.data?.id || `evo_${Date.now()}`;
             this.logger.log(`Mensagem enviada com sucesso via Evolution API para ${cleanPhone}. ID: ${messageId}`);
             return {
@@ -230,6 +252,7 @@ let MessagingService = MessagingService_1 = class MessagingService {
                 try {
                     const retryRes = await axios_1.default.post(url, {
                         number: cleanPhone,
+                        text: content,
                         options: {
                             delay: 1200,
                             presence: 'composing',
@@ -317,7 +340,7 @@ let MessagingService = MessagingService_1 = class MessagingService {
                 try {
                     const driveData = await (0, google_drive_helper_1.downloadDriveFileBuffer)(driveId);
                     if (driveData) {
-                        if (payload.type === 'image' && driveData.buffer.length < 3.5 * 1024 * 1024) {
+                        if (driveData.buffer.length < 15 * 1024 * 1024) {
                             base64Media = driveData.buffer.toString('base64');
                         }
                     }
@@ -370,13 +393,32 @@ let MessagingService = MessagingService_1 = class MessagingService {
             if (payload.quoted) {
                 reqBody.quoted = payload.quoted;
             }
-            const response = await axios_1.default.post(url, reqBody, {
-                headers: {
-                    apikey: evoConfig.apiKey,
-                    'Content-Type': 'application/json',
-                },
-                timeout: 25000,
-            });
+            let response;
+            for (let attempt = 1; attempt <= 2; attempt++) {
+                try {
+                    response = await axios_1.default.post(url, reqBody, {
+                        headers: {
+                            apikey: evoConfig.apiKey,
+                            'Content-Type': 'application/json',
+                        },
+                        timeout: 25000,
+                    });
+                    break;
+                }
+                catch (postErr) {
+                    const isNetworkGlitch = !postErr.response ||
+                        postErr.code === 'ECONNRESET' ||
+                        postErr.code === 'ETIMEDOUT' ||
+                        postErr.message?.includes('socket hang up') ||
+                        postErr.response?.status >= 500;
+                    if (attempt < 2 && isNetworkGlitch) {
+                        this.logger.warn(`Evolution API mídia socket instável (tentativa ${attempt}/2). Retentando em 800ms...`);
+                        await new Promise((r) => setTimeout(r, 800));
+                        continue;
+                    }
+                    throw postErr;
+                }
+            }
             const messageId = response.data?.key?.id || response.data?.id || `evo_media_${Date.now()}`;
             this.logger.log(`Mídia [${payload.type}] enviada via Evolution API para ${cleanPhone}. ID: ${messageId}`);
             return { success: true, messageId, provider: 'evolution', raw: response.data };

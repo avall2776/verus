@@ -658,7 +658,7 @@ export declare class ChatService {
         messageId: string;
     }>;
     sendManualMessage(tenantId: string, conversationId: string, payload: {
-        content: string;
+        content?: string;
         isInternal?: boolean;
         type?: string;
         mediaUrl?: string;

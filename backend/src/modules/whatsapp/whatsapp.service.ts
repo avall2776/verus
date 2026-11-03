@@ -32,10 +32,10 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
       this.reconcileAllTenantsBackground().catch(() => {});
     }, 30 * 1000);
 
-    // Repete a verificação e resolução a cada 5 minutos
+    // Repete a verificação e reconciliação a cada 30 minutos (evita sobrecarga no event loop da Evolution API)
     this.reconcilerTimer = setInterval(() => {
       this.reconcileAllTenantsBackground().catch(() => {});
-    }, 5 * 60 * 1000);
+    }, 30 * 60 * 1000);
   }
 
   /**

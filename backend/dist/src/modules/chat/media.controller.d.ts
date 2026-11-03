@@ -16,5 +16,5 @@ export declare class MediaController {
     }>;
     getFile(filename: string, res: Response): void;
     getAudioFile(filename: string, res: Response): void;
-    streamDriveFile(driveId: string, customName: string, res: Response): Promise<Response<any, Record<string, any>>>;
+    streamDriveFile(driveId: string, customName: string, res: Response): Promise<void | Response<any, Record<string, any>>>;
 }

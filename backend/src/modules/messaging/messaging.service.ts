@@ -326,6 +326,7 @@ export class MessagingService {
 
       const reqBody: any = {
         number: cleanPhone,
+        text: content,
         options: {
           delay: 1200,
           presence: 'composing',
@@ -340,17 +341,41 @@ export class MessagingService {
         reqBody.quoted = quoted;
       }
 
-      const response = await axios.post(
-        url,
-        reqBody,
-        {
-          headers: {
-            apikey: evoConfig.apiKey,
-            'Content-Type': 'application/json',
-          },
-          timeout: 15000,
-        },
-      );
+      let response: any;
+      let lastErr: any;
+
+      // Executa envio com até 3 tentativas para contornar micro-quedas de socket (ECONNRESET / socket hang up)
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          response = await axios.post(
+            url,
+            reqBody,
+            {
+              headers: {
+                apikey: evoConfig.apiKey,
+                'Content-Type': 'application/json',
+              },
+              timeout: 15000,
+            },
+          );
+          break; // Sucesso
+        } catch (postErr: any) {
+          lastErr = postErr;
+          const isNetworkGlitch =
+            !postErr.response ||
+            postErr.code === 'ECONNRESET' ||
+            postErr.code === 'ETIMEDOUT' ||
+            postErr.message?.includes('socket hang up') ||
+            postErr.response?.status >= 500;
+
+          if (attempt < 3 && isNetworkGlitch) {
+            this.logger.warn(`Evolution API socket instável (tentativa ${attempt}/3). Retentando envio para ${cleanPhone} em 750ms...`);
+            await new Promise((r) => setTimeout(r, 750));
+            continue;
+          }
+          throw postErr;
+        }
+      }
 
       const messageId = response.data?.key?.id || response.data?.id || `evo_${Date.now()}`;
       this.logger.log(`Mensagem enviada com sucesso via Evolution API para ${cleanPhone}. ID: ${messageId}`);
@@ -368,6 +393,7 @@ export class MessagingService {
             url,
             {
               number: cleanPhone,
+              text: content,
               options: {
                 delay: 1200,
                 presence: 'composing',
@@ -478,9 +504,9 @@ export class MessagingService {
         try {
           const driveData = await downloadDriveFileBuffer(driveId);
           if (driveData) {
-            // Apenas imagens leves (menores que 3.5MB) enviam em Base64 puro para rapidez.
-            // Vídeos e PDFs sempre usam streaming URL para não estourar a memória da Evolution API.
-            if (payload.type === 'image' && driveData.buffer.length < 3.5 * 1024 * 1024) {
+            // Se o arquivo tiver até 15MB, envia em Base64 direto em memória
+            // Isso evita falhas de download remoto na Evolution API
+            if (driveData.buffer.length < 15 * 1024 * 1024) {
               base64Media = driveData.buffer.toString('base64');
             }
           }
@@ -543,17 +569,37 @@ export class MessagingService {
         reqBody.quoted = payload.quoted;
       }
 
-      const response = await axios.post(
-        url,
-        reqBody,
-        {
-          headers: {
-            apikey: evoConfig.apiKey,
-            'Content-Type': 'application/json',
-          },
-          timeout: 25000,
-        },
-      );
+      let response: any;
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          response = await axios.post(
+            url,
+            reqBody,
+            {
+              headers: {
+                apikey: evoConfig.apiKey,
+                'Content-Type': 'application/json',
+              },
+              timeout: 25000,
+            },
+          );
+          break;
+        } catch (postErr: any) {
+          const isNetworkGlitch =
+            !postErr.response ||
+            postErr.code === 'ECONNRESET' ||
+            postErr.code === 'ETIMEDOUT' ||
+            postErr.message?.includes('socket hang up') ||
+            postErr.response?.status >= 500;
+
+          if (attempt < 2 && isNetworkGlitch) {
+            this.logger.warn(`Evolution API mídia socket instável (tentativa ${attempt}/2). Retentando em 800ms...`);
+            await new Promise((r) => setTimeout(r, 800));
+            continue;
+          }
+          throw postErr;
+        }
+      }
 
       const messageId = response.data?.key?.id || response.data?.id || `evo_media_${Date.now()}`;
       this.logger.log(`Mídia [${payload.type}] enviada via Evolution API para ${cleanPhone}. ID: ${messageId}`);

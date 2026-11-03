@@ -7,12 +7,14 @@ interface VersusAudioPlayerProps {
   src: string;
   downloadName?: string;
   className?: string;
+  isOutbound?: boolean;
 }
 
 export const VersusAudioPlayer: React.FC<VersusAudioPlayerProps> = ({
   src,
   downloadName = 'audio_vallor.ogg',
   className = '',
+  isOutbound = false,
 }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const progressBarRef = useRef<HTMLDivElement | null>(null);
@@ -112,11 +114,15 @@ export const VersusAudioPlayer: React.FC<VersusAudioPlayerProps> = ({
 
   if (hasError) {
     return (
-      <div className={`flex items-center gap-2.5 p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-amber-700 dark:text-amber-400 select-none ${className}`}>
-        <Volume2 size={16} className="shrink-0 opacity-70" />
+      <div className={`flex items-center gap-2.5 p-2.5 rounded-2xl select-none ${
+        isOutbound 
+          ? 'bg-white border border-slate-200/90 text-slate-900 shadow-sm' 
+          : 'bg-amber-500/10 border border-amber-500/25 text-amber-700 dark:text-amber-400'
+      } ${className}`}>
+        <Volume2 size={16} className={`shrink-0 ${isOutbound ? 'text-slate-600' : 'opacity-70'}`} />
         <div className="flex flex-col min-w-0">
-          <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">Áudio histórico indisponível</span>
-          <span className="text-[10px] text-slate-500 dark:text-slate-400">Armazenamento do CRM anterior desativado</span>
+          <span className={`text-xs font-bold truncate ${isOutbound ? 'text-slate-900' : 'text-slate-800 dark:text-slate-200'}`}>Áudio histórico indisponível</span>
+          <span className={`text-[10px] ${isOutbound ? 'text-slate-600 font-medium' : 'text-slate-500 dark:text-slate-400'}`}>Armazenamento do CRM anterior desativado</span>
         </div>
       </div>
     );
@@ -124,7 +130,11 @@ export const VersusAudioPlayer: React.FC<VersusAudioPlayerProps> = ({
 
   return (
     <div
-      className={`flex flex-col gap-2 p-3 rounded-2xl bg-slate-100 dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800/90 shadow-sm dark:shadow-lg text-slate-800 dark:text-white select-none ${className}`}
+      className={`flex flex-col gap-2 p-3 rounded-2xl select-none ${
+        isOutbound
+          ? 'bg-white border border-slate-200/90 shadow-md text-slate-900'
+          : 'bg-slate-100 dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800/90 shadow-sm dark:shadow-lg text-slate-800 dark:text-white'
+      } ${className}`}
     >
       {/* Elemento de áudio nativo */}
       <audio
@@ -169,7 +179,9 @@ export const VersusAudioPlayer: React.FC<VersusAudioPlayerProps> = ({
           <div
             ref={progressBarRef}
             onClick={handleSeek}
-            className="relative h-2 w-full bg-slate-200 dark:bg-slate-800/90 hover:h-2.5 rounded-full cursor-pointer transition-all overflow-hidden group/bar"
+            className={`relative h-2 w-full hover:h-2.5 rounded-full cursor-pointer transition-all overflow-hidden group/bar ${
+              isOutbound ? 'bg-slate-200 border border-slate-300/50' : 'bg-slate-200 dark:bg-slate-800/90'
+            }`}
             title="Clique para avançar ou retroceder"
           >
             {/* Barra preenchida com gradiente monocromático ciano/azul do Vallor */}
@@ -184,8 +196,10 @@ export const VersusAudioPlayer: React.FC<VersusAudioPlayerProps> = ({
             />
           </div>
 
-          {/* Timers de Reprodução */}
-          <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+          {/* Timers de Reprodução com Alto Contraste */}
+          <div className={`flex items-center justify-between text-[11px] font-mono ${
+            isOutbound ? 'text-slate-800 font-bold' : 'text-slate-600 dark:text-slate-300 font-medium'
+          }`}>
             <span>{formatTime(currentTime)}</span>
             <span>{formatTime(duration)}</span>
           </div>
@@ -195,7 +209,11 @@ export const VersusAudioPlayer: React.FC<VersusAudioPlayerProps> = ({
         <button
           type="button"
           onClick={cyclePlaybackRate}
-          className="px-2 py-1 rounded-lg bg-white hover:bg-slate-200 border border-slate-300 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 dark:border-slate-700/60 dark:hover:border-cyan-500/50 text-[11px] font-bold text-cyan-600 dark:text-cyan-300 hover:text-cyan-700 dark:hover:text-white transition-all cursor-pointer shrink-0 shadow-sm"
+          className={`px-2 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer shrink-0 shadow-sm ${
+            isOutbound
+              ? 'bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-900 active:scale-95'
+              : 'bg-white hover:bg-slate-200 border border-slate-300 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 dark:border-slate-700/60 dark:hover:border-cyan-500/50 text-cyan-600 dark:text-cyan-300 hover:text-cyan-700 dark:hover:text-white'
+          }`}
           title="Alterar velocidade de reprodução"
         >
           {playbackRate}x
@@ -207,7 +225,11 @@ export const VersusAudioPlayer: React.FC<VersusAudioPlayerProps> = ({
           download={downloadName}
           target="_blank"
           rel="noopener noreferrer"
-          className="p-2 rounded-lg bg-white hover:bg-slate-200 border border-slate-300 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 dark:border-slate-700/60 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white transition-all cursor-pointer shrink-0 shadow-sm"
+          className={`p-2 rounded-lg transition-all cursor-pointer shrink-0 shadow-sm ${
+            isOutbound
+              ? 'bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-800 hover:text-slate-950 active:scale-95'
+              : 'bg-white hover:bg-slate-200 border border-slate-300 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 dark:border-slate-700/60 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white'
+          }`}
           title="Baixar áudio"
         >
           <Download size={14} />

@@ -92,8 +92,8 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
         }, 10000);
         this.syncInterval = setInterval(() => {
             this.syncAllActiveTenants().catch((err) => this.logger.warn(`[Radar Stories] Falha no ciclo de auto-sync: ${err.message}`));
-        }, 2 * 60 * 1000);
-        this.logger.log(`[Radar Stories] Monitoramento automático em background ativado (polling a cada 2 minutos).`);
+        }, 10 * 60 * 1000);
+        this.logger.log(`[Radar Stories] Monitoramento automático em background ativado (polling a cada 10 minutos).`);
     }
     async syncAllActiveTenants() {
         try {

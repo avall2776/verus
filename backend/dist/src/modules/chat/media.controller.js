@@ -110,18 +110,23 @@ let MediaController = class MediaController {
         return res.sendFile(filePath);
     }
     async streamDriveFile(driveId, customName, res) {
-        const fileData = await (0, google_drive_helper_1.downloadDriveFileBuffer)(driveId);
-        if (!fileData) {
-            throw new common_1.NotFoundException('Arquivo do Google Drive não encontrado ou não acessível publicamente.');
+        try {
+            const fileData = await (0, google_drive_helper_1.downloadDriveFileBuffer)(driveId);
+            if (fileData && fileData.buffer && fileData.buffer.length > 0) {
+                const fileName = customName || 'arquivo.mp4';
+                res.setHeader('Content-Type', fileData.mimeType);
+                res.setHeader('Content-Length', fileData.buffer.length);
+                res.setHeader('Accept-Ranges', 'bytes');
+                res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(fileName)}"`);
+                res.setHeader('Access-Control-Allow-Origin', '*');
+                res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+                res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+                return res.end(fileData.buffer);
+            }
         }
-        const fileName = customName || 'arquivo.pdf';
-        res.setHeader('Content-Type', fileData.mimeType);
-        res.setHeader('Content-Length', fileData.buffer.length);
-        res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(fileName)}"`);
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
-        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-        return res.end(fileData.buffer);
+        catch (err) {
+        }
+        return res.redirect(302, `https://drive.google.com/file/d/${driveId}/view?usp=sharing`);
     }
 };
 exports.MediaController = MediaController;

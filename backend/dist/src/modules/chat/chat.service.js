@@ -761,7 +761,7 @@ let ChatService = ChatService_1 = class ChatService {
     async sendManualMessage(tenantId, conversationId, payload) {
         if (payload.scheduledAt) {
             return this.scheduleMessage(tenantId, conversationId, {
-                content: payload.content,
+                content: payload.content || '',
                 scheduledAt: payload.scheduledAt,
                 timezone: payload.timezone,
                 isInternal: payload.isInternal,

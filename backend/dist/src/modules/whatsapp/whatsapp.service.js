@@ -40,7 +40,7 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
         }, 30 * 1000);
         this.reconcilerTimer = setInterval(() => {
             this.reconcileAllTenantsBackground().catch(() => { });
-        }, 5 * 60 * 1000);
+        }, 30 * 60 * 1000);
     }
     async reconcileAllTenantsBackground() {
         try {
