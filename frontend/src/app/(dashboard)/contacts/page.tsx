@@ -1839,14 +1839,14 @@ E-MAIL: ${selectedContact.email || ''}`;
                         <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                           <TrendingUp size={16} />
                         </div>
-                        <h4 className="text-xs font-black text-slate-900 dark:text-white truncate">Lookalike VIP (Compradores)</h4>
+                        <h4 className="text-xs font-black text-slate-900 dark:text-white leading-tight">Lookalike VIP (Compradores)</h4>
                       </div>
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/40 shrink-0">
                         Mais Recomendado
                       </span>
                     </div>
                     <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed mb-3">
-                      Inclui clientes que já compraram de verdade com LTV. O Meta criará um público de 1 a 2 milhões de produtores idênticos aos seus compradores.
+                      Inclui 592 clientes que já compraram de verdade com LTV. O Meta criará um público de 1,6M a mais de 3,5M de produtores idênticos aos seus compradores.
                     </p>
                     <div className="flex items-center justify-between text-xs font-bold pt-2 border-t border-slate-200/80 dark:border-slate-800">
                       <span className="text-emerald-600 dark:text-emerald-400">{metrics.clientsCount} compradores</span>
