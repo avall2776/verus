@@ -2158,6 +2158,26 @@ function InboxContent() {
     }
   };
 
+  const handleRetryFailedMessage = async (failedMsg: any) => {
+    if (!activeChat || !failedMsg) return;
+    try {
+      const payload: any = {
+        content: failedMsg.content,
+        isInternal: false,
+        type: failedMsg.type || 'text',
+        ...(failedMsg.mediaUrl ? { mediaUrl: failedMsg.mediaUrl } : {}),
+        ...(activeInstance?.id ? { instanceId: activeInstance.id } : {})
+      };
+      setMessages(prev => prev.filter(m => m.id !== failedMsg.id));
+      await api.delete(`/conversations/${activeChat}/messages/${failedMsg.id}`).catch(() => {});
+      const { data } = await api.post(`/conversations/${activeChat}/messages`, payload);
+      setMessages(prev => [...prev, data]);
+      toast.success("Mensagem reenviada!");
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Falha ao reenviar mensagem.");
+    }
+  };
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setSelectedFile(e.target.files[0]);
@@ -4067,15 +4087,25 @@ function InboxContent() {
 
                           {/* Documentos e Anexos Diversos */}
                           {(msg.type === 'document' || (!!msg.mediaUrl && !/\.(mp4|mov|webm|ogg|opus|mp3|m4a|wav|jpg|jpeg|png|webp|gif)($|\?)/i.test(msg.mediaUrl) && !msg.mediaUrl.includes('maps.google.com') && msg.type !== 'audio' && msg.type !== 'video' && msg.type !== 'image' && msg.type !== 'location')) && (
-                            <div className="flex items-center gap-2.5 p-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 dark:bg-black/30 dark:hover:bg-black/40 dark:border-white/10 rounded-xl transition-colors mb-2 max-w-[340px]">
-                              <div className="w-8 h-8 rounded-lg bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-600 dark:text-rose-400 shrink-0">
+                            <div className={`flex items-center gap-2.5 p-2.5 rounded-xl transition-colors mb-2 max-w-[340px] ${
+                              isMe
+                                ? 'bg-white border border-slate-200/90 shadow-sm'
+                                : 'bg-slate-100 hover:bg-slate-200 border border-slate-200 dark:bg-black/30 dark:hover:bg-black/40 dark:border-white/10'
+                            }`}>
+                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                                isMe ? 'bg-rose-100 border border-rose-300 text-rose-600' : 'bg-rose-500/20 border border-rose-500/40 text-rose-600 dark:text-rose-400'
+                              }`}>
                                 <FileText size={18} />
                               </div>
                               <div className="min-w-0 flex-1">
-                                <span className="text-xs truncate font-medium text-slate-800 dark:text-slate-200 block" title={msg.content || 'Documento anexo'}>
+                                <span className={`text-xs truncate font-bold block ${
+                                  isMe ? 'text-slate-900' : 'text-slate-800 dark:text-slate-200'
+                                }`} title={msg.content || 'Documento anexo'}>
                                   {msg.content?.replace(/^📄\s*\[Documento:\s*([^\]]+)\][\s\S]*$/, '$1') || (isGoogleDriveUrl(msg.mediaUrl) ? 'Catálogo / PDF (Google Drive)' : 'Documento anexo')}
                                 </span>
-                                <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                <span className={`text-[10px] uppercase tracking-wider font-semibold ${
+                                  isMe ? 'text-slate-500' : 'text-slate-500 dark:text-slate-400'
+                                }`}>
                                   {isGoogleDriveUrl(msg.mediaUrl) ? 'GOOGLE DRIVE' : msg.mediaUrl?.includes('lvdphjhftfjdifnzuazd.supabase.co') ? 'ARQUIVO HISTÓRICO' : (msg.mediaUrl ? (msg.mediaUrl.split('.').pop()?.split('?')[0] || 'PDF') : 'DOCUMENTO')}
                                 </span>
                               </div>
@@ -4084,7 +4114,9 @@ function InboxContent() {
                                   href={getMediaUrl(msg.mediaUrl, 'document')} 
                                   target="_blank" 
                                   rel="noopener noreferrer" 
-                                  className="ml-auto text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors"
+                                  className={`ml-auto p-1 rounded-lg transition-colors ${
+                                    isMe ? 'text-blue-600 hover:text-blue-800 hover:bg-blue-50' : 'text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-white hover:bg-white/10'
+                                  }`}
                                   title="Abrir anexo"
                                 >
                                   <ExternalLink size={14} />
@@ -4115,13 +4147,13 @@ function InboxContent() {
                                     msg.status === 'read' ? 'Lida' :
                                     msg.status === 'delivered' ? 'Entregue' :
                                     msg.status === 'sent' ? 'Enviada' :
-                                    msg.status === 'failed' || msg.status === 'error' ? 'Não entregue (Janela de 24h expirada ou erro Meta). Clique para reenviar como Modelo HSM.' :
+                                    msg.status === 'failed' || msg.status === 'error' ? 'Falha no envio da mensagem.' :
                                     'Enviando...'
                                   } 
                                   onClick={(e) => {
                                     if (msg.status === 'failed' || msg.status === 'error') {
                                       e.stopPropagation();
-                                      setShowTemplateModal(true);
+                                      handleRetryFailedMessage(msg);
                                     }
                                   }}
                                   className={`inline-flex items-center ${msg.status === 'failed' || msg.status === 'error' ? 'cursor-pointer hover:scale-110 transition-transform' : ''}`}
@@ -4142,23 +4174,37 @@ function InboxContent() {
                             </span>
                           </div>
 
-                          {/* Alerta de Falha de Envio (Janela de 24h Meta) */}
+                          {/* Alerta de Falha de Envio */}
                           {isMe && !msg.isInternal && (msg.status === 'failed' || msg.status === 'error') && (
                             <div className="mt-1 pt-1 border-t border-rose-500/20 flex items-center justify-between gap-2 text-[10px] text-rose-300">
-                              <span className="flex items-center gap-1">
+                              <span className="flex items-center gap-1 font-medium">
                                 <AlertCircle size={11} className="text-rose-400 shrink-0" />
                                 Falha no envio
                               </span>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setShowTemplateModal(true);
-                                }}
-                                className="text-cyan-400 hover:text-cyan-300 font-bold underline cursor-pointer"
-                              >
-                                Tentar Modelo HSM
-                              </button>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRetryFailedMessage(msg);
+                                  }}
+                                  className="text-white bg-rose-600/80 hover:bg-rose-600 px-2 py-0.5 rounded font-bold cursor-pointer transition-colors"
+                                  title="Tentar reenviar esta mensagem agora"
+                                >
+                                  Reenviar
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowTemplateModal(true);
+                                  }}
+                                  className="text-cyan-400 hover:text-cyan-300 font-semibold underline cursor-pointer"
+                                  title="Modelos HSM para Meta Cloud API Oficial"
+                                >
+                                  Modelo HSM
+                                </button>
+                              </div>
                             </div>
                           )}
 
