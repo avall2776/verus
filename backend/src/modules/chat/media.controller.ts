@@ -79,6 +79,7 @@ export class MediaController {
       '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       '.txt': 'text/plain',
       '.csv': 'text/csv',
+      '.vcf': 'text/vcard; charset=utf-8',
       '.zip': 'application/zip',
       // Áudio e Vídeo
       '.ogg': 'audio/ogg',

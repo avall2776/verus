@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Patch, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Param, Body, UseGuards, Res } from '@nestjs/common';
+import { Response } from 'express';
 import { ContactsService } from './contacts.service';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { CurrentTenant } from '../../shared/decorators/tenant.decorator';
@@ -7,6 +8,14 @@ import { CurrentTenant } from '../../shared/decorators/tenant.decorator';
 @UseGuards(JwtAuthGuard)
 export class ContactsController {
   constructor(private readonly contactsService: ContactsService) {}
+
+  @Get('export/vcf')
+  async exportVcf(@CurrentTenant() tenantId: string, @Res() res: Response) {
+    const vcfContent = await this.contactsService.generateVcf(tenantId);
+    res.setHeader('Content-Type', 'text/vcard; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="contatos_verto_agenda.vcf"');
+    return res.send(vcfContent);
+  }
 
   @Get()
   async listContacts(@CurrentTenant() tenantId: string) {

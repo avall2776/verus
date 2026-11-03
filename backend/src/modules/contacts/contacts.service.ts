@@ -1,21 +1,23 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../shared/database/prisma.service';
 import { AutomationsService } from '../automations/automations.service';
-import { WhatsappService } from '../whatsapp/whatsapp.service';
+import { GoogleContactsService } from './google-contacts.service';
 
 @Injectable()
 export class ContactsService {
+  private readonly logger = new Logger(ContactsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly automationsService: AutomationsService,
-    private readonly whatsappService: WhatsappService,
+    private readonly googleContactsService: GoogleContactsService,
   ) {}
 
   async createContact(
     tenantId: string,
     data: { name: string; phone?: string; email?: string; source?: string; tags?: string[] },
   ) {
-    return this.prisma.contact.create({
+    const contact = await this.prisma.contact.create({
       data: {
         tenantId,
         name: data.name.trim(),
@@ -25,6 +27,15 @@ export class ContactsService {
         tags: data.tags || ['Lead'],
       },
     });
+
+    // Sincronização automática em segundo plano com a agenda (Google Contatos)
+    if (contact.phone) {
+      this.googleContactsService.syncContact(tenantId, contact).catch((err) => {
+        this.logger.warn(`Erro ao sincronizar novo contato com Google: ${err.message}`);
+      });
+    }
+
+    return contact;
   }
 
   async findAll(tenantId: string) {
@@ -228,6 +239,48 @@ export class ContactsService {
       where: { id: contactId, tenantId },
       data: updateData,
     });
+
+    // Sincronização automática em segundo plano caso o telefone seja elegível (não @lid)
+    if (contact.phone) {
+      this.googleContactsService.syncContact(tenantId, contact).catch((err) => {
+        this.logger.warn(`Erro ao sincronizar contato atualizado com Google: ${err.message}`);
+      });
+    }
+
     return contact;
+  }
+
+  /**
+   * Gera o arquivo vCard (.vcf) completo com todos os contatos elegíveis da empresa
+   */
+  async generateVcf(tenantId: string): Promise<string> {
+    const contacts = await this.prisma.contact.findMany({
+      where: { tenantId },
+      select: { id: true, name: true, phone: true, email: true, address: true },
+    });
+
+    const seenPhones = new Set<string>();
+    const vcards: string[] = [];
+
+    for (const c of contacts) {
+      const formatted = this.googleContactsService.sanitizePhone(c.phone);
+      if (!formatted || seenPhones.has(formatted)) continue;
+      seenPhones.add(formatted);
+
+      const displayName = this.googleContactsService.formatDisplayName(c.name, formatted);
+
+      let vcard = 'BEGIN:VCARD\r\nVERSION:3.0\r\n';
+      vcard += `FN:${displayName}\r\n`;
+      vcard += `N:;${displayName};;;\r\n`;
+      vcard += `TEL;TYPE=CELL:${formatted}\r\n`;
+      vcard += 'ORG:Verto Soluções Agrícolas\r\n';
+      if (c.email) vcard += `EMAIL:${c.email.trim()}\r\n`;
+      if (c.address) vcard += `NOTE:Endereço: ${c.address.replace(/[\r\n;]/g, ' ')}\r\n`;
+      vcard += 'END:VCARD\r\n';
+
+      vcards.push(vcard);
+    }
+
+    return vcards.join('');
   }
 }

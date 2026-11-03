@@ -73,6 +73,7 @@ export function getGoogleOAuthUrl(tenantId: string): string {
   const scopes = [
     'https://www.googleapis.com/auth/drive',
     'https://www.googleapis.com/auth/drive.file',
+    'https://www.googleapis.com/auth/contacts',
     'https://www.googleapis.com/auth/userinfo.email'
   ].join(' ');
 
