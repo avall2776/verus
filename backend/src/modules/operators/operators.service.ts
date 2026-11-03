@@ -23,16 +23,11 @@ export class OperatorsService {
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
-    // Buscar operadores vinculados à master ou que possuam função de atendimento
+    // Buscar estritamente os operadores pertencentes ao Super Admin Master (tenant_123)
     const operators = await this.prisma.user.findMany({
       where: {
-        OR: [
-          { tenantId: this.MASTER_TENANT_ID, isSuperAdmin: false },
-          { role: 'AGENT' },
-          { role: 'SUPPORT_AGENT' },
-          { role: 'SUPPORT_ANALYST' },
-          { role: 'SUPPORT_MANAGER' },
-        ],
+        tenantId: this.MASTER_TENANT_ID,
+        isSuperAdmin: false,
       },
       select: {
         id: true,
@@ -286,12 +281,15 @@ export class OperatorsService {
    * Atualização de dados e permissões do operador.
    */
   async updateOperator(id: string, dto: UpdateOperatorDto) {
-    const operator = await this.prisma.user.findUnique({
-      where: { id },
+    const operator = await this.prisma.user.findFirst({
+      where: {
+        id,
+        tenantId: this.MASTER_TENANT_ID,
+      },
     });
 
     if (!operator) {
-      throw new NotFoundException('Operador não encontrado.');
+      throw new NotFoundException('Operador master não encontrado.');
     }
 
     const data: any = {};
@@ -338,12 +336,15 @@ export class OperatorsService {
    * Remoção definitiva do operador com desatribuição segura de todos os vínculos e chamados.
    */
   async deleteOperator(id: string) {
-    const operator = await this.prisma.user.findUnique({
-      where: { id },
+    const operator = await this.prisma.user.findFirst({
+      where: {
+        id,
+        tenantId: this.MASTER_TENANT_ID,
+      },
     });
 
     if (!operator) {
-      throw new NotFoundException('Operador não encontrado.');
+      throw new NotFoundException('Operador master não encontrado.');
     }
 
     if (operator.isSuperAdmin || operator.role === 'SUPER_ADMIN') {
