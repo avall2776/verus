@@ -344,7 +344,11 @@ export default function SuperAdminLayout({
         </header>
         
         {/* Container do Conteúdo */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar bg-slate-50 dark:bg-[#070D1B]">
+        <div className={`flex-1 custom-scrollbar ${
+          pathname?.includes("/super-admin/motion-studio") 
+            ? "p-0 overflow-hidden flex flex-col min-h-0 bg-[#030611]" 
+            : "overflow-y-auto p-4 md:p-6 bg-slate-50 dark:bg-[#070D1B]"
+        }`}>
           {children}
         </div>
       </main>

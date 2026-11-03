@@ -29,6 +29,10 @@ yarn-error.log*
 *.pem
 backend/credentials/
 *.service_account.json
+*.mp4
+test_frame.jpg
+check_mp4.js
+check_video_tracks.js
 
 # Editor directories and files
 .idea

@@ -2,8 +2,8 @@ import { IsString, IsNotEmpty, IsBoolean, IsOptional } from 'class-validator';
 
 export class SendMessageDto {
   @IsString()
-  @IsNotEmpty()
-  content: string;
+  @IsOptional()
+  content?: string;
 
   @IsBoolean()
   @IsOptional()

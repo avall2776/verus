@@ -155,19 +155,25 @@ export class MediaController {
     @Query('name') customName: string,
     @Res() res: Response,
   ) {
-    const fileData = await downloadDriveFileBuffer(driveId);
-    if (!fileData) {
-      throw new NotFoundException('Arquivo do Google Drive não encontrado ou não acessível publicamente.');
+    try {
+      const fileData = await downloadDriveFileBuffer(driveId);
+      if (fileData && fileData.buffer && fileData.buffer.length > 0) {
+        const fileName = customName || 'arquivo.mp4';
+        res.setHeader('Content-Type', fileData.mimeType);
+        res.setHeader('Content-Length', fileData.buffer.length);
+        res.setHeader('Accept-Ranges', 'bytes');
+        res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(fileName)}"`);
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+        return res.end(fileData.buffer);
+      }
+    } catch (err: any) {
+      // Fallback gracioso caso o download falhe
     }
 
-    const fileName = customName || 'arquivo.pdf';
-    res.setHeader('Content-Type', fileData.mimeType);
-    res.setHeader('Content-Length', fileData.buffer.length);
-    res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(fileName)}"`);
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
-    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-    return res.end(fileData.buffer);
+    // Se o download direto em buffer não for possível, redireciona 302 sem gerar erro 404
+    return res.redirect(302, `https://drive.google.com/file/d/${driveId}/view?usp=sharing`);
   }
 }
 

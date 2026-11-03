@@ -912,7 +912,7 @@ export class ChatService {
     tenantId: string,
     conversationId: string,
     payload: {
-      content: string;
+      content?: string;
       isInternal?: boolean;
       type?: string;
       mediaUrl?: string;
@@ -927,7 +927,7 @@ export class ChatService {
     // Se o payload contiver data/hora de agendamento, encaminha para o fluxo de schedule
     if (payload.scheduledAt) {
       return this.scheduleMessage(tenantId, conversationId, {
-        content: payload.content,
+        content: payload.content || '',
         scheduledAt: payload.scheduledAt,
         timezone: payload.timezone,
         isInternal: payload.isInternal,

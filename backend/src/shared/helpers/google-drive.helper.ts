@@ -143,27 +143,36 @@ export async function downloadDriveFileBuffer(
     }
   }
 
-  // Tentativa 2: Direct UC Download (para arquivos públicos / com link de compartilhamento)
-  try {
-    const ucUrl = `https://drive.google.com/uc?export=download&id=${driveFileId}&confirm=t`;
-    const res = await axios.get(ucUrl, {
-      responseType: 'arraybuffer',
-      timeout: 25000,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      },
-    });
+  // Tentativa 2: Direct Google UserContent & UC Download (com bypass de confirmação)
+  const directUrls = [
+    `https://drive.usercontent.google.com/download?id=${driveFileId}&export=download&confirm=t`,
+    `https://drive.google.com/uc?export=download&id=${driveFileId}&confirm=t`,
+  ];
 
-    const contentType = (res.headers['content-type'] as string) || '';
-    // Se retornou página HTML de login ou confirmação, o arquivo não pôde ser baixado diretamente pelo UC
-    if (!contentType.includes('text/html')) {
-      return {
-        buffer: Buffer.from(res.data),
-        mimeType: contentType || 'application/octet-stream',
-      };
+  for (const directUrl of directUrls) {
+    try {
+      const res = await axios.get(directUrl, {
+        responseType: 'arraybuffer',
+        timeout: 25000,
+        maxRedirects: 5,
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          Accept: '*/*',
+        },
+      });
+
+      const contentType = (res.headers['content-type'] as string) || '';
+      // Se retornou binário real e não página HTML de erro/login
+      if (!contentType.includes('text/html') && res.data && res.data.length > 500) {
+        return {
+          buffer: Buffer.from(res.data),
+          mimeType: contentType || 'application/octet-stream',
+        };
+      }
+    } catch (directErr: any) {
+      // continua para a próxima URL
     }
-  } catch (ucErr: any) {
-    console.warn(`[DRIVE_HELPER] Falha no fallback UC: ${ucErr.message}`);
   }
 
   // Tentativa 3: lh3 para fotos e imagens
