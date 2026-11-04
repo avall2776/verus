@@ -125,6 +125,13 @@ export interface GeoEcosystemPin {
   lat: number;
   lng: number;
   phone?: string;
+  email?: string;
+  cpfCnpj?: string;
+  razaoSocial?: string;
+  address?: string;
+  neighborhood?: string;
+  source?: string;
+  tags?: string[];
   totalFaturado?: number;
   category: "reseller" | "supplier" | "client";
   color: string;
@@ -313,6 +320,13 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
   const [showSuppliersLayer, setShowSuppliersLayer] = useState<boolean>(true);
   const [showClientsLayer, setShowClientsLayer] = useState<boolean>(true);
   const [selectedEcosystemPin, setSelectedEcosystemPin] = useState<GeoEcosystemPin | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const handleCopyField = (text: string, fieldKey: string) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopiedField(fieldKey);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
   const controlsScrollRef = useRef<HTMLDivElement>(null);
 
   // Dados do Servidor
@@ -840,6 +854,7 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
 
       el.addEventListener("click", (e) => {
         e.stopPropagation();
+        setSelectedEcosystemPin(null);
         setSelectedPoint(point);
         setSpyingDeal(null);
         setDealModalFilter("all");
@@ -940,12 +955,13 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
 
       el.addEventListener("click", (e) => {
         e.stopPropagation();
+        setSelectedPoint(null);
         setSelectedEcosystemPin(pin);
 
         if (mapRef.current) {
           mapRef.current.flyTo({
             center: [pin.lng, pin.lat],
-            zoom: 8.5,
+            zoom: 9.5,
             pitch: 0,
             duration: 1200
           });
@@ -1270,6 +1286,7 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
               target = filteredPoints.find((p) => norm(p.cityName) === norm(featProps.cityName));
             }
             if (target) {
+              setSelectedEcosystemPin(null);
               setSelectedPoint(target);
               setSpyingDeal(null);
               setDealModalFilter("all");
@@ -2080,7 +2097,7 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                         ? "bg-purple-500/20 text-purple-300 border-purple-500/40" 
                         : "bg-slate-800 text-slate-500 border-slate-700"
                     }`}>
-                      {showResellersLayer ? (geoData?.ecosystem?.counts.resellers ?? "Ativo") : "Oculto"}
+                      {showResellersLayer ? (geoData?.ecosystem?.counts?.resellers ?? geoData?.ecosystem?.resellers?.length ?? "Ativo") : "Oculto"}
                     </span>
                     <div className="spatial-legend-tooltip">
                       <div className="spatial-tooltip-title text-purple-400">
@@ -2113,7 +2130,7 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                         ? "bg-orange-500/20 text-orange-300 border-orange-500/40" 
                         : "bg-slate-800 text-slate-500 border-slate-700"
                     }`}>
-                      {showSuppliersLayer ? (geoData?.ecosystem?.counts.suppliers ?? "Ativo") : "Oculto"}
+                      {showSuppliersLayer ? (geoData?.ecosystem?.counts?.suppliers ?? geoData?.ecosystem?.suppliers?.length ?? "Ativo") : "Oculto"}
                     </span>
                     <div className="spatial-legend-tooltip">
                       <div className="spatial-tooltip-title text-orange-400">
@@ -2146,7 +2163,7 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                         ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40" 
                         : "bg-slate-800 text-slate-500 border-slate-700"
                     }`}>
-                      {showClientsLayer ? (geoData?.ecosystem?.counts.clients ?? "Ativo") : "Oculto"}
+                      {showClientsLayer ? (geoData?.ecosystem?.counts?.clients ?? geoData?.ecosystem?.clients?.length ?? "Ativo") : "Oculto"}
                     </span>
                     <div className="spatial-legend-tooltip">
                       <div className="spatial-tooltip-title text-cyan-400">
@@ -3327,6 +3344,561 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                 </div>
               </div>
             )}
+          </aside>
+        )}
+
+        {/* ======================================================================= */}
+        {/* 5. GAVETA LATERAL DO ECOSSISTEMA: REVENDA, FORNECEDOR OU CLIENTE FINAL   */}
+        {/* ======================================================================= */}
+        {selectedEcosystemPin && !selectedPoint && (
+          <aside
+            className={`absolute top-0 right-0 bottom-0 w-[440px] max-w-full z-40 flex flex-col shadow-[-16px_0_45px_rgba(0,0,0,0.65)] transition-all duration-300 animate-in fade-in slide-in-from-right-8 ${
+              theme === "light"
+                ? "bg-white/95 border-l border-slate-200/90 text-slate-800"
+                : theme === "whatsapp"
+                ? "bg-[#111B21]/95 border-l border-[#202C33]/90 text-[#E9EDEF]"
+                : "bg-[#0B1224]/95 border-l border-slate-800/90 text-slate-200"
+            }`}
+            style={{
+              backdropFilter: "blur(24px)",
+              WebkitBackdropFilter: "blur(24px)",
+            }}
+          >
+            {/* Topo da Gaveta: Categoria e Botão Fechar */}
+            <div
+              className={`p-4 border-b flex items-center justify-between flex-shrink-0 backdrop-blur-md ${
+                theme === "light"
+                  ? "border-slate-200 bg-slate-50/95"
+                  : theme === "whatsapp"
+                  ? "border-[#202C33] bg-[#182229]/95"
+                  : "border-slate-800 bg-[#070D1B]/95"
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <div
+                  className="w-9 h-9 rounded-xl flex items-center justify-center border shadow-md flex-shrink-0"
+                  style={{
+                    backgroundColor:
+                      theme === "light"
+                        ? `${selectedEcosystemPin.color}15`
+                        : `${selectedEcosystemPin.color}25`,
+                    borderColor: `${selectedEcosystemPin.color}60`,
+                    boxShadow: `0 0 12px ${selectedEcosystemPin.color}35`,
+                  }}
+                >
+                  {selectedEcosystemPin.category === "reseller" ? (
+                    <Store className="w-5 h-5 text-purple-400" />
+                  ) : selectedEcosystemPin.category === "supplier" ? (
+                    <Truck className="w-5 h-5 text-orange-400" />
+                  ) : (
+                    <BadgeCheck className="w-5 h-5 text-cyan-400" />
+                  )}
+                </div>
+                <div>
+                  <span
+                    className="text-[10px] uppercase font-black tracking-wider px-2 py-0.5 rounded-full border inline-block"
+                    style={{
+                      backgroundColor: `${selectedEcosystemPin.color}20`,
+                      color:
+                        theme === "light" && selectedEcosystemPin.category === "client"
+                          ? "#0284c7"
+                          : selectedEcosystemPin.color,
+                      borderColor: `${selectedEcosystemPin.color}50`,
+                    }}
+                  >
+                    {selectedEcosystemPin.category === "reseller"
+                      ? "Revenda & Concessionária"
+                      : selectedEcosystemPin.category === "supplier"
+                      ? "Fornecedor Homologado"
+                      : "Cliente Faturado (Propriedade)"}
+                  </span>
+                  <div
+                    className={`text-[11px] font-medium mt-0.5 ${
+                      theme === "light" ? "text-slate-500" : "text-slate-400"
+                    }`}
+                  >
+                    {selectedEcosystemPin.category === "reseller"
+                      ? "Canal de Distribuição Regional"
+                      : selectedEcosystemPin.category === "supplier"
+                      ? "Cadeia de Insumos & Peças"
+                      : "Comprador Final com NF Emitida"}
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedEcosystemPin(null)}
+                className={`p-1.5 rounded-lg transition-colors ${
+                  theme === "light"
+                    ? "text-slate-400 hover:text-slate-800 hover:bg-slate-200"
+                    : theme === "whatsapp"
+                    ? "text-[#8696A0] hover:text-white hover:bg-[#202C33]"
+                    : "text-slate-400 hover:text-white hover:bg-slate-800"
+                }`}
+                title="Fechar painel"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Corpo Rolável Completo da Entidade */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-4">
+              {/* Card Hero: Nome e Localização Principal */}
+              <div
+                className={`p-4 rounded-2xl border shadow-sm ${
+                  theme === "light"
+                    ? "bg-slate-50 border-slate-200"
+                    : theme === "whatsapp"
+                    ? "bg-[#202C33] border-[#2A3942]"
+                    : "bg-[#0e1628] border-slate-800"
+                }`}
+              >
+                <h2
+                  className={`text-lg font-black tracking-tight leading-snug break-words ${
+                    theme === "light" ? "text-slate-900" : "text-white"
+                  }`}
+                >
+                  {selectedEcosystemPin.name}
+                </h2>
+
+                {selectedEcosystemPin.razaoSocial &&
+                  selectedEcosystemPin.razaoSocial !== selectedEcosystemPin.name && (
+                    <div
+                      className={`text-xs mt-0.5 italic ${
+                        theme === "light" ? "text-slate-500" : "text-slate-400"
+                      }`}
+                    >
+                      {selectedEcosystemPin.razaoSocial}
+                    </div>
+                  )}
+
+                <div className="flex items-center gap-2 mt-3 text-xs font-semibold">
+                  <div className="flex items-center gap-1.5 text-emerald-500 font-bold">
+                    <MapPin className="w-3.5 h-3.5 shrink-0" />
+                    <span>
+                      {selectedEcosystemPin.city} - {selectedEcosystemPin.state}
+                    </span>
+                  </div>
+
+                  {selectedEcosystemPin.cep && (
+                    <button
+                      type="button"
+                      onClick={() => handleCopyField(selectedEcosystemPin.cep!, "cep")}
+                      className={`flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md border transition-all ${
+                        copiedField === "cep"
+                          ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/50"
+                          : theme === "light"
+                          ? "bg-white text-slate-600 border-slate-300 hover:bg-slate-100"
+                          : "bg-slate-800/80 text-slate-300 border-slate-700 hover:bg-slate-700"
+                      }`}
+                      title="Copiar CEP"
+                    >
+                      <span>CEP: {selectedEcosystemPin.cep}</span>
+                      {copiedField === "cep" ? (
+                        <Check className="w-3 h-3 text-emerald-400" />
+                      ) : (
+                        <Copy className="w-3 h-3 opacity-60" />
+                      )}
+                    </button>
+                  )}
+                </div>
+
+                {selectedEcosystemPin.address && (
+                  <div
+                    className={`text-[11px] mt-2 pt-2 border-t flex items-center gap-1.5 ${
+                      theme === "light"
+                        ? "border-slate-200 text-slate-600"
+                        : theme === "whatsapp"
+                        ? "border-[#2A3942] text-slate-300"
+                        : "border-slate-800 text-slate-400"
+                    }`}
+                  >
+                    <span>
+                      {selectedEcosystemPin.address}
+                      {selectedEcosystemPin.neighborhood ? `, ${selectedEcosystemPin.neighborhood}` : ""}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Cards de Inteligência de Negócio (Adaptado por Categoria) */}
+              {selectedEcosystemPin.category === "client" ? (
+                /* VISÃO DE CLIENTE FINAL FATURADO */
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div
+                    className={`p-3.5 rounded-xl border backdrop-blur-md ${
+                      theme === "light"
+                        ? "bg-emerald-50/90 border-emerald-200 shadow-sm"
+                        : theme === "whatsapp"
+                        ? "bg-[#202C33]/95 border-emerald-500/40"
+                        : "bg-emerald-950/30 border-emerald-500/40"
+                    }`}
+                  >
+                    <div className="text-[10px] uppercase font-bold text-emerald-500">
+                      Faturamento Omie (NF)
+                    </div>
+                    <div
+                      className={`text-lg font-black mt-1 ${
+                        theme === "light" ? "text-emerald-950" : "text-emerald-400"
+                      }`}
+                    >
+                      {formatCurrency(selectedEcosystemPin.totalFaturado || 0)}
+                    </div>
+                    <div className="text-[10px] text-emerald-500/90 font-medium mt-0.5">
+                      Vendas Concluídas
+                    </div>
+                  </div>
+
+                  <div
+                    className={`p-3.5 rounded-xl border backdrop-blur-md ${
+                      theme === "light"
+                        ? "bg-cyan-50/90 border-cyan-200 shadow-sm"
+                        : theme === "whatsapp"
+                        ? "bg-[#202C33]/95 border-cyan-500/40"
+                        : "bg-cyan-950/30 border-cyan-500/40"
+                    }`}
+                  >
+                    <div className="text-[10px] uppercase font-bold text-cyan-500">
+                      Status Fiscal
+                    </div>
+                    <div
+                      className={`text-sm font-black mt-1.5 ${
+                        theme === "light" ? "text-cyan-950" : "text-cyan-300"
+                      }`}
+                    >
+                      Nota Fiscal Emitida
+                    </div>
+                    <div className="text-[10px] text-cyan-400 font-medium mt-0.5">
+                      Omie ERP Conectado
+                    </div>
+                  </div>
+                </div>
+              ) : selectedEcosystemPin.category === "reseller" ? (
+                /* VISÃO DE REVENDA / CONCESSIONÁRIA */
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div
+                    className={`p-3.5 rounded-xl border backdrop-blur-md ${
+                      theme === "light"
+                        ? "bg-purple-50/90 border-purple-200 shadow-sm"
+                        : theme === "whatsapp"
+                        ? "bg-[#202C33]/95 border-purple-500/40"
+                        : "bg-purple-950/30 border-purple-500/40"
+                    }`}
+                  >
+                    <div className="text-[10px] uppercase font-bold text-purple-400">
+                      Rede de Distribuição
+                    </div>
+                    <div
+                      className={`text-sm font-black mt-1.5 ${
+                        theme === "light" ? "text-purple-950" : "text-purple-300"
+                      }`}
+                    >
+                      Revenda Parceira
+                    </div>
+                    <div className="text-[10px] text-purple-400 font-medium mt-0.5">
+                      Polo {selectedEcosystemPin.city}
+                    </div>
+                  </div>
+
+                  <div
+                    className={`p-3.5 rounded-xl border backdrop-blur-md ${
+                      theme === "light"
+                        ? "bg-slate-50 border-slate-200"
+                        : theme === "whatsapp"
+                        ? "bg-[#202C33] border-[#2A3942]"
+                        : "bg-slate-900/60 border-slate-700/60"
+                    }`}
+                  >
+                    <div className="text-[10px] uppercase font-bold text-slate-400">
+                      Classificação B2B
+                    </div>
+                    <div
+                      className={`text-sm font-black mt-1.5 ${
+                        theme === "light" ? "text-slate-800" : "text-white"
+                      }`}
+                    >
+                      Canal Homologado
+                    </div>
+                    <div className="text-[10px] text-slate-400 font-medium mt-0.5">
+                      Ativo no Campo
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* VISÃO DE FORNECEDOR DE PEÇAS E INSUMOS */
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div
+                    className={`p-3.5 rounded-xl border backdrop-blur-md ${
+                      theme === "light"
+                        ? "bg-orange-50/90 border-orange-200 shadow-sm"
+                        : theme === "whatsapp"
+                        ? "bg-[#202C33]/95 border-orange-500/40"
+                        : "bg-orange-950/30 border-orange-500/40"
+                    }`}
+                  >
+                    <div className="text-[10px] uppercase font-bold text-orange-400">
+                      Cadeia de Suprimentos
+                    </div>
+                    <div
+                      className={`text-sm font-black mt-1.5 ${
+                        theme === "light" ? "text-orange-950" : "text-orange-300"
+                      }`}
+                    >
+                      Peças & Insumos
+                    </div>
+                    <div className="text-[10px] text-orange-400 font-medium mt-0.5">
+                      Fornecedor Ativo
+                    </div>
+                  </div>
+
+                  <div
+                    className={`p-3.5 rounded-xl border backdrop-blur-md ${
+                      theme === "light"
+                        ? "bg-slate-50 border-slate-200"
+                        : theme === "whatsapp"
+                        ? "bg-[#202C33] border-[#2A3942]"
+                        : "bg-slate-900/60 border-slate-700/60"
+                    }`}
+                  >
+                    <div className="text-[10px] uppercase font-bold text-slate-400">
+                      Polo Logístico
+                    </div>
+                    <div
+                      className={`text-sm font-black mt-1.5 ${
+                        theme === "light" ? "text-slate-800" : "text-white"
+                      }`}
+                    >
+                      {selectedEcosystemPin.state}
+                    </div>
+                    <div className="text-[10px] text-slate-400 font-medium mt-0.5">
+                      {selectedEcosystemPin.city}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Seção de Contato Direto & WhatsApp */}
+              <div
+                className={`p-4 rounded-xl border space-y-3 ${
+                  theme === "light"
+                    ? "bg-slate-50 border-slate-200"
+                    : theme === "whatsapp"
+                    ? "bg-[#202C33] border-[#2A3942]"
+                    : "bg-[#0e1628] border-slate-800"
+                }`}
+              >
+                <div
+                  className={`text-[11px] font-bold uppercase tracking-wider ${
+                    theme === "light" ? "text-slate-600" : "text-slate-400"
+                  }`}
+                >
+                  Canais de Contato & Acesso
+                </div>
+
+                {/* Telefone / WhatsApp */}
+                {selectedEcosystemPin.phone ? (
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 text-xs font-semibold">
+                      <Phone className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span
+                        className={`font-mono ${
+                          theme === "light" ? "text-slate-900" : "text-white"
+                        }`}
+                      >
+                        {selectedEcosystemPin.phone}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => handleCopyField(selectedEcosystemPin.phone!, "phone")}
+                        className={`p-1.5 rounded-lg border transition-all ${
+                          copiedField === "phone"
+                            ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/50"
+                            : theme === "light"
+                            ? "bg-white text-slate-600 border-slate-300 hover:bg-slate-100"
+                            : "bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700"
+                        }`}
+                        title="Copiar telefone"
+                      >
+                        {copiedField === "phone" ? (
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        ) : (
+                          <Copy className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+
+                      <a
+                        href={`https://wa.me/${selectedEcosystemPin.phone.replace(/\D/g, "")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 text-xs font-bold py-1 px-2.5 rounded-lg bg-[#25D366] hover:bg-[#20BD5A] text-white shadow-sm transition-all"
+                      >
+                        <MessageSquare className="w-3.5 h-3.5" />
+                        <span>WhatsApp</span>
+                      </a>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    className={`text-xs italic ${
+                      theme === "light" ? "text-slate-400" : "text-slate-500"
+                    }`}
+                  >
+                    Nenhum telefone cadastrado diretamente nesta ficha.
+                  </div>
+                )}
+
+                {/* E-mail (se houver) */}
+                {selectedEcosystemPin.email && (
+                  <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-700/20">
+                    <div
+                      className={`text-xs truncate ${
+                        theme === "light" ? "text-slate-700" : "text-slate-300"
+                      }`}
+                    >
+                      <span className="font-semibold text-[10px] text-slate-400 block">E-mail:</span>
+                      {selectedEcosystemPin.email}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyField(selectedEcosystemPin.email!, "email")}
+                      className={`p-1.5 rounded-lg border shrink-0 transition-all ${
+                        copiedField === "email"
+                          ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/50"
+                          : theme === "light"
+                          ? "bg-white text-slate-600 border-slate-300 hover:bg-slate-100"
+                          : "bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700"
+                      }`}
+                      title="Copiar e-mail"
+                    >
+                      {copiedField === "email" ? (
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  </div>
+                )}
+
+                {/* CPF / CNPJ (se houver) */}
+                {selectedEcosystemPin.cpfCnpj && (
+                  <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-700/20">
+                    <div
+                      className={`text-xs font-mono ${
+                        theme === "light" ? "text-slate-700" : "text-slate-300"
+                      }`}
+                    >
+                      <span className="font-semibold text-[10px] text-slate-400 block font-sans">
+                        Documento (CPF/CNPJ):
+                      </span>
+                      {selectedEcosystemPin.cpfCnpj}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyField(selectedEcosystemPin.cpfCnpj!, "cpfCnpj")}
+                      className={`p-1.5 rounded-lg border shrink-0 transition-all ${
+                        copiedField === "cpfCnpj"
+                          ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/50"
+                          : theme === "light"
+                          ? "bg-white text-slate-600 border-slate-300 hover:bg-slate-100"
+                          : "bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700"
+                      }`}
+                      title="Copiar documento"
+                    >
+                      {copiedField === "cpfCnpj" ? (
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Tags / Classificações do Sistema */}
+              {selectedEcosystemPin.tags && selectedEcosystemPin.tags.length > 0 && (
+                <div className="space-y-1.5">
+                  <div
+                    className={`text-[10px] font-bold uppercase tracking-wider ${
+                      theme === "light" ? "text-slate-500" : "text-slate-400"
+                    }`}
+                  >
+                    Classificações no CRM & Omie
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedEcosystemPin.tags.map((t, idx) => (
+                      <span
+                        key={idx}
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                          theme === "light"
+                            ? "bg-slate-100 text-slate-700 border-slate-300"
+                            : "bg-slate-800 text-slate-300 border-slate-700"
+                        }`}
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Rodapé Fixo da Entidade com Ações Rápidas */}
+            <div
+              className={`p-4 border-t flex flex-col gap-2 flex-shrink-0 backdrop-blur-md ${
+                theme === "light"
+                  ? "border-slate-200 bg-white/95"
+                  : theme === "whatsapp"
+                  ? "border-[#202C33] bg-[#111B21]/95"
+                  : "border-slate-800 bg-[#070D1B]/95"
+              }`}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  router.push(`/contacts?search=${encodeURIComponent(selectedEcosystemPin.name)}`);
+                }}
+                className={`w-full py-2.5 px-4 font-bold text-xs rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 ${
+                  theme === "whatsapp"
+                    ? "bg-[#00A884] hover:bg-[#02906F] text-white shadow-[#00A884]/25"
+                    : selectedEcosystemPin.category === "reseller"
+                    ? "bg-purple-600 hover:bg-purple-500 text-white shadow-purple-600/25"
+                    : selectedEcosystemPin.category === "supplier"
+                    ? "bg-orange-600 hover:bg-orange-500 text-white shadow-orange-600/25"
+                    : "bg-cyan-600 hover:bg-cyan-500 text-white shadow-cyan-600/25"
+                }`}
+              >
+                <span>Ver Ficha Completa na Base de Contatos</span>
+                <ExternalLink className="w-4 h-4" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (mapRef.current) {
+                    mapRef.current.flyTo({
+                      center: [selectedEcosystemPin.lng, selectedEcosystemPin.lat],
+                      zoom: 12,
+                      pitch: 20,
+                      duration: 1200,
+                    });
+                  }
+                }}
+                className={`w-full py-2 px-3 font-semibold text-xs rounded-xl border transition-all flex items-center justify-center gap-1.5 ${
+                  theme === "light"
+                    ? "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300"
+                    : theme === "whatsapp"
+                    ? "bg-[#202C33] hover:bg-[#2A3942] text-slate-200 border-[#2A3942]"
+                    : "bg-slate-900/80 hover:bg-slate-800 text-slate-300 border-slate-700"
+                }`}
+              >
+                <Compass className="w-3.5 h-3.5" />
+                <span>Aproximar Visão Tática</span>
+              </button>
+            </div>
           </aside>
         )}
 

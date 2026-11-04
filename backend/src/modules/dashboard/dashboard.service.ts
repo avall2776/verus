@@ -901,6 +901,12 @@ export class DashboardService {
         state: true,
         cep: true,
         phone: true,
+        email: true,
+        cpfCnpj: true,
+        razaoSocial: true,
+        address: true,
+        neighborhood: true,
+        source: true,
         tags: true,
         isFaturado: true,
         totalFaturado: true
@@ -927,6 +933,13 @@ export class DashboardService {
         state: c.state,
         cep: c.cep || undefined,
         phone: c.phone || undefined,
+        email: c.email || undefined,
+        cpfCnpj: c.cpfCnpj || undefined,
+        razaoSocial: c.razaoSocial || undefined,
+        address: c.address || undefined,
+        neighborhood: c.neighborhood || undefined,
+        source: c.source || undefined,
+        tags: c.tags || [],
         lat: coords.lat,
         lng: coords.lng
       };
