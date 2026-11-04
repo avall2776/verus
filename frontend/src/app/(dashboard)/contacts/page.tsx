@@ -1190,19 +1190,21 @@ export default function ContactsPage() {
           {/* Card 1: Lookalike VIP */}
           <div className="p-4 rounded-2xl border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/40 dark:bg-emerald-950/15 flex flex-col justify-between space-y-3">
             <div>
-              <div className="flex items-center justify-between gap-2 mb-2">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <div className="flex items-start gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
                     <TrendingUp size={16} />
                   </div>
-                  <h4 className="text-xs font-black text-slate-900 dark:text-white truncate">Lookalike VIP (Compradores)</h4>
+                  <div>
+                    <h4 className="text-xs font-black text-slate-900 dark:text-white leading-snug">Lookalike VIP (Compradores)</h4>
+                  </div>
                 </div>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/40 shrink-0">
                   Mais Recomendado
                 </span>
               </div>
               <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed mb-2.5">
-                Público baseado em clientes que já compraram com histórico de LTV. O algoritmo do Meta criará 1M a 2M de produtores rurais e clientes com o mesmo perfil.
+                Público baseado em 592 clientes que já compraram com histórico de LTV. O algoritmo do Meta criará de 1,6M a mais de 3,5M de produtores rurais e clientes com o mesmo perfil.
               </p>
               <div className="flex items-center justify-between text-xs font-bold pt-2 border-t border-emerald-200/60 dark:border-emerald-800/40">
                 <span className="text-emerald-600 dark:text-emerald-400">
@@ -1226,12 +1228,14 @@ export default function ContactsPage() {
           {/* Card 2: Remarketing de Fechamento */}
           <div className="p-4 rounded-2xl border border-amber-200 dark:border-amber-800/60 bg-amber-50/40 dark:bg-amber-950/15 flex flex-col justify-between space-y-3">
             <div>
-              <div className="flex items-center justify-between gap-2 mb-2">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <div className="flex items-start gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
                     <Zap size={16} />
                   </div>
-                  <h4 className="text-xs font-black text-slate-900 dark:text-white truncate">Remarketing de Fechamento</h4>
+                  <div>
+                    <h4 className="text-xs font-black text-slate-900 dark:text-white leading-snug">Remarketing de Fechamento</h4>
+                  </div>
                 </div>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/40 shrink-0">
                   Alta Conversão
@@ -1262,12 +1266,14 @@ export default function ContactsPage() {
           {/* Card 3: Reativação de Base */}
           <div className="p-4 rounded-2xl border border-blue-200 dark:border-blue-800/60 bg-blue-50/40 dark:bg-blue-950/15 flex flex-col justify-between space-y-3">
             <div>
-              <div className="flex items-center justify-between gap-2 mb-2">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <div className="flex items-start gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 mt-0.5">
                     <RefreshCw size={16} />
                   </div>
-                  <h4 className="text-xs font-black text-slate-900 dark:text-white truncate">Reativação da Base (Frios)</h4>
+                  <div>
+                    <h4 className="text-xs font-black text-slate-900 dark:text-white leading-snug">Reativação da Base (Frios)</h4>
+                  </div>
                 </div>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/40 shrink-0">
                   Prospecção
@@ -1298,12 +1304,14 @@ export default function ContactsPage() {
           {/* Card 4: Exclusão de Clientes */}
           <div className="p-4 rounded-2xl border border-purple-200 dark:border-purple-800/60 bg-purple-50/40 dark:bg-purple-950/15 flex flex-col justify-between space-y-3">
             <div>
-              <div className="flex items-center justify-between gap-2 mb-2">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <div className="flex items-start gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 mt-0.5">
                     <ShieldCheck size={16} />
                   </div>
-                  <h4 className="text-xs font-black text-slate-900 dark:text-white truncate">Exclusão de Clientes</h4>
+                  <div>
+                    <h4 className="text-xs font-black text-slate-900 dark:text-white leading-snug">Exclusão de Clientes</h4>
+                  </div>
                 </div>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/40 shrink-0">
                   Economia
@@ -1863,12 +1871,14 @@ E-MAIL: ${selectedContact.email || ''}`;
                         : "bg-slate-50/50 dark:bg-[#121824] border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
                     }`}
                   >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="flex items-start gap-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
                           <Zap size={16} />
                         </div>
-                        <h4 className="text-xs font-black text-slate-900 dark:text-white truncate">Remarketing de Fechamento</h4>
+                        <div>
+                          <h4 className="text-xs font-black text-slate-900 dark:text-white leading-snug">Remarketing de Fechamento</h4>
+                        </div>
                       </div>
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/40 shrink-0">
                         Alta Conversão
@@ -1892,12 +1902,14 @@ E-MAIL: ${selectedContact.email || ''}`;
                         : "bg-slate-50/50 dark:bg-[#121824] border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
                     }`}
                   >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="flex items-start gap-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 mt-0.5">
                           <RefreshCw size={16} />
                         </div>
-                        <h4 className="text-xs font-black text-slate-900 dark:text-white truncate">Reativação da Base (Frios)</h4>
+                        <div>
+                          <h4 className="text-xs font-black text-slate-900 dark:text-white leading-snug">Reativação da Base (Frios)</h4>
+                        </div>
                       </div>
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/40 shrink-0">
                         Prospecção
@@ -1921,12 +1933,14 @@ E-MAIL: ${selectedContact.email || ''}`;
                         : "bg-slate-50/50 dark:bg-[#121824] border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
                     }`}
                   >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="flex items-start gap-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 mt-0.5">
                           <ShieldCheck size={16} />
                         </div>
-                        <h4 className="text-xs font-black text-slate-900 dark:text-white truncate">Exclusão de Clientes</h4>
+                        <div>
+                          <h4 className="text-xs font-black text-slate-900 dark:text-white leading-snug">Exclusão de Clientes</h4>
+                        </div>
                       </div>
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/40 shrink-0">
                         Economia

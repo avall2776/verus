@@ -45,7 +45,11 @@ import {
   ShieldCheck,
   Inbox,
   HelpCircle,
-  Send
+  Send,
+  Store,
+  Truck,
+  Building2,
+  BadgeCheck
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
@@ -341,10 +345,11 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
 
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 
-  // Estados da Legenda Flutuante Oficial (Status aberto por padrão, demais retráteis)
+  // Estados da Legenda Flutuante Oficial (Status e Ecossistema abertos por padrão, demais retráteis)
   const [isLegendMinimized, setIsLegendMinimized] = useState<boolean>(false);
   const [expandedAccordions, setExpandedAccordions] = useState({
     status: true,
+    ecosystem: true,
     traffic: false,
     sectors: false
   });
@@ -450,7 +455,7 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
     }
   };
 
-  const toggleAccordion = (key: "status" | "traffic" | "sectors") => {
+  const toggleAccordion = (key: "status" | "ecosystem" | "traffic" | "sectors") => {
     setExpandedAccordions((prev) => ({
       ...prev,
       [key]: !prev[key]
@@ -1895,6 +1900,101 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                       <div className="spatial-tooltip-body">
                         Clientes ou leads interagindo no WhatsApp ou canais omnichannel nos últimos
                         15 minutos.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Accordion: Rede & Ecossistema de Campo (Revendas, Fornecedores e Clientes) */}
+            <div className="legend-accordion-group">
+              <div
+                className={`legend-accordion-header ${expandedAccordions.ecosystem ? "active" : ""}`}
+                onClick={() => toggleAccordion("ecosystem")}
+              >
+                <div className="legend-header-title">
+                  <span className="legend-header-icon">
+                    <Building2
+                      className={`w-3.5 h-3.5 ${
+                        theme === "whatsapp"
+                          ? "text-[#00A884]"
+                          : theme === "light"
+                          ? "text-purple-600"
+                          : "text-purple-400"
+                      }`}
+                    />
+                  </span>
+                  <span>Rede & Ecossistema de Campo</span>
+                </div>
+                <span className="legend-accordion-arrow">
+                  {expandedAccordions.ecosystem ? "▾" : "▸"}
+                </span>
+              </div>
+              {expandedAccordions.ecosystem && (
+                <div className="legend-accordion-body">
+                  {/* Revendas & Concessionárias */}
+                  <div className="leg-item leg-item-tooltip-wrap cursor-pointer hover:bg-purple-500/10 transition-colors">
+                    <span className="w-5 h-5 rounded-md bg-purple-500/15 border border-purple-500/30 text-purple-400 flex items-center justify-center flex-shrink-0 shadow-[0_0_8px_rgba(139,92,246,0.25)]">
+                      <Store size={12} className="text-purple-400" />
+                    </span>
+                    <span className="text-[11px] leading-tight flex-1">
+                      <strong className="text-purple-400">Revendas & Concessionárias</strong>
+                    </span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-purple-500/15 text-purple-300 border border-purple-500/30">
+                      Parceiros
+                    </span>
+                    <div className="spatial-legend-tooltip">
+                      <div className="spatial-tooltip-title text-purple-400">
+                        <Store size={13} className="text-purple-400" />
+                        <span>Revendas Autorizadas & Concessionárias</span>
+                      </div>
+                      <div className="spatial-tooltip-body">
+                        Braços de distribuição comercial, revendas parceiras e pontos de assistência técnica da Verto em polos agrícolas.
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Fornecedores & Peças */}
+                  <div className="leg-item leg-item-tooltip-wrap cursor-pointer hover:bg-amber-500/10 transition-colors">
+                    <span className="w-5 h-5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center flex-shrink-0 shadow-[0_0_8px_rgba(245,158,11,0.25)]">
+                      <Truck size={12} className="text-amber-400" />
+                    </span>
+                    <span className="text-[11px] leading-tight flex-1">
+                      <strong className="text-amber-400">Fornecedores & Peças</strong>
+                    </span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                      Insumos
+                    </span>
+                    <div className="spatial-legend-tooltip">
+                      <div className="spatial-tooltip-title text-amber-400">
+                        <Truck size={13} className="text-amber-400" />
+                        <span>Fornecedores Homologados</span>
+                      </div>
+                      <div className="spatial-tooltip-body">
+                        Fabricantes industriais, fornecedores de peças e matérias-primas conectadas à cadeia produtiva da Verto.
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Clientes Finais (Propriedades / Faturados) */}
+                  <div className="leg-item leg-item-tooltip-wrap cursor-pointer hover:bg-cyan-500/10 transition-colors">
+                    <span className="w-5 h-5 rounded-md bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 flex items-center justify-center flex-shrink-0 shadow-[0_0_8px_rgba(0,210,255,0.25)]">
+                      <BadgeCheck size={12} className="text-cyan-400" />
+                    </span>
+                    <span className="text-[11px] leading-tight flex-1">
+                      <strong className="text-cyan-400">Clientes Finais (Propriedades)</strong>
+                    </span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+                      Faturados
+                    </span>
+                    <div className="spatial-legend-tooltip">
+                      <div className="spatial-tooltip-title text-cyan-400">
+                        <BadgeCheck size={13} className="text-cyan-400" />
+                        <span>Produtores & Compradores Finais</span>
+                      </div>
+                      <div className="spatial-tooltip-body">
+                        Propriedades rurais e clientes finais onde as máquinas e tecnologias Verto estão operando com nota fiscal emitida.
                       </div>
                     </div>
                   </div>
