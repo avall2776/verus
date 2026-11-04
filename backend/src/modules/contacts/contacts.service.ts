@@ -251,29 +251,37 @@ export class ContactsService {
   }
 
   /**
-   * Gera o arquivo vCard (.vcf) completo com todos os contatos elegíveis da empresa
+   * Gera o arquivo vCard (.vcf) completo com todos os contatos da empresa
    */
   async generateVcf(tenantId: string): Promise<string> {
     const contacts = await this.prisma.contact.findMany({
       where: { tenantId },
-      select: { id: true, name: true, phone: true, email: true, address: true },
+      select: { id: true, name: true, phone: true, email: true, address: true, whatsappLid: true },
+      orderBy: { createdAt: 'desc' },
     });
 
-    const seenPhones = new Set<string>();
     const vcards: string[] = [];
 
     for (const c of contacts) {
-      const formatted = this.googleContactsService.sanitizePhone(c.phone);
-      if (!formatted || seenPhones.has(formatted)) continue;
-      seenPhones.add(formatted);
+      // Descarta apenas grupos do WhatsApp (IDs como 12036...)
+      const digits = (c.phone || '').replace(/\D/g, '');
+      if (digits.startsWith('12036')) continue;
 
-      const displayName = this.googleContactsService.formatDisplayName(c.name, formatted);
+      const formatted = this.googleContactsService.sanitizePhone(c.phone);
+      const displayName = this.googleContactsService.formatDisplayName(c.name, formatted || c.email || 'Cliente');
 
       let vcard = 'BEGIN:VCARD\r\nVERSION:3.0\r\n';
       vcard += `FN:${displayName}\r\n`;
       vcard += `N:;${displayName};;;\r\n`;
-      vcard += `TEL;TYPE=CELL:${formatted}\r\n`;
       vcard += 'ORG:Verto Soluções Agrícolas\r\n';
+
+      if (formatted) {
+        vcard += `TEL;TYPE=CELL:${formatted}\r\n`;
+        if (c.phone && c.phone.includes('@lid')) {
+          vcard += `NOTE:WhatsApp LID: ${c.phone}\r\n`;
+        }
+      }
+
       if (c.email) vcard += `EMAIL:${c.email.trim()}\r\n`;
       if (c.address) vcard += `NOTE:Endereço: ${c.address.replace(/[\r\n;]/g, ' ')}\r\n`;
       vcard += 'END:VCARD\r\n';
