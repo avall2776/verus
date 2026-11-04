@@ -6,11 +6,21 @@ import * as path from 'path';
 
 let brazilCitiesCoordsCache: Record<string, [number, number]> | null = null;
 function getBrazilCitiesCoords(): Record<string, [number, number]> {
-  if (brazilCitiesCoordsCache) return brazilCitiesCoordsCache;
+  if (brazilCitiesCoordsCache && Object.keys(brazilCitiesCoordsCache).length > 0) return brazilCitiesCoordsCache;
   try {
-    const filePath = path.resolve(__dirname, '../../shared/data/brazil_cities_coords.json');
-    if (fs.existsSync(filePath)) {
-      brazilCitiesCoordsCache = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    const candidatePaths = [
+      path.resolve(__dirname, '../../shared/data/brazil_cities_coords.json'),
+      path.resolve(__dirname, '../../../src/shared/data/brazil_cities_coords.json'),
+      path.resolve(__dirname, '../shared/data/brazil_cities_coords.json'),
+      path.resolve(process.cwd(), 'src/shared/data/brazil_cities_coords.json'),
+      path.resolve(process.cwd(), 'backend/src/shared/data/brazil_cities_coords.json'),
+      path.resolve(process.cwd(), 'dist/src/shared/data/brazil_cities_coords.json')
+    ];
+    for (const p of candidatePaths) {
+      if (fs.existsSync(p)) {
+        brazilCitiesCoordsCache = JSON.parse(fs.readFileSync(p, 'utf8'));
+        break;
+      }
     }
   } catch (e) {
     brazilCitiesCoordsCache = {};
