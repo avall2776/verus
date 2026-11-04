@@ -877,6 +877,72 @@ export class DashboardService {
       };
     }).sort((a, b) => b.salesVolume - a.salesVolume);
 
+    // 7. Ecossistema Tático de Campo: Revendas & Concessionárias (Roxo), Fornecedores (Laranja), Clientes Finais (Ciano)
+    const ecosystemContacts = await this.prisma.contact.findMany({
+      where: {
+        tenantId,
+        city: { not: null },
+        state: { not: null }
+      },
+      select: {
+        id: true,
+        name: true,
+        city: true,
+        state: true,
+        cep: true,
+        phone: true,
+        tags: true,
+        isFaturado: true,
+        totalFaturado: true
+      }
+    });
+
+    const resellers: Array<any> = [];
+    const suppliers: Array<any> = [];
+    const clients: Array<any> = [];
+
+    ecosystemContacts.forEach(c => {
+      const coords = resolveCityCoords(c.city, c.state);
+      if (!coords) return;
+
+      const tags = (c.tags || []).map(t => (t || '').toLowerCase());
+      const isRevenda = tags.some(t => t.includes('revenda') || t.includes('parceiro') || t.includes('concessionaria'));
+      const isFornecedor = tags.some(t => t.includes('fornecedor'));
+      const isClient = c.isFaturado || tags.some(t => t.includes('cliente'));
+
+      const baseItem = {
+        id: c.id,
+        name: c.name,
+        city: c.city,
+        state: c.state,
+        cep: c.cep || undefined,
+        phone: c.phone || undefined,
+        lat: coords.lat,
+        lng: coords.lng
+      };
+
+      if (isRevenda) {
+        resellers.push({
+          ...baseItem,
+          category: 'reseller',
+          color: '#8B5CF6'
+        });
+      } else if (isFornecedor) {
+        suppliers.push({
+          ...baseItem,
+          category: 'supplier',
+          color: '#F97316'
+        });
+      } else if (isClient) {
+        clients.push({
+          ...baseItem,
+          category: 'client',
+          color: '#00D2FF',
+          totalFaturado: Number(c.totalFaturado) || 0
+        });
+      }
+    });
+
     return {
       summary: {
         totalSalesCount,
@@ -903,7 +969,17 @@ export class DashboardService {
       },
       regions,
       sellers: sellersSummary,
-      points
+      points,
+      ecosystem: {
+        resellers,
+        suppliers,
+        clients,
+        counts: {
+          resellers: resellers.length,
+          suppliers: suppliers.length,
+          clients: clients.length
+        }
+      }
     };
   }
 
