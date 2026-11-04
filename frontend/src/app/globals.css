@@ -1552,7 +1552,14 @@ html.light .legend-header,
 
 html.light .legend-header-title,
 .light .legend-header-title {
-  color: #334155;
+  color: #0F172A;
+  font-weight: 800;
+}
+
+html.light .legend-accordion-arrow,
+.light .legend-accordion-arrow {
+  color: #0284C7;
+  font-weight: 900;
 }
 
 html.light .legend-accordion-header:hover,

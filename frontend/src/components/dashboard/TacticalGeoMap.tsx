@@ -1881,7 +1881,11 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                   {/* Negócio Fechado */}
                   <div
                     className={`leg-item leg-item-tooltip-wrap cursor-pointer ${
-                      selectedStatus === "closed" ? "bg-emerald-500/15" : ""
+                      selectedStatus === "closed"
+                        ? theme === "light"
+                          ? "bg-emerald-100/90 border border-emerald-300/80"
+                          : "bg-emerald-500/15"
+                        : ""
                     }`}
                     onClick={() =>
                       setSelectedStatus(selectedStatus === "closed" ? "all" : "closed")
@@ -1889,9 +1893,13 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                   >
                     <span className="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] flex-shrink-0"></span>
                     <span className="text-[11px] leading-tight flex-1">
-                      <strong className="text-emerald-500">Território Dominado (Vendas)</strong>
+                      <strong className={theme === "light" ? "text-emerald-900 font-bold" : "text-emerald-500"}>
+                        Território Dominado (Vendas)
+                      </strong>
                     </span>
-                    <span className="text-[10px] font-bold text-emerald-500">{closedCount}</span>
+                    <span className={`text-[10px] font-bold ${theme === "light" ? "text-emerald-900 font-black" : "text-emerald-500"}`}>
+                      {closedCount}
+                    </span>
                     <div className="spatial-legend-tooltip">
                       <div className="spatial-tooltip-title text-emerald-500">
                         <span className="spatial-tooltip-dot bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.8)]"></span>
@@ -1906,7 +1914,11 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                   {/* Em Atendimento */}
                   <div
                     className={`leg-item leg-item-tooltip-wrap cursor-pointer ${
-                      selectedStatus === "in_attendance" ? "bg-amber-500/15" : ""
+                      selectedStatus === "in_attendance"
+                        ? theme === "light"
+                          ? "bg-amber-100/90 border border-amber-300/80"
+                          : "bg-amber-500/15"
+                        : ""
                     }`}
                     onClick={() =>
                       setSelectedStatus(
@@ -1916,9 +1928,11 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                   >
                     <span className="w-3 h-3 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(250,204,21,0.8)] flex-shrink-0"></span>
                     <span className="text-[11px] leading-tight flex-1">
-                      <strong className="text-amber-500">Em Atendimento Ativo</strong>
+                      <strong className={theme === "light" ? "text-amber-950 font-bold" : "text-amber-500"}>
+                        Em Atendimento Ativo
+                      </strong>
                     </span>
-                    <span className="text-[10px] font-bold text-amber-500">
+                    <span className={`text-[10px] font-bold ${theme === "light" ? "text-amber-950 font-black" : "text-amber-500"}`}>
                       {inAttendanceCount}
                     </span>
                     <div className="spatial-legend-tooltip">
@@ -1935,7 +1949,11 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                   {/* Oportunidades Perdidas */}
                   <div
                     className={`leg-item leg-item-tooltip-wrap cursor-pointer ${
-                      selectedStatus === "lost" ? "bg-rose-500/15" : ""
+                      selectedStatus === "lost"
+                        ? theme === "light"
+                          ? "bg-rose-100/90 border border-rose-300/80"
+                          : "bg-rose-500/15"
+                        : ""
                     }`}
                     onClick={() =>
                       setSelectedStatus(
@@ -1945,9 +1963,11 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                   >
                     <span className="w-3 h-3 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] flex-shrink-0"></span>
                     <span className="text-[11px] leading-tight flex-1">
-                      <strong className="text-rose-400">Negócios Perdidos (Repescagem)</strong>
+                      <strong className={theme === "light" ? "text-rose-900 font-bold" : "text-rose-400"}>
+                        Negócios Perdidos (Repescagem)
+                      </strong>
                     </span>
-                    <span className="text-[10px] font-bold text-rose-400">
+                    <span className={`text-[10px] font-bold ${theme === "light" ? "text-rose-900 font-black" : "text-rose-400"}`}>
                       {lostCount}
                     </span>
                     <div className="spatial-legend-tooltip">
@@ -1972,13 +1992,13 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                   >
                     <span className="w-3 h-3 rounded-full bg-slate-500 flex-shrink-0"></span>
                     <span className="text-[11px] leading-tight flex-1">
-                      <strong className={theme === "light" ? "text-slate-600" : "text-slate-400"}>
+                      <strong className={theme === "light" ? "text-slate-800 font-bold" : "text-slate-400"}>
                         Mercado em Aberto (Névoa)
                       </strong>
                     </span>
                     <span
                       className={`text-[10px] font-bold ${
-                        theme === "light" ? "text-slate-600" : "text-slate-400"
+                        theme === "light" ? "text-slate-800 font-black" : "text-slate-400"
                       }`}
                     >
                       {unexploredCount}
@@ -2014,14 +2034,24 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                     </span>
                     <span className="text-[11px] leading-tight flex-1">
                       <strong
-                        className={theme === "whatsapp" ? "text-[#25D366]" : "text-cyan-400"}
+                        className={
+                          theme === "light"
+                            ? "text-sky-950 font-bold"
+                            : theme === "whatsapp"
+                            ? "text-[#25D366]"
+                            : "text-cyan-400"
+                        }
                       >
                         Radar em Tempo Real
                       </strong>
                     </span>
                     <span
                       className={`text-[10px] font-bold ${
-                        theme === "whatsapp" ? "text-[#25D366]" : "text-cyan-400"
+                        theme === "light"
+                          ? "text-sky-900 font-black"
+                          : theme === "whatsapp"
+                          ? "text-[#25D366]"
+                          : "text-cyan-400"
                       }`}
                     >
                       {liveCount} ao vivo
@@ -2082,21 +2112,37 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                     onClick={() => setShowResellersLayer(!showResellersLayer)}
                     className={`leg-item leg-item-tooltip-wrap cursor-pointer transition-all ${
                       showResellersLayer 
-                        ? "bg-purple-500/15 border-purple-500/30" 
+                        ? theme === "light"
+                          ? "bg-purple-100 border border-purple-300/80 shadow-2xs"
+                          : "bg-purple-500/15 border border-purple-500/30" 
                         : "opacity-40 hover:opacity-70"
                     }`}
                   >
-                    <span className="w-5 h-5 rounded-md bg-purple-500/15 border border-purple-500/30 text-purple-400 flex items-center justify-center flex-shrink-0 shadow-[0_0_8px_rgba(139,92,246,0.25)]">
-                      <Store size={12} className="text-purple-400" />
+                    <span
+                      className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 ${
+                        theme === "light"
+                          ? "bg-purple-200/90 border border-purple-400 text-purple-950 shadow-2xs"
+                          : "bg-purple-500/15 border border-purple-500/30 text-purple-400 shadow-[0_0_8px_rgba(139,92,246,0.25)]"
+                      }`}
+                    >
+                      <Store size={12} className={theme === "light" ? "text-purple-950" : "text-purple-400"} />
                     </span>
                     <span className="text-[11px] leading-tight flex-1">
-                      <strong className="text-purple-400">Revendas & Concessionárias</strong>
+                      <strong className={theme === "light" ? "text-purple-950 font-black" : "text-purple-400"}>
+                        Revendas & Concessionárias
+                      </strong>
                     </span>
-                    <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded border ${
-                      showResellersLayer 
-                        ? "bg-purple-500/20 text-purple-300 border-purple-500/40" 
-                        : "bg-slate-800 text-slate-500 border-slate-700"
-                    }`}>
+                    <span
+                      className={`text-[10px] font-bold px-1.5 py-0.2 rounded border ${
+                        showResellersLayer 
+                          ? theme === "light"
+                            ? "bg-purple-200/90 text-purple-950 border-purple-400/90 font-black"
+                            : "bg-purple-500/20 text-purple-300 border-purple-500/40" 
+                          : theme === "light"
+                          ? "bg-slate-200 text-slate-700 border-slate-300"
+                          : "bg-slate-800 text-slate-500 border-slate-700"
+                      }`}
+                    >
                       {showResellersLayer ? (geoData?.ecosystem?.counts?.resellers ?? geoData?.ecosystem?.resellers?.length ?? "Ativo") : "Oculto"}
                     </span>
                     <div className="spatial-legend-tooltip">
@@ -2115,21 +2161,37 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                     onClick={() => setShowSuppliersLayer(!showSuppliersLayer)}
                     className={`leg-item leg-item-tooltip-wrap cursor-pointer transition-all ${
                       showSuppliersLayer 
-                        ? "bg-orange-500/15 border-orange-500/30" 
+                        ? theme === "light"
+                          ? "bg-orange-100 border border-orange-300/80 shadow-2xs"
+                          : "bg-orange-500/15 border border-orange-500/30" 
                         : "opacity-40 hover:opacity-70"
                     }`}
                   >
-                    <span className="w-5 h-5 rounded-md bg-orange-500/15 border border-orange-500/30 text-orange-400 flex items-center justify-center flex-shrink-0 shadow-[0_0_8px_rgba(249,115,22,0.25)]">
-                      <Truck size={12} className="text-orange-400" />
+                    <span
+                      className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 ${
+                        theme === "light"
+                          ? "bg-orange-200/90 border border-orange-400 text-orange-950 shadow-2xs"
+                          : "bg-orange-500/15 border border-orange-500/30 text-orange-400 shadow-[0_0_8px_rgba(249,115,22,0.25)]"
+                      }`}
+                    >
+                      <Truck size={12} className={theme === "light" ? "text-orange-950" : "text-orange-400"} />
                     </span>
                     <span className="text-[11px] leading-tight flex-1">
-                      <strong className="text-orange-400">Fornecedores & Peças</strong>
+                      <strong className={theme === "light" ? "text-orange-950 font-black" : "text-orange-400"}>
+                        Fornecedores & Peças
+                      </strong>
                     </span>
-                    <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded border ${
-                      showSuppliersLayer 
-                        ? "bg-orange-500/20 text-orange-300 border-orange-500/40" 
-                        : "bg-slate-800 text-slate-500 border-slate-700"
-                    }`}>
+                    <span
+                      className={`text-[10px] font-bold px-1.5 py-0.2 rounded border ${
+                        showSuppliersLayer 
+                          ? theme === "light"
+                            ? "bg-orange-200/90 text-orange-950 border-orange-400/90 font-black"
+                            : "bg-orange-500/20 text-orange-300 border-orange-500/40" 
+                          : theme === "light"
+                          ? "bg-slate-200 text-slate-700 border-slate-300"
+                          : "bg-slate-800 text-slate-500 border-slate-700"
+                      }`}
+                    >
                       {showSuppliersLayer ? (geoData?.ecosystem?.counts?.suppliers ?? geoData?.ecosystem?.suppliers?.length ?? "Ativo") : "Oculto"}
                     </span>
                     <div className="spatial-legend-tooltip">
@@ -2148,21 +2210,37 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                     onClick={() => setShowClientsLayer(!showClientsLayer)}
                     className={`leg-item leg-item-tooltip-wrap cursor-pointer transition-all ${
                       showClientsLayer 
-                        ? "bg-cyan-500/15 border-cyan-500/30" 
+                        ? theme === "light"
+                          ? "bg-sky-100 border border-sky-300/80 shadow-2xs"
+                          : "bg-cyan-500/15 border border-cyan-500/30" 
                         : "opacity-40 hover:opacity-70"
                     }`}
                   >
-                    <span className="w-5 h-5 rounded-md bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 flex items-center justify-center flex-shrink-0 shadow-[0_0_8px_rgba(0,210,255,0.25)]">
-                      <BadgeCheck size={12} className="text-cyan-400" />
+                    <span
+                      className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 ${
+                        theme === "light"
+                          ? "bg-sky-200/90 border border-sky-400 text-sky-950 shadow-2xs"
+                          : "bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 shadow-[0_0_8px_rgba(0,210,255,0.25)]"
+                      }`}
+                    >
+                      <BadgeCheck size={12} className={theme === "light" ? "text-sky-950" : "text-cyan-400"} />
                     </span>
                     <span className="text-[11px] leading-tight flex-1">
-                      <strong className="text-cyan-400">Clientes Finais (Propriedades)</strong>
+                      <strong className={theme === "light" ? "text-sky-950 font-black" : "text-cyan-400"}>
+                        Clientes Finais (Propriedades)
+                      </strong>
                     </span>
-                    <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded border ${
-                      showClientsLayer 
-                        ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40" 
-                        : "bg-slate-800 text-slate-500 border-slate-700"
-                    }`}>
+                    <span
+                      className={`text-[10px] font-bold px-1.5 py-0.2 rounded border ${
+                        showClientsLayer 
+                          ? theme === "light"
+                            ? "bg-sky-200/90 text-sky-950 border-sky-400/90 font-black"
+                            : "bg-cyan-500/20 text-cyan-300 border-cyan-500/40" 
+                          : theme === "light"
+                          ? "bg-slate-200 text-slate-700 border-slate-300"
+                          : "bg-slate-800 text-slate-500 border-slate-700"
+                      }`}
+                    >
                       {showClientsLayer ? (geoData?.ecosystem?.counts?.clients ?? geoData?.ecosystem?.clients?.length ?? "Ativo") : "Oculto"}
                     </span>
                     <div className="spatial-legend-tooltip">
