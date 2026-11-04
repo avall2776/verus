@@ -116,7 +116,31 @@ export interface GeoCityPoint {
   recentDeals: GeoCityDeal[];
 }
 
+export interface GeoEcosystemPin {
+  id: string;
+  name: string;
+  city: string;
+  state: string;
+  cep?: string;
+  lat: number;
+  lng: number;
+  phone?: string;
+  totalFaturado?: number;
+  category: "reseller" | "supplier" | "client";
+  color: string;
+}
+
 export interface GeoMapResponse {
+  ecosystem?: {
+    resellers: GeoEcosystemPin[];
+    suppliers: GeoEcosystemPin[];
+    clients: GeoEcosystemPin[];
+    counts: {
+      resellers: number;
+      suppliers: number;
+      clients: number;
+    };
+  };
   summary: {
     totalSalesCount: number;
     totalRevenue: number;
@@ -284,6 +308,11 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<maplibregl.Marker[]>([]);
+  const ecosystemMarkersRef = useRef<maplibregl.Marker[]>([]);
+  const [showResellersLayer, setShowResellersLayer] = useState<boolean>(true);
+  const [showSuppliersLayer, setShowSuppliersLayer] = useState<boolean>(true);
+  const [showClientsLayer, setShowClientsLayer] = useState<boolean>(true);
+  const [selectedEcosystemPin, setSelectedEcosystemPin] = useState<GeoEcosystemPin | null>(null);
   const controlsScrollRef = useRef<HTMLDivElement>(null);
 
   // Dados do Servidor
@@ -832,6 +861,104 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
       markersRef.current.push(marker);
     });
   }, [filteredPoints, theme]);
+
+  // Renderização Tática das Camadas de Ecossistema de Campo (Revendas, Fornecedores e Clientes Finais)
+  useEffect(() => {
+    const mapInstance = mapRef.current;
+    if (!mapInstance) return;
+
+    ecosystemMarkersRef.current.forEach((m) => m.remove());
+    ecosystemMarkersRef.current = [];
+
+    const isLightMode = theme === "light";
+    const bgCard = isLightMode ? "#FFFFFF" : "#0B1224";
+
+    const pinsToRender: GeoEcosystemPin[] = [];
+
+    if (showResellersLayer && geoData?.ecosystem?.resellers) {
+      pinsToRender.push(...geoData.ecosystem.resellers);
+    }
+    if (showSuppliersLayer && geoData?.ecosystem?.suppliers) {
+      pinsToRender.push(...geoData.ecosystem.suppliers);
+    }
+    if (showClientsLayer && geoData?.ecosystem?.clients) {
+      pinsToRender.push(...geoData.ecosystem.clients);
+    }
+
+    pinsToRender.forEach((pin) => {
+      const el = document.createElement("div");
+      el.className =
+        "group relative cursor-pointer select-none transition-transform duration-300 hover:scale-135 z-20 hover:z-50";
+
+      let iconSvg = "";
+      let glow = "";
+      let categoryLabel = "";
+
+      if (pin.category === "reseller") {
+        glow = "rgba(139, 92, 246, 0.85)";
+        categoryLabel = "Revenda Autorizada";
+        iconSvg = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${pin.color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/></svg>`;
+      } else if (pin.category === "supplier") {
+        glow = "rgba(249, 115, 22, 0.85)";
+        categoryLabel = "Fornecedor Homologado";
+        iconSvg = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${pin.color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18.5" r="2.5"/><circle cx="7" cy="18.5" r="2.5"/></svg>`;
+      } else {
+        glow = "rgba(0, 210, 255, 0.85)";
+        categoryLabel = "Cliente Faturado";
+        iconSvg = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${pin.color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/></svg>`;
+      }
+
+      el.innerHTML = `
+        <div class="relative flex flex-col items-center">
+          <!-- Marcador do Ecossistema -->
+          <div class="w-6 h-6 rounded-lg flex items-center justify-center shadow-xl transition-all duration-300 border-2" 
+               style="background-color: ${bgCard}; border-color: ${pin.color}; box-shadow: 0 0 12px ${glow}">
+            ${iconSvg}
+          </div>
+          <div class="w-0 h-0 border-l-[3px] border-l-transparent border-r-[3px] border-r-transparent border-t-[4px] -mt-[0.5px]"
+               style="border-t-color: ${pin.color}"></div>
+
+          <!-- Micro-Tooltip Hover Tático -->
+          <div class="pointer-events-none absolute bottom-8 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${
+            isLightMode
+              ? "bg-white/95 text-slate-800 border-slate-300"
+              : "bg-[#0B1224]/95 text-white border-slate-700/80"
+          } border rounded-xl px-2.5 py-1.5 text-xs whitespace-nowrap shadow-2xl backdrop-blur-md flex flex-col items-start z-50">
+            <div class="flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full" style="background-color: ${pin.color}"></span>
+              <span class="font-extrabold text-[11px] leading-tight">${pin.name}</span>
+            </div>
+            <div class="text-[9px] text-slate-400 mt-0.5">
+              ${pin.city} - ${pin.state} ${pin.cep ? `• CEP: ${pin.cep}` : ""}
+            </div>
+            <div class="text-[9px] font-bold mt-0.5" style="color: ${pin.color}">
+              ${categoryLabel} ${pin.totalFaturado && pin.totalFaturado > 0 ? `• R$ ${(pin.totalFaturado / 1000).toFixed(0)}k faturado` : ""}
+            </div>
+          </div>
+        </div>
+      `;
+
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
+        setSelectedEcosystemPin(pin);
+
+        if (mapRef.current) {
+          mapRef.current.flyTo({
+            center: [pin.lng, pin.lat],
+            zoom: 8.5,
+            pitch: 0,
+            duration: 1200
+          });
+        }
+      });
+
+      const marker = new maplibregl.Marker({ element: el })
+        .setLngLat([pin.lng, pin.lat])
+        .addTo(mapInstance);
+
+      ecosystemMarkersRef.current.push(marker);
+    });
+  }, [geoData, showResellersLayer, showSuppliersLayer, showClientsLayer, theme]);
 
   // Função Auxiliar para Criação de Polígonos Georreferenciados de Território (Geometria Circular Suave)
   const createTerritoryCircle = (
@@ -1934,15 +2061,26 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
               {expandedAccordions.ecosystem && (
                 <div className="legend-accordion-body">
                   {/* Revendas & Concessionárias */}
-                  <div className="leg-item leg-item-tooltip-wrap cursor-pointer hover:bg-purple-500/10 transition-colors">
+                  <div 
+                    onClick={() => setShowResellersLayer(!showResellersLayer)}
+                    className={`leg-item leg-item-tooltip-wrap cursor-pointer transition-all ${
+                      showResellersLayer 
+                        ? "bg-purple-500/15 border-purple-500/30" 
+                        : "opacity-40 hover:opacity-70"
+                    }`}
+                  >
                     <span className="w-5 h-5 rounded-md bg-purple-500/15 border border-purple-500/30 text-purple-400 flex items-center justify-center flex-shrink-0 shadow-[0_0_8px_rgba(139,92,246,0.25)]">
                       <Store size={12} className="text-purple-400" />
                     </span>
                     <span className="text-[11px] leading-tight flex-1">
                       <strong className="text-purple-400">Revendas & Concessionárias</strong>
                     </span>
-                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-purple-500/15 text-purple-300 border border-purple-500/30">
-                      Parceiros
+                    <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded border ${
+                      showResellersLayer 
+                        ? "bg-purple-500/20 text-purple-300 border-purple-500/40" 
+                        : "bg-slate-800 text-slate-500 border-slate-700"
+                    }`}>
+                      {showResellersLayer ? (geoData?.ecosystem?.counts.resellers ?? "Ativo") : "Oculto"}
                     </span>
                     <div className="spatial-legend-tooltip">
                       <div className="spatial-tooltip-title text-purple-400">
@@ -1950,43 +2088,65 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                         <span>Revendas Autorizadas & Concessionárias</span>
                       </div>
                       <div className="spatial-tooltip-body">
-                        Braços de distribuição comercial, revendas parceiras e pontos de assistência técnica da Verto em polos agrícolas.
+                        Braços de distribuição comercial e revendas parceiras nos polos agrícolas. Clique para exibir ou ocultar os alfinetes roxos no mapa.
                       </div>
                     </div>
                   </div>
 
                   {/* Fornecedores & Peças */}
-                  <div className="leg-item leg-item-tooltip-wrap cursor-pointer hover:bg-amber-500/10 transition-colors">
-                    <span className="w-5 h-5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center flex-shrink-0 shadow-[0_0_8px_rgba(245,158,11,0.25)]">
-                      <Truck size={12} className="text-amber-400" />
+                  <div 
+                    onClick={() => setShowSuppliersLayer(!showSuppliersLayer)}
+                    className={`leg-item leg-item-tooltip-wrap cursor-pointer transition-all ${
+                      showSuppliersLayer 
+                        ? "bg-orange-500/15 border-orange-500/30" 
+                        : "opacity-40 hover:opacity-70"
+                    }`}
+                  >
+                    <span className="w-5 h-5 rounded-md bg-orange-500/15 border border-orange-500/30 text-orange-400 flex items-center justify-center flex-shrink-0 shadow-[0_0_8px_rgba(249,115,22,0.25)]">
+                      <Truck size={12} className="text-orange-400" />
                     </span>
                     <span className="text-[11px] leading-tight flex-1">
-                      <strong className="text-amber-400">Fornecedores & Peças</strong>
+                      <strong className="text-orange-400">Fornecedores & Peças</strong>
                     </span>
-                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
-                      Insumos
+                    <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded border ${
+                      showSuppliersLayer 
+                        ? "bg-orange-500/20 text-orange-300 border-orange-500/40" 
+                        : "bg-slate-800 text-slate-500 border-slate-700"
+                    }`}>
+                      {showSuppliersLayer ? (geoData?.ecosystem?.counts.suppliers ?? "Ativo") : "Oculto"}
                     </span>
                     <div className="spatial-legend-tooltip">
-                      <div className="spatial-tooltip-title text-amber-400">
-                        <Truck size={13} className="text-amber-400" />
+                      <div className="spatial-tooltip-title text-orange-400">
+                        <Truck size={13} className="text-orange-400" />
                         <span>Fornecedores Homologados</span>
                       </div>
                       <div className="spatial-tooltip-body">
-                        Fabricantes industriais, fornecedores de peças e matérias-primas conectadas à cadeia produtiva da Verto.
+                        Fabricantes de peças e insumos da cadeia produtiva. Clique para exibir ou ocultar os alfinetes laranja no mapa.
                       </div>
                     </div>
                   </div>
 
                   {/* Clientes Finais (Propriedades / Faturados) */}
-                  <div className="leg-item leg-item-tooltip-wrap cursor-pointer hover:bg-cyan-500/10 transition-colors">
+                  <div 
+                    onClick={() => setShowClientsLayer(!showClientsLayer)}
+                    className={`leg-item leg-item-tooltip-wrap cursor-pointer transition-all ${
+                      showClientsLayer 
+                        ? "bg-cyan-500/15 border-cyan-500/30" 
+                        : "opacity-40 hover:opacity-70"
+                    }`}
+                  >
                     <span className="w-5 h-5 rounded-md bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 flex items-center justify-center flex-shrink-0 shadow-[0_0_8px_rgba(0,210,255,0.25)]">
                       <BadgeCheck size={12} className="text-cyan-400" />
                     </span>
                     <span className="text-[11px] leading-tight flex-1">
                       <strong className="text-cyan-400">Clientes Finais (Propriedades)</strong>
                     </span>
-                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
-                      Faturados
+                    <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded border ${
+                      showClientsLayer 
+                        ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40" 
+                        : "bg-slate-800 text-slate-500 border-slate-700"
+                    }`}>
+                      {showClientsLayer ? (geoData?.ecosystem?.counts.clients ?? "Ativo") : "Oculto"}
                     </span>
                     <div className="spatial-legend-tooltip">
                       <div className="spatial-tooltip-title text-cyan-400">
@@ -1994,7 +2154,7 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                         <span>Produtores & Compradores Finais</span>
                       </div>
                       <div className="spatial-tooltip-body">
-                        Propriedades rurais e clientes finais onde as máquinas e tecnologias Verto estão operando com nota fiscal emitida.
+                        Propriedades rurais e compradores com nota fiscal emitida. Clique para exibir ou ocultar os alfinetes ciano no mapa.
                       </div>
                     </div>
                   </div>

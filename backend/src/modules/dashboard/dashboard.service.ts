@@ -1,6 +1,44 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../shared/database/prisma.service';
 import OpenAI from 'openai';
+import * as fs from 'fs';
+import * as path from 'path';
+
+let brazilCitiesCoordsCache: Record<string, [number, number]> | null = null;
+function getBrazilCitiesCoords(): Record<string, [number, number]> {
+  if (brazilCitiesCoordsCache) return brazilCitiesCoordsCache;
+  try {
+    const filePath = path.resolve(__dirname, '../../shared/data/brazil_cities_coords.json');
+    if (fs.existsSync(filePath)) {
+      brazilCitiesCoordsCache = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    }
+  } catch (e) {
+    brazilCitiesCoordsCache = {};
+  }
+  return brazilCitiesCoordsCache || {};
+}
+
+function normalizeCityName(name: string): string {
+  if (!name) return '';
+  return name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function resolveCityCoords(city?: string | null, state?: string | null): { lat: number; lng: number } | null {
+  if (!city) return null;
+  const coordsMap = getBrazilCitiesCoords();
+  const cleanCity = city.replace(/\s*\(.*?\)\s*/g, '').trim();
+  const norm = normalizeCityName(cleanCity);
+  const uf = (state || '').toLowerCase().trim();
+  if (coordsMap[`${norm}_${uf}`]) {
+    const [lat, lng] = coordsMap[`${norm}_${uf}`];
+    return { lat, lng };
+  }
+  if (coordsMap[norm]) {
+    const [lat, lng] = coordsMap[norm];
+    return { lat, lng };
+  }
+  return null;
+}
 
 @Injectable()
 export class DashboardService {
