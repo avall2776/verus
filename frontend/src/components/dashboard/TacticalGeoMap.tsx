@@ -316,9 +316,9 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<maplibregl.Marker[]>([]);
   const ecosystemMarkersRef = useRef<maplibregl.Marker[]>([]);
-  const [showResellersLayer, setShowResellersLayer] = useState<boolean>(true);
-  const [showSuppliersLayer, setShowSuppliersLayer] = useState<boolean>(true);
-  const [showClientsLayer, setShowClientsLayer] = useState<boolean>(true);
+  const [showResellersLayer, setShowResellersLayer] = useState<boolean>(false);
+  const [showSuppliersLayer, setShowSuppliersLayer] = useState<boolean>(false);
+  const [showClientsLayer, setShowClientsLayer] = useState<boolean>(false);
   const [selectedEcosystemPin, setSelectedEcosystemPin] = useState<GeoEcosystemPin | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const handleCopyField = (text: string, fieldKey: string) => {
