@@ -1,0 +1,14 @@
+{
+  "redirects": [
+    {
+      "source": "/c/:code*",
+      "destination": "/vallor/c/:code*",
+      "permanent": false
+    },
+    {
+      "source": "/p/:code*",
+      "destination": "/vallor/p/:code*",
+      "permanent": false
+    }
+  ]
+}
