@@ -83,16 +83,6 @@ const nextConfig = {
         destination: `${backendTarget}/socket.io/:path*`,
         basePath: false,
       },
-      {
-        source: '/c/:path*',
-        destination: '/vallor/c/:path*',
-        basePath: false,
-      },
-      {
-        source: '/p/:path*',
-        destination: '/vallor/p/:path*',
-        basePath: false,
-      },
     ];
   },
 

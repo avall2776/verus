@@ -87,16 +87,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Redirecionamento automático de links públicos de contratos e propostas para o basePath /vallor
-  if (pathname.startsWith('/c/') || pathname === '/c') {
-    const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = `/vallor${pathname}`;
-    return NextResponse.redirect(redirectUrl);
+  // Redirecionamento automático de links públicos de contratos e propostas para o basePath /vallor caso venham na raiz
+  const rawUrl = request.url;
+  if (!rawUrl.includes('/vallor/c/') && (pathname.startsWith('/c/') || pathname === '/c')) {
+    return NextResponse.redirect(new URL(`/vallor${pathname}`, request.url));
   }
-  if (pathname.startsWith('/p/') || pathname === '/p') {
-    const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = `/vallor${pathname}`;
-    return NextResponse.redirect(redirectUrl);
+  if (!rawUrl.includes('/vallor/p/') && (pathname.startsWith('/p/') || pathname === '/p')) {
+    return NextResponse.redirect(new URL(`/vallor${pathname}`, request.url));
   }
 
   // 4. Se a rota for pública, permite navegação direta
