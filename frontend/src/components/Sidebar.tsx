@@ -58,6 +58,7 @@ import KeyboardShortcutsModal from "@/components/modals/KeyboardShortcutsModal";
 import UserProfileModal from "@/components/modals/UserProfileModal";
 import WorkspaceManagerModal, { WorkspaceItem } from "@/components/modals/WorkspaceManagerModal";
 import { getCachedUser, clearUserCache } from "@/lib/userCache";
+import { clearAuthCookie } from "@/lib/authCookies";
 import { isAvatarUrlValid } from "@/lib/avatarUtils";
 import { useMobileMenu } from "@/contexts/MobileMenuContext";
 import ThemeToggle from "@/components/ui/ThemeToggle";
@@ -376,6 +377,7 @@ export default function Sidebar() {
 
   const handleLogout = () => {
     // 1. Limpeza profunda de tokens, credenciais e contextos de tenant
+    clearAuthCookie();
     localStorage.removeItem('versus_auth_token');
     localStorage.removeItem('versus_token');
     localStorage.removeItem('token');

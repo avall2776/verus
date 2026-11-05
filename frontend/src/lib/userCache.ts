@@ -11,6 +11,18 @@ const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos de cache em memória
 export function getStoredUserSync(): any {
   if (typeof window !== "undefined") {
     try {
+      const token =
+        localStorage.getItem("versus_auth_token") ||
+        localStorage.getItem("versus_token") ||
+        localStorage.getItem("token") ||
+        localStorage.getItem("auth_token");
+
+      if (!token) {
+        cachedUser = null;
+        localStorage.removeItem("versus_user");
+        return null;
+      }
+
       const stored = localStorage.getItem("versus_user");
       if (stored) {
         cachedUser = JSON.parse(stored);

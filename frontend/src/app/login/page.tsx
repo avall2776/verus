@@ -6,6 +6,7 @@ import { Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
 import * as THREE from "three";
 import { AnimatePresence } from "framer-motion";
 import VersusPreloader from "@/components/ui/VersusPreloader";
+import { setAuthCookie } from "@/lib/authCookies";
 
 // ================= COMPONENTE OCEANO DE DADOS (BOLINHAS DO FUNDO THREE.JS) =================
 const BackgroundParticles = () => {
@@ -191,6 +192,7 @@ export default function LoginPage() {
 
       localStorage.setItem("versus_auth_token", data.access_token);
       localStorage.setItem("versus_user", JSON.stringify(data.user));
+      setAuthCookie(data.access_token, data.user?.role);
       if (data.user?.tenantId) {
         localStorage.setItem("tenantId", data.user.tenantId);
       }
@@ -225,13 +227,25 @@ export default function LoginPage() {
     } catch (e) {}
 
     try {
+      const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+      const callbackUrl = params?.get("callbackUrl");
+
       const stored = localStorage.getItem("versus_user");
       if (stored) {
         const parsed = JSON.parse(stored);
         if (parsed.isSuperAdmin || parsed.role === "SUPER_ADMIN") {
+          if (callbackUrl && callbackUrl.startsWith("/super-admin")) {
+            router.push(callbackUrl);
+            return;
+          }
           router.push("/super-admin/companies");
           return;
         }
+      }
+
+      if (callbackUrl && callbackUrl.startsWith("/") && !callbackUrl.startsWith("//")) {
+        router.push(callbackUrl);
+        return;
       }
     } catch (e) {}
     router.push("/dashboard");

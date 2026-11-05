@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { clearAuthCookie, setAuthCookie, getAuthCookie } from './authCookies';
 
 const api = axios.create({
   baseURL: '/api-backend',
@@ -16,7 +17,8 @@ export const getStoredToken = (): string | null => {
     localStorage.getItem('token') ||
     localStorage.getItem('auth_token') ||
     sessionStorage.getItem('versus_auth_token') ||
-    sessionStorage.getItem('versus_token');
+    sessionStorage.getItem('versus_token') ||
+    getAuthCookie();
 
   if (token && typeof token === 'string') {
     token = token.trim();
@@ -25,6 +27,11 @@ export const getStoredToken = (): string | null => {
     }
     if (token.startsWith('Bearer ')) {
       token = token.slice(7).trim();
+    }
+
+    // Se temos o token no client, garante sincronização com cookie para o Middleware do Next.js
+    if (!getAuthCookie()) {
+      setAuthCookie(token);
     }
   }
   return token || null;
@@ -125,6 +132,7 @@ api.interceptors.response.use(
 
           if (isBlocked) {
             // Invalidação imediata de tokens apenas para o tenant bloqueado
+            clearAuthCookie();
             localStorage.removeItem('versus_auth_token');
             localStorage.removeItem('versus_token');
             localStorage.removeItem('token');
@@ -146,6 +154,7 @@ api.interceptors.response.use(
             !currentPath.includes('/p/')
           ) {
             // Sessão normal expirada
+            clearAuthCookie();
             localStorage.removeItem('versus_auth_token');
             localStorage.removeItem('versus_token');
             localStorage.removeItem('versus_user');

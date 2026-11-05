@@ -8,6 +8,7 @@ import GlobalSearchBar from "@/components/search/GlobalSearchBar";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import { useMobileMenu } from "@/contexts/MobileMenuContext";
 import { getStoredUserSync, clearUserCache } from "@/lib/userCache";
+import { setAuthCookie } from "@/lib/authCookies";
 import toast from "react-hot-toast";
 
 export default function Topbar() {
@@ -53,6 +54,7 @@ export default function Topbar() {
 
       localStorage.setItem("versus_auth_token", res.data.access_token);
       localStorage.setItem("versus_user", JSON.stringify(res.data.user));
+      setAuthCookie(res.data.access_token, res.data.user?.role);
       if (res.data.user?.tenantId) {
         localStorage.setItem("tenantId", res.data.user.tenantId);
       }

@@ -26,6 +26,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/lib/api";
+import { clearAuthCookie } from "@/lib/authCookies";
+import AuthGuard from "@/components/guards/AuthGuard";
 import UserProfileModal from "@/components/modals/UserProfileModal";
 import SuperAdminSupportNotifier from "@/components/support/SuperAdminSupportNotifier";
 import ThemeToggle from "@/components/ui/ThemeToggle";
@@ -131,6 +133,7 @@ export default function SuperAdminLayout({
   }, []);
 
   const handleLogout = () => {
+    clearAuthCookie();
     localStorage.removeItem("versus_auth_token");
     localStorage.removeItem("versus_token");
     localStorage.removeItem("token");
@@ -139,11 +142,12 @@ export default function SuperAdminLayout({
     localStorage.removeItem("versus_target_tenant_id");
     localStorage.removeItem("tenantId");
     sessionStorage.clear();
-    window.location.href = "/login";
+    window.location.href = "/vallor/login";
   };
 
   return (
-    <div className="h-screen flex w-full overflow-hidden bg-slate-50 dark:bg-[#070D1B] text-slate-900 dark:text-slate-100 font-sans">
+    <AuthGuard requireSuperAdmin>
+      <div className="h-screen flex w-full overflow-hidden bg-slate-50 dark:bg-[#070D1B] text-slate-900 dark:text-slate-100 font-sans">
       {/* Sidebar do Super Admin Monocromática (Desktop) com Suporte a Minimizar */}
       <aside 
         className={`hidden md:flex bg-white dark:bg-[#0B1224] border-r border-slate-200 dark:border-slate-800 flex-col justify-between h-full transition-[width] duration-200 ease-in-out relative z-20 shrink-0 ${
@@ -486,5 +490,6 @@ export default function SuperAdminLayout({
       {/* Notificador Flutuante em Tempo Real com Som de Suporte */}
       <SuperAdminSupportNotifier />
     </div>
-  );
+  </AuthGuard>
+);
 }
