@@ -87,6 +87,18 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Redirecionamento automático de links públicos de contratos e propostas para o basePath /vallor
+  if (pathname.startsWith('/c/') || pathname === '/c') {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = `/vallor${pathname}`;
+    return NextResponse.redirect(redirectUrl);
+  }
+  if (pathname.startsWith('/p/') || pathname === '/p') {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = `/vallor${pathname}`;
+    return NextResponse.redirect(redirectUrl);
+  }
+
   // 4. Se a rota for pública, permite navegação direta
   const isPublicRoute = PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix) || pathname === prefix);
   if (isPublicRoute) {
