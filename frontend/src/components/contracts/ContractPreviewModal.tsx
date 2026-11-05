@@ -10,6 +10,7 @@ import api from "@/lib/api";
 import toast from "react-hot-toast";
 import { useTheme } from "@/contexts/ThemeContext";
 import ModalPortal from "@/components/ui/ModalPortal";
+import { getPublicContractUrl } from "@/lib/contractUrlHelper";
 
 interface ContractPreviewModalProps {
   isOpen: boolean;
@@ -44,9 +45,10 @@ export function ContractPreviewModal({
 
   const handleCopyWhatsApp = async () => {
     try {
-      const origin = typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || "https://verus-alpha.vercel.app");
+      const publicContractUrl = getPublicContractUrl(contract.code);
+      const origin = typeof window !== "undefined" ? `${window.location.origin}/vallor` : (process.env.NEXT_PUBLIC_APP_URL || "https://avallmarketing.com.br/vallor");
       const res = await api.get(`/contracts/${contract.id}/whatsapp-share?origin=${encodeURIComponent(origin)}`);
-      const fallbackUrl = `${origin}/c/${contract.code.toLowerCase()}`;
+      const fallbackUrl = res.data?.signUrl || publicContractUrl;
       const textToCopy = res.data?.message || `Olá, *${contract.clientName}*! Segue o link oficial para assinatura digital do seu contrato: *${contract.title}* (${contract.code}).\n\nVocê pode revisar os termos e efetuar a assinatura eletrônica com validade jurídica pelo link: ${fallbackUrl}`;
       
       if (navigator.clipboard) {
@@ -61,8 +63,7 @@ export function ContractPreviewModal({
       }
     } catch (err) {
       console.error("Erro ao obter link de WhatsApp:", err);
-      const origin = typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || "https://verus-alpha.vercel.app");
-      const fallbackUrl = `${origin}/c/${contract.code.toLowerCase()}`;
+      const fallbackUrl = getPublicContractUrl(contract.code);
       const fallbackText = `Olá, *${contract.clientName}*! Segue o link oficial para assinatura digital do seu contrato: *${contract.title}* (${contract.code}).\n\nVocê pode revisar os termos e efetuar a assinatura eletrônica com validade jurídica pelo link: ${fallbackUrl}`;
       if (navigator.clipboard) {
         await navigator.clipboard.writeText(fallbackText);

@@ -7,8 +7,10 @@ const AUTH_COOKIE = 'versus_auth_token';
 const PUBLIC_PREFIXES = [
   '/login',
   '/blocked',
-  '/c/',
-  '/p/',
+  '/c',
+  '/p',
+  '/vallor/c',
+  '/vallor/p',
   '/relatorio',
   '/checklist',
   '/api-backend',

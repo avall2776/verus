@@ -13,6 +13,7 @@ import { Contract } from "@/types/commercial";
 import { ContractModal } from "@/components/contracts/ContractModal";
 import { ContractPreviewModal } from "@/components/contracts/ContractPreviewModal";
 import { useTheme } from "@/contexts/ThemeContext";
+import { getPublicContractUrl } from "@/lib/contractUrlHelper";
 
 export default function ContractsPage() {
   const { isWhatsApp } = useTheme();
@@ -94,9 +95,10 @@ export default function ContractsPage() {
 
   const handleShareWhatsApp = async (contract: Contract) => {
     try {
-      const origin = typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || "https://verus-alpha.vercel.app");
+      const publicContractUrl = getPublicContractUrl(contract.code);
+      const origin = typeof window !== "undefined" ? `${window.location.origin}/vallor` : (process.env.NEXT_PUBLIC_APP_URL || "https://avallmarketing.com.br/vallor");
       const res = await api.get(`/contracts/${contract.id}/whatsapp-share?origin=${encodeURIComponent(origin)}`);
-      const fallbackUrl = `${origin}/c/${contract.code.toLowerCase()}`;
+      const fallbackUrl = res.data?.signUrl || publicContractUrl;
       const textToCopy = res.data?.message || `Olá, *${contract.clientName}*! Segue o link oficial para assinatura digital do seu contrato: *${contract.title}* (${contract.code}).\n\nVocê pode revisar os termos e efetuar a assinatura eletrônica com validade jurídica pelo link: ${fallbackUrl}`;
       
       if (navigator.clipboard) {
@@ -111,8 +113,7 @@ export default function ContractsPage() {
       }
     } catch (err) {
       console.error("Erro ao obter link de WhatsApp:", err);
-      const origin = typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || "https://verus-alpha.vercel.app");
-      const fallbackUrl = `${origin}/c/${contract.code.toLowerCase()}`;
+      const fallbackUrl = getPublicContractUrl(contract.code);
       const fallbackText = `Olá, *${contract.clientName}*! Segue o link oficial para assinatura digital do seu contrato: *${contract.title}* (${contract.code}).\n\nVocê pode revisar os termos e efetuar a assinatura eletrônica com validade jurídica pelo link: ${fallbackUrl}`;
       if (navigator.clipboard) {
         await navigator.clipboard.writeText(fallbackText);

@@ -312,18 +312,30 @@ export class ContractsService {
       return contract;
     }
 
-    const rawBaseUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://verus-alpha.vercel.app';
-    const baseUrl = rawBaseUrl.replace(/\/+$/, '');
+    const rawBaseUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://avallmarketing.com.br/vallor';
+    let baseUrl = rawBaseUrl.replace(/\/+$/, '');
+    if (!baseUrl.endsWith('/vallor') && !baseUrl.includes('localhost')) {
+      baseUrl = `${baseUrl}/vallor`;
+    }
+
+    const updateData: any = {
+      status: 'SIGNED',
+      signedAt: new Date(),
+      signIp: clientIp || '187.127.10.166',
+      signUserAgent: userAgent || 'Navegador Web / Assinatura Digital do Cliente',
+      auditLogUrl: `${baseUrl}/c/${contract.code.toLowerCase()}`,
+    };
+
+    if (signerData?.signerName && signerData.signerName.trim()) {
+      updateData.clientName = signerData.signerName.trim();
+    }
+    if (signerData?.signerDocument && signerData.signerDocument.trim()) {
+      updateData.clientDocument = signerData.signerDocument.trim();
+    }
 
     const updated = await this.prisma.contract.update({
       where: { id: contract.id },
-      data: {
-        status: 'SIGNED',
-        signedAt: new Date(),
-        signIp: clientIp || '187.127.10.166',
-        signUserAgent: userAgent || 'Navegador Web / Assinatura Digital do Cliente',
-        auditLogUrl: `${baseUrl}/c/${contract.code.toLowerCase()}`,
-      },
+      data: updateData,
       include: {
         proposal: true,
         tenant: true,
@@ -341,8 +353,11 @@ export class ContractsService {
     }
     const formattedVal = Number(contract.value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-    const rawBaseUrl = origin || process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://verus-alpha.vercel.app';
-    const baseUrl = rawBaseUrl.replace(/\/+$/, '');
+    const rawBaseUrl = origin || process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://avallmarketing.com.br/vallor';
+    let baseUrl = rawBaseUrl.replace(/\/+$/, '');
+    if (!baseUrl.endsWith('/vallor') && !baseUrl.includes('localhost')) {
+      baseUrl = `${baseUrl}/vallor`;
+    }
     const signUrl = `${baseUrl}/c/${contract.code.toLowerCase()}`;
 
     const message = `Olá, *${contract.clientName}*! Tudo bem?\n\nSegue o link oficial para assinatura digital do seu contrato: *${contract.title}* (${contract.code}).\n💰 Valor: *${formattedVal}*\n\nVocê pode revisar os termos e efetuar a assinatura eletrônica com validade jurídica pelo link: ${signUrl}`;
