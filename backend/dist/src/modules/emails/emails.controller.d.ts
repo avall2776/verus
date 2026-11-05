@@ -118,13 +118,25 @@ export declare class EmailsController {
     }>;
     getEmailById(tenantId: string, id: string): Promise<{
         contact: {
+            number: string | null;
             id: string;
             name: string;
             phone: string | null;
             email: string | null;
             avatarUrl: string | null;
+            cpfCnpj: string | null;
+            razaoSocial: string | null;
+            nomeFantasia: string | null;
+            inscricaoEstadual: string | null;
             cep: string | null;
             address: string | null;
+            complement: string | null;
+            neighborhood: string | null;
+            city: string | null;
+            state: string | null;
+            isFaturado: boolean;
+            totalFaturado: number;
+            dataHealthScore: number;
             source: string;
             tags: string[];
             tenantId: string;
@@ -175,13 +187,25 @@ export declare class EmailsController {
     }>;
     sendEmail(tenantId: string, dto: SendEmailDto): Promise<{
         contact: {
+            number: string | null;
             id: string;
             name: string;
             phone: string | null;
             email: string | null;
             avatarUrl: string | null;
+            cpfCnpj: string | null;
+            razaoSocial: string | null;
+            nomeFantasia: string | null;
+            inscricaoEstadual: string | null;
             cep: string | null;
             address: string | null;
+            complement: string | null;
+            neighborhood: string | null;
+            city: string | null;
+            state: string | null;
+            isFaturado: boolean;
+            totalFaturado: number;
+            dataHealthScore: number;
             source: string;
             tags: string[];
             tenantId: string;

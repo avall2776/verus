@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { 
   MessageSquare, UserCheck, ArrowRight, X, 
   Sparkles, Eye, Mic, Image as ImageIcon, FileText, 
-  Loader2, PhoneForwarded
+  Loader2, PhoneForwarded, ArrowRightLeft, Building2, User
 } from "lucide-react";
 import api, { getStoredToken } from "@/lib/api";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -58,14 +58,13 @@ export function isBlockedNotificationContext(): boolean {
   // 1. Deslogado sem token
   if (!token) return true;
 
-  // 2. Tela de login, recuperação, cadastro ou Super Admin
+  // 2. Telas públicas ou de autenticação
   if (
     path.includes('/login') ||
     path.includes('/auth') ||
     path.includes('/register') ||
     path.includes('/forgot') ||
-    path.includes('/reset-password') ||
-    path.includes('/super-admin')
+    path.includes('/reset-password')
   ) {
     return true;
   }
@@ -279,6 +278,7 @@ export interface TransferAlertToastProps {
   contactPhone?: string | null;
   departmentName?: string | null;
   transferredBy?: string | null;
+  isDirectToMe?: boolean;
   onTakeoverSuccess?: (conversationId: string) => void;
   onOpen: (conversationId: string) => void;
   onClose: () => void;
@@ -291,11 +291,12 @@ export const TransferAlertToast: React.FC<TransferAlertToastProps> = ({
   contactPhone,
   departmentName = 'Atendimento Geral',
   transferredBy = 'Um colega',
+  isDirectToMe = false,
   onTakeoverSuccess,
   onOpen,
   onClose
 }) => {
-  // Isolamento estrito: Nunca renderizar alertas operacionais no console Super Admin ou em telas deslogadas/login
+  // Isolamento estrito: Nunca renderizar alertas operacionais em telas deslogadas ou de autenticação
   if (isBlockedNotificationContext()) {
     return null;
   }
@@ -328,39 +329,47 @@ export const TransferAlertToast: React.FC<TransferAlertToastProps> = ({
   return (
     <div className={`w-[370px] sm:w-[410px] rounded-2xl p-4 relative group overflow-hidden transition-all animate-in fade-in slide-in-from-top-4 duration-300 border-2 ${
       isClean
-        ? "bg-white border-amber-400 shadow-[0_12px_36px_rgba(0,0,0,0.12)] text-slate-900"
+        ? "bg-white border-indigo-200/90 shadow-[0_12px_36px_rgba(99,102,241,0.14)] text-slate-900"
         : isWhatsApp
-        ? "bg-[#0B141B] border-amber-500/70 shadow-[0_16px_45px_rgba(0,0,0,0.85)] text-white"
-        : "bg-[#0B1224] border-amber-500/70 shadow-[0_16px_45px_rgba(0,0,0,0.85)] text-white"
+        ? "bg-[#0B141B] border-indigo-500/50 shadow-[0_16px_45px_rgba(0,0,0,0.85)] text-white"
+        : "bg-[#0B1224] border-indigo-500/50 shadow-[0_16px_45px_rgba(0,0,0,0.85),0_0_24px_rgba(99,102,241,0.2)] text-white"
     }`}>
-      {/* Barra de destaque sólida no topo - sem degrade */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-amber-500" />
+      {/* Barra de destaque sólida e executiva no topo - Padrão Índigo / Violeta */}
+      <div className={`absolute top-0 left-0 right-0 h-1 ${
+        isClean 
+          ? "bg-indigo-600" 
+          : isWhatsApp 
+          ? "bg-indigo-500" 
+          : "bg-gradient-to-r from-indigo-500 via-indigo-400 to-violet-500"
+      }`} />
 
       {/* Header do Toast de Transferência */}
       <div className="flex items-start justify-between gap-2 mb-2.5">
         <div className="flex items-center gap-2.5">
-          {/* Badge de Alerta de Transferência */}
-          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${
+          {/* Badge Ícone Premium de Transferência */}
+          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border transition-colors ${
             isClean
-              ? "bg-amber-100 text-amber-700 border-amber-300"
-              : "bg-amber-500/20 text-amber-400 border-amber-500/50"
+              ? "bg-indigo-50 text-indigo-700 border-indigo-200"
+              : isWhatsApp
+              ? "bg-indigo-950/70 text-indigo-400 border-indigo-500/40"
+              : "bg-indigo-500/20 text-indigo-400 border-indigo-500/50"
           }`}>
-            <PhoneForwarded size={17} />
+            <ArrowRightLeft size={17} strokeWidth={2.2} />
           </div>
 
           <div>
             <div className="flex items-center gap-2">
               <span className={`text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md flex items-center gap-1.5 border ${
                 isClean
-                  ? "text-amber-800 bg-amber-100 border-amber-300"
-                  : "text-amber-300 bg-amber-950/80 border-amber-500/40"
+                  ? "text-indigo-900 bg-indigo-50 border-indigo-200"
+                  : "text-indigo-200 bg-indigo-950/80 border-indigo-500/40"
               }`}>
-                <span className="w-2 h-2 rounded-full bg-amber-500" />
-                Transferência de Lead
+                <span className={`w-2 h-2 rounded-full ${isClean ? "bg-indigo-600" : "bg-indigo-400"}`} />
+                {isDirectToMe ? "Lead Atribuído a Você" : "Transferência de Atendimento"}
               </span>
             </div>
             <p className={`text-[11px] mt-1 font-medium ${isClean ? "text-slate-600" : "text-slate-300"}`}>
-              Por <span className={`font-bold ${isClean ? "text-slate-900" : "text-white"}`}>{transferredBy}</span> para <span className={`font-bold ${isClean ? "text-amber-800" : "text-amber-300"}`}>{departmentName}</span>
+              Por <span className={`font-bold ${isClean ? "text-slate-900" : "text-white"}`}>{transferredBy}</span> para <span className={`font-bold ${isClean ? "text-indigo-700" : "text-indigo-300"}`}>{isDirectToMe ? "Você" : departmentName}</span>
             </p>
           </div>
         </div>
@@ -382,10 +391,10 @@ export const TransferAlertToast: React.FC<TransferAlertToastProps> = ({
       {/* Detalhes do Lead */}
       <div className={`rounded-xl p-3 border flex items-center justify-between mb-3.5 ${
         isClean
-          ? "bg-slate-100/90 border-slate-200"
+          ? "bg-slate-50 border-slate-200"
           : isWhatsApp
-          ? "bg-[#111B21] border-emerald-900/40"
-          : "bg-slate-900/90 border-slate-800"
+          ? "bg-[#111B21] border-slate-800"
+          : "bg-[#0F172A] border-slate-800"
       }`}>
         <div className="min-w-0">
           <h4 className={`font-bold text-sm truncate ${isClean ? "text-slate-900" : "text-white"}`}>{contactName}</h4>
@@ -395,10 +404,10 @@ export const TransferAlertToast: React.FC<TransferAlertToastProps> = ({
         </div>
         <span className={`text-[11px] font-bold px-2.5 py-1 rounded-lg shrink-0 border ${
           isClean
-            ? "text-amber-800 bg-amber-100 border-amber-300"
-            : "text-amber-300 bg-amber-950/60 border-amber-700/50"
+            ? "text-indigo-900 bg-indigo-100/70 border-indigo-200"
+            : "text-indigo-200 bg-indigo-950/70 border-indigo-500/40"
         }`}>
-          Aguardando Atendente
+          {isDirectToMe ? "Seu Atendimento" : "Fila do Setor"}
         </span>
       </div>
 
@@ -411,7 +420,9 @@ export const TransferAlertToast: React.FC<TransferAlertToastProps> = ({
           className={`px-3 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5 ${
             isClean
               ? "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300"
-              : "bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700"
+              : isWhatsApp
+              ? "bg-[#202C33] hover:bg-[#2A3942] text-slate-200 border-slate-700/60"
+              : "bg-slate-800/90 hover:bg-slate-700 text-slate-200 border-slate-700"
           }`}
         >
           <Eye size={13} />
@@ -421,7 +432,13 @@ export const TransferAlertToast: React.FC<TransferAlertToastProps> = ({
         <button
           onClick={handleTakeover}
           disabled={isTakingOver}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold transition-all cursor-pointer disabled:opacity-50 shadow-sm"
+          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-white text-xs font-bold transition-all cursor-pointer disabled:opacity-50 shadow-sm ${
+            isClean
+              ? "bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800"
+              : isWhatsApp
+              ? "bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 border border-indigo-400/30"
+              : "bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 border border-indigo-400/40"
+          }`}
         >
           {isTakingOver ? (
             <>
@@ -505,11 +522,12 @@ export function showTransferAlertToast(
     contactPhone?: string | null;
     departmentName?: string | null;
     transferredBy?: string | null;
+    isDirectToMe?: boolean;
   },
   router: any,
   onTakeoverSuccess?: (conversationId: string) => void
 ) {
-  // Isolamento estrito: Se deslogado, tela de login, super-admin ou se notificações visuais de transferências estiverem desativadas, silencia
+  // Isolamento estrito: Se deslogado, tela de login ou se notificações visuais de transferências estiverem desativadas, silencia
   if (isBlockedNotificationContext() || !isVisualNotificationEnabled("transfers")) {
     return;
   }
@@ -526,6 +544,7 @@ export function showTransferAlertToast(
         contactPhone={data.contactPhone}
         departmentName={data.departmentName}
         transferredBy={data.transferredBy}
+        isDirectToMe={data.isDirectToMe}
         onTakeoverSuccess={(cId) => {
           toast.dismiss(toastId);
           if (onTakeoverSuccess) onTakeoverSuccess(cId);

@@ -97,6 +97,18 @@ let UsersController = class UsersController {
                 permissions: true,
                 avatarUrl: true,
                 tenantId: true,
+                departments: {
+                    select: {
+                        departmentId: true,
+                        department: {
+                            select: {
+                                id: true,
+                                name: true,
+                                color: true,
+                            },
+                        },
+                    },
+                },
                 tenant: {
                     select: {
                         id: true,

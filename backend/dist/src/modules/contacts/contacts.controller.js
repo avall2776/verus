@@ -21,6 +21,12 @@ let ContactsController = class ContactsController {
     constructor(contactsService) {
         this.contactsService = contactsService;
     }
+    async exportVcf(tenantId, res) {
+        const vcfContent = await this.contactsService.generateVcf(tenantId);
+        res.setHeader('Content-Type', 'text/vcard; charset=utf-8');
+        res.setHeader('Content-Disposition', 'attachment; filename="contatos_verto_agenda.vcf"');
+        return res.send(vcfContent);
+    }
     async listContacts(tenantId) {
         return this.contactsService.findAll(tenantId);
     }
@@ -35,6 +41,14 @@ let ContactsController = class ContactsController {
     }
 };
 exports.ContactsController = ContactsController;
+__decorate([
+    (0, common_1.Get)('export/vcf'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], ContactsController.prototype, "exportVcf", null);
 __decorate([
     (0, common_1.Get)(),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),

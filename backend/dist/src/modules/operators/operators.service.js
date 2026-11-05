@@ -28,13 +28,8 @@ let OperatorsService = OperatorsService_1 = class OperatorsService {
         todayStart.setHours(0, 0, 0, 0);
         const operators = await this.prisma.user.findMany({
             where: {
-                OR: [
-                    { tenantId: this.MASTER_TENANT_ID, isSuperAdmin: false },
-                    { role: 'AGENT' },
-                    { role: 'SUPPORT_AGENT' },
-                    { role: 'SUPPORT_ANALYST' },
-                    { role: 'SUPPORT_MANAGER' },
-                ],
+                tenantId: this.MASTER_TENANT_ID,
+                isSuperAdmin: false,
             },
             select: {
                 id: true,
@@ -246,11 +241,14 @@ let OperatorsService = OperatorsService_1 = class OperatorsService {
         };
     }
     async updateOperator(id, dto) {
-        const operator = await this.prisma.user.findUnique({
-            where: { id },
+        const operator = await this.prisma.user.findFirst({
+            where: {
+                id,
+                tenantId: this.MASTER_TENANT_ID,
+            },
         });
         if (!operator) {
-            throw new common_1.NotFoundException('Operador não encontrado.');
+            throw new common_1.NotFoundException('Operador master não encontrado.');
         }
         const data = {};
         if (dto.name)
@@ -291,11 +289,14 @@ let OperatorsService = OperatorsService_1 = class OperatorsService {
         return updated;
     }
     async deleteOperator(id) {
-        const operator = await this.prisma.user.findUnique({
-            where: { id },
+        const operator = await this.prisma.user.findFirst({
+            where: {
+                id,
+                tenantId: this.MASTER_TENANT_ID,
+            },
         });
         if (!operator) {
-            throw new common_1.NotFoundException('Operador não encontrado.');
+            throw new common_1.NotFoundException('Operador master não encontrado.');
         }
         if (operator.isSuperAdmin || operator.role === 'SUPER_ADMIN') {
             throw new common_1.BadRequestException('Não é permitido excluir o usuário Super Administrador.');

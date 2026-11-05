@@ -69,6 +69,7 @@ function getGoogleOAuthUrl(tenantId) {
     const scopes = [
         'https://www.googleapis.com/auth/drive',
         'https://www.googleapis.com/auth/drive.file',
+        'https://www.googleapis.com/auth/contacts',
         'https://www.googleapis.com/auth/userinfo.email'
     ].join(' ');
     return `https://accounts.google.com/o/oauth2/v2/auth?` +

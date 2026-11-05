@@ -548,7 +548,7 @@ export class ChatService {
     return { success: true, conversationId, unreadCount: 1 };
   }
 
-  async assignToUser(tenantId: string, conversationId: string, userId: string, operatorName?: string) {
+  async assignToUser(tenantId: string, conversationId: string, userId: string, operatorName?: string, operatorId?: string) {
     const conversation = await this.prisma.conversation.findUnique({
       where: { id: conversationId },
       include: { contact: true, department: true }
@@ -595,6 +595,7 @@ export class ChatService {
       assignedTo: updated.assignedTo,
       assignedUser: assignedUser || null,
       transferredBy: operatorName || 'Um operador',
+      transferredById: operatorId || null,
       action: 'ASSIGNED',
       transferredAt: new Date().toISOString()
     });
@@ -602,7 +603,7 @@ export class ChatService {
     return convWithUser;
   }
 
-  async transferToDepartment(tenantId: string, conversationId: string, departmentId: string, userId?: string, operatorName?: string) {
+  async transferToDepartment(tenantId: string, conversationId: string, departmentId: string, userId?: string, operatorName?: string, operatorId?: string) {
     const conversation = await this.prisma.conversation.findUnique({
       where: { id: conversationId }
     });
@@ -666,6 +667,7 @@ export class ChatService {
       assignedTo: updated.assignedTo,
       assignedUser: assignedUser || null,
       transferredBy: operatorName || 'Um colega',
+      transferredById: operatorId || null,
       action: 'TRANSFERRED',
       transferredAt: new Date().toISOString()
     });

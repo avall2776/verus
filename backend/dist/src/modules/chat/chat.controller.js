@@ -84,11 +84,13 @@ let ChatController = class ChatController {
     }
     async transfer(tenantId, req, conversationId, body) {
         const operatorName = req.user?.name || req.user?.email || 'Um operador';
-        return this.chatService.transferToDepartment(tenantId, conversationId, body.departmentId, body.userId, operatorName);
+        const operatorId = req.user?.id || req.user?.userId;
+        return this.chatService.transferToDepartment(tenantId, conversationId, body.departmentId, body.userId, operatorName, operatorId);
     }
     async assign(tenantId, req, conversationId, body) {
         const operatorName = req.user?.name || req.user?.email || 'Um operador';
-        return this.chatService.assignToUser(tenantId, conversationId, body.userId, operatorName);
+        const operatorId = req.user?.id || req.user?.userId;
+        return this.chatService.assignToUser(tenantId, conversationId, body.userId, operatorName, operatorId);
     }
     async sendMessage(tenantId, conversationId, payload) {
         try {

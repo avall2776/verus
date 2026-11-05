@@ -177,7 +177,8 @@ export class ChatController {
     @Body() body: { departmentId: string; userId?: string },
   ) {
     const operatorName = req.user?.name || req.user?.email || 'Um operador';
-    return this.chatService.transferToDepartment(tenantId, conversationId, body.departmentId, body.userId, operatorName);
+    const operatorId = req.user?.id || req.user?.userId;
+    return this.chatService.transferToDepartment(tenantId, conversationId, body.departmentId, body.userId, operatorName, operatorId);
   }
 
   @Patch(':id/assign')
@@ -188,7 +189,8 @@ export class ChatController {
     @Body() body: { userId: string },
   ) {
     const operatorName = req.user?.name || req.user?.email || 'Um operador';
-    return this.chatService.assignToUser(tenantId, conversationId, body.userId, operatorName);
+    const operatorId = req.user?.id || req.user?.userId;
+    return this.chatService.assignToUser(tenantId, conversationId, body.userId, operatorName, operatorId);
   }
 
   @Post(':id/messages')

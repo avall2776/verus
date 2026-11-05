@@ -14,6 +14,55 @@ exports.DashboardService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../shared/database/prisma.service");
 const openai_1 = require("openai");
+const fs = require("fs");
+const path = require("path");
+let brazilCitiesCoordsCache = null;
+function getBrazilCitiesCoords() {
+    if (brazilCitiesCoordsCache && Object.keys(brazilCitiesCoordsCache).length > 0)
+        return brazilCitiesCoordsCache;
+    try {
+        const candidatePaths = [
+            path.resolve(__dirname, '../../shared/data/brazil_cities_coords.json'),
+            path.resolve(__dirname, '../../../src/shared/data/brazil_cities_coords.json'),
+            path.resolve(__dirname, '../shared/data/brazil_cities_coords.json'),
+            path.resolve(process.cwd(), 'src/shared/data/brazil_cities_coords.json'),
+            path.resolve(process.cwd(), 'backend/src/shared/data/brazil_cities_coords.json'),
+            path.resolve(process.cwd(), 'dist/src/shared/data/brazil_cities_coords.json')
+        ];
+        for (const p of candidatePaths) {
+            if (fs.existsSync(p)) {
+                brazilCitiesCoordsCache = JSON.parse(fs.readFileSync(p, 'utf8'));
+                break;
+            }
+        }
+    }
+    catch (e) {
+        brazilCitiesCoordsCache = {};
+    }
+    return brazilCitiesCoordsCache || {};
+}
+function normalizeCityName(name) {
+    if (!name)
+        return '';
+    return name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+function resolveCityCoords(city, state) {
+    if (!city)
+        return null;
+    const coordsMap = getBrazilCitiesCoords();
+    const cleanCity = city.replace(/\s*\(.*?\)\s*/g, '').trim();
+    const norm = normalizeCityName(cleanCity);
+    const uf = (state || '').toLowerCase().trim();
+    if (coordsMap[`${norm}_${uf}`]) {
+        const [lat, lng] = coordsMap[`${norm}_${uf}`];
+        return { lat, lng };
+    }
+    if (coordsMap[norm]) {
+        const [lat, lng] = coordsMap[norm];
+        return { lat, lng };
+    }
+    return null;
+}
 let DashboardService = DashboardService_1 = class DashboardService {
     constructor(prisma) {
         this.prisma = prisma;
@@ -698,6 +747,81 @@ let DashboardService = DashboardService_1 = class DashboardService {
                 activeDeals: u.activeDeals
             };
         }).sort((a, b) => b.salesVolume - a.salesVolume);
+        const ecosystemContacts = await this.prisma.contact.findMany({
+            where: {
+                tenantId,
+                city: { not: null },
+                state: { not: null }
+            },
+            select: {
+                id: true,
+                name: true,
+                city: true,
+                state: true,
+                cep: true,
+                phone: true,
+                email: true,
+                cpfCnpj: true,
+                razaoSocial: true,
+                address: true,
+                neighborhood: true,
+                source: true,
+                tags: true,
+                isFaturado: true,
+                totalFaturado: true
+            }
+        });
+        const resellers = [];
+        const suppliers = [];
+        const clients = [];
+        ecosystemContacts.forEach(c => {
+            const coords = resolveCityCoords(c.city, c.state);
+            if (!coords)
+                return;
+            const tags = (c.tags || []).map(t => (t || '').toLowerCase());
+            const isRevenda = tags.some(t => t.includes('revenda') || t.includes('parceiro') || t.includes('concessionaria'));
+            const isFornecedor = tags.some(t => t.includes('fornecedor'));
+            const isClient = c.isFaturado || tags.some(t => t.includes('cliente'));
+            const baseItem = {
+                id: c.id,
+                name: c.name,
+                city: c.city,
+                state: c.state,
+                cep: c.cep || undefined,
+                phone: c.phone || undefined,
+                email: c.email || undefined,
+                cpfCnpj: c.cpfCnpj || undefined,
+                razaoSocial: c.razaoSocial || undefined,
+                address: c.address || undefined,
+                neighborhood: c.neighborhood || undefined,
+                source: c.source || undefined,
+                tags: c.tags || [],
+                lat: coords.lat,
+                lng: coords.lng
+            };
+            if (isRevenda) {
+                resellers.push({
+                    ...baseItem,
+                    category: 'reseller',
+                    color: '#8B5CF6'
+                });
+            }
+            else if (isFornecedor) {
+                suppliers.push({
+                    ...baseItem,
+                    category: 'supplier',
+                    color: '#F97316'
+                });
+            }
+            else if (isClient) {
+                clients.push({
+                    ...baseItem,
+                    category: 'client',
+                    color: '#00D2FF',
+                    totalFaturado: Number(c.totalFaturado) || 0
+                });
+            }
+        });
         return {
             summary: {
                 totalSalesCount,
@@ -724,7 +848,17 @@ let DashboardService = DashboardService_1 = class DashboardService {
             },
             regions,
             sellers: sellersSummary,
-            points
+            points,
+            ecosystem: {
+                resellers,
+                suppliers,
+                clients,
+                counts: {
+                    resellers: resellers.length,
+                    suppliers: suppliers.length,
+                    clients: clients.length
+                }
+            }
         };
     }
     async getStrategicAiReport(tenantId) {

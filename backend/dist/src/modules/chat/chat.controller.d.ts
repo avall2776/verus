@@ -6,13 +6,25 @@ export declare class ChatController {
     constructor(chatService: ChatService);
     listConversations(tenantId: string, req: any, tab?: string, status?: string, departmentId?: string): Promise<({
         contact: {
+            number: string | null;
             id: string;
             name: string;
             phone: string | null;
             email: string | null;
             avatarUrl: string | null;
+            cpfCnpj: string | null;
+            razaoSocial: string | null;
+            nomeFantasia: string | null;
+            inscricaoEstadual: string | null;
             cep: string | null;
             address: string | null;
+            complement: string | null;
+            neighborhood: string | null;
+            city: string | null;
+            state: string | null;
+            isFaturado: boolean;
+            totalFaturado: number;
+            dataHealthScore: number;
             source: string;
             tags: string[];
             tenantId: string;
@@ -133,13 +145,25 @@ export declare class ChatController {
     }>;
     getConversationByContact(tenantId: string, contactId: string): Promise<{
         contact: {
+            number: string | null;
             id: string;
             name: string;
             phone: string | null;
             email: string | null;
             avatarUrl: string | null;
+            cpfCnpj: string | null;
+            razaoSocial: string | null;
+            nomeFantasia: string | null;
+            inscricaoEstadual: string | null;
             cep: string | null;
             address: string | null;
+            complement: string | null;
+            neighborhood: string | null;
+            city: string | null;
+            state: string | null;
+            isFaturado: boolean;
+            totalFaturado: number;
+            dataHealthScore: number;
             source: string;
             tags: string[];
             tenantId: string;
@@ -179,13 +203,25 @@ export declare class ChatController {
     }>;
     getConversation(tenantId: string, conversationId: string): Promise<{
         contact: {
+            number: string | null;
             id: string;
             name: string;
             phone: string | null;
             email: string | null;
             avatarUrl: string | null;
+            cpfCnpj: string | null;
+            razaoSocial: string | null;
+            nomeFantasia: string | null;
+            inscricaoEstadual: string | null;
             cep: string | null;
             address: string | null;
+            complement: string | null;
+            neighborhood: string | null;
+            city: string | null;
+            state: string | null;
+            isFaturado: boolean;
+            totalFaturado: number;
+            dataHealthScore: number;
             source: string;
             tags: string[];
             tenantId: string;
@@ -257,13 +293,25 @@ export declare class ChatController {
             role: string;
         };
         contact: {
+            number: string | null;
             id: string;
             name: string;
             phone: string | null;
             email: string | null;
             avatarUrl: string | null;
+            cpfCnpj: string | null;
+            razaoSocial: string | null;
+            nomeFantasia: string | null;
+            inscricaoEstadual: string | null;
             cep: string | null;
             address: string | null;
+            complement: string | null;
+            neighborhood: string | null;
+            city: string | null;
+            state: string | null;
+            isFaturado: boolean;
+            totalFaturado: number;
+            dataHealthScore: number;
             source: string;
             tags: string[];
             tenantId: string;
@@ -310,13 +358,25 @@ export declare class ChatController {
     }>;
     release(tenantId: string, conversationId: string): Promise<{
         contact: {
+            number: string | null;
             id: string;
             name: string;
             phone: string | null;
             email: string | null;
             avatarUrl: string | null;
+            cpfCnpj: string | null;
+            razaoSocial: string | null;
+            nomeFantasia: string | null;
+            inscricaoEstadual: string | null;
             cep: string | null;
             address: string | null;
+            complement: string | null;
+            neighborhood: string | null;
+            city: string | null;
+            state: string | null;
+            isFaturado: boolean;
+            totalFaturado: number;
+            dataHealthScore: number;
             source: string;
             tags: string[];
             tenantId: string;
@@ -364,13 +424,25 @@ export declare class ChatController {
     }>;
     returnToBot(tenantId: string, conversationId: string): Promise<{
         contact: {
+            number: string | null;
             id: string;
             name: string;
             phone: string | null;
             email: string | null;
             avatarUrl: string | null;
+            cpfCnpj: string | null;
+            razaoSocial: string | null;
+            nomeFantasia: string | null;
+            inscricaoEstadual: string | null;
             cep: string | null;
             address: string | null;
+            complement: string | null;
+            neighborhood: string | null;
+            city: string | null;
+            state: string | null;
+            isFaturado: boolean;
+            totalFaturado: number;
+            dataHealthScore: number;
             source: string;
             tags: string[];
             tenantId: string;
@@ -418,13 +490,25 @@ export declare class ChatController {
     }>;
     resolve(tenantId: string, conversationId: string): Promise<{
         contact: {
+            number: string | null;
             id: string;
             name: string;
             phone: string | null;
             email: string | null;
             avatarUrl: string | null;
+            cpfCnpj: string | null;
+            razaoSocial: string | null;
+            nomeFantasia: string | null;
+            inscricaoEstadual: string | null;
             cep: string | null;
             address: string | null;
+            complement: string | null;
+            neighborhood: string | null;
+            city: string | null;
+            state: string | null;
+            isFaturado: boolean;
+            totalFaturado: number;
+            dataHealthScore: number;
             source: string;
             tags: string[];
             tenantId: string;
@@ -472,13 +556,25 @@ export declare class ChatController {
     }>;
     reopen(tenantId: string, conversationId: string): Promise<{
         contact: {
+            number: string | null;
             id: string;
             name: string;
             phone: string | null;
             email: string | null;
             avatarUrl: string | null;
+            cpfCnpj: string | null;
+            razaoSocial: string | null;
+            nomeFantasia: string | null;
+            inscricaoEstadual: string | null;
             cep: string | null;
             address: string | null;
+            complement: string | null;
+            neighborhood: string | null;
+            city: string | null;
+            state: string | null;
+            isFaturado: boolean;
+            totalFaturado: number;
+            dataHealthScore: number;
             source: string;
             tags: string[];
             tenantId: string;
@@ -536,13 +632,25 @@ export declare class ChatController {
     }>;
     ignore(tenantId: string, conversationId: string): Promise<{
         contact: {
+            number: string | null;
             id: string;
             name: string;
             phone: string | null;
             email: string | null;
             avatarUrl: string | null;
+            cpfCnpj: string | null;
+            razaoSocial: string | null;
+            nomeFantasia: string | null;
+            inscricaoEstadual: string | null;
             cep: string | null;
             address: string | null;
+            complement: string | null;
+            neighborhood: string | null;
+            city: string | null;
+            state: string | null;
+            isFaturado: boolean;
+            totalFaturado: number;
+            dataHealthScore: number;
             source: string;
             tags: string[];
             tenantId: string;
@@ -594,13 +702,25 @@ export declare class ChatController {
     }): Promise<{
         assignedUser: any;
         contact: {
+            number: string | null;
             id: string;
             name: string;
             phone: string | null;
             email: string | null;
             avatarUrl: string | null;
+            cpfCnpj: string | null;
+            razaoSocial: string | null;
+            nomeFantasia: string | null;
+            inscricaoEstadual: string | null;
             cep: string | null;
             address: string | null;
+            complement: string | null;
+            neighborhood: string | null;
+            city: string | null;
+            state: string | null;
+            isFaturado: boolean;
+            totalFaturado: number;
+            dataHealthScore: number;
             source: string;
             tags: string[];
             tenantId: string;
@@ -669,13 +789,25 @@ export declare class ChatController {
             role: string;
         };
         contact: {
+            number: string | null;
             id: string;
             name: string;
             phone: string | null;
             email: string | null;
             avatarUrl: string | null;
+            cpfCnpj: string | null;
+            razaoSocial: string | null;
+            nomeFantasia: string | null;
+            inscricaoEstadual: string | null;
             cep: string | null;
             address: string | null;
+            complement: string | null;
+            neighborhood: string | null;
+            city: string | null;
+            state: string | null;
+            isFaturado: boolean;
+            totalFaturado: number;
+            dataHealthScore: number;
             source: string;
             tags: string[];
             tenantId: string;

@@ -1,31 +1,36 @@
 const { Client } = require('ssh2');
 
 const conn = new Client();
-
 conn.on('ready', () => {
-  console.log('SSH connection ready, pulling and restarting versus-engine...');
-  conn.exec(`
-    cd /root/verus && \\
-    git fetch origin main && \\
-    git reset --hard origin/main && \\
-    cd backend && \\
-    npx prisma generate && \\
-    npm run build && \\
-    pm2 restart versus-engine && \\
-    pm2 status
-  `, (err, stream) => {
+  console.log('SSH conectado. Obtendo detalhes do serviço...');
+  conn.exec('pm2 jlist', (err, stream) => {
     if (err) throw err;
     let out = '';
-    stream.on('close', (code, signal) => {
-      console.log('Stream closed with code ' + code);
-      console.log('Deployment Result:\n' + out);
-      conn.end();
-    }).on('data', (data) => {
-      out += data;
-      process.stdout.write(data);
-    }).stderr.on('data', (data) => {
-      process.stderr.write(data);
-    });
+    stream.on('close', () => {
+      try {
+        const list = JSON.parse(out);
+        const engine = list.find(p => p.name === 'versus-engine');
+        console.log('App cwd:', engine?.pm2_env?.pm_cwd);
+        console.log('App script:', engine?.pm2_env?.pm_exec_path);
+
+        const cwd = engine?.pm2_env?.pm_cwd || '/root/VERSUS/backend';
+        // Executar pull, prisma generate, build e restart
+        const deployCmd = `cd ${cwd}/.. && git fetch origin main && git reset --hard origin/main && cd ${cwd} && npx prisma generate && npm run build && pm2 restart versus-engine`;
+        console.log('Executando:', deployCmd);
+
+        conn.exec(deployCmd, (err2, stream2) => {
+          if (err2) throw err2;
+          stream2.on('close', (code) => {
+            console.log('Deploy concluído com código:', code);
+            conn.end();
+          }).on('data', d => process.stdout.write(d.toString()))
+            .stderr.on('data', d => process.stderr.write(d.toString()));
+        });
+      } catch (e) {
+        console.error('Erro ao parsear pm2 jlist:', e);
+        conn.end();
+      }
+    }).on('data', d => out += d);
   });
 }).connect({
   host: '187.127.10.166',

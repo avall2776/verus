@@ -57,6 +57,7 @@ let MediaController = class MediaController {
             '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             '.txt': 'text/plain',
             '.csv': 'text/csv',
+            '.vcf': 'text/vcard; charset=utf-8',
             '.zip': 'application/zip',
             '.ogg': 'audio/ogg',
             '.opus': 'audio/ogg',

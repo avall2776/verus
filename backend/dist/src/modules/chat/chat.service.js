@@ -486,7 +486,7 @@ let ChatService = ChatService_1 = class ChatService {
         this.chatGateway.emitConversationUpdated(tenantId, { ...conversation, unreadCount: 1 });
         return { success: true, conversationId, unreadCount: 1 };
     }
-    async assignToUser(tenantId, conversationId, userId, operatorName) {
+    async assignToUser(tenantId, conversationId, userId, operatorName, operatorId) {
         const conversation = await this.prisma.conversation.findUnique({
             where: { id: conversationId },
             include: { contact: true, department: true }
@@ -528,12 +528,13 @@ let ChatService = ChatService_1 = class ChatService {
             assignedTo: updated.assignedTo,
             assignedUser: assignedUser || null,
             transferredBy: operatorName || 'Um operador',
+            transferredById: operatorId || null,
             action: 'ASSIGNED',
             transferredAt: new Date().toISOString()
         });
         return convWithUser;
     }
-    async transferToDepartment(tenantId, conversationId, departmentId, userId, operatorName) {
+    async transferToDepartment(tenantId, conversationId, departmentId, userId, operatorName, operatorId) {
         const conversation = await this.prisma.conversation.findUnique({
             where: { id: conversationId }
         });
@@ -587,6 +588,7 @@ let ChatService = ChatService_1 = class ChatService {
             assignedTo: updated.assignedTo,
             assignedUser: assignedUser || null,
             transferredBy: operatorName || 'Um colega',
+            transferredById: operatorId || null,
             action: 'TRANSFERRED',
             transferredAt: new Date().toISOString()
         });

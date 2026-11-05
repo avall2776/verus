@@ -25,13 +25,25 @@ export declare class ChatService {
     getOperatorProductivity(tenantId: string, userId: string): Promise<any>;
     findAllConversations(tenantId: string, userId: string, userRole: string, tab?: string, departmentId?: string): Promise<({
         contact: {
+            number: string | null;
             id: string;
             name: string;
             phone: string | null;
             email: string | null;
             avatarUrl: string | null;
+            cpfCnpj: string | null;
+            razaoSocial: string | null;
+            nomeFantasia: string | null;
+            inscricaoEstadual: string | null;
             cep: string | null;
             address: string | null;
+            complement: string | null;
+            neighborhood: string | null;
+            city: string | null;
+            state: string | null;
+            isFaturado: boolean;
+            totalFaturado: number;
+            dataHealthScore: number;
             source: string;
             tags: string[];
             tenantId: string;
@@ -99,13 +111,25 @@ export declare class ChatService {
     }[]>;
     getConversationByContact(tenantId: string, contactId: string): Promise<{
         contact: {
+            number: string | null;
             id: string;
             name: string;
             phone: string | null;
             email: string | null;
             avatarUrl: string | null;
+            cpfCnpj: string | null;
+            razaoSocial: string | null;
+            nomeFantasia: string | null;
+            inscricaoEstadual: string | null;
             cep: string | null;
             address: string | null;
+            complement: string | null;
+            neighborhood: string | null;
+            city: string | null;
+            state: string | null;
+            isFaturado: boolean;
+            totalFaturado: number;
+            dataHealthScore: number;
             source: string;
             tags: string[];
             tenantId: string;
@@ -145,13 +169,25 @@ export declare class ChatService {
     }>;
     getConversationById(tenantId: string, conversationId: string): Promise<{
         contact: {
+            number: string | null;
             id: string;
             name: string;
             phone: string | null;
             email: string | null;
             avatarUrl: string | null;
+            cpfCnpj: string | null;
+            razaoSocial: string | null;
+            nomeFantasia: string | null;
+            inscricaoEstadual: string | null;
             cep: string | null;
             address: string | null;
+            complement: string | null;
+            neighborhood: string | null;
+            city: string | null;
+            state: string | null;
+            isFaturado: boolean;
+            totalFaturado: number;
+            dataHealthScore: number;
             source: string;
             tags: string[];
             tenantId: string;
@@ -219,13 +255,25 @@ export declare class ChatService {
             role: string;
         };
         contact: {
+            number: string | null;
             id: string;
             name: string;
             phone: string | null;
             email: string | null;
             avatarUrl: string | null;
+            cpfCnpj: string | null;
+            razaoSocial: string | null;
+            nomeFantasia: string | null;
+            inscricaoEstadual: string | null;
             cep: string | null;
             address: string | null;
+            complement: string | null;
+            neighborhood: string | null;
+            city: string | null;
+            state: string | null;
+            isFaturado: boolean;
+            totalFaturado: number;
+            dataHealthScore: number;
             source: string;
             tags: string[];
             tenantId: string;
@@ -272,13 +320,25 @@ export declare class ChatService {
     }>;
     releaseConversation(tenantId: string, conversationId: string): Promise<{
         contact: {
+            number: string | null;
             id: string;
             name: string;
             phone: string | null;
             email: string | null;
             avatarUrl: string | null;
+            cpfCnpj: string | null;
+            razaoSocial: string | null;
+            nomeFantasia: string | null;
+            inscricaoEstadual: string | null;
             cep: string | null;
             address: string | null;
+            complement: string | null;
+            neighborhood: string | null;
+            city: string | null;
+            state: string | null;
+            isFaturado: boolean;
+            totalFaturado: number;
+            dataHealthScore: number;
             source: string;
             tags: string[];
             tenantId: string;
@@ -326,13 +386,25 @@ export declare class ChatService {
     }>;
     returnToBot(tenantId: string, conversationId: string): Promise<{
         contact: {
+            number: string | null;
             id: string;
             name: string;
             phone: string | null;
             email: string | null;
             avatarUrl: string | null;
+            cpfCnpj: string | null;
+            razaoSocial: string | null;
+            nomeFantasia: string | null;
+            inscricaoEstadual: string | null;
             cep: string | null;
             address: string | null;
+            complement: string | null;
+            neighborhood: string | null;
+            city: string | null;
+            state: string | null;
+            isFaturado: boolean;
+            totalFaturado: number;
+            dataHealthScore: number;
             source: string;
             tags: string[];
             tenantId: string;
@@ -380,13 +452,25 @@ export declare class ChatService {
     }>;
     reopenConversation(tenantId: string, conversationId: string): Promise<{
         contact: {
+            number: string | null;
             id: string;
             name: string;
             phone: string | null;
             email: string | null;
             avatarUrl: string | null;
+            cpfCnpj: string | null;
+            razaoSocial: string | null;
+            nomeFantasia: string | null;
+            inscricaoEstadual: string | null;
             cep: string | null;
             address: string | null;
+            complement: string | null;
+            neighborhood: string | null;
+            city: string | null;
+            state: string | null;
+            isFaturado: boolean;
+            totalFaturado: number;
+            dataHealthScore: number;
             source: string;
             tags: string[];
             tenantId: string;
@@ -442,7 +526,7 @@ export declare class ChatService {
         conversationId: string;
         unreadCount: number;
     }>;
-    assignToUser(tenantId: string, conversationId: string, userId: string, operatorName?: string): Promise<{
+    assignToUser(tenantId: string, conversationId: string, userId: string, operatorName?: string, operatorId?: string): Promise<{
         assignedUser: {
             id: string;
             name: string;
@@ -464,13 +548,25 @@ export declare class ChatService {
             role: string;
         };
         contact: {
+            number: string | null;
             id: string;
             name: string;
             phone: string | null;
             email: string | null;
             avatarUrl: string | null;
+            cpfCnpj: string | null;
+            razaoSocial: string | null;
+            nomeFantasia: string | null;
+            inscricaoEstadual: string | null;
             cep: string | null;
             address: string | null;
+            complement: string | null;
+            neighborhood: string | null;
+            city: string | null;
+            state: string | null;
+            isFaturado: boolean;
+            totalFaturado: number;
+            dataHealthScore: number;
             source: string;
             tags: string[];
             tenantId: string;
@@ -515,16 +611,28 @@ export declare class ChatService {
         assignedTo: string | null;
         status: string;
     }>;
-    transferToDepartment(tenantId: string, conversationId: string, departmentId: string, userId?: string, operatorName?: string): Promise<{
+    transferToDepartment(tenantId: string, conversationId: string, departmentId: string, userId?: string, operatorName?: string, operatorId?: string): Promise<{
         assignedUser: any;
         contact: {
+            number: string | null;
             id: string;
             name: string;
             phone: string | null;
             email: string | null;
             avatarUrl: string | null;
+            cpfCnpj: string | null;
+            razaoSocial: string | null;
+            nomeFantasia: string | null;
+            inscricaoEstadual: string | null;
             cep: string | null;
             address: string | null;
+            complement: string | null;
+            neighborhood: string | null;
+            city: string | null;
+            state: string | null;
+            isFaturado: boolean;
+            totalFaturado: number;
+            dataHealthScore: number;
             source: string;
             tags: string[];
             tenantId: string;

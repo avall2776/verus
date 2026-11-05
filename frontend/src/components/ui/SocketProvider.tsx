@@ -17,7 +17,7 @@ import {
   SoundSettings,
   DEFAULT_SOUND_SETTINGS
 } from '@/lib/soundSettings';
-import { canUserAccessWhatsApp } from '@/lib/userCache';
+import { canUserAccessWhatsApp, getStoredUserSync } from '@/lib/userCache';
 
 interface SocketContextType {
   socket: Socket | null;
@@ -122,14 +122,13 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     // Sem token = categoricamente deslogado
     if (!token) return true;
 
-    // Rotas de login, autenticação ou Super Admin Console (que tem isolamento próprio)
+    // Rotas de login, autenticação ou públicas
     if (
       p.includes('/login') || 
       p.includes('/auth') || 
       p.includes('/register') || 
       p.includes('/forgot') || 
-      p.includes('/reset-password') ||
-      p.includes('/super-admin')
+      p.includes('/reset-password')
     ) {
       return true;
     }
@@ -533,45 +532,96 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       }
     });
 
-    // Escuta global para Atendimentos Transferidos (Padrão Lero / Transfer Alert)
+    // Escuta global para Atendimentos Transferidos (Padrão Lero / Transfer Alert Inteligente)
     socketInstance.on('conversationTransferred', (data) => {
-      // Suprime absolutamente notificações em login, público, deslogado ou super-admin
+      // Suprime absolutamente notificações em rotas de autenticação ou públicas
       if (isUnauthenticatedOrPublic()) return;
 
       // Isolamento de segurança: se não tem permissão para WhatsApp, ignora transferências
       if (!canUserAccessWhatsApp()) return;
 
-      console.log('⚡ [WebSockets] Atendimento transferido recebido:', data);
+      const currentUser = getStoredUserSync();
+      const currentUserId = currentUser?.id;
+      const isSuperAdminOrAdmin = Boolean(
+        currentUser?.isSuperAdmin || 
+        String(currentUser?.role).toUpperCase() === 'ADMIN' || 
+        String(currentUser?.role).toUpperCase() === 'SUPER_ADMIN'
+      );
+
+      // 1. Não notificar o próprio operador que realizou a transferência (evita eco desnecessário)
+      if (data.transferredById && currentUserId && data.transferredById === currentUserId) {
+        console.log('⚡ [WebSockets] Transferência originada pelo próprio operador logado. Alerta de eco suprimido.');
+        return;
+      }
+
+      // 2. Análise de Destinatário: Atribuição Nominal vs Fila de Setor
+      const isDirectToMe = Boolean(data.assignedTo && data.assignedTo === currentUserId);
+      const isDirectToOther = Boolean(data.assignedTo && data.assignedTo !== currentUserId);
+
+      // Departamentos aos quais o usuário logado pertence
+      const userDeptIds: string[] = Array.isArray(currentUser?.departments)
+        ? currentUser.departments.map((d: any) => d.departmentId || d.department?.id || d.id).filter(Boolean)
+        : [];
+      
+      const targetDeptId = data.department?.id;
+      const isMyDepartment = Boolean(targetDeptId && userDeptIds.includes(targetDeptId));
+
+      // 3. Matriz de Entrega Seletiva:
+      // Se foi transferido diretamente para OUTRO atendente e eu NÃO sou admin/supervisor -> Ignora
+      if (isDirectToOther && !isSuperAdminOrAdmin) {
+        return;
+      }
+
+      // Se foi transferido para a fila de um setor e eu NÃO pertenço àquele setor e NÃO sou admin/supervisor -> Ignora
+      if (!data.assignedTo && !isMyDepartment && !isSuperAdminOrAdmin) {
+        return;
+      }
+
+      console.log('⚡ [WebSockets] Atendimento transferido direcionado recebido:', data);
       const convId = data.conversationId;
       const contactName = data.contact?.name || 'Lead';
       const contactPhone = data.contact?.phone || null;
       const departmentName = data.department?.name || 'Seu Setor';
       const transferredBy = data.transferredBy || 'Um colega de equipe';
 
-      // 1. Popup visual na tela (independente de som)
+      // 4. Popup visual na tela com o novo tema Índigo / Violeta Imperial
       if (convId && isVisualNotificationEnabled('transfers')) {
         showTransferAlertToast({
           conversationId: convId,
           contactName,
           contactPhone,
           departmentName,
-          transferredBy
+          transferredBy,
+          isDirectToMe,
         }, router);
       }
 
-      // 2. Alerta sonoro de alta prioridade (respeita silenciamento)
+      // 5. Alerta sonoro de alta prioridade (respeita silenciamento)
       const currentSoundSettings = getSoundSettings();
       if (!currentSoundSettings.masterMute && !isSoundChannelMuted('support')) {
         playNotificationSound(true, 'support');
         triggerVibration(true);
       }
-      triggerTabBlink(`⚡ [TRANSFERÊNCIA] ${contactName}`);
 
-      // 3. Web Push Notification se em segundo plano e com visual ativo
+      // 6. Piscar o título da aba do navegador (elegante, sem emojis)
+      const tabTitle = isDirectToMe 
+        ? `[NOVO ATENDIMENTO] ${contactName}` 
+        : `[TRANSFERÊNCIA] ${contactName}`;
+      triggerTabBlink(tabTitle);
+
+      // 7. Web Push Notification se em segundo plano e com visual ativo
       if (isVisualNotificationEnabled('transfers')) {
         if (typeof document !== 'undefined' && (document.hidden || !document.hasFocus())) {
-          dispatchDesktopNotification(`⚡ Vallor · Lead Transferido para Você!`, {
-            body: `${contactName} foi transferido para ${departmentName} por ${transferredBy}. Clique para assumir.`,
+          const pushTitle = isDirectToMe 
+            ? `Vallor · Atendimento Atribuído a Você` 
+            : `Vallor · Atendimento Transferido para ${departmentName}`;
+          
+          const pushBody = isDirectToMe
+            ? `${contactName} foi atribuído diretamente a você por ${transferredBy}. Clique para assumir.`
+            : `${contactName} foi transferido para ${departmentName} por ${transferredBy}. Clique para assumir.`;
+
+          dispatchDesktopNotification(pushTitle, {
+            body: pushBody,
             tag: `transfer_${convId || 'general'}`,
             url: convId ? `/inbox?conversationId=${convId}` : '/inbox',
             channel: 'support'

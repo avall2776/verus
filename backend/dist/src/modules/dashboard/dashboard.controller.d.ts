@@ -95,6 +95,16 @@ export declare class DashboardController {
             };
             recentDeals: any[];
         }[];
+        ecosystem: {
+            resellers: any[];
+            suppliers: any[];
+            clients: any[];
+            counts: {
+                resellers: number;
+                suppliers: number;
+                clients: number;
+            };
+        };
     }>;
     getStrategicAiReport(tenantId: string): Promise<any>;
     auditDealWithAi(tenantId: string, dealId: string): Promise<any>;
