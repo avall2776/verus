@@ -1536,7 +1536,7 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
           OR: [
             { whatsappLid: cleanLid },
             { phone: cleanLid },
-            ...(rawNumber ? [{ whatsappLid: { contains: rawNumber } }, { phone: { contains: rawNumber } }] : []),
+            ...(rawNumber ? [{ whatsappLid: `${rawNumber}@lid` }, { phone: `${rawNumber}@lid` }] : []),
           ],
         },
         orderBy: { updatedAt: 'desc' },

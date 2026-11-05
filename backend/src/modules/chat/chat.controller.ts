@@ -297,6 +297,14 @@ export class ChatController {
     return this.chatService.transcribeAudioMessage(tenantId, messageId);
   }
 
+  @Post('messages/:messageId/analyze-image')
+  async analyzeImageMessage(
+    @CurrentTenant() tenantId: string,
+    @Param('messageId') messageId: string,
+  ) {
+    return this.chatService.analyzeImageMessage(tenantId, messageId);
+  }
+
   @Post('contact/:contactId/messages')
   async sendMessageToContact(
     @CurrentTenant() tenantId: string,

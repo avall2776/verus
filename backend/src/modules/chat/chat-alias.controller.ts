@@ -31,4 +31,12 @@ export class ChatAliasController {
   ) {
     return this.chatService.transcribeAudioMessage(tenantId, messageId);
   }
+
+  @Post('messages/:messageId/analyze-image')
+  async analyzeImageMessage(
+    @CurrentTenant() tenantId: string,
+    @Param('messageId') messageId: string,
+  ) {
+    return this.chatService.analyzeImageMessage(tenantId, messageId);
+  }
 }

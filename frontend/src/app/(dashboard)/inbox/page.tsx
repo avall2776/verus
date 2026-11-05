@@ -226,6 +226,8 @@ function InboxContent() {
   const [mutedContactIds, setMutedContactIds] = useState<string[]>([]);
   const [expandedTranscriptions, setExpandedTranscriptions] = useState<{ [key: string]: boolean }>({});
   const [transcribingMessageIds, setTranscribingMessageIds] = useState<{ [key: string]: boolean }>({});
+  const [expandedImageAnalyses, setExpandedImageAnalyses] = useState<{ [key: string]: boolean }>({});
+  const [analyzingImageIds, setAnalyzingImageIds] = useState<{ [key: string]: boolean }>({});
   const [showChatOptionsMenu, setShowChatOptionsMenu] = useState(false);
   const [showLeftHeaderMenu, setShowLeftHeaderMenu] = useState(false);
   const [showDeleteConvModal, setShowDeleteConvModal] = useState(false);
@@ -1859,6 +1861,30 @@ function InboxContent() {
       toast.error(msg);
     } finally {
       setTranscribingMessageIds(prev => ({ ...prev, [messageId]: false }));
+    }
+  };
+
+  // Análise visual de imagem sob demanda com IA (GPT-4o Vision)
+  const handleAnalyzeImage = async (messageId: string) => {
+    if (!messageId || analyzingImageIds[messageId]) return;
+    setAnalyzingImageIds(prev => ({ ...prev, [messageId]: true }));
+    try {
+      const res = await api.post(`/conversations/messages/${messageId}/analyze-image`);
+      const newContent = res.data?.content;
+      if (newContent) {
+        setMessages(prev =>
+          prev.map(m =>
+            m.id === messageId ? { ...m, content: newContent } : m
+          )
+        );
+        setExpandedImageAnalyses(prev => ({ ...prev, [messageId]: true }));
+        toast.success('Imagem analisada com sucesso!');
+      }
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'Erro ao analisar imagem com IA.';
+      toast.error(msg);
+    } finally {
+      setAnalyzingImageIds(prev => ({ ...prev, [messageId]: false }));
     }
   };
 
@@ -4022,6 +4048,68 @@ function InboxContent() {
                             </div>
                           )}
 
+                          {/* Botão de Análise de Imagem sob demanda ou Card Colapsável */}
+                          {msg.type === 'image' && (
+                            <div className="px-1 flex flex-col gap-1 mb-2">
+                              {msg.content?.includes('📷 [Análise da Imagem]:') ? (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setExpandedImageAnalyses(prev => ({
+                                        ...prev,
+                                        [msg.id]: !prev[msg.id]
+                                      }));
+                                    }}
+                                    className={`flex items-center gap-1.5 text-[11px] font-bold transition-colors cursor-pointer self-start ${
+                                      isMe
+                                        ? 'text-white hover:text-white/80 bg-white/20 hover:bg-white/30 border border-white/25 px-2 py-0.5 rounded-lg'
+                                        : 'text-blue-600 hover:text-blue-700 dark:text-cyan-400 dark:hover:text-cyan-300'
+                                    }`}
+                                  >
+                                    <Sparkles size={12} className="shrink-0" />
+                                    <span>{expandedImageAnalyses[msg.id] ? 'Ocultar análise da imagem' : 'Ver análise da imagem'}</span>
+                                  </button>
+
+                                  {expandedImageAnalyses[msg.id] && (
+                                    <div className={`rounded-xl p-2.5 text-xs animate-in fade-in slide-in-from-top-1 shadow-inner ${
+                                      isMe
+                                        ? 'bg-white text-slate-900 border border-slate-200 shadow-md'
+                                        : 'bg-slate-100 dark:bg-black/40 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-cyan-500/30'
+                                    }`}>
+                                      <div className={`flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider mb-1 ${
+                                        isMe ? 'text-blue-600' : 'text-blue-600 dark:text-cyan-400'
+                                      }`}>
+                                        <Sparkles size={11} />
+                                        <span>Análise Visual por IA</span>
+                                      </div>
+                                      <p className={`italic leading-relaxed text-[11px] ${
+                                        isMe ? 'text-slate-800 font-medium' : 'text-slate-700 dark:text-slate-300'
+                                      }`}>
+                                        "{msg.content.split('📷 [Análise da Imagem]:')[1]?.trim()}"
+                                      </p>
+                                    </div>
+                                  )}
+                                </>
+                              ) : (
+                                <button
+                                  type="button"
+                                  disabled={analyzingImageIds[msg.id]}
+                                  onClick={() => handleAnalyzeImage(msg.id)}
+                                  className={`flex items-center gap-1.5 text-[11px] font-bold disabled:opacity-50 transition-colors cursor-pointer self-start mt-0.5 ${
+                                    isMe
+                                      ? 'text-white hover:text-white/80 bg-white/20 hover:bg-white/30 border border-white/25 px-2.5 py-1 rounded-lg backdrop-blur-sm'
+                                      : 'text-blue-600 hover:text-blue-700 dark:text-cyan-400 dark:hover:text-cyan-300'
+                                  }`}
+                                  title="Analisar e descrever o conteúdo desta imagem com IA sob demanda"
+                                >
+                                  <Sparkles size={12} className={`shrink-0 ${analyzingImageIds[msg.id] ? 'animate-spin' : ''}`} />
+                                  <span>{analyzingImageIds[msg.id] ? 'Analisando imagem com IA...' : 'Analisar imagem com IA'}</span>
+                                </button>
+                              )}
+                            </div>
+                          )}
+
                           {/* Renderização de Vídeos (WhatsApp Nativo e Google Drive) */}
                           {(msg.type === 'video' || (!!msg.mediaUrl && (/\.(mp4|mov|webm|mkv|avi)($|\?)/i.test(msg.mediaUrl) || isGoogleDriveUrl(msg.mediaUrl)))) && (
                             <div className="mb-2 max-w-[320px] sm:max-w-[380px]">
@@ -4252,9 +4340,17 @@ function InboxContent() {
 
                           {/* Conteúdo de Texto com Horário e Ticks Inline WhatsApp */}
                           <div className="text-[0.92rem] leading-relaxed break-words relative">
-                            {msg.content && msg.type !== 'audio' && msg.type !== 'document' && msg.type !== 'location' && !msg.content.startsWith('📍') && (
-                              <span className="whitespace-pre-wrap select-text">{msg.content}</span>
-                            )}
+                            {(() => {
+                              let textToRender = msg.content || '';
+                              if (msg.type === 'image') {
+                                textToRender = textToRender.replace(/\n*📷 \[Análise da Imagem\]:[\s\S]*$/i, '').trim();
+                                if (textToRender === '📷 Foto') textToRender = '';
+                              }
+                              if (textToRender && msg.type !== 'audio' && msg.type !== 'document' && msg.type !== 'location' && !textToRender.startsWith('📍')) {
+                                return <span className="whitespace-pre-wrap select-text">{textToRender}</span>;
+                              }
+                              return null;
+                            })()}
                             {/* Horário e Ticks WhatsApp (Float-Right Inline) */}
                             <span className={`inline-flex items-center gap-1 float-right ml-2.5 mt-1 select-none text-[11px] ${
                               msg.isInternal 

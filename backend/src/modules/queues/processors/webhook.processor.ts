@@ -155,21 +155,9 @@ export class WebhookProcessor extends WorkerHost {
         mediaUrl = await this.whatsappService.downloadAndSaveMedia(tenantId, mediaId, mimeType);
       }
 
-      // Análise Visual via Vision (GPT-4o-mini / Vision)
-      const imageBuffer = getLocalBuffer(mediaUrl);
-      if (imageBuffer) {
-        this.logger.log(`[Multimodal Vision] Analisando imagem recebida de ${remoteJid}...`);
-        const visualAnalysis = await this.aiService.analyzeImage(imageBuffer, mimeType, caption);
-        if (visualAnalysis) {
-          content = caption
-            ? `${caption}\n📷 [Análise da Imagem]: ${visualAnalysis}`
-            : `📷 [Análise da Imagem]: ${visualAnalysis}`;
-        } else {
-          content = caption || '📷 Foto';
-        }
-      } else {
-        content = caption || '📷 Foto';
-      }
+      // Imagem recebida: preserva a legenda original da foto (sem transcrever/analisar com IA automaticamente)
+      // A análise visual por IA agora é estritamente sob demanda pelo operador no painel
+      content = caption || '📷 Foto';
     } else if (isVideo) {
       msgType = 'video';
       const vidObj = message.video;
@@ -327,7 +315,9 @@ export class WebhookProcessor extends WorkerHost {
     if (existingContact) {
       // Se encontrou, atualiza dados que faltavam ou novo whatsappLid emitido pelo WhatsApp
       const dataToUpdate: any = {};
-      if (lidId && existingContact.whatsappLid !== lidId) {
+      // Trava de segurança: apenas associa o whatsappLid se o contato ainda NÃO possuir LID gravado
+      // e NUNCA sobrescreve o LID de um contato existente com LIDs de terceiros em mensagens outbound
+      if (lidId && !existingContact.whatsappLid && !isFromMe) {
         dataToUpdate.whatsappLid = lidId;
       }
       if (realPhone && (existingContact.phone?.includes('@lid') || existingContact.phone?.replace(/\D/g, '').length > 13)) {
