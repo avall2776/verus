@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { 
   LayoutDashboard, 
   MessageSquare, 
@@ -141,11 +141,35 @@ export default function Sidebar() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { hasGlobalUnread } = useSocket();
-  const { status: waStatus, refreshStatus: refreshWaStatus } = useWhatsApp();
+  const { status: waStatus, instances: waInstances, activeInstance: waActiveInstance, refreshStatus: refreshWaStatus } = useWhatsApp();
   const { isOpen: isMobileOpen, closeMenu: closeMobileMenu } = useMobileMenu();
   const { isDark, isWhatsApp } = useTheme();
   const [isExpanded, setIsExpanded] = useState(true);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+
+  // Detecção Inteligente e Automática da Conexão do WhatsApp (QR Code vs API Oficial Meta)
+  const isWaConnected = 
+    waStatus.status === 'connected' || 
+    waActiveInstance?.status === 'connected' ||
+    Boolean(waInstances && waInstances.some(inst => inst.status === 'connected'));
+
+  const waConnectionLabel = useMemo(() => {
+    if (!isWaConnected) {
+      return 'Nenhuma linha ativa';
+    }
+
+    if (waStatus.metaPhoneNumberId) {
+      const cleanId = String(waStatus.metaPhoneNumberId).replace(/^ID:\s*/i, '').trim();
+      return `API Oficial Meta • ID: ${cleanId}`;
+    }
+
+    const connectedInst = 
+      (waActiveInstance?.status === 'connected' ? waActiveInstance : null) ||
+      (waInstances ? waInstances.find(i => i.status === 'connected') : null);
+
+    const instanceName = connectedInst?.name || waStatus.instanceName || 'Linha Principal';
+    return `Conectado via QR Code • ${instanceName}`;
+  }, [isWaConnected, waStatus, waActiveInstance, waInstances]);
 
   // Usuário e Modais Estilo Lero
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -925,7 +949,7 @@ export default function Sidebar() {
               : 'bg-slate-50 dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800'
           }`}>
             <div className="relative flex items-center justify-center w-2 h-2 shrink-0">
-              {waStatus.status === 'connected' ? (
+              {isWaConnected ? (
                 <>
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
@@ -939,12 +963,12 @@ export default function Sidebar() {
                 <span className={`text-xs font-semibold truncate ${
                   isWhatsApp ? 'text-[#E9EDEF]' : 'text-slate-800 dark:text-white'
                 }`}>
-                  {waStatus.status === 'connected' ? 'WhatsApp Conectado' : 'Desconectado'}
+                  {isWaConnected ? 'WhatsApp Conectado' : 'Desconectado'}
                 </span>
                 <span className={`text-[10px] truncate ${
                   isWhatsApp ? 'text-[#8696A0]' : 'text-slate-500 dark:text-gray-500'
-                }`}>
-                  {waStatus.metaPhoneNumberId ? `ID: ${String(waStatus.metaPhoneNumberId).replace(/^ID:\s*/i, '').trim()}` : 'Sem Instância'}
+                }`} title={waConnectionLabel}>
+                  {waConnectionLabel}
                 </span>
               </div>
             )}
