@@ -779,8 +779,8 @@ let DashboardService = DashboardService_1 = class DashboardService {
             if (!coords)
                 return;
             const tags = (c.tags || []).map(t => (t || '').toLowerCase());
-            const isRevenda = tags.some(t => t.includes('revenda') || t.includes('parceiro') || t.includes('concessionaria'));
-            const isFornecedor = tags.some(t => t.includes('fornecedor'));
+            const isRevenda = tags.some(t => t === 'revenda' || t.includes('concessionaria') || t.includes('revenda autorizada'));
+            const isFornecedor = tags.some(t => t.includes('fornecedor') || t.includes('posto') || t.includes('combustivel'));
             const isClient = c.isFaturado || tags.some(t => t.includes('cliente'));
             const baseItem = {
                 id: c.id,
