@@ -102,3 +102,4 @@ export default function AuthGuard({ children, requireSuperAdmin = false }: AuthG
 
   return <>{children}</>;
 }
+

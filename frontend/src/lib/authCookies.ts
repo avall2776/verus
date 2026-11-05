@@ -35,3 +35,4 @@ export function getAuthCookie(): string | null {
   const match = document.cookie.match(new RegExp(`(^|;\\s*)(${AUTH_COOKIE_NAME})=([^;]*)`));
   return match ? decodeURIComponent(match[3]) : null;
 }
+

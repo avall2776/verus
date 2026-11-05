@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Delete, Patch, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Patch, UseGuards, Request } from '@nestjs/common';
 import { DepartmentsService } from './departments.service';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { CurrentTenant } from '../../shared/decorators/tenant.decorator';
@@ -14,8 +14,8 @@ export class DepartmentsController {
   }
 
   @Get()
-  async findAll(@CurrentTenant() tenantId: string) {
-    return this.departmentsService.findAll(tenantId);
+  async findAll(@CurrentTenant() tenantId: string, @Request() req: any) {
+    return this.departmentsService.findAll(tenantId, req.user?.id, req.user?.role);
   }
 
   @Post(':id/users')

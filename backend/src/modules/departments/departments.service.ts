@@ -11,9 +11,19 @@ export class DepartmentsService {
     });
   }
 
-  async findAll(tenantId: string) {
+  async findAll(tenantId: string, userId?: string, userRole?: string) {
+    const isMaster = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN';
+    const where: any = { tenantId };
+
+    // Se for operador (AGENT), lista somente os departamentos aos quais ele pertence
+    if (!isMaster && userId) {
+      where.users = {
+        some: { userId },
+      };
+    }
+
     return this.prisma.department.findMany({
-      where: { tenantId },
+      where,
       include: {
         users: {
           include: { user: true }
