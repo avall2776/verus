@@ -6,6 +6,7 @@ export declare class ContactsService {
     private readonly automationsService;
     private readonly googleContactsService;
     private readonly logger;
+    private readonly contactsCache;
     constructor(prisma: PrismaService, automationsService: AutomationsService, googleContactsService: GoogleContactsService);
     createContact(tenantId: string, data: {
         name: string;
@@ -40,44 +41,7 @@ export declare class ContactsService {
         createdAt: Date;
         updatedAt: Date;
     }>;
-    findAll(tenantId: string): Promise<{
-        id: string;
-        name: string;
-        phone: string;
-        email: string;
-        cpfCnpj: string;
-        razaoSocial: string;
-        nomeFantasia: string;
-        inscricaoEstadual: string;
-        cep: string;
-        address: string;
-        number: string;
-        complement: string;
-        neighborhood: string;
-        city: string;
-        state: string;
-        isFaturado: boolean;
-        totalFaturado: number;
-        dataHealthScore: number;
-        source: string;
-        avatarUrl: string;
-        tags: string[];
-        statusCategory: "won" | "lost" | "hot" | "cold" | "collaborator" | "partner";
-        isClient: boolean;
-        dealsCount: number;
-        totalWonValue: number;
-        totalActivePipelineValue: number;
-        deals: {
-            id: string;
-            title: string;
-            status: string;
-            value: number;
-            createdAt: Date;
-            updatedAt: Date;
-        }[];
-        lastActive: string;
-        createdAt: string;
-    }[]>;
+    findAll(tenantId: string): Promise<any>;
     updateTags(tenantId: string, contactId: string, tags: string[]): Promise<{
         number: string | null;
         id: string;

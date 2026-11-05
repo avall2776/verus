@@ -39,12 +39,33 @@ let ChatService = ChatService_1 = class ChatService {
         this.scheduledQueue = scheduledQueue;
         this.logger = new common_1.Logger(ChatService_1.name);
         this.productivityCache = new Map();
+        this.conversationsCache = new Map();
     }
     async getConversationCounts(tenantId, userId, userRole, departmentId) {
         const isMaster = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN';
         const where = { tenantId };
-        if (departmentId && departmentId !== 'all') {
-            where.departmentId = departmentId;
+        if (!isMaster) {
+            const userDepts = await this.prisma.userDepartment.findMany({
+                where: { userId },
+                select: { departmentId: true },
+            });
+            const allowedDeptIds = userDepts.map(ud => ud.departmentId);
+            if (departmentId && departmentId !== 'all') {
+                if (allowedDeptIds.includes(departmentId)) {
+                    where.departmentId = departmentId;
+                }
+                else {
+                    where.departmentId = { in: allowedDeptIds.length > 0 ? allowedDeptIds : ['__NONE__'] };
+                }
+            }
+            else {
+                where.departmentId = { in: allowedDeptIds.length > 0 ? allowedDeptIds : ['__NONE__'] };
+            }
+        }
+        else {
+            if (departmentId && departmentId !== 'all') {
+                where.departmentId = departmentId;
+            }
         }
         const groups = await this.prisma.conversation.groupBy({
             by: ['status', 'assignedTo'],
@@ -176,11 +197,48 @@ let ChatService = ChatService_1 = class ChatService {
         this.productivityCache.set(cacheKey, { data: result, expiresAt: Date.now() + 30000 });
         return result;
     }
+    clearConversationsCache(tenantId) {
+        if (!tenantId) {
+            this.conversationsCache.clear();
+            return;
+        }
+        for (const key of this.conversationsCache.keys()) {
+            if (key.startsWith(`${tenantId}:`)) {
+                this.conversationsCache.delete(key);
+            }
+        }
+    }
     async findAllConversations(tenantId, userId, userRole, tab = 'waiting', departmentId) {
+        const cacheKey = `${tenantId}:${userId}:${tab}:${departmentId || 'all'}`;
+        const cached = this.conversationsCache.get(cacheKey);
+        if (cached && Date.now() < cached.expiresAt) {
+            return cached.data;
+        }
         const whereClause = { tenantId };
         const isMaster = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN';
-        if (departmentId && departmentId !== 'all') {
-            whereClause.departmentId = departmentId;
+        let allowedDeptIds = [];
+        if (!isMaster) {
+            const userDepts = await this.prisma.userDepartment.findMany({
+                where: { userId },
+                select: { departmentId: true },
+            });
+            allowedDeptIds = userDepts.map(ud => ud.departmentId);
+            if (departmentId && departmentId !== 'all') {
+                if (allowedDeptIds.includes(departmentId)) {
+                    whereClause.departmentId = departmentId;
+                }
+                else {
+                    whereClause.departmentId = { in: allowedDeptIds.length > 0 ? allowedDeptIds : ['__NONE__'] };
+                }
+            }
+            else {
+                whereClause.departmentId = { in: allowedDeptIds.length > 0 ? allowedDeptIds : ['__NONE__'] };
+            }
+        }
+        else {
+            if (departmentId && departmentId !== 'all') {
+                whereClause.departmentId = departmentId;
+            }
         }
         if (tab === 'all' || tab === 'unread') {
         }
@@ -198,12 +256,42 @@ let ChatService = ChatService_1 = class ChatService {
         }
         const conversations = await this.prisma.conversation.findMany({
             where: whereClause,
-            include: {
-                contact: true,
-                department: true,
+            select: {
+                id: true,
+                tenantId: true,
+                status: true,
+                assignedTo: true,
+                departmentId: true,
+                createdAt: true,
+                updatedAt: true,
+                contact: {
+                    select: {
+                        id: true,
+                        name: true,
+                        phone: true,
+                        email: true,
+                        avatarUrl: true,
+                        tags: true,
+                        source: true,
+                    }
+                },
+                department: {
+                    select: {
+                        id: true,
+                        name: true,
+                        color: true,
+                    }
+                },
                 messages: {
                     orderBy: { createdAt: 'desc' },
-                    take: 1
+                    take: 1,
+                    select: {
+                        id: true,
+                        content: true,
+                        type: true,
+                        direction: true,
+                        createdAt: true,
+                    }
                 }
             },
             orderBy: { updatedAt: 'desc' }
@@ -235,6 +323,7 @@ let ChatService = ChatService_1 = class ChatService {
                 }
             }
         }
+        this.conversationsCache.set(cacheKey, { data: conversations, expiresAt: Date.now() + 10000 });
         return conversations;
     }
     async getConversationMessages(tenantId, conversationId) {
@@ -248,6 +337,68 @@ let ChatService = ChatService_1 = class ChatService {
             this.logger.error(`Erro ao buscar mensagens da conversa ${conversationId}: ${err?.message}`);
             return [];
         }
+    }
+    async resolveDepartmentByPhone(tenantId, phone, state) {
+        if (!phone && !state)
+            return null;
+        try {
+            const departments = await this.prisma.department.findMany({
+                where: { tenantId },
+                select: { id: true, name: true }
+            });
+            if (!departments || departments.length === 0)
+                return null;
+            const dddToRegion = {
+                '51': 1, '53': 1, '54': 1, '55': 1, '47': 1, '48': 1, '49': 1, '41': 1, '42': 1, '43': 1, '44': 1, '45': 1, '46': 1,
+                '67': 2, '65': 2, '66': 2, '91': 2, '93': 2, '94': 2, '69': 2, '95': 2, '68': 2, '92': 2, '97': 2, '96': 2,
+                '62': 3, '64': 3, '31': 3, '32': 3, '33': 3, '34': 3, '35': 3, '37': 3, '38': 3, '11': 3, '12': 3, '13': 3, '14': 3, '15': 3, '16': 3, '17': 3, '18': 3, '19': 3,
+                '63': 4, '71': 4, '73': 4, '74': 4, '75': 4, '77': 4,
+                '98': 5, '99': 5, '86': 5, '89': 5,
+                '85': 6, '88': 6, '84': 6, '83': 6, '79': 6, '81': 6, '87': 6, '82': 6
+            };
+            const ufToRegion = {
+                'RS': 1, 'SC': 1, 'PR': 1,
+                'MS': 2, 'MT': 2, 'PA': 2, 'RO': 2, 'RR': 2, 'AC': 2, 'AM': 2, 'AP': 2,
+                'GO': 3, 'MG': 3, 'SP': 3,
+                'TO': 4, 'BA': 4,
+                'MA': 5, 'PI': 5,
+                'CE': 6, 'RN': 6, 'PB': 6, 'SE': 6, 'PE': 6, 'AL': 6
+            };
+            let targetRegionNum = null;
+            if (phone) {
+                const clean = phone.replace(/\D/g, '');
+                let ddd = '';
+                if (clean.startsWith('55') && clean.length >= 12) {
+                    ddd = clean.substring(2, 4);
+                }
+                else if (clean.length === 10 || clean.length === 11) {
+                    ddd = clean.substring(0, 2);
+                }
+                if (ddd && dddToRegion[ddd]) {
+                    targetRegionNum = dddToRegion[ddd];
+                }
+                else if (clean.startsWith('595')) {
+                    targetRegionNum = 1;
+                }
+            }
+            if (!targetRegionNum && state) {
+                const uf = state.trim().toUpperCase();
+                if (ufToRegion[uf])
+                    targetRegionNum = ufToRegion[uf];
+            }
+            if (targetRegionNum) {
+                const matched = departments.find(d => {
+                    const upper = d.name.toUpperCase();
+                    return upper.includes(`REGIÃO ${targetRegionNum}`) || upper.includes(`REGIAO ${targetRegionNum}`);
+                });
+                if (matched)
+                    return matched.id;
+            }
+        }
+        catch (e) {
+            this.logger.warn(`Erro ao resolver departamento por telefone: ${e.message}`);
+        }
+        return null;
     }
     async getConversationByContact(tenantId, contactId) {
         let conversation = await this.prisma.conversation.findFirst({
@@ -283,10 +434,12 @@ let ChatService = ChatService_1 = class ChatService {
                 });
             }
             if (!conversation) {
+                const autoDeptId = await this.resolveDepartmentByPhone(tenantId, contact.phone, contact.state);
                 conversation = await this.prisma.conversation.create({
                     data: {
                         tenantId,
                         contactId: contact.id,
+                        departmentId: autoDeptId,
                         status: 'waiting',
                     },
                     include: {
@@ -296,6 +449,21 @@ let ChatService = ChatService_1 = class ChatService {
                         contact: true
                     }
                 });
+            }
+            else if (!conversation.departmentId && contact.phone) {
+                const autoDeptId = await this.resolveDepartmentByPhone(tenantId, contact.phone, contact.state);
+                if (autoDeptId) {
+                    conversation = await this.prisma.conversation.update({
+                        where: { id: conversation.id },
+                        data: { departmentId: autoDeptId },
+                        include: {
+                            messages: {
+                                orderBy: { createdAt: 'asc' }
+                            },
+                            contact: true
+                        }
+                    });
+                }
             }
         }
         if (conversation.contact) {
@@ -1667,6 +1835,91 @@ let ChatService = ChatService_1 = class ChatService {
             messageId: updated.id,
             audioTranscription: transcription,
             cached: false,
+        };
+    }
+    async analyzeImageMessage(tenantId, messageId) {
+        const message = await this.prisma.message.findFirst({
+            where: { id: messageId, tenantId },
+        });
+        if (!message) {
+            throw new common_1.NotFoundException('Mensagem não encontrada.');
+        }
+        if (!message.mediaUrl) {
+            throw new common_1.BadRequestException('Mensagem não possui arquivo de imagem associado.');
+        }
+        let buffer = null;
+        const mediaUrl = message.mediaUrl;
+        const cleanUrl = mediaUrl.split('?')[0];
+        const basename = path.basename(cleanUrl);
+        const candidatePaths = [
+            path.join(process.cwd(), 'uploads', 'media', basename),
+            path.join(process.cwd(), 'uploads', 'images', basename),
+            path.join(process.cwd(), 'uploads', basename),
+        ];
+        for (const p of candidatePaths) {
+            if (fs.existsSync(p)) {
+                try {
+                    buffer = fs.readFileSync(p);
+                    break;
+                }
+                catch { }
+            }
+        }
+        if (!buffer && (mediaUrl.startsWith('http://') || mediaUrl.startsWith('https://'))) {
+            try {
+                const resp = await axios_1.default.get(mediaUrl, {
+                    responseType: 'arraybuffer',
+                    timeout: 20000,
+                });
+                buffer = Buffer.from(resp.data);
+            }
+            catch (err) {
+                this.logger.error(`Erro ao obter imagem para análise (${mediaUrl}): ${err.message}`);
+                throw new common_1.BadRequestException('Não foi possível baixar o arquivo de imagem para análise.');
+            }
+        }
+        if (!buffer) {
+            throw new common_1.BadRequestException('Arquivo de imagem não encontrado no servidor.');
+        }
+        let mimeType = 'image/jpeg';
+        if (basename.endsWith('.png'))
+            mimeType = 'image/png';
+        else if (basename.endsWith('.webp'))
+            mimeType = 'image/webp';
+        else if (basename.endsWith('.gif'))
+            mimeType = 'image/gif';
+        const visualAnalysis = await this.aiService.analyzeImage(buffer, mimeType, message.content);
+        if (!visualAnalysis) {
+            throw new common_1.BadRequestException('Não foi possível analisar a imagem.');
+        }
+        const cleanBaseContent = message.content
+            ? message.content.replace(/\n*📷 \[Análise da Imagem\]:[\s\S]*$/i, '').trim()
+            : '';
+        const newContent = cleanBaseContent && cleanBaseContent !== '📷 Foto'
+            ? `${cleanBaseContent}\n\n📷 [Análise da Imagem]: ${visualAnalysis}`
+            : `📷 [Análise da Imagem]: ${visualAnalysis}`;
+        const updated = await this.prisma.message.update({
+            where: { id: message.id },
+            data: {
+                content: newContent,
+            },
+        });
+        try {
+            if (this.chatGateway) {
+                this.chatGateway.emitMessageTranscribed(tenantId, {
+                    messageId: updated.id,
+                    conversationId: updated.conversationId,
+                    audioTranscription: visualAnalysis,
+                });
+            }
+        }
+        catch (e) {
+            this.logger.warn(`Falha ao emitir socket de atualização de mensagem: ${e.message}`);
+        }
+        return {
+            messageId: updated.id,
+            analysis: visualAnalysis,
+            content: newContent,
         };
     }
 };

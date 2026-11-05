@@ -24,8 +24,8 @@ let DepartmentsController = class DepartmentsController {
     async create(tenantId, body) {
         return this.departmentsService.create(tenantId, body.name, body.color || '#cccccc');
     }
-    async findAll(tenantId) {
-        return this.departmentsService.findAll(tenantId);
+    async findAll(tenantId, req) {
+        return this.departmentsService.findAll(tenantId, req.user?.id, req.user?.role);
     }
     async addUser(tenantId, id, body) {
         return this.departmentsService.addUserToDepartment(tenantId, id, body.userId);
@@ -52,8 +52,9 @@ __decorate([
 __decorate([
     (0, common_1.Get)(),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], DepartmentsController.prototype, "findAll", null);
 __decorate([

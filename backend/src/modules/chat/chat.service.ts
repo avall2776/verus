@@ -211,7 +211,27 @@ export class ChatService {
     return result;
   }
 
+  private readonly conversationsCache = new Map<string, { data: any; expiresAt: number }>();
+
+  clearConversationsCache(tenantId?: string) {
+    if (!tenantId) {
+      this.conversationsCache.clear();
+      return;
+    }
+    for (const key of this.conversationsCache.keys()) {
+      if (key.startsWith(`${tenantId}:`)) {
+        this.conversationsCache.delete(key);
+      }
+    }
+  }
+
   async findAllConversations(tenantId: string, userId: string, userRole: string, tab: string = 'waiting', departmentId?: string) {
+    const cacheKey = `${tenantId}:${userId}:${tab}:${departmentId || 'all'}`;
+    const cached = this.conversationsCache.get(cacheKey);
+    if (cached && Date.now() < cached.expiresAt) {
+      return cached.data;
+    }
+
     const whereClause: any = { tenantId };
     const isMaster = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN';
 
@@ -255,12 +275,42 @@ export class ChatService {
 
     const conversations = await this.prisma.conversation.findMany({
       where: whereClause,
-      include: { 
-        contact: true,
-        department: true,
+      select: {
+        id: true,
+        tenantId: true,
+        status: true,
+        assignedTo: true,
+        departmentId: true,
+        createdAt: true,
+        updatedAt: true,
+        contact: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            email: true,
+            avatarUrl: true,
+            tags: true,
+            source: true,
+          }
+        },
+        department: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+          }
+        },
         messages: {
           orderBy: { createdAt: 'desc' },
-          take: 1
+          take: 1,
+          select: {
+            id: true,
+            content: true,
+            type: true,
+            direction: true,
+            createdAt: true,
+          }
         }
       },
       orderBy: { updatedAt: 'desc' }
@@ -297,6 +347,7 @@ export class ChatService {
       }
     }
 
+    this.conversationsCache.set(cacheKey, { data: conversations, expiresAt: Date.now() + 10000 });
     return conversations;
   }
 

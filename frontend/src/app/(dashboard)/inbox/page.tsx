@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense, useRef, useMemo, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { 
   Search, Filter, MoreVertical, Send, Paperclip, Bot, User, Phone, Mail, Tag, 
@@ -84,6 +84,7 @@ function getWhatsAppDateLabel(dateInput?: string | number | Date): string {
 
 function InboxContent() {
   const { isWhatsApp } = useTheme();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const contactIdParam = searchParams.get('contactId');
   const conversationIdParam = searchParams.get('conversationId') || searchParams.get('chat');
@@ -241,6 +242,7 @@ function InboxContent() {
 
   // Estados para Ação Manual no Funil do CRM
   const [crmStages, setCrmStages] = useState(DEFAULT_CRM_STAGES);
+  const [currentDeal, setCurrentDeal] = useState<any | null>(null);
   const [currentDealStage, setCurrentDealStage] = useState<string | null>(null);
   const [showCrmDropdown, setShowCrmDropdown] = useState(false);
   const [isMovingStage, setIsMovingStage] = useState(false);
@@ -255,6 +257,17 @@ function InboxContent() {
 
   // Estados para Integração com Radar de Stories (Visualizadores Recentes + Stories Ativos da Linha Principal)
   const [recentStoryViewers, setRecentStoryViewers] = useState<Set<string>>(new Set());
+  const recentStorySuffixSet = useMemo(() => {
+    const set = new Set<string>();
+    recentStoryViewers.forEach((p) => {
+      const clean = p.replace(/\D/g, '');
+      if (clean.length >= 8) {
+        set.add(clean.slice(-8));
+      }
+      set.add(clean);
+    });
+    return set;
+  }, [recentStoryViewers]);
   const [activeLineStories, setActiveLineStories] = useState<any[]>([]);
   const [storyViewersList, setStoryViewersList] = useState<any[]>([]);
   const [storyViewerModal, setStoryViewerModal] = useState<{
@@ -1408,7 +1421,7 @@ function InboxContent() {
     staleTime: 10000,
     refetchInterval: 60000, // Sincronização automática em background a cada 1 minuto (solicitada pelo usuário)
     retry: false,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false, // Otimização de performance: evita requisição pesada ao alternar janelas
   });
 
   // Limpa o indicador global de não lidas ao entrar na tela de Atendimento
@@ -1891,21 +1904,25 @@ function InboxContent() {
   // Derivar contato ativo
   const activeContactData = contacts.find(c => c.id === activeChat);
 
-  // Busca o estágio atual do deal no CRM para o contato selecionado
+  // Busca o estágio atual e os dados do deal no CRM para o contato selecionado
   useEffect(() => {
     if (!activeContactData?.contactId) {
+      setCurrentDeal(null);
       setCurrentDealStage(null);
       return;
     }
     api.get(`/deals/contact/${activeContactData.contactId}`)
       .then(res => {
-        if (res.data?.status) {
-          setCurrentDealStage(res.data.status);
+        if (res.data) {
+          setCurrentDeal(res.data);
+          setCurrentDealStage(res.data.status || null);
         } else {
+          setCurrentDeal(null);
           setCurrentDealStage(null);
         }
       })
       .catch(() => {
+        setCurrentDeal(null);
         setCurrentDealStage(null);
       });
   }, [activeContactData?.contactId]);
@@ -2265,25 +2282,38 @@ function InboxContent() {
     });
   };
 
-  // Filtro de busca e abas sobre os contatos da lista (Padrão WhatsApp Web)
-  const filteredContacts = contacts.filter(c => {
-    if (activeFilterTab === 'unread' && !((c.unread || 0) > 0 || c.hasNewMessage)) return false;
-    if (activeFilterTab === 'waiting' && !(c.status === 'waiting' || c.status === 'bot_active' || (!c.assignedTo && c.status !== 'resolved' && c.status !== 'closed'))) return false;
-    if (activeFilterTab === 'mine' && !(c.status === 'open' || c.status === 'human_takeover' || c.status === 'in_progress' || !!c.assignedTo)) return false;
-    if (activeFilterTab === 'resolved' && !(c.status === 'resolved' || c.status === 'closed')) return false;
-    if (onlyUnread && !((c.unread || 0) > 0 || c.hasNewMessage)) return false;
-    if (selectedDepartmentFilter && selectedDepartmentFilter !== 'all') {
-      if (c.departmentId !== selectedDepartmentFilter) return false;
-    }
+  // Filtro de busca e abas sobre os contatos da lista (Padrão WhatsApp Web - Otimizado com useMemo)
+  const filteredContacts = useMemo(() => {
+    return contacts.filter(c => {
+      if (activeFilterTab === 'unread' && !((c.unread || 0) > 0 || c.hasNewMessage)) return false;
+      if (activeFilterTab === 'waiting' && !(c.status === 'waiting' || c.status === 'bot_active' || (!c.assignedTo && c.status !== 'resolved' && c.status !== 'closed'))) return false;
+      if (activeFilterTab === 'mine' && !(c.status === 'open' || c.status === 'human_takeover' || c.status === 'in_progress' || !!c.assignedTo)) return false;
+      if (activeFilterTab === 'resolved' && !(c.status === 'resolved' || c.status === 'closed')) return false;
+      if (onlyUnread && !((c.unread || 0) > 0 || c.hasNewMessage)) return false;
+      if (selectedDepartmentFilter && selectedDepartmentFilter !== 'all') {
+        if (c.departmentId !== selectedDepartmentFilter) return false;
+      }
 
-    if (!searchQuery.trim()) return true;
-    const q = searchQuery.toLowerCase();
-    return (
-      (c.name && c.name.toLowerCase().includes(q)) ||
-      (c.phone && c.phone.toLowerCase().includes(q)) ||
-      (c.lastMsg && c.lastMsg.toLowerCase().includes(q))
-    );
-  });
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase();
+      return (
+        (c.name && c.name.toLowerCase().includes(q)) ||
+        (c.phone && c.phone.toLowerCase().includes(q)) ||
+        (c.lastMsg && c.lastMsg.toLowerCase().includes(q))
+      );
+    });
+  }, [contacts, activeFilterTab, onlyUnread, selectedDepartmentFilter, searchQuery]);
+
+  // Paginação progressiva virtualizada da lista (limite inicial de 40 para garantir 60 FPS)
+  const [displayLimit, setDisplayLimit] = useState(40);
+
+  useEffect(() => {
+    setDisplayLimit(40);
+  }, [activeFilterTab, selectedDepartmentFilter, searchQuery]);
+
+  const visibleContacts = useMemo(() => {
+    return filteredContacts.slice(0, displayLimit);
+  }, [filteredContacts, displayLimit]);
 
   // Calcular total de contatos com mensagens não lidas e contadores de abas
   const unreadCount = contacts.filter(c => (c.unread || 0) > 0 || c.hasNewMessage).length;
@@ -2764,7 +2794,17 @@ function InboxContent() {
         )}
 
         {/* Lista de Contatos WhatsApp */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden relative scrollbar-thin">
+        <div 
+          className="flex-1 overflow-y-auto overflow-x-hidden relative scrollbar-thin"
+          onScroll={(e) => {
+            const el = e.currentTarget;
+            if (el.scrollHeight - el.scrollTop - el.clientHeight < 400) {
+              if (displayLimit < filteredContacts.length) {
+                setDisplayLimit(prev => Math.min(prev + 40, filteredContacts.length));
+              }
+            }
+          }}
+        >
           {fetchError && (
             <div className="p-3 bg-red-500/20 border-b border-red-500/50 text-red-400 text-xs text-center font-bold">
               Erro ao sincronizar conversas: {fetchError}
@@ -2789,14 +2829,13 @@ function InboxContent() {
               <span>Nenhuma conversa encontrada</span>
             </div>
           ) : (
-            filteredContacts.map((contact) => {
+            visibleContacts.map((contact) => {
               const cleanContactPhone = (contact.phone || '').replace(/\D/g, '');
+              const last8 = cleanContactPhone.slice(-8);
               const hasRecentStory = Boolean(
                 cleanContactPhone && (
                   recentStoryViewers.has(cleanContactPhone) ||
-                  Array.from(recentStoryViewers).some(
-                    (p) => p.endsWith(cleanContactPhone.slice(-8)) || cleanContactPhone.endsWith(p.slice(-8))
-                  )
+                  (last8.length === 8 && recentStorySuffixSet.has(last8))
                 )
               );
 
@@ -3021,6 +3060,11 @@ function InboxContent() {
             );
           })
         )}
+        {filteredContacts.length > visibleContacts.length && (
+          <div className="py-3 text-center text-xs text-slate-400 dark:text-slate-500 font-medium">
+            Carregando mais conversas ({visibleContacts.length} de {filteredContacts.length})...
+          </div>
+        )}
         </div>
       </div>
 
@@ -3178,8 +3222,14 @@ function InboxContent() {
                   onClick={() => setShowContactInfo(prev => !prev)}
                   title="Clique para ver dados do contato"
                 >
-                  {/* Avatar WhatsApp com indicador de status */}
-                  <div className="relative shrink-0">
+                  {/* Avatar WhatsApp com indicador de status e anel da cor da região (exclusivo do Inbox) */}
+                  <div 
+                    className="relative shrink-0 p-0.5 rounded-full transition-all"
+                    style={activeContactData.department?.color ? {
+                      boxShadow: `0 0 0 2.5px ${activeContactData.department.color}`,
+                    } : undefined}
+                    title={activeContactData.department?.name ? `Setor / Região: ${activeContactData.department.name}` : undefined}
+                  >
                     <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full ${isWhatsApp ? 'bg-[#2A3942] border-[#222D34]' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700/60'} border flex items-center justify-center text-slate-700 dark:text-white font-bold shrink-0 relative overflow-hidden shadow-inner text-xs sm:text-sm`}>
                       {(() => {
                         const isSelfOrMainLine = activeContactData.name?.includes('(você)') || (activeContactData.phone && activeInstance?.phoneNumber && activeContactData.phone.replace(/\D/g, '') === activeInstance.phoneNumber.replace(/\D/g, ''));
@@ -3208,44 +3258,17 @@ function InboxContent() {
                     <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-500 border-2 ${isWhatsApp ? 'border-[#202C33]' : 'border-white dark:border-[#0B1224]'}`} />
                   </div>
                   
-                  {/* Título e Subtítulo WhatsApp */}
-                  <div className="min-w-0 flex-1 overflow-hidden">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <h2 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate whitespace-nowrap group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors leading-tight">
+                  {/* Título e Subtítulo Limpos e Elegantes (sem sobreposição de leitura) */}
+                  <div className="min-w-0 flex-1 overflow-hidden pr-2">
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate whitespace-nowrap group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors leading-tight">
                         {formatContactDisplayName(activeContactData.name, activeContactData.phone)}
                       </h2>
-                      {activeContactData.department && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            loadDepartmentsAndShowTransfer();
-                          }}
-                          className="text-[10px] font-semibold px-2 py-0.5 rounded-md border flex items-center gap-1 cursor-pointer hover:opacity-85 transition-opacity shrink-0"
-                          style={{
-                            backgroundColor: isWhatsApp ? 'rgba(0,168,132,0.15)' : ((activeContactData.department.color || "#3b82f6") + "20"),
-                            borderColor: isWhatsApp ? 'rgba(0,168,132,0.3)' : ((activeContactData.department.color || "#3b82f6") + "40"),
-                            color: isWhatsApp ? '#00A884' : (activeContactData.department.color || "#60a5fa"),
-                          }}
-                          title="Clique para transferir departamento"
-                        >
-                          <span
-                            className="w-1.5 h-1.5 rounded-full shrink-0"
-                            style={{ backgroundColor: isWhatsApp ? '#00A884' : (activeContactData.department.color || "#3b82f6") }}
-                          />
-                          <span>{activeContactData.department.name}</span>
-                        </button>
-                      )}
                     </div>
 
                     {activeContactData.assignedUser ? (
                       <span className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 font-medium truncate whitespace-nowrap block leading-tight mt-0.5">
                         Atendente: <strong className="text-slate-900 dark:text-white font-semibold">{activeContactData.assignedUser.name}</strong>
-                        {activeContactData.assignedUser.departments && activeContactData.assignedUser.departments.length > 0 && (
-                          <span className="text-slate-400 dark:text-slate-500 font-normal">
-                            {" "}• {activeContactData.assignedUser.departments.map((d: any) => d.department?.name).filter(Boolean).join(", ")}
-                          </span>
-                        )}
                       </span>
                     ) : activeContactData.isAi || activeContactData.status === 'bot_active' ? (
                       <div className="flex items-center gap-1 text-[11px] sm:text-xs text-cyan-600 dark:text-cyan-400 font-medium truncate whitespace-nowrap leading-tight mt-0.5">
@@ -5039,7 +5062,14 @@ function InboxContent() {
 
           {/* Cartão de Perfil Circular */}
           <div className="p-6 flex flex-col items-center border-b border-slate-200 dark:border-slate-800/80 relative bg-gradient-to-b from-slate-100/60 dark:from-[#17253D]/40 to-transparent">
-            <div className="w-24 h-24 rounded-full bg-slate-200 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700/80 flex items-center justify-center text-slate-800 dark:text-white font-black text-2xl shadow-xl mb-3 overflow-hidden relative">
+            <div 
+              className="w-24 h-24 rounded-full bg-slate-200 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700/80 flex items-center justify-center text-slate-800 dark:text-white font-black text-2xl shadow-xl mb-3 overflow-hidden relative transition-all"
+              style={activeContactData.department?.color ? {
+                boxShadow: `0 0 0 3px ${activeContactData.department.color}`,
+                borderColor: activeContactData.department.color,
+              } : undefined}
+              title={activeContactData.department?.name ? `Setor / Região: ${activeContactData.department.name}` : undefined}
+            >
               {isAvatarUrlValid(activeContactData.avatarUrl) ? (
                 <img 
                   src={activeContactData.avatarUrl!} 
@@ -5127,14 +5157,28 @@ function InboxContent() {
                 <span>Ligar</span>
               </button>
 
-              <a
-                href="/crm"
+              <button
+                type="button"
+                onClick={() => {
+                  const dealId = currentDeal?.id;
+                  const contactId = activeContactData?.contactId;
+                  const phone = activeContactData?.phone?.replace(/\D/g, '') || '';
+                  if (dealId) {
+                    router.push(`/crm?dealId=${dealId}`);
+                  } else if (contactId) {
+                    router.push(`/crm?contactId=${contactId}`);
+                  } else if (phone) {
+                    router.push(`/crm?search=${encodeURIComponent(phone)}`);
+                  } else {
+                    router.push('/crm');
+                  }
+                }}
                 className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700 hover:border-blue-500/50 hover:text-blue-600 dark:hover:text-blue-300 text-xs font-semibold transition-all cursor-pointer shadow-sm"
-                title="Visualizar no CRM"
+                title="Visualizar oportunidade deste cliente no CRM"
               >
                 <TrendingUp size={13} className="text-blue-600 dark:text-blue-400" />
                 <span>CRM</span>
-              </a>
+              </button>
 
               <button
                 type="button"

@@ -23,72 +23,9 @@ export declare class ChatService {
     private static readonly lastSyncTimes;
     private readonly productivityCache;
     getOperatorProductivity(tenantId: string, userId: string): Promise<any>;
-    findAllConversations(tenantId: string, userId: string, userRole: string, tab?: string, departmentId?: string): Promise<({
-        contact: {
-            number: string | null;
-            id: string;
-            name: string;
-            phone: string | null;
-            email: string | null;
-            avatarUrl: string | null;
-            cpfCnpj: string | null;
-            razaoSocial: string | null;
-            nomeFantasia: string | null;
-            inscricaoEstadual: string | null;
-            cep: string | null;
-            address: string | null;
-            complement: string | null;
-            neighborhood: string | null;
-            city: string | null;
-            state: string | null;
-            isFaturado: boolean;
-            totalFaturado: number;
-            dataHealthScore: number;
-            source: string;
-            tags: string[];
-            tenantId: string;
-            whatsappLid: string | null;
-            createdAt: Date;
-            updatedAt: Date;
-        };
-        messages: {
-            id: string;
-            tenantId: string;
-            createdAt: Date;
-            contactId: string;
-            status: string;
-            providerMessageId: string | null;
-            content: string;
-            type: string;
-            mediaUrl: string | null;
-            audioTranscription: string | null;
-            quotedMessage: import("@prisma/client/runtime/library").JsonValue | null;
-            reactions: import("@prisma/client/runtime/library").JsonValue | null;
-            isInternal: boolean;
-            fromMe: boolean;
-            direction: string;
-            senderType: string;
-            scheduledAt: Date | null;
-            conversationId: string;
-        }[];
-        department: {
-            id: string;
-            name: string;
-            tenantId: string;
-            createdAt: Date;
-            updatedAt: Date;
-            color: string | null;
-        };
-    } & {
-        id: string;
-        tenantId: string;
-        createdAt: Date;
-        updatedAt: Date;
-        contactId: string;
-        departmentId: string | null;
-        assignedTo: string | null;
-        status: string;
-    })[]>;
+    private readonly conversationsCache;
+    clearConversationsCache(tenantId?: string): void;
+    findAllConversations(tenantId: string, userId: string, userRole: string, tab?: string, departmentId?: string): Promise<any>;
     getConversationMessages(tenantId: string, conversationId: string): Promise<{
         id: string;
         tenantId: string;
@@ -109,6 +46,7 @@ export declare class ChatService {
         scheduledAt: Date | null;
         conversationId: string;
     }[]>;
+    resolveDepartmentByPhone(tenantId: string, phone?: string | null, state?: string | null): Promise<string | null>;
     getConversationByContact(tenantId: string, contactId: string): Promise<{
         contact: {
             number: string | null;
@@ -948,5 +886,10 @@ export declare class ChatService {
         messageId: string;
         audioTranscription: string;
         cached: boolean;
+    }>;
+    analyzeImageMessage(tenantId: string, messageId: string): Promise<{
+        messageId: string;
+        analysis: string;
+        content: string;
     }>;
 }

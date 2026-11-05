@@ -15,12 +15,29 @@ const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../shared/database/prisma.service");
 const automations_service_1 = require("../automations/automations.service");
 let CrmService = CrmService_1 = class CrmService {
+    clearDealsCache(tenantId) {
+        if (!tenantId) {
+            this.dealsCache.clear();
+            return;
+        }
+        for (const k of this.dealsCache.keys()) {
+            if (k.startsWith(`${tenantId}:`)) {
+                this.dealsCache.delete(k);
+            }
+        }
+    }
     constructor(prisma, automationsService) {
         this.prisma = prisma;
         this.automationsService = automationsService;
         this.logger = new common_1.Logger(CrmService_1.name);
+        this.dealsCache = new Map();
     }
     async findAllDeals(tenantId, filters) {
+        const cacheKey = `${tenantId}:${filters?.status || 'all'}:${filters?.startDate || ''}:${filters?.endDate || ''}`;
+        const cached = this.dealsCache.get(cacheKey);
+        if (cached && Date.now() < cached.expiresAt) {
+            return cached.data;
+        }
         const where = { tenantId };
         if (filters?.status && filters.status !== 'all') {
             where.status = filters.status;
@@ -35,7 +52,7 @@ let CrmService = CrmService_1 = class CrmService {
                 where[field].lte = new Date(filters.endDate);
             }
         }
-        return this.prisma.deal.findMany({
+        const deals = await this.prisma.deal.findMany({
             where,
             include: {
                 contact: {
@@ -58,6 +75,8 @@ let CrmService = CrmService_1 = class CrmService {
             },
             orderBy: { updatedAt: 'desc' }
         });
+        this.dealsCache.set(cacheKey, { data: deals, expiresAt: Date.now() + 15000 });
+        return deals;
     }
     async findOneDeal(tenantId, id) {
         const deal = await this.prisma.deal.findUnique({
@@ -118,6 +137,7 @@ let CrmService = CrmService_1 = class CrmService {
         });
     }
     async createDeal(tenantId, data) {
+        this.clearDealsCache(tenantId);
         let contactId = data.contactId;
         if (!contactId && data.contact) {
             const phone = data.contact.phone || `manual-${Date.now()}`;
@@ -185,6 +205,7 @@ let CrmService = CrmService_1 = class CrmService {
         });
     }
     async updateDeal(tenantId, id, data) {
+        this.clearDealsCache(tenantId);
         const deal = await this.prisma.deal.findUnique({
             where: { id },
             select: { id: true, tenantId: true, contactId: true, status: true }

@@ -464,8 +464,8 @@ function CrmContent() {
   useEffect(() => {
     if (dealIdFromUrl && (!selectedDeal || selectedDeal.id !== dealIdFromUrl)) {
       handleOpenDeal(dealIdFromUrl);
-    } else if (!dealIdFromUrl && contactIdFromUrl && (!selectedDeal || selectedDeal.contactId !== contactIdFromUrl) && deals.length > 0) {
-      // Procura primeiro oportunidade em andamento deste contato
+    } else if (!dealIdFromUrl && contactIdFromUrl && (!selectedDeal || (selectedDeal.contactId !== contactIdFromUrl && selectedDeal.contact?.id !== contactIdFromUrl))) {
+      // 1. Procura primeiro oportunidade em andamento deste contato na memória
       const match = deals.find(d => 
         (d.contactId === contactIdFromUrl || d.contact?.id === contactIdFromUrl) &&
         !['won', 'lost', 'disqualified'].includes(d.status?.toLowerCase())
@@ -473,8 +473,21 @@ function CrmContent() {
 
       if (match) {
         handleOpenDeal(match);
-      } else if (!loading) {
-        toast.error("Nenhuma oportunidade encontrada para este contato no CRM.");
+      } else {
+        // 2. Busca direto na API pelo deal mais recente deste contato
+        api.get(`/deals/contact/${contactIdFromUrl}`)
+          .then(({ data }) => {
+            if (data && data.id) {
+              handleOpenDeal(data);
+            } else if (!loading && deals.length > 0) {
+              toast.error("Nenhuma oportunidade encontrada para este contato no CRM.");
+            }
+          })
+          .catch(() => {
+            if (!loading && deals.length > 0) {
+              toast.error("Nenhuma oportunidade encontrada para este contato no CRM.");
+            }
+          });
       }
     }
   }, [dealIdFromUrl, contactIdFromUrl, deals, loading]);

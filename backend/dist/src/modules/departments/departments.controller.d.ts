@@ -13,7 +13,7 @@ export declare class DepartmentsController {
         updatedAt: Date;
         color: string | null;
     }>;
-    findAll(tenantId: string): Promise<({
+    findAll(tenantId: string, req: any): Promise<({
         users: ({
             user: {
                 id: string;

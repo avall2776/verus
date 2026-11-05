@@ -2,33 +2,7 @@ import { CrmService } from './crm.service';
 export declare class CrmController {
     private readonly crmService;
     constructor(crmService: CrmService);
-    listDeals(tenantId: string, startDate?: string, endDate?: string, dateType?: 'created' | 'closed', status?: string): Promise<({
-        contact: {
-            id: string;
-            name: string;
-            phone: string;
-            email: string;
-            source: string;
-            tags: string[];
-        };
-        assignee: {
-            id: string;
-            name: string;
-            email: string;
-        };
-    } & {
-        id: string;
-        tenantId: string;
-        createdAt: Date;
-        updatedAt: Date;
-        contactId: string;
-        assignedTo: string | null;
-        status: string;
-        title: string;
-        value: import("@prisma/client/runtime/library").Decimal;
-        notes: string | null;
-        metadata: import("@prisma/client/runtime/library").JsonValue | null;
-    })[]>;
+    listDeals(tenantId: string, startDate?: string, endDate?: string, dateType?: 'created' | 'closed', status?: string): Promise<any>;
     listUsers(tenantId: string): Promise<{
         id: string;
         name: string;

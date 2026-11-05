@@ -9,6 +9,7 @@ export declare class PublicApiService {
     private readonly logger;
     constructor(prisma: PrismaService, chatGateway?: ChatGateway, automationsService?: AutomationsService);
     private normalizePhone;
+    private resolveDepartmentByPhone;
     createLead(tenantId: string, dto: CreateLeadDto): Promise<{
         success: boolean;
         message: string;

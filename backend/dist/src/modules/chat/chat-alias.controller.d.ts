@@ -15,4 +15,9 @@ export declare class ChatAliasController {
         audioTranscription: string;
         cached: boolean;
     }>;
+    analyzeImageMessage(tenantId: string, messageId: string): Promise<{
+        messageId: string;
+        analysis: string;
+        content: string;
+    }>;
 }

@@ -45,6 +45,68 @@ let PublicApiService = PublicApiService_1 = class PublicApiService {
         }
         return clean.startsWith('+') ? clean : `+${clean}`;
     }
+    async resolveDepartmentByPhone(tenantId, phone, state) {
+        if (!phone && !state)
+            return null;
+        try {
+            const departments = await this.prisma.department.findMany({
+                where: { tenantId },
+                select: { id: true, name: true }
+            });
+            if (!departments || departments.length === 0)
+                return null;
+            const dddToRegion = {
+                '51': 1, '53': 1, '54': 1, '55': 1, '47': 1, '48': 1, '49': 1, '41': 1, '42': 1, '43': 1, '44': 1, '45': 1, '46': 1,
+                '67': 2, '65': 2, '66': 2, '91': 2, '93': 2, '94': 2, '69': 2, '95': 2, '68': 2, '92': 2, '97': 2, '96': 2,
+                '62': 3, '64': 3, '31': 3, '32': 3, '33': 3, '34': 3, '35': 3, '37': 3, '38': 3, '11': 3, '12': 3, '13': 3, '14': 3, '15': 3, '16': 3, '17': 3, '18': 3, '19': 3,
+                '63': 4, '71': 4, '73': 4, '74': 4, '75': 4, '77': 4,
+                '98': 5, '99': 5, '86': 5, '89': 5,
+                '85': 6, '88': 6, '84': 6, '83': 6, '79': 6, '81': 6, '87': 6, '82': 6
+            };
+            const ufToRegion = {
+                'RS': 1, 'SC': 1, 'PR': 1,
+                'MS': 2, 'MT': 2, 'PA': 2, 'RO': 2, 'RR': 2, 'AC': 2, 'AM': 2, 'AP': 2,
+                'GO': 3, 'MG': 3, 'SP': 3,
+                'TO': 4, 'BA': 4,
+                'MA': 5, 'PI': 5,
+                'CE': 6, 'RN': 6, 'PB': 6, 'SE': 6, 'PE': 6, 'AL': 6
+            };
+            let targetRegionNum = null;
+            if (phone) {
+                const clean = phone.replace(/\D/g, '');
+                let ddd = '';
+                if (clean.startsWith('55') && clean.length >= 12) {
+                    ddd = clean.substring(2, 4);
+                }
+                else if (clean.length === 10 || clean.length === 11) {
+                    ddd = clean.substring(0, 2);
+                }
+                if (ddd && dddToRegion[ddd]) {
+                    targetRegionNum = dddToRegion[ddd];
+                }
+                else if (clean.startsWith('595')) {
+                    targetRegionNum = 1;
+                }
+            }
+            if (!targetRegionNum && state) {
+                const uf = state.trim().toUpperCase();
+                if (ufToRegion[uf])
+                    targetRegionNum = ufToRegion[uf];
+            }
+            if (targetRegionNum) {
+                const matched = departments.find(d => {
+                    const upper = d.name.toUpperCase();
+                    return upper.includes(`REGIÃO ${targetRegionNum}`) || upper.includes(`REGIAO ${targetRegionNum}`);
+                });
+                if (matched)
+                    return matched.id;
+            }
+        }
+        catch (e) {
+            this.logger.warn(`Erro ao resolver departamento por telefone: ${e.message}`);
+        }
+        return null;
+    }
     async createLead(tenantId, dto) {
         if (!dto.name || !dto.name.trim()) {
             throw new common_1.BadRequestException('O campo "name" (nome do lead) é obrigatório.');
@@ -163,6 +225,7 @@ let PublicApiService = PublicApiService_1 = class PublicApiService {
                 },
             },
         });
+        const targetDeptId = await this.resolveDepartmentByPhone(tenantId, cleanPhone, dto.state || dto.custom_fields?.state || dto.custom_fields?.estado);
         let conversation = await this.prisma.conversation.findUnique({
             where: {
                 tenantId_contactId: {
@@ -176,19 +239,26 @@ let PublicApiService = PublicApiService_1 = class PublicApiService {
                 data: {
                     tenantId,
                     contactId: contact.id,
+                    departmentId: targetDeptId,
                     status: 'waiting',
                     assignedTo: assignedUserId,
                 },
             });
         }
-        else if (conversation.status === 'resolved' || conversation.status === 'closed') {
+        else {
+            const updateData = {
+                assignedTo: assignedUserId || conversation.assignedTo,
+                updatedAt: new Date(),
+            };
+            if (conversation.status === 'resolved' || conversation.status === 'closed') {
+                updateData.status = 'waiting';
+            }
+            if (!conversation.departmentId && targetDeptId) {
+                updateData.departmentId = targetDeptId;
+            }
             conversation = await this.prisma.conversation.update({
                 where: { id: conversation.id },
-                data: {
-                    status: 'waiting',
-                    assignedTo: assignedUserId || conversation.assignedTo,
-                    updatedAt: new Date(),
-                },
+                data: updateData,
             });
         }
         const initialContent = `📥 [Lead Tráfego Pago] Ingressou via ${source}${campaign ? ` - Campanha: "${campaign}"` : ''}${dto.ad_name ? ` (Anúncio: "${dto.ad_name}")` : ''}.`;

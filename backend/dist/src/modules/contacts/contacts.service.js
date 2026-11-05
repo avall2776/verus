@@ -21,6 +21,7 @@ let ContactsService = ContactsService_1 = class ContactsService {
         this.automationsService = automationsService;
         this.googleContactsService = googleContactsService;
         this.logger = new common_1.Logger(ContactsService_1.name);
+        this.contactsCache = new Map();
     }
     async createContact(tenantId, data) {
         const contact = await this.prisma.contact.create({
@@ -33,6 +34,7 @@ let ContactsService = ContactsService_1 = class ContactsService {
                 tags: data.tags || ['Lead'],
             },
         });
+        this.contactsCache.delete(tenantId);
         if (contact.phone) {
             this.googleContactsService.syncContact(tenantId, contact).catch((err) => {
                 this.logger.warn(`Erro ao sincronizar novo contato com Google: ${err.message}`);
@@ -41,6 +43,10 @@ let ContactsService = ContactsService_1 = class ContactsService {
         return contact;
     }
     async findAll(tenantId) {
+        const cached = this.contactsCache.get(tenantId);
+        if (cached && Date.now() < cached.expiresAt) {
+            return cached.data;
+        }
         const contacts = await this.prisma.contact.findMany({
             where: { tenantId },
             orderBy: { updatedAt: 'desc' },
@@ -57,7 +63,7 @@ let ContactsService = ContactsService_1 = class ContactsService {
                 }
             }
         });
-        return contacts.map(c => {
+        const result = contacts.map(c => {
             let tags = Array.isArray(c.tags) ? [...c.tags] : [];
             const deals = c.deals || [];
             const wonDeals = deals.filter(d => d.status === 'won');
@@ -150,8 +156,11 @@ let ContactsService = ContactsService_1 = class ContactsService {
                 createdAt: c.createdAt.toISOString()
             };
         });
+        this.contactsCache.set(tenantId, { data: result, expiresAt: Date.now() + 20000 });
+        return result;
     }
     async updateTags(tenantId, contactId, tags) {
+        this.contactsCache.delete(tenantId);
         const contact = await this.prisma.contact.update({
             where: { id: contactId, tenantId },
             data: { tags }
@@ -164,6 +173,7 @@ let ContactsService = ContactsService_1 = class ContactsService {
         return contact;
     }
     async updateContact(tenantId, contactId, data) {
+        this.contactsCache.delete(tenantId);
         const existing = await this.prisma.contact.findFirst({
             where: { id: contactId, tenantId },
         });

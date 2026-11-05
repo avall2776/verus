@@ -6,6 +6,7 @@ import { GoogleContactsService } from './google-contacts.service';
 @Injectable()
 export class ContactsService {
   private readonly logger = new Logger(ContactsService.name);
+  private readonly contactsCache = new Map<string, { data: any; expiresAt: number }>();
 
   constructor(
     private readonly prisma: PrismaService,
@@ -29,6 +30,7 @@ export class ContactsService {
     });
 
     // Sincronização automática em segundo plano com a agenda (Google Contatos)
+    this.contactsCache.delete(tenantId);
     if (contact.phone) {
       this.googleContactsService.syncContact(tenantId, contact).catch((err) => {
         this.logger.warn(`Erro ao sincronizar novo contato com Google: ${err.message}`);
@@ -39,6 +41,11 @@ export class ContactsService {
   }
 
   async findAll(tenantId: string) {
+    const cached = this.contactsCache.get(tenantId);
+    if (cached && Date.now() < cached.expiresAt) {
+      return cached.data;
+    }
+
     const contacts = await this.prisma.contact.findMany({
       where: { tenantId },
       orderBy: { updatedAt: 'desc' },
@@ -56,7 +63,7 @@ export class ContactsService {
       }
     });
 
-    return contacts.map(c => {
+    const result = contacts.map(c => {
       let tags = Array.isArray(c.tags) ? [...c.tags] : [];
       const deals = c.deals || [];
 
@@ -161,9 +168,13 @@ export class ContactsService {
         createdAt: c.createdAt.toISOString()
       };
     });
+
+    this.contactsCache.set(tenantId, { data: result, expiresAt: Date.now() + 20000 });
+    return result;
   }
 
   async updateTags(tenantId: string, contactId: string, tags: string[]) {
+    this.contactsCache.delete(tenantId);
     const contact = await this.prisma.contact.update({
       where: { id: contactId, tenantId },
       data: { tags }
@@ -196,6 +207,7 @@ export class ContactsService {
     city?: string;
     state?: string;
   }) {
+    this.contactsCache.delete(tenantId);
     const existing = await this.prisma.contact.findFirst({
       where: { id: contactId, tenantId },
     });

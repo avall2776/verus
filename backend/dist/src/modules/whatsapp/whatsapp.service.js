@@ -1252,7 +1252,7 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
                     OR: [
                         { whatsappLid: cleanLid },
                         { phone: cleanLid },
-                        ...(rawNumber ? [{ whatsappLid: { contains: rawNumber } }, { phone: { contains: rawNumber } }] : []),
+                        ...(rawNumber ? [{ whatsappLid: `${rawNumber}@lid` }, { phone: `${rawNumber}@lid` }] : []),
                     ],
                 },
                 orderBy: { updatedAt: 'desc' },

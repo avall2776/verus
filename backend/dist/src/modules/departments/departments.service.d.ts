@@ -10,7 +10,7 @@ export declare class DepartmentsService {
         updatedAt: Date;
         color: string | null;
     }>;
-    findAll(tenantId: string): Promise<({
+    findAll(tenantId: string, userId?: string, userRole?: string): Promise<({
         users: ({
             user: {
                 id: string;

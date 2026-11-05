@@ -146,22 +146,7 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             else if (mediaId) {
                 mediaUrl = await this.whatsappService.downloadAndSaveMedia(tenantId, mediaId, mimeType);
             }
-            const imageBuffer = getLocalBuffer(mediaUrl);
-            if (imageBuffer) {
-                this.logger.log(`[Multimodal Vision] Analisando imagem recebida de ${remoteJid}...`);
-                const visualAnalysis = await this.aiService.analyzeImage(imageBuffer, mimeType, caption);
-                if (visualAnalysis) {
-                    content = caption
-                        ? `${caption}\n📷 [Análise da Imagem]: ${visualAnalysis}`
-                        : `📷 [Análise da Imagem]: ${visualAnalysis}`;
-                }
-                else {
-                    content = caption || '📷 Foto';
-                }
-            }
-            else {
-                content = caption || '📷 Foto';
-            }
+            content = caption || '📷 Foto';
         }
         else if (isVideo) {
             msgType = 'video';
@@ -298,7 +283,7 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
         let contact;
         if (existingContact) {
             const dataToUpdate = {};
-            if (lidId && existingContact.whatsappLid !== lidId) {
+            if (lidId && !existingContact.whatsappLid && !isFromMe) {
                 dataToUpdate.whatsappLid = lidId;
             }
             if (realPhone && (existingContact.phone?.includes('@lid') || existingContact.phone?.replace(/\D/g, '').length > 13)) {

@@ -5,6 +5,19 @@ import { AutomationsService } from '../automations/automations.service';
 @Injectable()
 export class CrmService {
   private readonly logger = new Logger(CrmService.name);
+  private readonly dealsCache = new Map<string, { data: any; expiresAt: number }>();
+
+  clearDealsCache(tenantId?: string) {
+    if (!tenantId) {
+      this.dealsCache.clear();
+      return;
+    }
+    for (const k of this.dealsCache.keys()) {
+      if (k.startsWith(`${tenantId}:`)) {
+        this.dealsCache.delete(k);
+      }
+    }
+  }
 
   constructor(
     private readonly prisma: PrismaService,
@@ -12,6 +25,12 @@ export class CrmService {
   ) {}
 
   async findAllDeals(tenantId: string, filters?: { startDate?: string; endDate?: string; dateType?: 'created' | 'closed'; status?: string }) {
+    const cacheKey = `${tenantId}:${filters?.status || 'all'}:${filters?.startDate || ''}:${filters?.endDate || ''}`;
+    const cached = this.dealsCache.get(cacheKey);
+    if (cached && Date.now() < cached.expiresAt) {
+      return cached.data;
+    }
+
     const where: any = { tenantId };
 
     if (filters?.status && filters.status !== 'all') {
@@ -29,7 +48,7 @@ export class CrmService {
       }
     }
 
-    return this.prisma.deal.findMany({
+    const deals = await this.prisma.deal.findMany({
       where,
       include: {
         contact: {
@@ -52,6 +71,9 @@ export class CrmService {
       },
       orderBy: { updatedAt: 'desc' }
     });
+
+    this.dealsCache.set(cacheKey, { data: deals, expiresAt: Date.now() + 15000 });
+    return deals;
   }
 
   async findOneDeal(tenantId: string, id: string) {
@@ -122,6 +144,7 @@ export class CrmService {
   }
 
   async createDeal(tenantId: string, data: any) {
+    this.clearDealsCache(tenantId);
     let contactId = data.contactId;
 
     if (!contactId && data.contact) {
@@ -193,6 +216,7 @@ export class CrmService {
   }
 
   async updateDeal(tenantId: string, id: string, data: any) {
+    this.clearDealsCache(tenantId);
     const deal = await this.prisma.deal.findUnique({
       where: { id },
       select: { id: true, tenantId: true, contactId: true, status: true }

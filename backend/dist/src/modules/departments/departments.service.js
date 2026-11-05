@@ -21,9 +21,16 @@ let DepartmentsService = class DepartmentsService {
             data: { tenantId, name, color },
         });
     }
-    async findAll(tenantId) {
+    async findAll(tenantId, userId, userRole) {
+        const isMaster = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN';
+        const where = { tenantId };
+        if (!isMaster && userId) {
+            where.users = {
+                some: { userId },
+            };
+        }
         return this.prisma.department.findMany({
-            where: { tenantId },
+            where,
             include: {
                 users: {
                     include: { user: true }

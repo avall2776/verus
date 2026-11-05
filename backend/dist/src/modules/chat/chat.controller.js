@@ -141,6 +141,9 @@ let ChatController = class ChatController {
     async transcribeAudioMessage(tenantId, messageId) {
         return this.chatService.transcribeAudioMessage(tenantId, messageId);
     }
+    async analyzeImageMessage(tenantId, messageId) {
+        return this.chatService.analyzeImageMessage(tenantId, messageId);
+    }
     async sendMessageToContact(tenantId, contactId, payload, req) {
         try {
             return await this.chatService.sendManualMessageToContact(tenantId, contactId, payload, req.user.id);
@@ -404,6 +407,14 @@ __decorate([
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], ChatController.prototype, "transcribeAudioMessage", null);
+__decorate([
+    (0, common_1.Post)('messages/:messageId/analyze-image'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('messageId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], ChatController.prototype, "analyzeImageMessage", null);
 __decorate([
     (0, common_1.Post)('contact/:contactId/messages'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
