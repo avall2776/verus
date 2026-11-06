@@ -364,10 +364,10 @@ export class ChatService {
 
       const timeA = a.messages && a.messages.length > 0 && a.messages[0].createdAt
         ? new Date(a.messages[0].createdAt).getTime()
-        : new Date(a.updatedAt).getTime();
+        : new Date(a.createdAt).getTime();
       const timeB = b.messages && b.messages.length > 0 && b.messages[0].createdAt
         ? new Date(b.messages[0].createdAt).getTime()
-        : new Date(b.updatedAt).getTime();
+        : new Date(b.createdAt).getTime();
       return timeB - timeA;
     });
 
