@@ -11,7 +11,7 @@ import {
   Smile, Bold, Italic, Strikethrough, Code, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Trash2, Play, Pause,
   Volume2, Check, CheckCheck, Copy, ExternalLink, Headphones, Download, ZoomIn, Maximize2,
   BellOff, History, UserPlus, FileDown, MessageSquarePlus, PanelRight, Info, Pin,
-  Clock, AlertCircle, Workflow, Pencil, ShoppingBag, MapPin, Video, ArrowLeft, Reply, Users
+  Clock, AlertCircle, Workflow, Pencil, ShoppingBag, MapPin, Video, ArrowLeft, Reply, Users, Star
 } from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
 import { useWhatsApp } from "@/components/ui/WhatsAppProvider";
@@ -230,6 +230,7 @@ function InboxContent() {
   const [expandedImageAnalyses, setExpandedImageAnalyses] = useState<{ [key: string]: boolean }>({});
   const [analyzingImageIds, setAnalyzingImageIds] = useState<{ [key: string]: boolean }>({});
   const [showChatOptionsMenu, setShowChatOptionsMenu] = useState(false);
+  const [showCrmSubmenu, setShowCrmSubmenu] = useState(false);
   const [showLeftHeaderMenu, setShowLeftHeaderMenu] = useState(false);
   const [showDeleteConvModal, setShowDeleteConvModal] = useState(false);
   const [isDeletingConv, setIsDeletingConv] = useState(false);
@@ -3264,6 +3265,17 @@ function InboxContent() {
                       <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate whitespace-nowrap group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors leading-tight">
                         {formatContactDisplayName(activeContactData.name, activeContactData.phone)}
                       </h2>
+                      {/* Tag do Contato no Estilo Lero */}
+                      {activeContactData.tags && activeContactData.tags.length > 0 && (() => {
+                        const firstTag = activeContactData.tags[0];
+                        const tagTheme = getTagColor(firstTag);
+                        return (
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border shrink-0 ${tagTheme.bg} ${tagTheme.text} ${tagTheme.border}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${tagTheme.dot} shrink-0`} />
+                            <span className="truncate max-w-[100px]">{firstTag}</span>
+                          </span>
+                        );
+                      })()}
                     </div>
 
                     {activeContactData.assignedUser ? (
@@ -3292,8 +3304,8 @@ function InboxContent() {
                 </div>
               </div>
 
-              {/* Ações Alinhadas à Direita (Padrão WhatsApp Web + VERSUS) */}
-              <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 ml-1.5">
+              {/* Ações Alinhadas à Direita (Estilo Executivo Clean / Lero) */}
+              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-1.5">
                 {isResolved ? (
                   <div className="hidden md:flex items-center gap-1.5 mr-1 shrink-0">
                     <span className={`inline-flex ${isWhatsApp ? 'text-[#8696A0] bg-[#202C33] border-[#222D34]' : 'text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700/80'} text-[11px] font-semibold px-2 py-0.5 border rounded-lg items-center gap-1`}>
@@ -3311,176 +3323,53 @@ function InboxContent() {
                     </button>
                   </div>
                 ) : (
-                  <div className="hidden md:flex items-center gap-1.5 mr-1 shrink-0">
-                    {/* Botão Assumir */}
-                    <button 
-                      onClick={() => handleTakeover()} 
-                      className={`text-white text-[11px] font-bold px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shrink-0 shadow-sm ${
-                        activeContactData.status === 'human_takeover'
-                          ? 'bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500'
-                          : isWhatsApp
-                            ? 'bg-[#00A884] hover:bg-[#02906F]'
-                            : 'bg-blue-600 hover:bg-blue-500'
-                      }`}
-                      title="Assumir o atendimento"
-                    >
-                      <UserCheck size={12} />
-                      <span>Assumir</span>
-                    </button>
+                  <div className="hidden md:flex items-center gap-1.5 shrink-0">
+                    {/* Botão Assumir (Apenas se aguardando ou sem atendente) */}
+                    {(activeContactData.status === 'waiting' || (!activeContactData.assignedUser && !activeContactData.isAi)) && (
+                      <button 
+                        onClick={() => handleTakeover()} 
+                        className={`text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shrink-0 shadow-sm active:scale-95 ${
+                          activeContactData.status === 'human_takeover'
+                            ? 'bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500'
+                            : isWhatsApp
+                              ? 'bg-[#00A884] hover:bg-[#02906F]'
+                              : 'bg-blue-600 hover:bg-blue-500'
+                        }`}
+                        title="Assumir o atendimento"
+                      >
+                        <UserCheck size={13} />
+                        <span>Assumir</span>
+                      </button>
+                    )}
 
-                    {/* Botão Transferir (solicitado pelo usuário lado a lado com Assumir e Finalizar) */}
+                    {/* Botão Transferir */}
                     <button 
                       type="button"
                       onClick={() => loadDepartmentsAndShowTransfer()} 
-                      className={`text-[11px] font-semibold px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shrink-0 shadow-sm ${
+                      className={`text-xs font-medium px-2.5 sm:px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shrink-0 border ${
                         isWhatsApp
-                          ? 'bg-[#202C33] hover:bg-[#2A3942] text-[#E9EDEF] border border-[#222D34]'
-                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 dark:bg-slate-800/90 dark:hover:bg-slate-700 dark:text-slate-200 dark:border-slate-700 hover:text-blue-600 dark:hover:text-blue-400'
+                          ? 'bg-[#202C33] hover:bg-[#2A3942] text-[#E9EDEF] border-[#2A3942]'
+                          : 'bg-slate-100/90 hover:bg-slate-200 text-slate-700 border-slate-200 dark:bg-[#1E293B]/80 dark:hover:bg-[#1E293B] dark:text-slate-200 dark:border-slate-700/80'
                       }`}
                       title="Transferir para outro atendente ou setor"
                     >
-                      <ArrowRightLeft size={12} className={isWhatsApp ? "text-[#8696A0]" : "text-blue-500"} />
+                      <ArrowRightLeft size={13} className={isWhatsApp ? "text-[#8696A0]" : "text-blue-500 dark:text-blue-400"} />
                       <span>Transferir</span>
                     </button>
 
-                    {/* Botão Finalizar */}
+                    {/* Botão Finalizar (Verde Emerald idêntico ao Lero) */}
                     <button 
                       onClick={handleRelease} 
-                      className={`text-[11px] font-semibold px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shrink-0 shadow-sm ${
-                        isWhatsApp
-                          ? 'bg-[#202C33] hover:bg-[#2A3942] text-[#E9EDEF] border border-[#222D34]'
-                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 dark:bg-slate-800/90 dark:hover:bg-slate-700 dark:text-slate-200 dark:border-slate-700 hover:text-red-600 dark:hover:text-red-400'
-                      }`}
+                      className="bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shrink-0 shadow-sm active:scale-95"
                       title="Finalizar atendimento"
                     >
-                      <CheckCircle2 size={12} className="text-emerald-500" />
+                      <CheckCircle2 size={13} />
                       <span>Finalizar</span>
                     </button>
-
-                    {/* Botão Devolver IA */}
-                    {(activeContactData.status === 'human_takeover' || activeContactData.status === 'open' || activeContactData.status === 'in_progress') && (
-                      <button 
-                        type="button"
-                        onClick={handleReturnToBot} 
-                        disabled={isReturningToBot}
-                        className={`text-[11px] font-semibold px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shrink-0 shadow-sm ${
-                          isWhatsApp
-                            ? 'bg-[#202C33] hover:bg-[#2A3942] text-purple-300 border border-purple-500/30'
-                            : 'bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 dark:bg-purple-950/40 dark:hover:bg-purple-900/60 dark:text-purple-300 dark:border-purple-800'
-                        }`}
-                        title="Devolver atendimento para a IA"
-                      >
-                        <Bot size={12} className="text-purple-400" />
-                        <span>{isReturningToBot ? 'Devolvendo...' : 'Devolver IA'}</span>
-                      </button>
-                    )}
                   </div>
                 )}
 
-                {/* Botão de Ação Manual no Funil do CRM */}
-                {activeContactData?.contactId && (
-                  <div className="relative shrink-0">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowCrmDropdown(prev => !prev);
-                      }}
-                      className={`p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl border transition-all flex items-center gap-1 cursor-pointer text-xs font-semibold ${
-                        showCrmDropdown
-                          ? (isWhatsApp ? 'bg-[#103629] text-[#00A884] border-[#00A884]' : 'bg-blue-50 text-blue-700 border-blue-300 dark:bg-blue-600/25 dark:text-blue-300 dark:border-blue-500/60 shadow-lg shadow-blue-500/10')
-                          : isWhatsApp
-                            ? 'bg-[#202C33] hover:bg-[#2A3942] text-[#E9EDEF] border-[#222D34]'
-                            : currentStageObj
-                              ? `${currentStageObj.bgLight} ${currentStageObj.color} ${currentStageObj.borderLight} hover:brightness-125`
-                              : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200 hover:text-slate-900 dark:bg-[#1E293B]/80 dark:text-slate-300 dark:border-slate-700/80 dark:hover:bg-slate-700/80 dark:hover:text-white'
-                      }`}
-                      title="Mover lead no Funil do CRM"
-                    >
-                      <Workflow size={13} className={isWhatsApp ? 'text-[#00A884]' : (currentStageObj ? currentStageObj.color : 'text-blue-600 dark:text-blue-400')} />
-                      <span className="hidden md:inline font-medium text-[11px] max-w-[100px] truncate">
-                        {currentStageObj ? currentStageObj.title : 'Funil CRM'}
-                      </span>
-                      <ChevronDown size={11} className={`hidden sm:inline transition-transform duration-200 ${showCrmDropdown ? 'rotate-180' : ''}`} />
-                    </button>
-
-                    {/* Dropdown de Estágios do Funil com Backdrop Isolado */}
-                    {showCrmDropdown && (
-                      <>
-                        <div 
-                          className="fixed inset-0 z-40" 
-                          onClick={() => setShowCrmDropdown(false)} 
-                        />
-                        <div
-                          onClick={(e) => e.stopPropagation()}
-                          className="absolute top-full right-0 mt-2 w-64 bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-700/90 rounded-2xl shadow-xl dark:shadow-[0_25px_50px_rgba(0,0,0,0.9)] p-1.5 z-50 animate-in fade-in zoom-in-95 text-xs backdrop-blur-xl divide-y divide-slate-100 dark:divide-slate-800/80"
-                        >
-                          <div className="px-3 py-2 flex items-center justify-between">
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-                              <Workflow size={12} className="text-blue-600 dark:text-blue-400" />
-                              Estágios do CRM
-                            </span>
-                            {isMovingStage && (
-                              <RefreshCw size={11} className="animate-spin text-blue-600 dark:text-blue-400" />
-                            )}
-                          </div>
-                          <div className="py-1 max-h-72 overflow-y-auto custom-scrollbar flex flex-col gap-0.5">
-                            {crmStages.map((stage) => {
-                              const isCurrent = currentDealStage === stage.id;
-                              return (
-                                <button
-                                  key={stage.id}
-                                  type="button"
-                                  disabled={isMovingStage}
-                                  onClick={() => handleMoveContactToStage(stage.id, stage.title)}
-                                  className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-left transition-all cursor-pointer group ${
-                                    isCurrent
-                                      ? 'bg-blue-50 text-blue-700 dark:bg-blue-600/20 dark:text-white font-bold border border-blue-200 dark:border-blue-500/40 shadow-sm'
-                                      : 'hover:bg-slate-100 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-                                  }`}
-                                >
-                                  <div className="flex items-center gap-2.5 min-w-0">
-                                    <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${stage.dotColor || 'bg-blue-400'} shadow-sm`} />
-                                    <span className="truncate text-xs">{stage.title}</span>
-                                  </div>
-                                  {isCurrent && (
-                                    <Check size={14} className="text-blue-600 dark:text-blue-400 shrink-0 ml-2" />
-                                  )}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )}
-
-                {/* Ícone 1: Busca na Conversa (WhatsApp Web) */}
-                <button
-                  type="button"
-                  onClick={() => setShowSearchInChat(prev => !prev)}
-                  className={`p-1.5 sm:p-2 rounded-full transition-colors cursor-pointer shrink-0 ${
-                    showSearchInChat 
-                      ? 'bg-slate-100 text-blue-600 dark:bg-slate-800 dark:text-white' 
-                      : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/60'
-                  }`}
-                  title="Pesquisar na conversa"
-                >
-                  <Search size={18} />
-                </button>
-
-                {/* Botão Rápido: Apagar Conversa Inteira (Em telas médias/grandes) */}
-                <button
-                  type="button"
-                  onClick={() => setShowDeleteConvModal(true)}
-                  className="hidden sm:flex p-1.5 sm:p-2 rounded-full text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:text-slate-400 dark:hover:text-rose-400 dark:hover:bg-rose-500/15 transition-colors cursor-pointer shrink-0"
-                  title="Apagar conversa inteira"
-                >
-                  <Trash2 size={18} />
-                </button>
-
-                {/* Ícone 2: Menu Mais Opções (WhatsApp Web) */}
+                {/* Ícone 3 Pontinhos (Menu Mais Opções Organizado Estilo Lero) */}
                 <div className="relative shrink-0">
                   <button 
                     type="button"
@@ -3503,187 +3392,314 @@ function InboxContent() {
                     <>
                       <div 
                         className="fixed inset-0 z-40" 
-                        onClick={() => setShowChatOptionsMenu(false)} 
+                        onClick={() => {
+                          setShowChatOptionsMenu(false);
+                          setShowCrmSubmenu(false);
+                        }} 
                       />
                       <div 
                         onClick={(e) => e.stopPropagation()}
-                        className="absolute top-full right-0 mt-2 w-72 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700/90 rounded-2xl shadow-xl dark:shadow-[0_25px_50px_rgba(0,0,0,0.9)] py-2 z-50 animate-in fade-in zoom-in-95 text-xs divide-y divide-slate-100 dark:divide-slate-800/80"
+                        className={`absolute top-full right-0 mt-2 w-72 sm:w-80 border rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 text-xs backdrop-blur-xl ${
+                          isWhatsApp
+                            ? 'bg-[#233138] border-[#2A3942] text-[#E9EDEF]'
+                            : 'bg-white dark:bg-[#0F172A] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200'
+                        }`}
                       >
-                      <div className="py-1">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowChatOptionsMenu(false);
-                            setShowContactInfo(true);
-                          }}
-                          className="w-full px-4 py-2.5 text-left hover:bg-slate-100 dark:hover:bg-slate-800/80 flex items-center gap-3 transition-colors cursor-pointer group"
-                        >
-                          <div className="w-8 h-8 rounded-lg bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 group-hover:bg-blue-500/25 transition-colors">
-                            <PanelRight size={16} />
-                          </div>
-                          <div className="flex flex-col min-w-0">
-                            <span className="font-semibold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors">Dados do Contato</span>
-                            <span className="text-[11px] text-slate-500 dark:text-slate-300 leading-tight">Ver detalhes, tags e telefone</span>
-                          </div>
-                        </button>
+                        {/* Seção 1: NESTA CONVERSA */}
+                        <div className="px-2 py-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                            Nesta Conversa
+                          </span>
+                        </div>
 
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowChatOptionsMenu(false);
-                            setShowHistoryModal(true);
-                          }}
-                          className="w-full px-4 py-2.5 text-left hover:bg-slate-100 dark:hover:bg-slate-800/80 flex items-center gap-3 transition-colors cursor-pointer group"
-                        >
-                          <div className="w-8 h-8 rounded-lg bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 group-hover:bg-blue-500/25 transition-colors">
-                            <History size={16} />
-                          </div>
-                          <div className="flex flex-col min-w-0">
-                            <span className="font-semibold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors">Histórico de Atendimento</span>
-                            <span className="text-[11px] text-slate-500 dark:text-slate-300 leading-tight">Ver eventos e métricas do ticket</span>
-                          </div>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowChatOptionsMenu(false);
-                            handleExportConversation();
-                          }}
-                          className="w-full px-4 py-2.5 text-left hover:bg-slate-100 dark:hover:bg-slate-800/80 flex items-center gap-3 transition-colors cursor-pointer group"
-                        >
-                          <div className="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0 group-hover:bg-emerald-500/25 transition-colors">
-                            <FileDown size={16} />
-                          </div>
-                          <div className="flex flex-col min-w-0">
-                            <span className="font-semibold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-300 transition-colors">Exportar Conversa</span>
-                            <span className="text-[11px] text-slate-500 dark:text-slate-300 leading-tight">Baixar transcrição completa (.txt)</span>
-                          </div>
-                        </button>
-                      </div>
-
-                      <div className="py-1">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowChatOptionsMenu(false);
-                            setShowScheduledDrawer(true);
-                          }}
-                          className="w-full px-4 py-2.5 text-left hover:bg-slate-100 dark:hover:bg-slate-800/80 flex items-center justify-between transition-colors cursor-pointer group"
-                        >
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-8 h-8 rounded-lg bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-600 dark:text-cyan-400 shrink-0 group-hover:bg-cyan-500/25 transition-colors">
-                              <CalendarClock size={16} />
+                        <div className="space-y-0.5">
+                          {/* Pesquisar mensagens */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowChatOptionsMenu(false);
+                              setShowSearchInChat(true);
+                            }}
+                            className={`w-full px-3 py-2 rounded-xl text-left flex items-center justify-between transition-colors cursor-pointer ${
+                              isWhatsApp
+                                ? 'hover:bg-[#182229] text-[#E9EDEF]'
+                                : 'hover:bg-slate-100 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-200'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <Search size={15} className="text-slate-400 shrink-0" />
+                              <span className="font-medium text-xs">Pesquisar mensagens</span>
                             </div>
-                            <div className="flex flex-col min-w-0">
-                              <span className="font-semibold text-slate-900 dark:text-white group-hover:text-cyan-600 dark:group-hover:text-cyan-300 transition-colors">Ver Mensagens Agendadas</span>
-                              <span className="text-[11px] text-slate-500 dark:text-slate-300 leading-tight">Fila de disparos deste contato</span>
+                          </button>
+
+                          {/* Mensagens agendadas */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowChatOptionsMenu(false);
+                              setShowScheduledDrawer(true);
+                            }}
+                            className={`w-full px-3 py-2 rounded-xl text-left flex items-center justify-between transition-colors cursor-pointer ${
+                              isWhatsApp
+                                ? 'hover:bg-[#182229] text-[#E9EDEF]'
+                                : 'hover:bg-slate-100 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-200'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <CalendarClock size={15} className="text-cyan-500 shrink-0" />
+                              <span className="font-medium text-xs">Mensagens agendadas</span>
                             </div>
-                          </div>
-                          {activeChat && (scheduledMessagesByChat[activeChat]?.length || 0) > 0 && (
-                            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-cyan-100 text-cyan-700 dark:bg-cyan-500/25 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-500/40 shrink-0">
-                              {scheduledMessagesByChat[activeChat].length}
+                            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700/60 min-w-[18px] text-center">
+                              {activeChat && scheduledMessagesByChat[activeChat]?.length ? scheduledMessagesByChat[activeChat].length : 0}
                             </span>
+                          </button>
+
+                          {/* Notas internas */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowChatOptionsMenu(false);
+                              setIsInternalMode(prev => !prev);
+                              setTimeout(() => {
+                                textareaRef.current?.focus();
+                              }, 100);
+                              toast.success(!isInternalMode ? "Modo Nota Interna ativado!" : "Modo WhatsApp ativado!");
+                            }}
+                            className={`w-full px-3 py-2 rounded-xl text-left flex items-center justify-between transition-colors cursor-pointer ${
+                              isWhatsApp
+                                ? 'hover:bg-[#182229] text-[#E9EDEF]'
+                                : 'hover:bg-slate-100 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-200'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <FileText size={15} className="text-yellow-500 shrink-0" />
+                              <span className="font-medium text-xs">Notas internas</span>
+                            </div>
+                            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700/60 min-w-[18px] text-center">
+                              {messages.filter(m => m.isInternal).length}
+                            </span>
+                          </button>
+
+                          {/* Mídia, links e docs */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowChatOptionsMenu(false);
+                              setShowContactInfo(true);
+                            }}
+                            className={`w-full px-3 py-2 rounded-xl text-left flex items-center justify-between transition-colors cursor-pointer ${
+                              isWhatsApp
+                                ? 'hover:bg-[#182229] text-[#E9EDEF]'
+                                : 'hover:bg-slate-100 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-200'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <ImageIcon size={15} className="text-blue-500 shrink-0" />
+                              <span className="font-medium text-xs">Mídia, links e docs</span>
+                            </div>
+                          </button>
+
+                          {/* Mensagens favoritas */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowChatOptionsMenu(false);
+                              toast("Nenhuma mensagem favoritada nesta conversa.");
+                            }}
+                            className={`w-full px-3 py-2 rounded-xl text-left flex items-center justify-between transition-colors cursor-pointer ${
+                              isWhatsApp
+                                ? 'hover:bg-[#182229] text-[#E9EDEF]'
+                                : 'hover:bg-slate-100 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-200'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <Star size={15} className="text-amber-400 shrink-0" />
+                              <span className="font-medium text-xs">Mensagens favoritas</span>
+                            </div>
+                            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700/60 min-w-[18px] text-center">
+                              0
+                            </span>
+                          </button>
+
+                          {/* Devolver IA (se disponível) */}
+                          {(activeContactData.status === 'human_takeover' || activeContactData.status === 'open' || activeContactData.status === 'in_progress') && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowChatOptionsMenu(false);
+                                handleReturnToBot();
+                              }}
+                              disabled={isReturningToBot}
+                              className={`w-full px-3 py-2 rounded-xl text-left flex items-center justify-between transition-colors cursor-pointer ${
+                                isWhatsApp
+                                  ? 'hover:bg-[#182229] text-purple-300'
+                                  : 'hover:bg-purple-50 dark:hover:bg-purple-950/40 text-purple-600 dark:text-purple-300'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <Bot size={15} className="text-purple-400 shrink-0" />
+                                <span className="font-medium text-xs">{isReturningToBot ? 'Devolvendo...' : 'Devolver para a IA'}</span>
+                              </div>
+                            </button>
                           )}
-                        </button>
+                        </div>
 
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowChatOptionsMenu(false);
-                            setShowScheduleModal(true);
-                          }}
-                          className="w-full px-4 py-2.5 text-left hover:bg-slate-100 dark:hover:bg-slate-800/80 flex items-center gap-3 transition-colors cursor-pointer group"
-                        >
-                          <div className="w-8 h-8 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0 group-hover:bg-amber-500/25 transition-colors">
-                            <Calendar size={16} />
+                        {/* Divisor */}
+                        <div className="my-1.5 border-t border-slate-100 dark:border-slate-800/80" />
+
+                        {/* Seção 2: HISTÓRICO E MAIS */}
+                        <div className="px-2 py-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                            Histórico e Mais
+                          </span>
+                        </div>
+
+                        <div className="space-y-0.5">
+                          {/* Histórico de atendimentos */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowChatOptionsMenu(false);
+                              setShowHistoryModal(true);
+                            }}
+                            className={`w-full px-3 py-2 rounded-xl text-left flex items-center justify-between transition-colors cursor-pointer ${
+                              isWhatsApp
+                                ? 'hover:bg-[#182229] text-[#E9EDEF]'
+                                : 'hover:bg-slate-100 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-200'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <History size={15} className="text-slate-400 shrink-0" />
+                              <span className="font-medium text-xs">Histórico de atendimentos</span>
+                            </div>
+                            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700/60 min-w-[18px] text-center">
+                              1
+                            </span>
+                          </button>
+
+                          {/* Funil do CRM (com sub-menu de estágios integrado) */}
+                          <div className="rounded-xl overflow-hidden">
+                            <button
+                              type="button"
+                              onClick={() => setShowCrmSubmenu(prev => !prev)}
+                              className={`w-full px-3 py-2 rounded-xl text-left flex items-center justify-between transition-colors cursor-pointer ${
+                                isWhatsApp
+                                  ? 'hover:bg-[#182229] text-[#E9EDEF]'
+                                  : 'hover:bg-slate-100 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-200'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <Workflow size={15} className="text-blue-500 shrink-0" />
+                                <span className="font-medium text-xs">Funil do CRM</span>
+                              </div>
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 max-w-[100px] truncate">
+                                  {currentStageObj ? currentStageObj.title : 'Selecionar'}
+                                </span>
+                                <ChevronRight size={13} className={`text-slate-400 transition-transform ${showCrmSubmenu ? 'rotate-90' : ''}`} />
+                              </div>
+                            </button>
+
+                            {/* Submenu com lista de estágios do CRM */}
+                            {showCrmSubmenu && (
+                              <div className="pl-4 pr-1 py-1 space-y-0.5 border-l-2 border-blue-500/30 ml-3.5 my-1 bg-slate-50/50 dark:bg-slate-900/40 rounded-r-xl">
+                                {crmStages.map((stage) => {
+                                  const isCurrent = currentDealStage === stage.id;
+                                  return (
+                                    <button
+                                      key={stage.id}
+                                      type="button"
+                                      disabled={isMovingStage}
+                                      onClick={() => {
+                                        handleMoveContactToStage(stage.id, stage.title);
+                                        setShowCrmSubmenu(false);
+                                        setShowChatOptionsMenu(false);
+                                      }}
+                                      className={`w-full px-2.5 py-1.5 rounded-lg flex items-center justify-between text-left transition-all cursor-pointer ${
+                                        isCurrent
+                                          ? 'bg-blue-50 text-blue-700 dark:bg-blue-600/20 dark:text-white font-bold'
+                                          : 'hover:bg-slate-100 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-300'
+                                      }`}
+                                    >
+                                      <div className="flex items-center gap-2 min-w-0">
+                                        <span className={`w-2 h-2 rounded-full shrink-0 ${stage.dotColor || 'bg-blue-400'}`} />
+                                        <span className="truncate text-[11px]">{stage.title}</span>
+                                      </div>
+                                      {isCurrent && <Check size={12} className="text-blue-600 dark:text-blue-400 shrink-0 ml-1.5" />}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
                           </div>
-                          <div className="flex flex-col min-w-0">
-                            <span className="font-semibold text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-300 transition-colors">Agendar Nova Mensagem</span>
-                            <span className="text-[11px] text-slate-500 dark:text-slate-300 leading-tight">Programar envio de data e hora</span>
-                          </div>
-                        </button>
+
+                          {/* Exportar conversa */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowChatOptionsMenu(false);
+                              handleExportConversation();
+                            }}
+                            className={`w-full px-3 py-2 rounded-xl text-left flex items-center justify-between transition-colors cursor-pointer ${
+                              isWhatsApp
+                                ? 'hover:bg-[#182229] text-[#E9EDEF]'
+                                : 'hover:bg-slate-100 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-200'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <FileDown size={15} className="text-emerald-500 shrink-0" />
+                              <span className="font-medium text-xs">Exportar conversa</span>
+                            </div>
+                          </button>
+
+                          {/* Dados do contato */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowChatOptionsMenu(false);
+                              setShowContactInfo(true);
+                            }}
+                            className={`w-full px-3 py-2 rounded-xl text-left flex items-center justify-between transition-colors cursor-pointer ${
+                              isWhatsApp
+                                ? 'hover:bg-[#182229] text-[#E9EDEF]'
+                                : 'hover:bg-slate-100 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-200'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <PanelRight size={15} className="text-blue-500 shrink-0" />
+                              <span className="font-medium text-xs">Dados do contato</span>
+                            </div>
+                          </button>
+
+                          {/* Apagar conversa */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowChatOptionsMenu(false);
+                              setShowDeleteConvModal(true);
+                            }}
+                            className={`w-full px-3 py-2 rounded-xl text-left flex items-center justify-between transition-colors cursor-pointer ${
+                              isWhatsApp
+                                ? 'hover:bg-[#182229] text-rose-400'
+                                : 'hover:bg-rose-50 dark:hover:bg-rose-950/30 text-rose-600 dark:text-rose-400'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <Trash2 size={15} className="text-rose-500 shrink-0" />
+                              <span className="font-semibold text-xs">Apagar conversa</span>
+                            </div>
+                          </button>
+                        </div>
                       </div>
+                    </>
+                  )}
+                </div>
 
-                      <div className="py-1">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowChatOptionsMenu(false);
-                            setIsInternalMode(prev => !prev);
-                            setTimeout(() => {
-                              textareaRef.current?.focus();
-                            }, 100);
-                            toast.success(!isInternalMode ? "Modo Nota Interna ativado!" : "Modo WhatsApp ativado!");
-                          }}
-                          className="w-full px-4 py-2.5 text-left hover:bg-slate-100 dark:hover:bg-slate-800/80 flex items-center gap-3 transition-colors cursor-pointer group"
-                        >
-                          <div className="w-8 h-8 rounded-lg bg-yellow-500/15 border border-yellow-500/30 flex items-center justify-center text-yellow-600 dark:text-yellow-400 shrink-0 group-hover:bg-yellow-500/25 transition-colors">
-                            <Lock size={16} />
-                          </div>
-                          <div className="flex flex-col min-w-0">
-                            <span className="font-semibold text-slate-900 dark:text-white group-hover:text-yellow-600 dark:group-hover:text-yellow-300 transition-colors">
-                              {isInternalMode ? "Desativar Nota Interna" : "Nota Interna (Equipe)"}
-                            </span>
-                            <span className="text-[11px] text-slate-500 dark:text-slate-300 leading-tight">Anotação privada invisível ao cliente</span>
-                          </div>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowChatOptionsMenu(false);
-                            handleCopyText(activeChat || '', 'chatId');
-                            toast.success("ID do atendimento copiado!");
-                          }}
-                          className="w-full px-4 py-2.5 text-left hover:bg-slate-100 dark:hover:bg-slate-800/80 flex items-center gap-3 transition-colors cursor-pointer group"
-                        >
-                          <div className="w-8 h-8 rounded-lg bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-600 dark:text-purple-400 shrink-0 group-hover:bg-purple-500/25 transition-colors">
-                            <Copy size={16} />
-                          </div>
-                          <div className="flex flex-col min-w-0">
-                            <span className="font-semibold text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors">
-                              {copiedField === 'chatId' ? 'ID Copiado!' : 'Copiar ID do Atendimento'}
-                            </span>
-                            <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate max-w-[190px]">
-                              {activeChat || '---'}
-                            </span>
-                          </div>
-                        </button>
-                      </div>
-
-                      <div className="py-1">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowChatOptionsMenu(false);
-                            setShowDeleteConvModal(true);
-                          }}
-                          className="w-full px-4 py-2.5 text-left hover:bg-rose-50 dark:hover:bg-rose-500/15 flex items-center gap-3 transition-colors cursor-pointer group text-rose-600 dark:text-rose-400"
-                        >
-                          <div className="w-8 h-8 rounded-lg bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-600 dark:text-rose-400 shrink-0 group-hover:bg-rose-500/25 transition-colors">
-                            <Trash2 size={16} />
-                          </div>
-                          <div className="flex flex-col min-w-0">
-                            <span className="font-semibold text-rose-600 dark:text-rose-400 group-hover:text-rose-700 dark:group-hover:text-rose-300 transition-colors">
-                              Apagar Conversa
-                            </span>
-                            <span className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
-                              Limpar histórico e excluir mensagens
-                            </span>
-                          </div>
-                        </button>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-
-                {/* Ícone 3: Dados do Contato (WhatsApp Web - desktop/tablet) */}
+                {/* Ícone Lateral: Dados do Contato (Desktop/Tablet) */}
                 <button
                   type="button"
                   onClick={() => setShowContactInfo(prev => !prev)}
-                  className={`hidden md:flex p-2 rounded-full transition-colors cursor-pointer shrink-0 ${
+                  className={`hidden md:flex p-1.5 sm:p-2 rounded-full transition-colors cursor-pointer shrink-0 ${
                     showContactInfo 
                       ? 'bg-blue-50 text-blue-600 dark:bg-slate-800 dark:text-blue-400' 
                       : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/60'
