@@ -203,6 +203,19 @@ function InboxContent() {
   const [taggingContactId, setTaggingContactId] = useState<string | null>(null);
   const [customTagInput, setCustomTagInput] = useState('');
   const [activeFilterTab, setActiveFilterTab] = useState<'all' | 'unread' | 'waiting' | 'mine' | 'resolved'>('all');
+
+  const currentUser = useMemo(() => {
+    try {
+      const userStr = localStorage.getItem('versus_user');
+      if (userStr) {
+        return JSON.parse(userStr);
+      }
+    } catch (e) {}
+    return null;
+  }, []);
+
+  const currentUserId = currentUser?.id || '';
+  const currentUserRole = currentUser?.role || 'AGENT';
   const [showSearchInChat, setShowSearchInChat] = useState(false);
   const [chatSearchQuery, setChatSearchQuery] = useState('');
   const [showContactInfo, setShowContactInfo] = useState(false);
@@ -1685,43 +1698,18 @@ function InboxContent() {
           if (prev.some(m => m.id === data.id)) return prev;
           return [...prev, data];
         });
-      } else if (!activeChat) {
-        setActiveChat(data.conversationId);
-        setMessages([data]);
       }
+
+      // Atualiza os contadores das abas em tempo real
+      refetchCounts();
 
       // Atualiza a lista lateral
       setContacts((prev) => {
         const idx = prev.findIndex(c => c.id === data.conversationId);
         
         if (idx === -1) {
-          // É uma conversa nova! Como não temos os dados do contato no payload da mensagem,
-          // recarregamos a lista do servidor silenciosamente.
-          api.get('/conversations').then((res) => {
-            const mapped = res.data.map((conv: any) => {
-              const lastMsgObj = conv.messages && conv.messages.length > 0 ? conv.messages[0] : null;
-              const lastMsg = lastMsgObj ? lastMsgObj.content : 'Nova conversa';
-              const existing = prev.find((p: any) => p.id === conv.id);
-              const rawAvatar = conv.contact?.avatarUrl;
-              const cleanAvatar = sanitizeAvatarUrl(rawAvatar);
-              return {
-                id: conv.id,
-                contactId: conv.contact?.id || '',
-                name: formatContactDisplayName(conv.contact?.name, conv.contact?.phone),
-                phone: conv.contact?.phone || '',
-                email: conv.contact?.email || '',
-                avatarUrl: cleanAvatar,
-                lastMsg: lastMsg,
-                time: formatCardTimestamp(lastMsgObj?.createdAt || conv.updatedAt),
-                isAi: conv.status === 'bot_active',
-                unread: conv.id === data.conversationId ? 1 : (existing?.unread || 0),
-                hasNewMessage: conv.id === data.conversationId ? true : (existing?.hasNewMessage || false),
-                status: conv.status,
-                assignedTo: conv.assignedTo
-              };
-            });
-            setContacts(mapped);
-          });
+          // Sincroniza via React Query respeitando a aba e filtros atuais
+          refetchConversations();
           return prev;
         }
         
@@ -1782,43 +1770,9 @@ function InboxContent() {
         })
       );
 
-      // Recarrega a lista silenciosamente mantendo unread
-      const deptQuery = selectedDepartmentFilter && selectedDepartmentFilter !== 'all' ? `&departmentId=${selectedDepartmentFilter}` : '';
-      api.get(`/conversations?tab=${queryTab}${deptQuery}`).then((res) => {
-        const mapped = res.data.map((conv: any) => {
-          const lastMessageObj = conv.messages && conv.messages.length > 0 ? conv.messages[0] : null;
-          const lastMsg = lastMessageObj ? lastMessageObj.content : 'Nova conversa';
-          const rawAvatar = conv.contact?.avatarUrl;
-          const cleanAvatar = sanitizeAvatarUrl(rawAvatar);
-          return {
-            id: conv.id,
-            contactId: conv.contact?.id || '',
-            name: formatContactDisplayName(conv.contact?.name, conv.contact?.phone),
-            phone: conv.contact?.phone || '',
-            email: conv.contact?.email || '',
-            avatarUrl: cleanAvatar,
-            tags: conv.contact?.tags || [],
-            lastMsg: lastMsg,
-            lastMessage: lastMsg,
-            lastMessageType: lastMessageObj?.type || 'text',
-            lastMessageDirection: lastMessageObj?.direction || null,
-            time: formatCardTimestamp(lastMessageObj?.createdAt || conv.updatedAt),
-            isAi: conv.status === 'bot_active',
-            status: conv.status,
-            assignedTo: conv.assignedTo,
-            assignedUser: conv.assignedUser,
-            departmentId: conv.departmentId,
-            department: conv.department
-          };
-        });
-        
-        setContacts((prev) => {
-           return mapped.map((newC: any) => {
-              const old = prev.find(p => p.id === newC.id);
-              return { ...newC, unread: old?.unread || 0, hasNewMessage: old?.hasNewMessage || false };
-           });
-        });
-      }).catch(() => {});
+      // Revalida a lista e os contadores de forma consistente
+      refetchConversations();
+      refetchCounts();
     };
 
     const handleConversationTransferred = (transferData: any) => {
@@ -2380,7 +2334,7 @@ function InboxContent() {
       const chat = contacts.find(c => c.id === current);
       if (!chat) return null;
       if (newTab === 'waiting' && chat.status !== 'waiting' && chat.status !== 'bot_active') return null;
-      if (newTab === 'mine' && chat.status !== 'open' && chat.status !== 'human_takeover') return null;
+      if (newTab === 'mine' && chat.status !== 'open' && chat.status !== 'human_takeover' && chat.status !== 'in_progress') return null;
       if (newTab === 'resolved' && chat.status !== 'resolved' && chat.status !== 'closed') return null;
       return current;
     });
@@ -2388,10 +2342,19 @@ function InboxContent() {
 
   // Filtro de busca e abas sobre os contatos da lista (Padrão WhatsApp Web - Otimizado com useMemo)
   const filteredContacts = useMemo(() => {
+    const isMaster = currentUserRole === 'ADMIN' || currentUserRole === 'SUPER_ADMIN';
+
     return contacts.filter(c => {
       if (activeFilterTab === 'unread' && !((c.unread || 0) > 0 || c.hasNewMessage)) return false;
       if (activeFilterTab === 'waiting' && !(c.status === 'waiting' || c.status === 'bot_active' || (!c.assignedTo && c.status !== 'resolved' && c.status !== 'closed'))) return false;
-      if (activeFilterTab === 'mine' && !(c.status === 'open' || c.status === 'human_takeover' || c.status === 'in_progress' || !!c.assignedTo)) return false;
+      if (activeFilterTab === 'mine') {
+        const isAssignedToMe = currentUserId ? c.assignedTo === currentUserId : true;
+        if (!isMaster) {
+          if (!isAssignedToMe) return false;
+        } else {
+          if (!(isAssignedToMe || c.status === 'open' || c.status === 'human_takeover' || c.status === 'in_progress' || !!c.assignedTo)) return false;
+        }
+      }
       if (activeFilterTab === 'resolved' && !(c.status === 'resolved' || c.status === 'closed')) return false;
       if (onlyUnread && !((c.unread || 0) > 0 || c.hasNewMessage)) return false;
       if (selectedDepartmentFilter && selectedDepartmentFilter !== 'all') {
@@ -2406,7 +2369,7 @@ function InboxContent() {
         (c.lastMsg && c.lastMsg.toLowerCase().includes(q))
       );
     });
-  }, [contacts, activeFilterTab, onlyUnread, selectedDepartmentFilter, searchQuery]);
+  }, [contacts, activeFilterTab, onlyUnread, selectedDepartmentFilter, searchQuery, currentUserId, currentUserRole]);
 
   // Paginação progressiva virtualizada da lista (limite inicial de 40 para garantir 60 FPS)
   const [displayLimit, setDisplayLimit] = useState(40);
@@ -2422,7 +2385,12 @@ function InboxContent() {
   // Calcular total de contatos com mensagens não lidas e contadores de abas
   const unreadCount = contacts.filter(c => (c.unread || 0) > 0 || c.hasNewMessage).length;
   const waitingCount = tabCounts?.waiting ?? contacts.filter(c => c.status === 'waiting' || c.status === 'bot_active' || (!c.assignedTo && c.status !== 'resolved' && c.status !== 'closed')).length;
-  const mineCount = tabCounts?.mine ?? contacts.filter(c => c.status === 'open' || c.status === 'human_takeover' || c.status === 'in_progress' || !!c.assignedTo).length;
+  const mineCount = tabCounts?.mine ?? contacts.filter(c => {
+    const isMaster = currentUserRole === 'ADMIN' || currentUserRole === 'SUPER_ADMIN';
+    const isAssignedToMe = currentUserId ? c.assignedTo === currentUserId : true;
+    if (!isMaster) return isAssignedToMe;
+    return isAssignedToMe || c.status === 'open' || c.status === 'human_takeover' || c.status === 'in_progress' || !!c.assignedTo;
+  }).length;
   const resolvedCount = tabCounts?.resolved ?? contacts.filter(c => c.status === 'resolved' || c.status === 'closed').length;
 
   const isResolved = activeContactData?.status === 'resolved' || activeContactData?.status === 'closed';
@@ -4055,17 +4023,24 @@ function InboxContent() {
             {/* Chat Messages (Padrão Estrutural WhatsApp com Ticks Inline e Balões Corporativos) */}
             <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-2.5 z-10 scrollbar-thin">
               {messages.length === 0 ? (
-                <div className="flex-1 flex flex-col items-center justify-center text-slate-500 gap-2">
-                  <Bot size={40} className="text-slate-600" />
+                <div className="flex-1 flex flex-col items-center justify-center text-slate-500 gap-2 p-6 text-center">
                   {isResolved ? (
                     <>
+                      <div className="w-12 h-12 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center mb-1">
+                        <CheckCircle2 size={24} />
+                      </div>
                       <p className="text-sm font-semibold text-slate-300">Atendimento Finalizado</p>
-                      <p className="text-xs text-slate-500">O cliente pode reabrir o ticket enviando uma nova mensagem.</p>
+                      <p className="text-xs text-slate-500 max-w-sm">O cliente pode reabrir o ticket enviando uma nova mensagem.</p>
                     </>
                   ) : (
                     <>
-                      <p className="text-sm font-semibold text-slate-300">Aguardando mensagens ao vivo...</p>
-                      <p className="text-xs text-slate-500">Rode o script de simulação no backend!</p>
+                      <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center mb-1 border border-emerald-500/20">
+                        <MessageSquarePlus size={24} />
+                      </div>
+                      <p className="text-sm font-semibold text-slate-200">Conversa Pronta para Atendimento</p>
+                      <p className="text-xs text-slate-400 max-w-sm leading-relaxed">
+                        Nenhuma mensagem trocada ainda. Digite uma mensagem abaixo para iniciar o contato com o cliente via WhatsApp.
+                      </p>
                     </>
                   )}
                 </div>

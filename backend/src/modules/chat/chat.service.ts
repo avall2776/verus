@@ -48,7 +48,10 @@ export class ChatService {
           where.departmentId = { in: allowedDeptIds.length > 0 ? allowedDeptIds : ['__NONE__'] };
         }
       } else {
-        where.departmentId = { in: allowedDeptIds.length > 0 ? allowedDeptIds : ['__NONE__'] };
+        where.OR = [
+          { departmentId: { in: allowedDeptIds.length > 0 ? allowedDeptIds : ['__NONE__'] } },
+          { departmentId: null }
+        ];
       }
     } else {
       if (departmentId && departmentId !== 'all') {
@@ -251,7 +254,13 @@ export class ChatService {
           whereClause.departmentId = { in: allowedDeptIds.length > 0 ? allowedDeptIds : ['__NONE__'] };
         }
       } else {
-        whereClause.departmentId = { in: allowedDeptIds.length > 0 ? allowedDeptIds : ['__NONE__'] };
+        // Sem filtro específico: inclui os setores permitidos e também conversas ainda sem setor (fila geral)
+        if (tab !== 'mine') {
+          whereClause.OR = [
+            { departmentId: { in: allowedDeptIds.length > 0 ? allowedDeptIds : ['__NONE__'] } },
+            { departmentId: null }
+          ];
+        }
       }
     } else {
       if (departmentId && departmentId !== 'all') {
@@ -267,6 +276,11 @@ export class ChatService {
       whereClause.status = { in: ['open', 'human_takeover', 'in_progress'] };
       if (!isMaster) {
         whereClause.assignedTo = userId;
+        // Na aba "Meus", a conversa atribuída ao operador sempre aparece para ele
+        if (!departmentId || departmentId === 'all') {
+          delete whereClause.departmentId;
+          delete whereClause.OR;
+        }
       }
     } else {
       // tab === 'waiting' (Fila de espera compartilhada da região do operador)
