@@ -719,6 +719,38 @@ function InboxContent() {
     return getContactDisplayName(name, phone, getLoggedInUserName());
   };
 
+  const formatCardTimestamp = (rawDate?: string | Date | null) => {
+    if (!rawDate) return '';
+    try {
+      const d = new Date(rawDate);
+      if (isNaN(d.getTime())) return '';
+      
+      const now = new Date();
+      const isToday = d.toDateString() === now.toDateString();
+      if (isToday) {
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      }
+
+      const yesterday = new Date(now);
+      yesterday.setDate(now.getDate() - 1);
+      const isYesterday = d.toDateString() === yesterday.toDateString();
+      if (isYesterday) {
+        return 'Ontem';
+      }
+
+      const diffMs = now.getTime() - d.getTime();
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      if (diffDays < 7 && diffDays > 0) {
+        const weekday = d.toLocaleDateString('pt-BR', { weekday: 'short' });
+        return weekday.charAt(0).toUpperCase() + weekday.slice(1).replace('.', '');
+      }
+
+      return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+    } catch {
+      return '';
+    }
+  };
+
   const getContactInitials = (name?: string | null, phone?: string | null) => {
     const displayName = getContactDisplayName(name, phone, getLoggedInUserName());
     if (!displayName || displayName === 'Cliente WhatsApp') {
@@ -1299,7 +1331,7 @@ function InboxContent() {
           lastMessage: lastMsg,
           lastMessageType: lastMessageObj?.type || 'text',
           lastMessageDirection: lastMessageObj?.direction || null,
-          time: new Date(conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          time: formatCardTimestamp(lastMessageObj?.createdAt || conv.updatedAt),
           updatedAt: conv.updatedAt,
           isAi: conv.status === 'bot_active',
           unread: 0,
@@ -1407,7 +1439,7 @@ function InboxContent() {
           lastMessage: lastMsg,
           lastMessageType: lastMessageObj?.type || 'text',
           lastMessageDirection: lastMessageObj?.direction || null,
-          time: new Date(conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          time: formatCardTimestamp(lastMessageObj?.createdAt || conv.updatedAt),
           updatedAt: conv.updatedAt,
           isAi: conv.status === 'bot_active',
           unread: 0,
@@ -1597,7 +1629,8 @@ function InboxContent() {
           // recarregamos a lista do servidor silenciosamente.
           api.get('/conversations').then((res) => {
             const mapped = res.data.map((conv: any) => {
-              const lastMsg = conv.messages && conv.messages.length > 0 ? conv.messages[0].content : 'Nova conversa';
+              const lastMsgObj = conv.messages && conv.messages.length > 0 ? conv.messages[0] : null;
+              const lastMsg = lastMsgObj ? lastMsgObj.content : 'Nova conversa';
               const existing = prev.find((p: any) => p.id === conv.id);
               const rawAvatar = conv.contact?.avatarUrl;
               const cleanAvatar = sanitizeAvatarUrl(rawAvatar);
@@ -1609,7 +1642,7 @@ function InboxContent() {
                 email: conv.contact?.email || '',
                 avatarUrl: cleanAvatar,
                 lastMsg: lastMsg,
-                time: new Date(conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                time: formatCardTimestamp(lastMsgObj?.createdAt || conv.updatedAt),
                 isAi: conv.status === 'bot_active',
                 unread: conv.id === data.conversationId ? 1 : (existing?.unread || 0),
                 hasNewMessage: conv.id === data.conversationId ? true : (existing?.hasNewMessage || false),
@@ -1625,7 +1658,7 @@ function InboxContent() {
         const updatedContacts = [...prev];
         const contact = updatedContacts.splice(idx, 1)[0];
         contact.lastMsg = data.content;
-        contact.time = new Date(data.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        contact.time = formatCardTimestamp(data.createdAt || Date.now());
         
         if (data.contact) {
           const sanitizedNewAvatar = sanitizeAvatarUrl(data.contact.avatarUrl);
@@ -1699,7 +1732,7 @@ function InboxContent() {
             lastMessage: lastMsg,
             lastMessageType: lastMessageObj?.type || 'text',
             lastMessageDirection: lastMessageObj?.direction || null,
-            time: new Date(conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            time: formatCardTimestamp(lastMessageObj?.createdAt || conv.updatedAt),
             isAi: conv.status === 'bot_active',
             status: conv.status,
             assignedTo: conv.assignedTo,
