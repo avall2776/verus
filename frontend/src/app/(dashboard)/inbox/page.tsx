@@ -11,10 +11,11 @@ import {
   Smile, Bold, Italic, Strikethrough, Code, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Trash2, Play, Pause,
   Volume2, Check, CheckCheck, Copy, ExternalLink, Headphones, Download, ZoomIn, Maximize2,
   BellOff, History, UserPlus, FileDown, MessageSquarePlus, PanelRight, Info, Pin,
-  Clock, AlertCircle, Workflow, Pencil, ShoppingBag, MapPin, Video, ArrowLeft, Reply, Users, Star
+  Clock, AlertCircle, Workflow, Pencil, ShoppingBag, MapPin, Video, ArrowLeft, Reply, Users, Star, Menu
 } from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
 import { useWhatsApp } from "@/components/ui/WhatsAppProvider";
+import { useMobileMenu } from "@/contexts/MobileMenuContext";
 import { useQuery } from "@tanstack/react-query";
 import api, { getEffectiveTenantContext } from "@/lib/api";
 import toast from "react-hot-toast";
@@ -84,6 +85,7 @@ function getWhatsAppDateLabel(dateInput?: string | number | Date): string {
 
 function InboxContent() {
   const { isWhatsApp } = useTheme();
+  const { toggleMenu } = useMobileMenu();
   const router = useRouter();
   const searchParams = useSearchParams();
   const contactIdParam = searchParams.get('contactId');
@@ -2470,7 +2472,17 @@ function InboxContent() {
             const totalActiveViews = activeLineStories.reduce((acc, s) => acc + (Number(s.viewsCount) || 0), 0);
 
             return (
-              <div className="flex items-center gap-2.5 min-w-0">
+              <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                {/* Botão de Menu para Mobile (quando Topbar está oculta para tela cheia) */}
+                <button
+                  type="button"
+                  onClick={toggleMenu}
+                  className="md:hidden p-1.5 -ml-1 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
+                  title="Abrir menu de navegação"
+                >
+                  <Menu size={18} />
+                </button>
+
                 {/* Foto de Perfil Circular da Instância (Linha Principal) - Clicar abre o Story igual no WhatsApp */}
                 <div
                   onClick={(e) => {
@@ -3404,41 +3416,45 @@ function InboxContent() {
                 </button>
 
                 <div 
-                  className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 cursor-pointer group overflow-hidden"
+                  className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 cursor-pointer group"
                   onClick={() => setShowContactInfo(prev => !prev)}
                   title="Clique para ver dados do contato"
                 >
-                  {/* Avatar WhatsApp com indicador de status e anel da cor da região (exclusivo do Inbox) */}
+                  {/* Avatar WhatsApp com indicador de status e anel da cor da região (respeita proporção e dimensão exata) */}
                   <div 
-                    className="relative shrink-0 p-0.5 rounded-full transition-all"
-                    style={activeContactData.department?.color ? {
-                      boxShadow: `0 0 0 2.5px ${activeContactData.department.color}`,
-                    } : undefined}
+                    className="relative shrink-0 flex items-center justify-center my-auto"
                     title={activeContactData.department?.name ? `Setor / Região: ${activeContactData.department.name}` : undefined}
                   >
-                    <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full ${isWhatsApp ? 'bg-[#2A3942] border-[#222D34]' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700/60'} border flex items-center justify-center text-slate-700 dark:text-white font-bold shrink-0 relative overflow-hidden shadow-inner text-xs sm:text-sm`}>
-                      {(() => {
-                        const isSelfOrMainLine = activeContactData.name?.includes('(você)') || (activeContactData.phone && activeInstance?.phoneNumber && activeContactData.phone.replace(/\D/g, '') === activeInstance.phoneNumber.replace(/\D/g, ''));
-                        const rawContactPhoto = activeContactData.avatarUrl || (isSelfOrMainLine ? (activeInstance?.profilePicUrl || waStatus?.profilePicUrl) : null);
-                        const contactPhoto = sanitizeAvatarUrl(rawContactPhoto);
+                    <div 
+                      className="w-10 h-10 sm:w-11 sm:h-11 rounded-full p-[2.5px] transition-all flex items-center justify-center shrink-0 aspect-square"
+                      style={{
+                        backgroundColor: activeContactData.department?.color ? activeContactData.department.color : 'transparent',
+                      }}
+                    >
+                      <div className={`w-full h-full rounded-full ${isWhatsApp ? 'bg-[#2A3942]' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700/60'} border flex items-center justify-center text-slate-700 dark:text-white font-bold shrink-0 relative overflow-hidden shadow-inner text-xs sm:text-sm aspect-square`}>
+                        {(() => {
+                          const isSelfOrMainLine = activeContactData.name?.includes('(você)') || (activeContactData.phone && activeInstance?.phoneNumber && activeContactData.phone.replace(/\D/g, '') === activeInstance.phoneNumber.replace(/\D/g, ''));
+                          const rawContactPhoto = activeContactData.avatarUrl || (isSelfOrMainLine ? (activeInstance?.profilePicUrl || waStatus?.profilePicUrl) : null);
+                          const contactPhoto = sanitizeAvatarUrl(rawContactPhoto);
 
-                        return contactPhoto ? (
-                          <img 
-                            src={contactPhoto} 
-                            alt={activeContactData.name} 
-                            referrerPolicy="no-referrer"
-                            className="w-full h-full object-cover rounded-full"
-                            onError={(e) => {
-                              (e.currentTarget as HTMLElement).style.display = 'none';
-                              const fallback = e.currentTarget.parentElement?.querySelector('.avatar-initials') as HTMLElement;
-                              if (fallback) fallback.classList.remove('hidden');
-                            }}
-                          />
-                        ) : null;
-                      })()}
-                      <span className={`avatar-initials ${activeContactData.avatarUrl ? "hidden" : ""}`}>
-                        {getContactInitials(activeContactData.name, activeContactData.phone)}
-                      </span>
+                          return contactPhoto ? (
+                            <img 
+                              src={contactPhoto} 
+                              alt={activeContactData.name} 
+                              referrerPolicy="no-referrer"
+                              className="w-full h-full object-cover rounded-full block aspect-square"
+                              onError={(e) => {
+                                (e.currentTarget as HTMLElement).style.display = 'none';
+                                const fallback = e.currentTarget.parentElement?.querySelector('.avatar-initials') as HTMLElement;
+                                if (fallback) fallback.classList.remove('hidden');
+                              }}
+                            />
+                          ) : null;
+                        })()}
+                        <span className={`avatar-initials ${activeContactData.avatarUrl ? "hidden" : ""} text-xs sm:text-sm font-bold`}>
+                          {getContactInitials(activeContactData.name, activeContactData.phone)}
+                        </span>
+                      </div>
                     </div>
                     {/* Status Indicator */}
                     <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-500 border-2 ${isWhatsApp ? 'border-[#202C33]' : 'border-white dark:border-[#0B1224]'}`} />
