@@ -118,6 +118,67 @@ function InboxContent() {
   const [aiAgentName, setAiAgentName] = useState<string>('Sofia');
   const { socket, isConnected, clearGlobalUnread } = useSocket();
 
+  // Redimensionamento lateral do painel esquerdo (Estilo Lero / Vallor)
+  const DEFAULT_SIDEBAR_WIDTH = 380;
+  const MIN_SIDEBAR_WIDTH = 280;
+  const MAX_SIDEBAR_WIDTH = 750;
+
+  const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('versus_inbox_sidebar_width');
+        if (saved) {
+          const parsed = parseInt(saved, 10);
+          if (!isNaN(parsed) && parsed >= MIN_SIDEBAR_WIDTH && parsed <= MAX_SIDEBAR_WIDTH) {
+            return parsed;
+          }
+        }
+      } catch (e) {}
+    }
+    return DEFAULT_SIDEBAR_WIDTH;
+  });
+  const [isResizingSidebar, setIsResizingSidebar] = useState(false);
+  const [showResizeTooltip, setShowResizeTooltip] = useState(false);
+  const sidebarWidthRef = useRef(sidebarWidth);
+  sidebarWidthRef.current = sidebarWidth;
+
+  const handleMouseDownResize = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizingSidebar(true);
+
+    const startX = e.clientX;
+    const startWidth = sidebarWidthRef.current;
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      const delta = moveEvent.clientX - startX;
+      const newWidth = Math.min(Math.max(startWidth + delta, MIN_SIDEBAR_WIDTH), MAX_SIDEBAR_WIDTH);
+      setSidebarWidth(newWidth);
+    };
+
+    const onMouseUp = () => {
+      setIsResizingSidebar(false);
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      try {
+        localStorage.setItem('versus_inbox_sidebar_width', sidebarWidthRef.current.toString());
+      } catch (err) {}
+    };
+
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  };
+
+  const handleDoubleClickResize = () => {
+    setSidebarWidth(DEFAULT_SIDEBAR_WIDTH);
+    try {
+      localStorage.setItem('versus_inbox_sidebar_width', DEFAULT_SIDEBAR_WIDTH.toString());
+    } catch (e) {}
+  };
+
   // Carrega dinamicamente departamentos e nome da IA configurado para este Tenant
   useEffect(() => {
     api.get('/departments').then((res) => {
@@ -2386,8 +2447,15 @@ function InboxContent() {
   return (
     <div className={`flex h-full w-full ${isWhatsApp ? 'bg-[#0C1317]' : 'bg-slate-100 dark:bg-[#050814]'} text-slate-900 dark:text-slate-100 overflow-hidden`}>
       
-      {/* 1. PAINEL ESQUERDO: Lista de Conversas (Padrão Estrutural WhatsApp Web com Master-Detail Mobile) */}
-      <div className={`${activeChat ? 'hidden md:flex' : 'flex'} w-full md:w-[360px] lg:w-[380px] flex-shrink-0 ${isWhatsApp ? 'bg-[#111B21] border-[#222D34]' : 'bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800'} border-r flex-col overflow-hidden z-10`}>
+      {/* 1. PAINEL ESQUERDO: Lista de Conversas (Padrão Estrutural WhatsApp Web com Master-Detail Mobile e Redimensionamento) */}
+      <div 
+        style={{
+          width: typeof window !== 'undefined' && window.innerWidth >= 768 ? `${sidebarWidth}px` : undefined,
+          minWidth: typeof window !== 'undefined' && window.innerWidth >= 768 ? `${MIN_SIDEBAR_WIDTH}px` : undefined,
+          maxWidth: typeof window !== 'undefined' && window.innerWidth >= 768 ? `${MAX_SIDEBAR_WIDTH}px` : undefined,
+        }}
+        className={`${activeChat ? 'hidden md:flex' : 'flex'} w-full flex-shrink-0 ${isWhatsApp ? 'bg-[#111B21] border-[#222D34]' : 'bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800'} border-r flex-col overflow-hidden z-10 relative`}
+      >
         
         {/* Header Superior WhatsApp */}
         {/* Header Superior WhatsApp (Foto de Perfil da Linha Principal & Status) */}
@@ -2534,12 +2602,22 @@ function InboxContent() {
               <button
                 type="button"
                 onClick={() => setShowLeftHeaderMenu(prev => !prev)}
-                className={`p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/80 transition-colors cursor-pointer ${
+                className={`p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/80 transition-colors cursor-pointer relative ${
                   showLeftHeaderMenu ? 'text-blue-600 bg-slate-100 dark:text-white dark:bg-slate-800/80' : ''
                 }`}
-                title="Mais opções"
+                title={
+                  selectedDepartmentFilter !== 'all' 
+                    ? `Mais opções (Filtro ativo: ${departments.find(d => d.id === selectedDepartmentFilter)?.name || 'Setor'})` 
+                    : "Mais opções"
+                }
               >
                 <MoreVertical size={18} />
+                {selectedDepartmentFilter !== 'all' && (
+                  <span 
+                    className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full ring-2 ring-white dark:ring-[#202C33]"
+                    style={{ backgroundColor: departments.find(d => d.id === selectedDepartmentFilter)?.color || '#3b82f6' }}
+                  />
+                )}
               </button>
 
               {showLeftHeaderMenu && (
@@ -2551,8 +2629,83 @@ function InboxContent() {
                   />
                   <div 
                     onClick={(e) => e.stopPropagation()}
-                    className="absolute top-full right-0 mt-2 w-56 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700/90 rounded-2xl shadow-xl dark:shadow-[0_20px_45px_rgba(0,0,0,0.85)] py-1.5 z-50 animate-in fade-in zoom-in-95 text-xs text-slate-700 dark:text-slate-200 divide-y divide-slate-100 dark:divide-slate-800/80"
+                    className="absolute top-full right-0 mt-2 w-64 sm:w-72 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700/90 rounded-2xl shadow-xl dark:shadow-[0_20px_45px_rgba(0,0,0,0.85)] py-1.5 z-50 animate-in fade-in zoom-in-95 text-xs text-slate-700 dark:text-slate-200 divide-y divide-slate-100 dark:divide-slate-800/80"
                   >
+                    {/* Filtro de Setores / Departamentos */}
+                    {departments.length > 0 && (
+                      <div className="py-1">
+                        <div className="px-3.5 py-1.5 text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 tracking-wider flex items-center justify-between">
+                          <span className="flex items-center gap-1.5">
+                            <Network size={12} className="text-blue-500" />
+                            Filtrar por Setor
+                          </span>
+                          {selectedDepartmentFilter !== 'all' && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedDepartmentFilter('all');
+                              }}
+                              className="text-[10px] text-blue-500 dark:text-blue-400 hover:underline normal-case font-semibold cursor-pointer"
+                            >
+                              Limpar
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Opção Todos os Setores */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedDepartmentFilter('all');
+                            setShowLeftHeaderMenu(false);
+                          }}
+                          className={`w-full px-3.5 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-800/80 flex items-center justify-between transition-colors cursor-pointer ${
+                            selectedDepartmentFilter === 'all'
+                              ? 'text-blue-600 dark:text-blue-400 font-semibold bg-blue-50/60 dark:bg-blue-900/20'
+                              : ''
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="w-2 h-2 rounded-full bg-slate-400 shrink-0" />
+                            <span className="truncate">Todos os setores</span>
+                          </div>
+                          {selectedDepartmentFilter === 'all' && <Check size={14} className="shrink-0 text-blue-600 dark:text-blue-400" />}
+                        </button>
+
+                        {/* Lista dos Departamentos */}
+                        <div className="max-h-52 overflow-y-auto custom-scrollbar">
+                          {departments.map((dept) => {
+                            const isSelected = selectedDepartmentFilter === dept.id;
+                            const color = dept.color || '#3b82f6';
+                            return (
+                              <button
+                                key={dept.id}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedDepartmentFilter(dept.id);
+                                  setShowLeftHeaderMenu(false);
+                                }}
+                                className={`w-full px-3.5 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-800/80 flex items-center justify-between transition-colors cursor-pointer ${
+                                  isSelected
+                                    ? 'text-blue-600 dark:text-blue-400 font-semibold bg-blue-50/60 dark:bg-blue-900/20'
+                                    : ''
+                                }`}
+                              >
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <span
+                                    className="w-2 h-2 rounded-full shrink-0"
+                                    style={{ backgroundColor: color }}
+                                  />
+                                  <span className="truncate">{dept.name}</span>
+                                </div>
+                                {isSelected && <Check size={14} className="shrink-0 text-blue-600 dark:text-blue-400" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
                     <div className="py-1">
                       <button
                         type="button"
@@ -2779,51 +2932,27 @@ function InboxContent() {
           </button>
         </div>
 
-        {/* Barra de Filtro de Departamentos / Setores */}
-        {departments.length > 0 && (
-          <div className={`flex items-center gap-1.5 px-3 py-1.5 border-b ${
-            isWhatsApp ? 'bg-[#111B21] border-[#222D34]' : 'bg-slate-50/70 dark:bg-[#070D18]/70 border-slate-200/80 dark:border-slate-800/60'
-          } overflow-x-auto scrollbar-none text-xs shrink-0`}>
-            <span className={`text-[10px] font-bold uppercase tracking-wider ${isWhatsApp ? 'text-[#8696A0]' : 'text-slate-400 dark:text-slate-500'} shrink-0 mr-0.5`}>
-              Setor:
+        {/* Indicador de Filtro de Setor Ativo (quando selecionado pelo menu de 3 pontinhos) */}
+        {selectedDepartmentFilter !== 'all' && (
+          <div className={`px-3 py-1.5 border-b flex items-center justify-between text-xs shrink-0 ${
+            isWhatsApp ? 'bg-[#182229] border-[#222D34]' : 'bg-blue-50/60 dark:bg-blue-950/20 border-blue-200/50 dark:border-blue-900/30'
+          }`}>
+            <span className="text-[11px] font-medium flex items-center gap-1.5 text-blue-600 dark:text-blue-400 truncate">
+              <span 
+                className="w-2 h-2 rounded-full shrink-0" 
+                style={{ backgroundColor: departments.find(d => d.id === selectedDepartmentFilter)?.color || '#3b82f6' }}
+              />
+              <span className="truncate">Setor: {departments.find(d => d.id === selectedDepartmentFilter)?.name || 'Selecionado'}</span>
             </span>
             <button
               type="button"
               onClick={() => setSelectedDepartmentFilter('all')}
-              className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold transition-all whitespace-nowrap cursor-pointer flex items-center gap-1 ${
-                selectedDepartmentFilter === 'all'
-                  ? (isWhatsApp ? 'bg-[#103629] text-[#00A884] border border-[#00A884]' : 'bg-slate-900 text-white dark:bg-white dark:text-slate-950 shadow-xs')
-                  : (isWhatsApp ? 'bg-[#202C33] text-[#8696A0] border border-[#222D34]' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 dark:bg-slate-800/80 dark:text-slate-300 dark:border-slate-700/60')
-              }`}
+              className="text-[10px] text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+              title="Remover filtro de setor"
             >
-              Todos
+              <X size={12} />
+              <span>Limpar</span>
             </button>
-            {departments.map((dept) => {
-              const isSelected = selectedDepartmentFilter === dept.id;
-              const color = isWhatsApp ? '#00A884' : (dept.color || '#3b82f6');
-              return (
-                <button
-                  key={dept.id}
-                  type="button"
-                  onClick={() => setSelectedDepartmentFilter(dept.id)}
-                  className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 border ${
-                    isSelected
-                      ? (isWhatsApp ? 'bg-[#103629] text-[#00A884] border-[#00A884]' : 'bg-blue-600 text-white border-blue-500 shadow-xs')
-                      : (isWhatsApp ? 'bg-[#202C33] text-[#8696A0] border-[#222D34]' : 'bg-white text-slate-700 hover:bg-slate-100 border-slate-200 dark:bg-slate-800/80 dark:text-slate-300 dark:border-slate-700/60')
-                  }`}
-                  style={!isWhatsApp ? {
-                    backgroundColor: isSelected ? color : undefined,
-                    borderColor: isSelected ? color : undefined,
-                  } : undefined}
-                >
-                  <span
-                    className="w-1.5 h-1.5 rounded-full shrink-0"
-                    style={{ backgroundColor: isSelected ? (isWhatsApp ? '#00A884' : '#ffffff') : color }}
-                  />
-                  <span>{dept.name}</span>
-                </button>
-              );
-            })}
           </div>
         )}
 
@@ -3100,6 +3229,29 @@ function InboxContent() {
           </div>
         )}
         </div>
+      </div>
+
+      {/* Separador Redimensionável Lateral (Padrão Lero / Vallor) */}
+      <div 
+        onMouseDown={handleMouseDownResize}
+        onDoubleClick={handleDoubleClickResize}
+        onMouseEnter={() => setShowResizeTooltip(true)}
+        onMouseLeave={() => setShowResizeTooltip(false)}
+        className={`hidden md:flex relative w-1 hover:w-1.5 z-30 cursor-col-resize items-center justify-center transition-all group shrink-0 select-none ${
+          isResizingSidebar 
+            ? 'bg-blue-500 w-1.5 shadow-[0_0_10px_rgba(59,130,246,0.5)]' 
+            : isWhatsApp 
+              ? 'hover:bg-[#00A884]/80 bg-[#222D34]' 
+              : 'hover:bg-blue-500/70 bg-slate-200/80 dark:bg-slate-800/80'
+        }`}
+        title="Arraste para redimensionar (duplo clique para o padrão)"
+      >
+        {/* Tooltip flutuante idêntico ao do print */}
+        {(showResizeTooltip || isResizingSidebar) && (
+          <div className="absolute top-1/2 left-3 -translate-y-1/2 pointer-events-none whitespace-nowrap px-3 py-1.5 rounded-xl bg-slate-900/95 dark:bg-black/90 text-white text-[11px] font-medium shadow-2xl border border-slate-700/80 z-50 animate-in fade-in zoom-in-95 backdrop-blur-md">
+            Arraste para redimensionar (duplo clique para o padrão)
+          </div>
+        )}
       </div>
 
       {/* 2. PAINEL CENTRAL: Janela de Chat (Estrutura WhatsApp Corporativo VERSUS) */}
