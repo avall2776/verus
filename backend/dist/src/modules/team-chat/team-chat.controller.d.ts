@@ -3,6 +3,7 @@ export declare class TeamChatController {
     private readonly teamChatService;
     constructor(teamChatService: TeamChatService);
     getUsers(tenantId: string, req: any): Promise<{
+        isOnline: boolean;
         department: string;
         departmentColor: string;
         lastMessage: {
@@ -25,7 +26,6 @@ export declare class TeamChatController {
             userId: string;
         })[];
         role: string;
-        isOnline: boolean;
     }[]>;
     getDepartments(tenantId: string): Promise<{
         id: string;

@@ -990,7 +990,7 @@ let ChatService = ChatService_1 = class ChatService {
                 conversationId,
                 providerMessageId: tempMessageId,
                 contactId: conversation.contactId,
-                content: payload.content,
+                content: payload.content || '',
                 type,
                 mediaUrl,
                 isInternal,
@@ -1009,7 +1009,7 @@ let ChatService = ChatService_1 = class ChatService {
                         phone: conversation.contact.phone,
                         type: type,
                         mediaUrl,
-                        content: payload.content,
+                        content: payload.content || '',
                         filename: payload.filename ||
                             (payload.content?.includes('.')
                                 ? payload.content
@@ -1026,7 +1026,7 @@ let ChatService = ChatService_1 = class ChatService {
                     sendRes = await this.messagingService.sendText({
                         tenantId,
                         phone: conversation.contact.phone,
-                        content: payload.content,
+                        content: payload.content || '',
                         instanceId: payload.instanceId,
                         quoted: quotedEvolutionPayload,
                     });
@@ -1633,24 +1633,6 @@ let ChatService = ChatService_1 = class ChatService {
                                 },
                                 orderBy: { updatedAt: 'desc' },
                             });
-                        }
-                    }
-                    const push = (rawMsg.pushName || '').trim();
-                    if (!contact && push && push.length >= 3 && push !== 'Cliente WhatsApp' && !push.includes('@lid')) {
-                        const normPush = push.toLowerCase();
-                        const candidates = await this.prisma.contact.findMany({
-                            where: {
-                                tenantId,
-                                NOT: { phone: { contains: '@lid' } },
-                            },
-                            orderBy: { updatedAt: 'desc' },
-                        });
-                        const matched = candidates.find(c => {
-                            const cNorm = (c.name || '').trim().toLowerCase();
-                            return cNorm === normPush || cNorm.startsWith(normPush + ' ') || cNorm.includes(' ' + normPush);
-                        });
-                        if (matched) {
-                            contact = matched;
                         }
                     }
                     if (!contact) {

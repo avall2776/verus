@@ -707,30 +707,6 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                                 }
                             }).catch(() => { });
                         }
-                        const normPush = this.whatsappService.normalizeContactName(pushName);
-                        if (normPush && normPush.length >= 3) {
-                            const lidCandidates = await this.prisma.contact.findMany({
-                                where: {
-                                    tenantId,
-                                    phone: { contains: 'lid' },
-                                },
-                            });
-                            for (const lc of lidCandidates) {
-                                const lcNorm = this.whatsappService.normalizeContactName(lc.name);
-                                if (lcNorm === normPush) {
-                                    await this.prisma.contact.update({
-                                        where: { id: lc.id },
-                                        data: {
-                                            phone: phone,
-                                            whatsappLid: lc.phone,
-                                            name: pushName,
-                                            ...(profilePictureUrl ? { avatarUrl: profilePictureUrl } : {}),
-                                        },
-                                    });
-                                    this.logger.log(`[CONTACTS_UPSERT] Contato LID [${lc.id}] (${lc.name}) reconciliado com telefone real: ${phone}`);
-                                }
-                            }
-                        }
                         const updated = await this.prisma.contact.findFirst({ where: { tenantId, phone } });
                         if (updated) {
                             this.chatGateway.emitContactUpdated(tenantId, updated);

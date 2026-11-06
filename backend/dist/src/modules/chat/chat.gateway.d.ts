@@ -3,8 +3,11 @@ import { Server, Socket } from 'socket.io';
 export declare class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     server: Server;
     private readonly logger;
+    private onlineUsersByTenant;
+    private socketInfo;
     handleConnection(client: Socket): void;
     handleDisconnect(client: Socket): void;
+    getOnlineUserIds(tenantId: string): Set<string>;
     emitNewMessage(tenantId: string, messageData: any): void;
     emitMessageDeleted(tenantId: string, payload: {
         conversationId: string;

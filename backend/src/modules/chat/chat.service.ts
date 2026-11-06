@@ -1173,7 +1173,7 @@ export class ChatService {
         conversationId,
         providerMessageId: tempMessageId,
         contactId: conversation.contactId,
-        content: payload.content,
+        content: payload.content || '',
         type,
         mediaUrl,
         isInternal,
@@ -1194,7 +1194,7 @@ export class ChatService {
             phone: conversation.contact.phone,
             type: type as 'image' | 'document' | 'video',
             mediaUrl,
-            content: payload.content,
+            content: payload.content || '',
             filename:
               payload.filename ||
               (payload.content?.includes('.')
@@ -1211,7 +1211,7 @@ export class ChatService {
           sendRes = await this.messagingService.sendText({
             tenantId,
             phone: conversation.contact.phone,
-            content: payload.content,
+            content: payload.content || '',
             instanceId: payload.instanceId,
             quoted: quotedEvolutionPayload,
           });

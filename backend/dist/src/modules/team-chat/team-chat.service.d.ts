@@ -5,6 +5,7 @@ export declare class TeamChatService {
     private readonly chatGateway;
     constructor(prisma: PrismaService, chatGateway: ChatGateway);
     getUsers(tenantId: string, currentUserId?: string): Promise<{
+        isOnline: boolean;
         department: string;
         departmentColor: string;
         lastMessage: {
@@ -27,7 +28,6 @@ export declare class TeamChatService {
             userId: string;
         })[];
         role: string;
-        isOnline: boolean;
     }[]>;
     getChannels(tenantId: string): Promise<{
         lastMessage: {
@@ -93,7 +93,7 @@ export declare class TeamChatService {
     sendMessage(tenantId: string, senderId: string, data: {
         channelId?: string;
         receiverId?: string;
-        content: string;
+        content?: string;
         mediaUrl?: string;
     }): Promise<{
         channel: {

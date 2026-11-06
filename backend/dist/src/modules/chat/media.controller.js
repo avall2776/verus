@@ -110,18 +110,50 @@ let MediaController = class MediaController {
         res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
         return res.sendFile(filePath);
     }
-    async streamDriveFile(driveId, customName, res) {
+    async streamDriveFile(driveId, customName, req, res) {
         try {
             const fileData = await (0, google_drive_helper_1.downloadDriveFileBuffer)(driveId);
             if (fileData && fileData.buffer && fileData.buffer.length > 0) {
-                const fileName = customName || 'arquivo.mp4';
-                res.setHeader('Content-Type', fileData.mimeType);
-                res.setHeader('Content-Length', fileData.buffer.length);
+                const fileName = customName || 'video.mp4';
+                let mimeType = fileData.mimeType;
+                const lowerName = fileName.toLowerCase();
+                if (!mimeType || mimeType === 'application/octet-stream') {
+                    if (lowerName.endsWith('.mp4') || lowerName.endsWith('.mov') || lowerName.includes('video')) {
+                        mimeType = 'video/mp4';
+                    }
+                    else if (lowerName.endsWith('.pdf')) {
+                        mimeType = 'application/pdf';
+                    }
+                    else if (lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg')) {
+                        mimeType = 'image/jpeg';
+                    }
+                    else if (lowerName.endsWith('.png')) {
+                        mimeType = 'image/png';
+                    }
+                    else if (lowerName.endsWith('.webp')) {
+                        mimeType = 'image/webp';
+                    }
+                }
+                const totalLength = fileData.buffer.length;
+                const range = req.headers.range;
                 res.setHeader('Accept-Ranges', 'bytes');
                 res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(fileName)}"`);
                 res.setHeader('Access-Control-Allow-Origin', '*');
                 res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
                 res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+                if (range) {
+                    const parts = range.replace(/bytes=/, '').split('-');
+                    const start = parseInt(parts[0], 10);
+                    const end = parts[1] ? parseInt(parts[1], 10) : totalLength - 1;
+                    const chunkSize = end - start + 1;
+                    res.status(206);
+                    res.setHeader('Content-Range', `bytes ${start}-${end}/${totalLength}`);
+                    res.setHeader('Content-Length', chunkSize);
+                    res.setHeader('Content-Type', mimeType);
+                    return res.end(fileData.buffer.subarray(start, end + 1));
+                }
+                res.setHeader('Content-Type', mimeType);
+                res.setHeader('Content-Length', totalLength);
                 return res.end(fileData.buffer);
             }
         }
@@ -160,9 +192,10 @@ __decorate([
     (0, common_1.Get)('drive-stream/:driveId'),
     __param(0, (0, common_1.Param)('driveId')),
     __param(1, (0, common_1.Query)('name')),
-    __param(2, (0, common_1.Res)()),
+    __param(2, (0, common_1.Req)()),
+    __param(3, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:paramtypes", [String, String, Object, Object]),
     __metadata("design:returntype", Promise)
 ], MediaController.prototype, "streamDriveFile", null);
 exports.MediaController = MediaController = __decorate([

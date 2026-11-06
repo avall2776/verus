@@ -1514,8 +1514,8 @@ function InboxContent() {
         };
       });
     },
-    staleTime: 10000,
-    refetchInterval: 60000, // Sincronização automática em background a cada 1 minuto (solicitada pelo usuário)
+    staleTime: 4000,
+    refetchInterval: isConnected ? 30000 : 5000, // Sincronização em tempo real quando socket desconectado (fallback Vercel)
     retry: false,
     refetchOnWindowFocus: false, // Otimização de performance: evita requisição pesada ao alternar janelas
   });
@@ -1619,11 +1619,17 @@ function InboxContent() {
         const { data } = await api.get(`/conversations/${activeChat}/messages`);
         if (Array.isArray(data)) {
           messagesCacheRef.current[activeChat] = data;
-          setMessages(data);
-          setTimeout(() => {
-            scrollToBottom('auto');
-            textareaRef.current?.focus();
-          }, 50);
+          setMessages(prev => {
+            const hasChanged = prev.length !== data.length || 
+              (prev.length > 0 && data.length > 0 && prev[prev.length - 1].id !== data[data.length - 1].id);
+            if (hasChanged) {
+              setTimeout(() => {
+                scrollToBottom(prev.length === 0 ? 'auto' : 'smooth');
+              }, 50);
+              return data;
+            }
+            return prev;
+          });
         }
       } catch (error) {
         console.error("Erro ao buscar mensagens:", error);
@@ -1646,13 +1652,14 @@ function InboxContent() {
     fetchMessages();
     fetchScheduled();
 
-    // Polling de segurança em background para a conversa ativa (atualiza a cada 60s caso perca evento do WebSocket)
+    // Sincronização inteligente: 3s quando WebSocket desconectado (fallback Vercel), 30s quando conectado
+    const pollInterval = isConnected ? 30000 : 3000;
     const backgroundChatInterval = setInterval(() => {
       fetchMessages();
-    }, 60000);
+    }, pollInterval);
 
     return () => clearInterval(backgroundChatInterval);
-  }, [activeChat]);
+  }, [activeChat, isConnected]);
 
   // 3. Ouvir WebSocket para mensagens em tempo real
   useEffect(() => {
@@ -4351,7 +4358,7 @@ function InboxContent() {
                           )}
 
                           {/* Renderização de Vídeos (WhatsApp Nativo e Google Drive) */}
-                          {(msg.type === 'video' || (!!msg.mediaUrl && (/\.(mp4|mov|webm|mkv|avi)($|\?)/i.test(msg.mediaUrl) || isGoogleDriveUrl(msg.mediaUrl)))) && (
+                          {(msg.type === 'video' || (msg.type !== 'image' && msg.type !== 'document' && !!msg.mediaUrl && /\.(mp4|mov|webm|mkv|avi)($|\?)/i.test(msg.mediaUrl))) && (
                             <div className="mb-2 max-w-[320px] sm:max-w-[380px]">
                               {msg.mediaUrl?.includes('lvdphjhftfjdifnzuazd.supabase.co') ? (
                                 <div className="flex items-center gap-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-700 dark:text-amber-400 text-xs">

@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { StorageService } from '../../shared/storage/storage.service';
 export declare class MediaController {
     private readonly storageService;
@@ -16,5 +16,5 @@ export declare class MediaController {
     }>;
     getFile(filename: string, res: Response): void;
     getAudioFile(filename: string, res: Response): void;
-    streamDriveFile(driveId: string, customName: string, res: Response): Promise<void | Response<any, Record<string, any>>>;
+    streamDriveFile(driveId: string, customName: string, req: Request, res: Response): Promise<void | Response<any, Record<string, any>>>;
 }

@@ -10,9 +10,10 @@ import {
   BadRequestException,
   Body,
   Query,
+  Req,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import * as path from 'path';
 import * as fs from 'fs';
 import { StorageService } from '../../shared/storage/storage.service';
@@ -154,19 +155,56 @@ export class MediaController {
   async streamDriveFile(
     @Param('driveId') driveId: string,
     @Query('name') customName: string,
+    @Req() req: Request,
     @Res() res: Response,
   ) {
     try {
       const fileData = await downloadDriveFileBuffer(driveId);
       if (fileData && fileData.buffer && fileData.buffer.length > 0) {
-        const fileName = customName || 'arquivo.mp4';
-        res.setHeader('Content-Type', fileData.mimeType);
-        res.setHeader('Content-Length', fileData.buffer.length);
+        const fileName = customName || 'video.mp4';
+        let mimeType = fileData.mimeType;
+        const lowerName = fileName.toLowerCase();
+
+        // Determina MIME type correto para navegadores e WhatsApp
+        if (!mimeType || mimeType === 'application/octet-stream') {
+          if (lowerName.endsWith('.mp4') || lowerName.endsWith('.mov') || lowerName.includes('video')) {
+            mimeType = 'video/mp4';
+          } else if (lowerName.endsWith('.pdf')) {
+            mimeType = 'application/pdf';
+          } else if (lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg')) {
+            mimeType = 'image/jpeg';
+          } else if (lowerName.endsWith('.png')) {
+            mimeType = 'image/png';
+          } else if (lowerName.endsWith('.webp')) {
+            mimeType = 'image/webp';
+          }
+        }
+
+        const totalLength = fileData.buffer.length;
+        const range = req.headers.range;
+
         res.setHeader('Accept-Ranges', 'bytes');
         res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(fileName)}"`);
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
         res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+
+        // Suporte a HTTP 206 Partial Content (Range requests para players HTML5 de vídeo)
+        if (range) {
+          const parts = range.replace(/bytes=/, '').split('-');
+          const start = parseInt(parts[0], 10);
+          const end = parts[1] ? parseInt(parts[1], 10) : totalLength - 1;
+          const chunkSize = end - start + 1;
+
+          res.status(206);
+          res.setHeader('Content-Range', `bytes ${start}-${end}/${totalLength}`);
+          res.setHeader('Content-Length', chunkSize);
+          res.setHeader('Content-Type', mimeType);
+          return res.end(fileData.buffer.subarray(start, end + 1));
+        }
+
+        res.setHeader('Content-Type', mimeType);
+        res.setHeader('Content-Length', totalLength);
         return res.end(fileData.buffer);
       }
     } catch (err: any) {

@@ -19,6 +19,7 @@ let TeamChatService = class TeamChatService {
         this.chatGateway = chatGateway;
     }
     async getUsers(tenantId, currentUserId) {
+        const onlineUserIds = this.chatGateway.getOnlineUserIds(tenantId);
         const users = await this.prisma.user.findMany({
             where: { tenantId },
             select: {
@@ -65,6 +66,7 @@ let TeamChatService = class TeamChatService {
         }));
         return users.map((user, idx) => ({
             ...user,
+            isOnline: onlineUserIds.has(user.id) || Boolean(user.isOnline),
             department: user.departments?.[0]?.department?.name || null,
             departmentColor: user.departments?.[0]?.department?.color || null,
             lastMessage: lastMessages[idx] || null
@@ -136,8 +138,10 @@ let TeamChatService = class TeamChatService {
         return [];
     }
     async sendMessage(tenantId, senderId, data) {
-        if (!data.content || !data.content.trim())
-            throw new common_1.BadRequestException("Conteúdo vazio.");
+        const rawContent = (data.content && data.content.trim()) ? data.content.trim() : '';
+        const content = rawContent || (data.mediaUrl ? 'Arquivo anexado' : '');
+        if (!content && !data.mediaUrl)
+            throw new common_1.BadRequestException("Conteúdo ou anexo obrigatório.");
         if (!data.channelId && !data.receiverId)
             throw new common_1.BadRequestException("Destino inválido.");
         const message = await this.prisma.teamMessage.create({
@@ -146,7 +150,7 @@ let TeamChatService = class TeamChatService {
                 senderId,
                 channelId: data.channelId || null,
                 receiverId: data.receiverId || null,
-                content: data.content.trim(),
+                content: content,
                 mediaUrl: data.mediaUrl || null
             },
             include: {
