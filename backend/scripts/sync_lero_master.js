@@ -200,7 +200,9 @@ async function main() {
     }
 
     // Atualizar / Criar Deal
-    const existingDeal = contact.deals?.[0];
+    const existingDeal = await prisma.deal.findFirst({
+      where: { tenantId: TENANT_ID, contactId: contact.id }
+    });
     if (existingDeal) {
       await prisma.deal.update({
         where: { id: existingDeal.id },
@@ -230,36 +232,42 @@ async function main() {
     }
 
     // Atualizar / Criar Conversa (Ordem, Atendente e Região)
-    let conv = contact.conversations?.[0];
-    const isAi = conv?.status === 'bot_active';
-    const finalDept = isAi ? DEPTS.IA : targetDept;
-
-    if (conv) {
-      await prisma.conversation.update({
-        where: { id: conv.id },
-        data: {
-          departmentId: finalDept,
-          assignedTo: assignedUserId,
-          updatedAt: cardInteractionDate,
-        }
-      });
-      updatedConvs++;
-      deptMappedCount++;
-    } else {
-      await prisma.conversation.create({
-        data: {
+    const existingConv = await prisma.conversation.findUnique({
+      where: {
+        tenantId_contactId: {
           tenantId: TENANT_ID,
           contactId: contact.id,
-          status: assignedUserId ? 'open' : 'waiting',
-          departmentId: finalDept,
-          assignedTo: assignedUserId,
-          createdAt: card.created_at ? new Date(card.created_at) : new Date(),
-          updatedAt: cardInteractionDate,
         }
-      });
-      updatedConvs++;
-      deptMappedCount++;
-    }
+      }
+    });
+
+    const isAi = existingConv?.status === 'bot_active';
+    const finalDept = isAi ? DEPTS.IA : targetDept;
+
+    await prisma.conversation.upsert({
+      where: {
+        tenantId_contactId: {
+          tenantId: TENANT_ID,
+          contactId: contact.id,
+        }
+      },
+      create: {
+        tenantId: TENANT_ID,
+        contactId: contact.id,
+        status: assignedUserId ? 'open' : 'waiting',
+        departmentId: finalDept,
+        assignedTo: assignedUserId,
+        createdAt: card.created_at ? new Date(card.created_at) : new Date(),
+        updatedAt: cardInteractionDate,
+      },
+      update: {
+        departmentId: finalDept,
+        assignedTo: assignedUserId,
+        updatedAt: cardInteractionDate,
+      }
+    });
+    updatedConvs++;
+    deptMappedCount++;
   }
 
   // 4. Garantir que todas as conversas da IA fiquem com o departmentId da IA
@@ -289,3 +297,4 @@ main().catch(err => {
   console.error('Erro na sincronização master:', err);
   prisma.$disconnect();
 });
+
