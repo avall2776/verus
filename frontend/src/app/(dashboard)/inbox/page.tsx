@@ -1409,6 +1409,8 @@ function InboxContent() {
           lastMessageDirection: lastMessageObj?.direction || null,
           time: formatCardTimestamp(lastMessageObj?.createdAt || conv.updatedAt),
           updatedAt: conv.updatedAt,
+          isPinned: !!(conv.contact?.phone?.includes('556699844152') || (conv.contact?.name && conv.contact.name.toLowerCase().includes('trojan'))),
+          lastMessageDate: lastMessageObj?.createdAt || conv.updatedAt,
           isAi: conv.status === 'bot_active',
           unread: 0,
           status: conv.status,
@@ -1517,6 +1519,8 @@ function InboxContent() {
           lastMessageDirection: lastMessageObj?.direction || null,
           time: formatCardTimestamp(lastMessageObj?.createdAt || conv.updatedAt),
           updatedAt: conv.updatedAt,
+          isPinned: !!(conv.contact?.phone?.includes('556699844152') || (conv.contact?.name && conv.contact.name.toLowerCase().includes('trojan'))),
+          lastMessageDate: lastMessageObj?.createdAt || conv.updatedAt,
           isAi: conv.status === 'bot_active',
           unread: 0,
           status: conv.status,
@@ -3112,6 +3116,11 @@ function InboxContent() {
                     </div>
 
                     <div className="flex items-center gap-1.5 shrink-0">
+                      {contact.isPinned && (
+                        <span title="Conversa Fixada">
+                          <Pin size={11} className="text-emerald-500 fill-emerald-500 -rotate-45 shrink-0" />
+                        </span>
+                      )}
                       <span className={`text-[11px] whitespace-nowrap shrink-0 ${
                         contact.unread > 0 ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-slate-400 dark:text-slate-500'
                       }`}>
