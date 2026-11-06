@@ -5,11 +5,36 @@ import {
   Search, Hash, Plus, MessageSquare, Send, Paperclip, Smile, 
   Users, User as UserIcon, ShieldCheck, CheckCheck, Circle, 
   Filter, MoreVertical, X, Sparkles, Building2, PhoneCall, ArrowLeft,
-  Trash2, AlertTriangle, Check, RefreshCw
+  Trash2, AlertTriangle, Check, RefreshCw, FileText, Download, ExternalLink, Loader2, Eye
 } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/lib/api";
 import { useSocket } from "@/components/ui/SocketProvider";
+
+const COMMON_EMOJIS = [
+  '😀', '😃', '😄', '😁', '😅', '😂', '🤣', '😊', '😇', '🙂', 
+  '😉', '😌', '😍', '🥰', '😘', '😋', '😎', '🤝', '👍', '👎', 
+  '👌', '✌️', '🤞', '👏', '🙌', '🙏', '💪', '🔥', '✨', '⭐', 
+  '🚀', '💡', '💬', '📞', '📅', '⏰', '⏳', '🎯', '✅', '❌', 
+  '⚠️', '💰', '💵', '💳', '📊', '📈', '📌', '📎', '🎉', '🏆'
+];
+
+function isImageUrl(url?: string | null): boolean {
+  if (!url) return false;
+  return /\.(jpg|jpeg|png|webp|gif|svg)(\?.*)?$/i.test(url) || url.includes('/images/') || url.includes('image');
+}
+
+function getFileNameFromUrl(url?: string | null): string {
+  if (!url) return 'Arquivo anexado';
+  try {
+    const cleanUrl = url.split('?')[0];
+    const parts = cleanUrl.split('/');
+    const rawName = parts[parts.length - 1];
+    return decodeURIComponent(rawName) || 'Arquivo';
+  } catch {
+    return 'Arquivo';
+  }
+}
 
 interface Department {
   id: string;
@@ -103,6 +128,14 @@ export default function ChatInternoPage() {
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [isSending, setIsSending] = useState(false);
+
+  // Emojis, Anexos e Mídia
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [filePreviewUrl, setFilePreviewUrl] = useState<string | null>(null);
+  const [isUploadingMedia, setIsUploadingMedia] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Menu de Ações do Chat (Dropdown)
   const [showChatMenu, setShowChatMenu] = useState(false);
@@ -228,17 +261,53 @@ export default function ChatInternoPage() {
     }
   };
 
-  // Envio de mensagem
+  // Seleção de arquivo para anexo
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setSelectedFile(file);
+      if (file.type.startsWith('image/')) {
+        setFilePreviewUrl(URL.createObjectURL(file));
+      } else {
+        setFilePreviewUrl(null);
+      }
+    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  // Envio de mensagem com suporte a anexo e texto
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || !activeChatId || isSending) return;
+    if ((!inputValue.trim() && !selectedFile) || !activeChatId || isSending || isUploadingMedia) return;
     const textToSend = inputValue.trim();
+    const fileToUpload = selectedFile;
+
     setInputValue('');
+    setSelectedFile(null);
+    setFilePreviewUrl(null);
+    setShowEmojiPicker(false);
     setIsSending(true);
 
+    let uploadedMediaUrl: string | null = null;
+
     try {
+      if (fileToUpload) {
+        setIsUploadingMedia(true);
+        const formData = new FormData();
+        formData.append('file', fileToUpload);
+        formData.append('folder', 'team-chat');
+
+        const { data: uploadRes } = await api.post('/media/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+
+        if (uploadRes?.url) {
+          uploadedMediaUrl = uploadRes.url;
+        }
+      }
+
       const payload = chatType === 'channel' 
-        ? { channelId: activeChatId, content: textToSend } 
-        : { receiverId: activeChatId, content: textToSend };
+        ? { channelId: activeChatId, content: textToSend || 'Arquivo anexado', mediaUrl: uploadedMediaUrl || undefined } 
+        : { receiverId: activeChatId, content: textToSend || 'Arquivo anexado', mediaUrl: uploadedMediaUrl || undefined };
 
       const { data: newMsg } = await api.post('/team-chat/messages', payload);
 
@@ -268,8 +337,15 @@ export default function ChatInternoPage() {
       console.error("Erro ao enviar mensagem", error);
       toast.error("Não foi possível enviar a mensagem.");
       setInputValue(textToSend); // Restaura texto em caso de falha
+      if (fileToUpload) {
+        setSelectedFile(fileToUpload);
+        if (fileToUpload.type.startsWith('image/')) {
+          setFilePreviewUrl(URL.createObjectURL(fileToUpload));
+        }
+      }
     } finally {
       setIsSending(false);
+      setIsUploadingMedia(false);
       textareaRef.current?.focus();
     }
   };
@@ -481,16 +557,23 @@ export default function ChatInternoPage() {
       }
     };
 
+    // 5. Presença de Usuários em Tempo Real
+    const onUserPresenceChanged = (payload: { userId: string; isOnline: boolean }) => {
+      setUsers(prev => prev.map(u => u.id === payload.userId ? { ...u, isOnline: payload.isOnline } : u));
+    };
+
     socket.on('newTeamMessage', onNewTeamMessage);
     socket.on('teamMessageDeleted', onTeamMessageDeleted);
     socket.on('teamHistoryCleared', onTeamHistoryCleared);
     socket.on('teamChannelDeleted', onTeamChannelDeleted);
+    socket.on('userPresenceChanged', onUserPresenceChanged);
 
     return () => {
       socket.off('newTeamMessage', onNewTeamMessage);
       socket.off('teamMessageDeleted', onTeamMessageDeleted);
       socket.off('teamHistoryCleared', onTeamHistoryCleared);
       socket.off('teamChannelDeleted', onTeamChannelDeleted);
+      socket.off('userPresenceChanged', onUserPresenceChanged);
     };
   }, [socket, activeChatId, chatType, currentUserId]);
 
@@ -1122,13 +1205,62 @@ export default function ChatInternoPage() {
 
                         {/* Balão de Mensagem */}
                         <div 
-                          className={`px-4 py-2.5 text-sm relative break-words leading-relaxed shadow-sm ${
+                          className={`px-4 py-2.5 text-sm relative break-words leading-relaxed shadow-sm max-w-[85%] sm:max-w-[70%] ${
                             fromMe 
                               ? 'bg-blue-600 text-white rounded-2xl rounded-tr-xs shadow-[0_2px_10px_rgba(37,99,235,0.2)]' 
                               : 'bg-white dark:bg-[#1E293B] border border-slate-200 dark:border-slate-700/60 text-slate-800 dark:text-slate-100 rounded-2xl rounded-tl-xs shadow-sm'
                           }`}
                         >
-                          <p className="whitespace-pre-wrap">{msg.content}</p>
+                          {/* Renderização de Imagem ou Documento Anexado */}
+                          {msg.mediaUrl && (
+                            <div className="mb-2">
+                              {isImageUrl(msg.mediaUrl) ? (
+                                <div className="relative group/media overflow-hidden rounded-xl border border-black/10 dark:border-white/10 max-w-sm">
+                                  <img 
+                                    src={msg.mediaUrl} 
+                                    alt="Imagem anexada"
+                                    onClick={() => setLightboxImage(msg.mediaUrl!)}
+                                    className="w-full max-h-72 object-cover rounded-xl cursor-pointer hover:scale-[1.01] transition-transform duration-200"
+                                    loading="lazy"
+                                  />
+                                  <div 
+                                    onClick={() => setLightboxImage(msg.mediaUrl!)}
+                                    className="absolute inset-0 bg-black/30 opacity-0 group-hover/media:opacity-100 transition-opacity flex items-center justify-center cursor-pointer gap-2"
+                                  >
+                                    <span className="p-2 rounded-full bg-black/60 text-white text-xs flex items-center gap-1.5 shadow-lg">
+                                      <Eye size={14} /> Ampliar
+                                    </span>
+                                  </div>
+                                </div>
+                              ) : (
+                                <a 
+                                  href={msg.mediaUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  download
+                                  className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
+                                    fromMe 
+                                      ? 'bg-blue-700/60 hover:bg-blue-700 border-blue-500/40 text-white' 
+                                      : 'bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white'
+                                  }`}
+                                >
+                                  <div className={`p-2.5 rounded-lg ${fromMe ? 'bg-blue-800/80 text-blue-200' : 'bg-blue-600/10 text-blue-500'}`}>
+                                    <FileText size={20} />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-semibold truncate max-w-[180px] sm:max-w-[240px]">{getFileNameFromUrl(msg.mediaUrl)}</p>
+                                    <span className={`text-[10px] ${fromMe ? 'text-blue-200' : 'text-slate-400'}`}>Clique para baixar / abrir</span>
+                                  </div>
+                                  <Download size={16} className={`shrink-0 ${fromMe ? 'text-blue-200' : 'text-slate-400'}`} />
+                                </a>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Conteúdo textual (se não for apenas o placeholder automático) */}
+                          {Boolean(msg.content && (msg.content !== 'Arquivo anexado' || !msg.mediaUrl)) && (
+                            <p className="whitespace-pre-wrap">{msg.content}</p>
+                          )}
                           
                           <div className={`flex items-center gap-1 justify-end mt-1 text-[10px] ${fromMe ? 'text-blue-200' : 'text-slate-400'}`}>
                             <span>{timeString}</span>
@@ -1146,11 +1278,63 @@ export default function ChatInternoPage() {
 
           {/* Composer / Campo de Digitação */}
           <div className="p-3 md:p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0F172A] shrink-0">
-            <div className="bg-slate-100 dark:bg-[#1E293B] border border-slate-200 dark:border-slate-700/80 rounded-2xl p-2 flex items-end gap-2 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500/20 transition-all shadow-sm">
+            {/* Input oculto para selecionar anexo */}
+            <input 
+              ref={fileInputRef} 
+              type="file" 
+              className="hidden" 
+              accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv" 
+              onChange={handleFileSelect} 
+            />
+
+            {/* Preview do Arquivo Selecionado antes de enviar */}
+            {selectedFile && (
+              <div className="mb-2 p-2.5 px-3 rounded-xl bg-slate-100 dark:bg-[#1E293B] border border-blue-500/40 flex items-center justify-between gap-3 shadow-md animate-in fade-in slide-in-from-bottom-2">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  {filePreviewUrl ? (
+                    <img src={filePreviewUrl} alt="Preview" className="w-10 h-10 object-cover rounded-lg border border-slate-700 shrink-0" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-lg bg-blue-600/15 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
+                      <FileText size={20} />
+                    </div>
+                  )}
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-semibold text-slate-900 dark:text-white truncate max-w-[240px] sm:max-w-md">
+                      {selectedFile.name}
+                    </span>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                      <span>{(selectedFile.size / 1024).toFixed(1)} KB</span>
+                      <span>•</span>
+                      <span className="text-blue-400 font-medium">
+                        {selectedFile.type.startsWith('image/') ? 'Foto / Imagem' : 'Documento'}
+                      </span>
+                    </span>
+                  </div>
+                </div>
+                
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedFile(null);
+                    setFilePreviewUrl(null);
+                  }}
+                  disabled={isUploadingMedia}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                  title="Remover anexo"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            )}
+
+            <div className="bg-slate-100 dark:bg-[#1E293B] border border-slate-200 dark:border-slate-700/80 rounded-2xl p-2 flex items-end gap-2 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500/20 transition-all shadow-sm relative">
+              {/* Botão de Anexo */}
               <button 
                 type="button"
-                className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-xl transition-colors shrink-0"
-                title="Anexar arquivo"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isSending || isUploadingMedia}
+                className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-xl transition-colors shrink-0 cursor-pointer disabled:opacity-40"
+                title="Anexar arquivo ou foto"
               >
                 <Paperclip size={18} />
               </button>
@@ -1174,21 +1358,66 @@ export default function ChatInternoPage() {
                 className="flex-1 bg-transparent text-sm text-slate-900 dark:text-white placeholder:text-slate-400 outline-none resize-none py-2 max-h-32 custom-scrollbar leading-relaxed"
               />
 
-              <button 
-                type="button"
-                className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-xl transition-colors shrink-0"
-                title="Emojis"
-              >
-                <Smile size={18} />
-              </button>
+              {/* Botão e Popover de Emojis */}
+              <div className="relative shrink-0">
+                <button 
+                  type="button"
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                  className={`p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-xl transition-colors shrink-0 cursor-pointer ${
+                    showEmojiPicker ? 'text-amber-400 bg-slate-800/80' : ''
+                  }`}
+                  title="Emojis"
+                >
+                  <Smile size={18} />
+                </button>
 
+                {showEmojiPicker && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setShowEmojiPicker(false)} />
+                    <div className="absolute bottom-12 right-0 w-72 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700/80 shadow-[0_15px_35px_rgba(0,0,0,0.3)] dark:shadow-[0_15px_35px_rgba(0,0,0,0.7)] rounded-2xl p-3 z-50 animate-in fade-in zoom-in-95">
+                      <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800 mb-2">
+                        <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Emojis</span>
+                        <button
+                          type="button"
+                          onClick={() => setShowEmojiPicker(false)}
+                          className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-0.5 cursor-pointer"
+                        >
+                          <X size={13} />
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-8 gap-1.5 max-h-48 overflow-y-auto custom-scrollbar p-1">
+                        {COMMON_EMOJIS.map((emoji, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              setInputValue(prev => prev + emoji);
+                              setShowEmojiPicker(false);
+                              textareaRef.current?.focus();
+                            }}
+                            className="w-7 h-7 flex items-center justify-center text-lg hover:scale-125 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-transform cursor-pointer"
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Botão de Enviar */}
               <button 
                 onClick={handleSendMessage}
-                disabled={!inputValue.trim() || isSending}
-                className="p-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-[0_0_12px_rgba(37,99,235,0.3)] transition-all disabled:opacity-40 disabled:cursor-not-allowed shrink-0 cursor-pointer active:scale-95"
+                disabled={(!inputValue.trim() && !selectedFile) || isSending || isUploadingMedia}
+                className="p-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-[0_0_12px_rgba(37,99,235,0.3)] transition-all disabled:opacity-40 disabled:cursor-not-allowed shrink-0 cursor-pointer active:scale-95 flex items-center justify-center"
                 title="Enviar mensagem (Enter)"
               >
-                <Send size={16} />
+                {isSending || isUploadingMedia ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Send size={16} />
+                )}
               </button>
             </div>
             <p className="text-[10px] text-slate-500 text-center mt-1.5">
@@ -1459,6 +1688,40 @@ export default function ChatInternoPage() {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+      {/* Modal Lightbox para Ampliar Imagens */}
+      {lightboxImage && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in"
+          onClick={() => setLightboxImage(null)}
+        >
+          <div className="relative max-w-4xl max-h-[90vh] flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
+            <div className="absolute -top-12 right-0 flex items-center gap-2">
+              <a 
+                href={lightboxImage} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                download
+                className="p-2 rounded-xl bg-slate-800/90 text-white hover:bg-slate-700 transition-colors flex items-center gap-1.5 text-xs font-medium shadow-lg"
+                title="Abrir em tamanho real / Baixar"
+              >
+                <ExternalLink size={14} /> Abrir original
+              </a>
+              <button
+                onClick={() => setLightboxImage(null)}
+                className="p-2 rounded-xl bg-slate-800/90 text-slate-300 hover:text-white hover:bg-rose-600 transition-colors shadow-lg cursor-pointer"
+                title="Fechar"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <img 
+              src={lightboxImage} 
+              alt="Visualização" 
+              className="max-h-[85vh] max-w-full object-contain rounded-2xl shadow-2xl border border-slate-700/60"
+            />
           </div>
         </div>
       )}

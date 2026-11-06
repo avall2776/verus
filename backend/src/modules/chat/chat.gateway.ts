@@ -18,8 +18,39 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private readonly logger = new Logger(ChatGateway.name);
 
+  // Mapeamento em memória para Presença Online de Usuários da Equipe:
+  // tenantId -> Map<userId, Set<socketId>>
+  private onlineUsersByTenant: Map<string, Map<string, Set<string>>> = new Map();
+  // socketId -> { tenantId?: string, userId?: string }
+  private socketInfo: Map<string, { tenantId?: string; userId?: string }> = new Map();
+
   handleConnection(client: Socket) {
     this.logger.log(`Cliente Web conectado no rádio: ${client.id}`);
+
+    // Registro de presença do usuário autenticado no sistema
+    client.on('userPresence', (data: { tenantId?: string; userId?: string }) => {
+      if (!data || !data.tenantId || !data.userId) return;
+      const { tenantId, userId } = data;
+
+      const existing = this.socketInfo.get(client.id) || {};
+      this.socketInfo.set(client.id, { ...existing, tenantId, userId });
+
+      if (!this.onlineUsersByTenant.has(tenantId)) {
+        this.onlineUsersByTenant.set(tenantId, new Map());
+      }
+      const tenantUsers = this.onlineUsersByTenant.get(tenantId)!;
+      if (!tenantUsers.has(userId)) {
+        tenantUsers.set(userId, new Set());
+      }
+      const sockets = tenantUsers.get(userId)!;
+      const wasOnline = sockets.size > 0;
+      sockets.add(client.id);
+
+      if (!wasOnline && this.server) {
+        this.server.to(tenantId).emit('userPresenceChanged', { userId, isOnline: true });
+        this.logger.log(`[Presença] Usuário ${userId} está ONLINE no tenant ${tenantId}`);
+      }
+    });
     
     // O cliente avisa a qual Tenant pertence para entrar na sala certa
     client.on('joinTenant', (tenantId: string) => {
@@ -32,6 +63,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       });
       client.join(tenantId);
       this.logger.log(`Cliente ${client.id} entrou na sala: ${tenantId}`);
+
+      const existing = this.socketInfo.get(client.id) || {};
+      this.socketInfo.set(client.id, { ...existing, tenantId });
     });
 
     client.on('leaveTenant', (tenantId?: string) => {
@@ -48,6 +82,32 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleDisconnect(client: Socket) {
     this.logger.log(`Cliente desconectado: ${client.id}`);
+    const info = this.socketInfo.get(client.id);
+    if (info && info.tenantId && info.userId) {
+      const tenantUsers = this.onlineUsersByTenant.get(info.tenantId);
+      if (tenantUsers && tenantUsers.has(info.userId)) {
+        const sockets = tenantUsers.get(info.userId)!;
+        sockets.delete(client.id);
+        if (sockets.size === 0) {
+          tenantUsers.delete(info.userId);
+          if (this.server) {
+            this.server.to(info.tenantId).emit('userPresenceChanged', { userId: info.userId, isOnline: false });
+            this.logger.log(`[Presença] Usuário ${info.userId} está OFFLINE no tenant ${info.tenantId}`);
+          }
+        }
+      }
+    }
+    this.socketInfo.delete(client.id);
+  }
+
+  public getOnlineUserIds(tenantId: string): Set<string> {
+    const tenantUsers = this.onlineUsersByTenant.get(tenantId);
+    if (!tenantUsers) return new Set();
+    const active = new Set<string>();
+    tenantUsers.forEach((sockets, uId) => {
+      if (sockets.size > 0) active.add(uId);
+    });
+    return active;
   }
 
   public emitNewMessage(tenantId: string, messageData: any) {

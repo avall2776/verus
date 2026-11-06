@@ -360,6 +360,15 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (tenantId) {
         socketInstance.emit('joinTenant', tenantId);
+        try {
+          const userStr = localStorage.getItem('versus_user');
+          if (userStr) {
+            const user = JSON.parse(userStr);
+            if (user?.id) {
+              socketInstance.emit('userPresence', { tenantId, userId: user.id });
+            }
+          }
+        } catch (e) {}
       } else {
         socketInstance.emit('leaveTenant');
         socketInstance.emit('joinTenant', 'unauthenticated_isolated');
@@ -669,6 +678,15 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     if (tenantId) {
       socket.emit('joinTenant', tenantId);
+      try {
+        const userStr = localStorage.getItem('versus_user');
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          if (user?.id) {
+            socket.emit('userPresence', { tenantId, userId: user.id });
+          }
+        }
+      } catch (e) {}
     } else {
       socket.emit('leaveTenant');
       socket.emit('joinTenant', 'unauthenticated_isolated');

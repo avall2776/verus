@@ -20,3 +20,4 @@ export function getPublicContractUrl(codeOrId?: string): string {
   }
   return `${cleanBase}/vallor/c/${cleanCode}`;
 }
+
