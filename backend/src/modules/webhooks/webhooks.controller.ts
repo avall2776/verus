@@ -867,31 +867,8 @@ export class WebhooksController {
               }).catch(() => {});
             }
 
-            // 2. Reconcilia contatos que ficaram salvos com identificador @lid
-            const normPush = this.whatsappService.normalizeContactName(pushName);
-            if (normPush && normPush.length >= 3) {
-              const lidCandidates = await this.prisma.contact.findMany({
-                where: {
-                  tenantId,
-                  phone: { contains: 'lid' },
-                },
-              });
-              for (const lc of lidCandidates) {
-                const lcNorm = this.whatsappService.normalizeContactName(lc.name);
-                if (lcNorm === normPush) {
-                  await this.prisma.contact.update({
-                    where: { id: lc.id },
-                    data: {
-                      phone: phone,
-                      whatsappLid: lc.phone,
-                      name: pushName,
-                      ...(profilePictureUrl ? { avatarUrl: profilePictureUrl } : {}),
-                    },
-                  });
-                  this.logger.log(`[CONTACTS_UPSERT] Contato LID [${lc.id}] (${lc.name}) reconciliado com telefone real: ${phone}`);
-                }
-              }
-            }
+            // 2. Reconcilia contatos que ficaram salvos com identificador @lid exclusivamente via whatsappLid biunívoco
+            // (NUNCA por aproximação de nome para não misturar contatos homônimos como "Eduardo")
 
             const updated = await this.prisma.contact.findFirst({ where: { tenantId, phone } });
             if (updated) {

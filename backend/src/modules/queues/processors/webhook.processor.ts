@@ -292,24 +292,9 @@ export class WebhookProcessor extends WorkerHost {
       }
     }
 
-    // Fallback 2: Cruzamento por Nome Semântico para contatos que já possuem telefone real salvo
-    if (!existingContact && effectiveCustomerPushName && !isGenericPushName && effectiveCustomerPushName.length >= 3) {
-      const normPush = effectiveCustomerPushName.trim().toLowerCase();
-      const candidates = await this.prisma.contact.findMany({
-        where: {
-          tenantId,
-          NOT: { phone: { contains: '@lid' } },
-        },
-        orderBy: { updatedAt: 'desc' },
-      });
-      const matched = candidates.find(c => {
-        const cNorm = (c.name || '').trim().toLowerCase();
-        return cNorm === normPush || cNorm.startsWith(normPush + ' ') || cNorm.includes(' ' + normPush);
-      });
-      if (matched) {
-        existingContact = matched;
-      }
-    }
+    // REGRA DE SEGURANÇA MÁXIMA: NUNCA cruzar contatos por aproximação ou semelhança de nome (ex: "Eduardo"),
+    // pois isso misturava clientes e revendas homônimos na mesma conversa.
+    // A identificação é estritamente soberana por Telefone / WhatsApp JID / LID.
 
     let contact;
     if (existingContact) {

@@ -1955,25 +1955,9 @@ export class ChatService {
             }
           }
 
-          // Fallback 2: Cruzamento por Nome Semântico para contatos com número real
-          const push = (rawMsg.pushName || '').trim();
-          if (!contact && push && push.length >= 3 && push !== 'Cliente WhatsApp' && !push.includes('@lid')) {
-            const normPush = push.toLowerCase();
-            const candidates = await this.prisma.contact.findMany({
-              where: {
-                tenantId,
-                NOT: { phone: { contains: '@lid' } },
-              },
-              orderBy: { updatedAt: 'desc' },
-            });
-            const matched = candidates.find(c => {
-              const cNorm = (c.name || '').trim().toLowerCase();
-              return cNorm === normPush || cNorm.startsWith(normPush + ' ') || cNorm.includes(' ' + normPush);
-            });
-            if (matched) {
-              contact = matched;
-            }
-          }
+          // REGRA DE SEGURANÇA MÁXIMA: NUNCA cruzar contatos por aproximação ou semelhança de nome (ex: "Eduardo"),
+          // pois isso misturava clientes e revendas homônimos na mesma conversa.
+          // A identificação é estritamente soberana por Telefone / WhatsApp JID / LID.
 
           if (!contact) {
             contact = await this.prisma.contact.create({
