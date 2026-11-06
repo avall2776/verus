@@ -1376,7 +1376,14 @@ function CrmContent() {
           <div className="flex-1 flex gap-2 overflow-x-auto pb-4 custom-scrollbar items-start min-h-[500px]">
             {columns.map((col, idx) => {
               const isCollapsed = collapsedCols.includes(col.id);
-              const columnDeals = filteredDeals.filter(d => d.status === col.id);
+              const columnDeals = filteredDeals
+                .filter(d => d.status === col.id)
+                .sort((a, b) => {
+                  const posA = a.metadata?.position !== undefined && a.metadata?.position !== null ? Number(a.metadata.position) : 999999;
+                  const posB = b.metadata?.position !== undefined && b.metadata?.position !== null ? Number(b.metadata.position) : 999999;
+                  if (posA !== posB) return posA - posB;
+                  return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+                });
               const totalValue = columnDeals.reduce((sum, d) => sum + (d.value ? Number(d.value) : 0), 0);
               
               const colColorClass = isWhatsApp ? 'text-[#00A884]' : neutralMode ? 'text-gray-300' : col.color;

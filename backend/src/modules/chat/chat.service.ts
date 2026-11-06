@@ -48,10 +48,7 @@ export class ChatService {
           where.departmentId = { in: allowedDeptIds.length > 0 ? allowedDeptIds : ['__NONE__'] };
         }
       } else {
-        where.OR = [
-          { departmentId: { in: allowedDeptIds.length > 0 ? allowedDeptIds : ['__NONE__'] } },
-          { departmentId: null }
-        ];
+        where.departmentId = { in: allowedDeptIds.length > 0 ? allowedDeptIds : ['__NONE__'] };
       }
     } else {
       if (departmentId && departmentId !== 'all') {
@@ -254,12 +251,9 @@ export class ChatService {
           whereClause.departmentId = { in: allowedDeptIds.length > 0 ? allowedDeptIds : ['__NONE__'] };
         }
       } else {
-        // Sem filtro específico: inclui os setores permitidos e também conversas ainda sem setor (fila geral)
+        // Operador sem filtro específico: restringe estritamente às regiões/departamentos permitidos (nunca vaza outras regiões ou setor nulo)
         if (tab !== 'mine') {
-          whereClause.OR = [
-            { departmentId: { in: allowedDeptIds.length > 0 ? allowedDeptIds : ['__NONE__'] } },
-            { departmentId: null }
-          ];
+          whereClause.departmentId = { in: allowedDeptIds.length > 0 ? allowedDeptIds : ['__NONE__'] };
         }
       }
     } else {
