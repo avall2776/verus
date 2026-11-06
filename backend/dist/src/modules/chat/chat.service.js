@@ -59,7 +59,10 @@ let ChatService = ChatService_1 = class ChatService {
                 }
             }
             else {
-                where.departmentId = { in: allowedDeptIds.length > 0 ? allowedDeptIds : ['__NONE__'] };
+                where.OR = [
+                    { departmentId: { in: allowedDeptIds.length > 0 ? allowedDeptIds : ['__NONE__'] } },
+                    { departmentId: null }
+                ];
             }
         }
         else {
@@ -232,7 +235,12 @@ let ChatService = ChatService_1 = class ChatService {
                 }
             }
             else {
-                whereClause.departmentId = { in: allowedDeptIds.length > 0 ? allowedDeptIds : ['__NONE__'] };
+                if (tab !== 'mine') {
+                    whereClause.OR = [
+                        { departmentId: { in: allowedDeptIds.length > 0 ? allowedDeptIds : ['__NONE__'] } },
+                        { departmentId: null }
+                    ];
+                }
             }
         }
         else {
@@ -249,6 +257,10 @@ let ChatService = ChatService_1 = class ChatService {
             whereClause.status = { in: ['open', 'human_takeover', 'in_progress'] };
             if (!isMaster) {
                 whereClause.assignedTo = userId;
+                if (!departmentId || departmentId === 'all') {
+                    delete whereClause.departmentId;
+                    delete whereClause.OR;
+                }
             }
         }
         else {

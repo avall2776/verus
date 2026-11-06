@@ -406,6 +406,7 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
         });
         const isAiActiveForTenant = currentTenant?.aiEnabled !== false;
         const initialStatus = isAiActiveForTenant ? 'bot_active' : 'waiting';
+        const targetDeptId = await this.resolveDepartmentByPhone(tenantId, contact.phone || remoteJid, contact.state);
         let conversation = await this.prisma.conversation.upsert({
             where: {
                 tenantId_contactId: {
@@ -416,11 +417,20 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             create: {
                 tenantId,
                 contactId: contact.id,
+                departmentId: targetDeptId,
                 status: initialStatus,
                 assignedTo: null,
             },
-            update: {}
+            update: {
+                ...(targetDeptId ? { departmentId: targetDeptId } : {})
+            }
         });
+        if (!conversation.departmentId && targetDeptId) {
+            conversation = await this.prisma.conversation.update({
+                where: { id: conversation.id },
+                data: { departmentId: targetDeptId }
+            });
+        }
         if (fromMe) {
             conversation = await this.prisma.conversation.update({
                 where: { id: conversation.id },
@@ -520,7 +530,15 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
         }
         this.chatGateway.emitNewMessage(tenantId, {
             ...savedMessage,
-            contact: { phone: contact.phone, name: contact.name, avatarUrl: contact.avatarUrl }
+            conversationId: conversation.id,
+            departmentId: conversation.departmentId,
+            assignedTo: conversation.assignedTo,
+            contact: {
+                id: contact.id,
+                phone: contact.phone,
+                name: contact.name,
+                avatarUrl: contact.avatarUrl
+            }
         });
         if (fromMe) {
             return { status: 'success_outbound_synced', messageId: savedMessage.id };
@@ -620,6 +638,68 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             this.logger.log(`Conversa [${conversation.id}] agendada para IA em 800ms (Buffer).`);
         }
         return { status: 'success', messageId: savedMessage.id };
+    }
+    async resolveDepartmentByPhone(tenantId, phone, state) {
+        if (!phone && !state)
+            return null;
+        try {
+            const departments = await this.prisma.department.findMany({
+                where: { tenantId },
+                select: { id: true, name: true }
+            });
+            if (!departments || departments.length === 0)
+                return null;
+            const dddToRegion = {
+                '51': 1, '53': 1, '54': 1, '55': 1, '47': 1, '48': 1, '49': 1, '41': 1, '42': 1, '43': 1, '44': 1, '45': 1, '46': 1,
+                '67': 2, '65': 2, '66': 2, '91': 2, '93': 2, '94': 2, '69': 2, '95': 2, '68': 2, '92': 2, '97': 2, '96': 2,
+                '62': 3, '64': 3, '31': 3, '32': 3, '33': 3, '34': 3, '35': 3, '37': 3, '38': 3, '11': 3, '12': 3, '13': 3, '14': 3, '15': 3, '16': 3, '17': 3, '18': 3, '19': 3,
+                '63': 4, '71': 4, '73': 4, '74': 4, '75': 4, '77': 4,
+                '98': 5, '99': 5, '86': 5, '89': 5,
+                '85': 6, '88': 6, '84': 6, '83': 6, '79': 6, '81': 6, '87': 6, '82': 6
+            };
+            const ufToRegion = {
+                'RS': 1, 'SC': 1, 'PR': 1,
+                'MS': 2, 'MT': 2, 'PA': 2, 'RO': 2, 'RR': 2, 'AC': 2, 'AM': 2, 'AP': 2,
+                'GO': 3, 'MG': 3, 'SP': 3,
+                'TO': 4, 'BA': 4,
+                'MA': 5, 'PI': 5,
+                'CE': 6, 'RN': 6, 'PB': 6, 'SE': 6, 'PE': 6, 'AL': 6
+            };
+            let targetRegionNum = null;
+            if (phone) {
+                const clean = phone.replace(/\D/g, '');
+                let ddd = '';
+                if (clean.startsWith('55') && clean.length >= 12) {
+                    ddd = clean.substring(2, 4);
+                }
+                else if (clean.length === 10 || clean.length === 11) {
+                    ddd = clean.substring(0, 2);
+                }
+                if (ddd && dddToRegion[ddd]) {
+                    targetRegionNum = dddToRegion[ddd];
+                }
+                else if (clean.startsWith('595')) {
+                    targetRegionNum = 1;
+                }
+            }
+            if (!targetRegionNum && state) {
+                const uf = state.trim().toUpperCase();
+                if (ufToRegion[uf])
+                    targetRegionNum = ufToRegion[uf];
+            }
+            if (targetRegionNum) {
+                const matched = departments.find(d => {
+                    const upper = d.name.toUpperCase();
+                    return upper.includes(`REGIÃO ${targetRegionNum}`) || upper.includes(`REGIAO ${targetRegionNum}`);
+                });
+                if (matched)
+                    return matched.id;
+            }
+        }
+        catch (e) {
+            this.logger.warn(`Erro ao resolver departamento por telefone: ${e.message}`);
+        }
+        return null;
     }
 };
 exports.WebhookProcessor = WebhookProcessor;

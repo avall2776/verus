@@ -571,6 +571,71 @@ export class WebhooksController {
         return { status: 'status_broadcast_processed' };
       }
 
+      // Intercepta e processa Reações do WhatsApp (messageType === 'reactionMessage' ou message.reactionMessage)
+      const reactionMsg = messageObj?.reactionMessage || data?.reactionMessage;
+      if (data?.messageType === 'reactionMessage' || reactionMsg) {
+        const targetMessageId = reactionMsg?.key?.id;
+        const emoji = reactionMsg?.text ?? '';
+        const senderJid = key.participant || key.remoteJid || '';
+        const fromMe = Boolean(key.fromMe);
+
+        if (targetMessageId) {
+          try {
+            const msg = await this.prisma.message.findFirst({
+              where: {
+                tenantId,
+                providerMessageId: targetMessageId,
+              },
+            });
+
+            if (msg) {
+              let currentReactions: any[] = Array.isArray(msg.reactions) ? [...(msg.reactions as any[])] : [];
+              const senderKey = fromMe ? 'me' : (senderJid || 'contact');
+              const existingIndex = currentReactions.findIndex(r => r.senderKey === senderKey || (fromMe && r.fromMe) || (!fromMe && !r.fromMe));
+
+              if (emoji && emoji.trim().length > 0) {
+                const reactionObj = {
+                  emoji: emoji.trim(),
+                  senderKey,
+                  fromMe,
+                  timestamp: Date.now(),
+                };
+                if (existingIndex >= 0) {
+                  currentReactions[existingIndex] = reactionObj;
+                } else {
+                  currentReactions.push(reactionObj);
+                }
+              } else {
+                if (existingIndex >= 0) {
+                  currentReactions.splice(existingIndex, 1);
+                }
+              }
+
+              await this.prisma.message.update({
+                where: { id: msg.id },
+                data: { reactions: currentReactions },
+              });
+
+              this.chatGateway.emitMessageReactionUpdated(tenantId, {
+                messageId: msg.id,
+                conversationId: msg.conversationId,
+                reactions: currentReactions,
+              });
+
+              await this.prisma.conversation.update({
+                where: { id: msg.conversationId },
+                data: { updatedAt: new Date() }
+              });
+
+              this.logger.log(`[Reaction Inbound] Reação [${emoji || 'removida'}] aplicada à mensagem [${msg.id}] (origem: ${senderJid})`);
+            }
+          } catch (e: any) {
+            this.logger.warn(`Erro ao processar reactionMessage em messages.upsert: ${e.message}`);
+          }
+        }
+        return { status: 'reaction_upsert_processed' };
+      }
+
       const isFromMe = Boolean(key.fromMe);
 
       // Normaliza payload para formato Meta compatível com o WebhookProcessor

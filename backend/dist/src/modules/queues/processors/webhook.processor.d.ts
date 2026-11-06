@@ -17,4 +17,5 @@ export declare class WebhookProcessor extends WorkerHost {
     private readonly logger;
     constructor(prisma: PrismaService, aiQueue: Queue, chatGateway: ChatGateway, messagingService: MessagingService, automationsService: AutomationsService, whatsappService: WhatsappService, aiService: AiService);
     process(job: Job<any, any, string>): Promise<any>;
+    private resolveDepartmentByPhone;
 }
