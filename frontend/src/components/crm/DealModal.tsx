@@ -2320,3 +2320,5 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
     </ModalPortal>
   );
 }
+
+export default DealModal;

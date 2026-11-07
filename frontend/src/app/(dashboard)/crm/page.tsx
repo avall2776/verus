@@ -83,28 +83,9 @@ function CrmContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isWhatsApp, isClean, isDark, theme } = useTheme();
-  const [deals, setDeals] = useState<any[]>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const cached = sessionStorage.getItem('versus_crm_deals_cache');
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch {}
-    }
-    return [];
-  });
+  const [deals, setDeals] = useState<any[]>([]);
   const [columns, setColumns] = useState<any[]>([]);
-  const [loading, setLoading] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const cached = sessionStorage.getItem('versus_crm_deals_cache');
-        if (cached && cached.length > 50) return false;
-      } catch {}
-    }
-    return true;
-  });
+  const [loading, setLoading] = useState<boolean>(true);
   const [selectedDeal, setSelectedDeal] = useState<any | null>(null);
   const [collapsedCols, setCollapsedCols] = useState<string[]>([]);
   const [neutralMode, setNeutralMode] = useState(false);
@@ -426,12 +407,7 @@ function CrmContent() {
   const fetchDeals = async () => {
     try {
       const { data } = await api.get('/deals');
-      setDeals(data);
-      if (typeof window !== 'undefined') {
-        try {
-          sessionStorage.setItem('versus_crm_deals_cache', JSON.stringify(data));
-        } catch {}
-      }
+      setDeals(Array.isArray(data) ? data : []);
     } catch (error) {
       toast.error("Erro ao carregar Pipeline");
     } finally {
@@ -3096,29 +3072,21 @@ const DealCard = React.memo(function DealCard({ deal, index, col, onOpenDeal, is
   const effectiveBgLight = isWhatsApp ? 'bg-[#005C4B]/20' : col.bgLight;
   const effectiveBorderLight = isWhatsApp ? 'border-[#00A884]/30' : col.borderLight;
 
-  return (
-    <Draggable draggableId={deal.id} index={index} isDragDisabled={isMobile}>
-      {(provided, snapshot) => (
-        <div
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          {...provided.dragHandleProps}
-          style={{ ...provided.draggableProps.style }}
-          onClick={() => {
-            if (onOpenDeal) {
-              onOpenDeal(deal);
-            }
-          }}
-          className={`group relative flex flex-col gap-2.5 rounded-xl border p-4 shadow-sm transition-all cursor-pointer active:scale-[0.99] select-none ${
-            isWhatsApp
-              ? 'bg-[#111B21] hover:bg-[#162229] border-[#222D34] hover:border-[#00A884]/40 text-[#E9EDEF]'
-              : 'border-slate-200 dark:border-slate-800/80 bg-white dark:bg-[#161b22] text-slate-800 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-700'
-          } ${
-            snapshot.isDragging ? `rotate-2 scale-[1.02] shadow-2xl transition-transform duration-150 z-50 ring-1 ${effectiveBorderLight} ${isWhatsApp ? 'bg-[#202C33]' : 'bg-slate-50 dark:bg-gray-800'}` : ''
-          }`}
-        >
-          {/* CABEÇALHO: ID E BADGE */}
-          <div className="flex items-center justify-between text-xs">
+  const cardContent = (
+    <div
+      onClick={() => {
+        if (onOpenDeal) {
+          onOpenDeal(deal);
+        }
+      }}
+      className={`group relative flex flex-col gap-2.5 rounded-xl border p-4 shadow-sm transition-all cursor-pointer active:scale-[0.99] select-none ${
+        isWhatsApp
+          ? 'bg-[#111B21] hover:bg-[#162229] border-[#222D34] hover:border-[#00A884]/40 text-[#E9EDEF]'
+          : 'border-slate-200 dark:border-slate-800/80 bg-white dark:bg-[#161b22] text-slate-800 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-700'
+      }`}
+    >
+      {/* CABEÇALHO: ID E BADGE */}
+      <div className="flex items-center justify-between text-xs">
             <span className={`font-mono font-bold ${effectiveColColor}`}>
               #{deal.id?.split('-')[0]?.toUpperCase() || 'DEAL'}
             </span>
@@ -3353,21 +3321,27 @@ const DealCard = React.memo(function DealCard({ deal, index, col, onOpenDeal, is
           </div>
 
         </div>
+  );
+
+  // No mobile, renderiza direto como div nativa: 0ms de lag, zero conflitos de toque e 0 overhead de drag
+  if (isMobile) {
+    return cardContent;
+  }
+
+  return (
+    <Draggable draggableId={deal.id} index={index}>
+      {(provided, snapshot) => (
+        <div
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+          style={{ ...provided.draggableProps.style }}
+          className={snapshot.isDragging ? `rotate-2 scale-[1.02] shadow-2xl transition-transform duration-150 z-50 ring-1 ${effectiveBorderLight} ${isWhatsApp ? 'bg-[#202C33]' : 'bg-slate-50 dark:bg-gray-800'}` : ''}
+        >
+          {cardContent}
+        </div>
       )}
     </Draggable>
-  );
-}, (prev, next) => {
-  return (
-    prev.deal.id === next.deal.id &&
-    prev.deal.updatedAt === next.deal.updatedAt &&
-    prev.deal.status === next.deal.status &&
-    prev.deal.value === next.deal.value &&
-    prev.deal.title === next.deal.title &&
-    prev.deal.contact?.name === next.deal.contact?.name &&
-    prev.deal.contact?.phone === next.deal.contact?.phone &&
-    prev.index === next.index &&
-    prev.col.id === next.col.id &&
-    prev.isMobile === next.isMobile
   );
 });
 
