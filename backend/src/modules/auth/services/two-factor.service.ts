@@ -45,6 +45,11 @@ export class TwoFactorService {
       timeStyle: 'medium',
     }).format(new Date());
 
+    const mapsLocation = telemetry.city
+      ? encodeURIComponent(`${telemetry.city}, ${telemetry.state || 'RS'}, Brasil`)
+      : encodeURIComponent(`${telemetry.ip}`);
+    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${mapsLocation}`;
+
     const message = [
       `🔐 *[VALLOR SECURITY] · Autorização de Acesso*`,
       `━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
@@ -52,6 +57,7 @@ export class TwoFactorService {
       `📧 *E-mail de Login:* *${user.email}*`,
       `🏢 *Empresa / Tenant:* ${tenantName || 'Vallor Omnichannel'}`,
       `📍 *Local:* ${telemetry.city || 'Desconhecido'}, ${telemetry.state || 'BR'} (IP: \`${telemetry.ip || '0.0.0.0'}\`)`,
+      `🗺️ *Ver no Maps:* ${mapsUrl}`,
       `💻 *Dispositivo:* ${telemetry.browser || 'Navegador'} no ${telemetry.device || 'Desktop/Mobile'}`,
       `⏰ *Horário:* ${nowBr}`,
       `━━━━━━━━━━━━━━━━━━━━━━━━━━━`,

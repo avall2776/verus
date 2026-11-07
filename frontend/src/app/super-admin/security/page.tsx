@@ -23,6 +23,7 @@ import {
   Radio,
   Fingerprint,
   ChevronDown,
+  ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/lib/api";
@@ -519,12 +520,21 @@ export default function SecurityAuditPage() {
                         {/* Localização & IP */}
                         <td className="py-3.5 px-4">
                           <div className="flex flex-col">
-                            <div className="flex items-center gap-1.5 font-medium text-slate-900 dark:text-slate-100">
-                              <MapPin size={13} className="text-rose-500 shrink-0" />
-                              <span>
+                            <a
+                              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                                `${session.city || ""}, ${session.state || ""}, Brasil`
+                              )}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 font-medium text-slate-900 dark:text-slate-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors group cursor-pointer w-fit"
+                              title="Abrir localização no Google Maps em tempo real"
+                            >
+                              <MapPin size={13} className="text-rose-500 shrink-0 group-hover:scale-110 transition-transform" />
+                              <span className="underline decoration-dotted decoration-slate-400/60 hover:decoration-blue-500">
                                 {session.city || "Cidade"}, {session.state || "UF"}
                               </span>
-                            </div>
+                              <ExternalLink size={11} className="text-slate-400 group-hover:text-blue-500 opacity-60 group-hover:opacity-100 transition-opacity" />
+                            </a>
                             <span className="text-[11px] font-mono text-slate-400 ml-4.5">
                               {session.ipAddress || "127.0.0.1"}
                             </span>
@@ -693,10 +703,22 @@ export default function SecurityAuditPage() {
                         </td>
 
                         <td className="py-3 px-4 text-[11px]">
-                          <span>
-                            {log.city || "Brasil"} •{" "}
+                          <div className="flex items-center gap-1.5">
+                            <a
+                              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                                `${log.city || ""}, ${log.state || ""}, Brasil`
+                              )}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="hover:text-blue-600 dark:hover:text-blue-400 underline decoration-dotted transition-colors inline-flex items-center gap-1"
+                              title="Abrir no Google Maps"
+                            >
+                              <MapPin size={11} className="text-rose-500 shrink-0" />
+                              <span>{log.city || "Brasil"}</span>
+                            </a>
+                            <span className="text-slate-400">•</span>
                             <span className="font-mono text-slate-400">{log.ipAddress}</span>
-                          </span>
+                          </div>
                         </td>
 
                         <td className="py-3 px-4 text-slate-500 text-[11px]">
