@@ -754,12 +754,12 @@ export default function Sidebar() {
   return (
     <>
       <aside 
-        className={`hidden md:flex bg-white dark:bg-[#0B1224] border-r border-slate-200 dark:border-gray-800 flex-col justify-between h-full transition-[width] duration-200 ease-in-out relative z-20 shrink-0 ${isExpanded ? 'w-[260px]' : 'w-[64px]'}`}
+        className={`vallor-sidebar-col hidden md:flex bg-white dark:bg-[#0B1224] flex-col justify-between h-full transition-[width] duration-200 ease-in-out relative z-20 shrink-0 ${isExpanded ? 'w-[260px]' : 'w-[64px]'}`}
       >
       <div className="flex flex-col h-full overflow-hidden">
         
         {/* Header Institucional: Logotipo Oficial VALLOR */}
-        <div className="h-16 flex items-center justify-between border-b border-slate-200 dark:border-gray-800 px-4 shrink-0 relative">
+        <div className="h-16 flex items-center justify-between px-4 shrink-0 relative">
           {isExpanded ? (
             <div className="flex items-center justify-between w-full">
               <Link 
@@ -847,7 +847,7 @@ export default function Sidebar() {
         )}
 
         {/* Navigation */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-3 flex flex-col gap-1">
+        <div className="flex-1 overflow-y-auto no-scrollbar p-3 flex flex-col gap-1">
           <button 
             onClick={toggleSidebar}
             className={`flex items-center p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-800/50 transition-colors mb-2 ${isExpanded ? 'justify-end' : 'justify-center'}`}
@@ -939,9 +939,7 @@ export default function Sidebar() {
         </div>
 
         {/* Footer */}
-        <div className={`border-t p-3 shrink-0 flex flex-col gap-2 ${
-          isWhatsApp ? 'border-[#222D34]' : 'border-slate-200 dark:border-gray-800'
-        }`}>
+        <div className="p-3 shrink-0 flex flex-col gap-2">
           {/* WA Status */}
           <div className={`flex items-center gap-3 px-2 py-1.5 rounded-lg border transition-colors ${
             !isExpanded && 'justify-center'

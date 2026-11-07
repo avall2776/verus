@@ -2585,21 +2585,20 @@ function InboxContent() {
   const todayFirstResp = productivityData?.todayFirstResp ?? "0s";
 
   return (
-    <div className={`flex h-full w-full ${isWhatsApp ? 'bg-[#0C1317]' : 'bg-slate-100 dark:bg-[#050814]'} text-slate-900 dark:text-slate-100 overflow-hidden`}>
+    <div className={`vallor-inbox-root flex h-full w-full ${isWhatsApp ? 'bg-[#0B141A]' : 'bg-[#E2E8F0] dark:bg-[#050814]'} text-slate-900 dark:text-slate-100 overflow-hidden`}>
       
-      {/* 1. PAINEL ESQUERDO: Lista de Conversas (Padrão Estrutural WhatsApp Web com Master-Detail Mobile e Redimensionamento) */}
+      {/* 1. PAINEL ESQUERDO: Lista de Conversas (Transição por Camada de Cor sem Bordas Duras) */}
       <div 
         style={{
           width: typeof window !== 'undefined' && window.innerWidth >= 768 ? `${sidebarWidth}px` : undefined,
           minWidth: typeof window !== 'undefined' && window.innerWidth >= 768 ? `${MIN_SIDEBAR_WIDTH}px` : undefined,
           maxWidth: typeof window !== 'undefined' && window.innerWidth >= 768 ? `${MAX_SIDEBAR_WIDTH}px` : undefined,
         }}
-        className={`${activeChat ? 'hidden md:flex' : 'flex'} w-full flex-shrink-0 ${isWhatsApp ? 'bg-[#111B21] border-[#222D34]' : 'bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800'} border-r flex-col overflow-hidden z-10 relative`}
+        className={`vallor-inbox-col ${activeChat ? 'hidden md:flex' : 'flex'} w-full flex-shrink-0 ${isWhatsApp ? 'bg-[#18262E]' : 'bg-[#EDF2F7] dark:bg-[#121F3B]'} flex-col overflow-hidden z-10 relative`}
       >
         
-        {/* Header Superior WhatsApp */}
-        {/* Header Superior WhatsApp (Foto de Perfil da Linha Principal & Status) */}
-        <div className={`px-3.5 py-3 ${isWhatsApp ? 'bg-[#202C33] border-[#222D34]' : 'bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800'} border-b flex items-center justify-between`}>
+        {/* Header Superior WhatsApp (Foto de Perfil da Linha Principal & Status - Sem borda inferior desalinhada) */}
+        <div className="h-16 px-3.5 bg-transparent flex items-center justify-between shrink-0">
           {(() => {
             const effectiveStatus = activeInstance ? activeInstance.status : (waStatus?.status || 'disconnected');
             const isWaConnected = effectiveStatus === 'connected';
@@ -2669,14 +2668,14 @@ function InboxContent() {
                   </div>
 
                   {/* Status de Presença */}
-                  <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-[#0B1224] ${
+                  <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 ${isWhatsApp ? 'border-[#18262E]' : 'border-[#EDF2F7] dark:border-[#121F3B]'} ${
                     isWaConnected ? 'bg-emerald-400 animate-pulse' : isWaConnecting ? 'bg-amber-400' : 'bg-rose-500'
                   }`} />
 
                   {/* Badge de Story Ativo na Linha Principal */}
                   {hasActiveStories && (
                     <div
-                      className="absolute -top-1 -right-1 px-1 min-w-[16px] h-4 rounded-full bg-[#00A884] border-2 border-white dark:border-[#0B1224] flex items-center justify-center text-white text-[9px] font-black shadow-sm"
+                      className={`absolute -top-1 -right-1 px-1 min-w-[16px] h-4 rounded-full bg-[#00A884] border-2 ${isWhatsApp ? 'border-[#18262E]' : 'border-[#EDF2F7] dark:border-[#121F3B]'} flex items-center justify-center text-white text-[9px] font-black shadow-sm`}
                       title={`${activeLineStories.length} Story ativo • ${totalActiveViews} visualizações`}
                     >
                       <Eye size={9} className="text-white" />
@@ -2731,7 +2730,7 @@ function InboxContent() {
               type="button"
               onClick={() => handleSyncOfflineMessages(true, true)}
               disabled={isSyncingOffline}
-              className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 border border-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 dark:hover:text-white dark:border-transparent flex items-center justify-center transition-all cursor-pointer shadow-sm hover:scale-105 active:scale-95 disabled:opacity-50"
+              className="vallor-inbox-pill-idle w-8 h-8 rounded-xl bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 border border-slate-200/80 dark:bg-[#1B2C52] dark:hover:bg-[#233866] dark:text-slate-200 dark:hover:text-white dark:border-[#263C6E] flex items-center justify-center transition-all cursor-pointer shadow-sm hover:scale-105 active:scale-95 disabled:opacity-50"
               title="Sincronizar mensagens offline (últimas 24h)"
             >
               <RefreshCw size={14} className={isSyncingOffline ? "animate-spin text-blue-500 dark:text-blue-400" : ""} />
@@ -2955,16 +2954,16 @@ function InboxContent() {
           </>
         )}
 
-        {/* Barra de Busca WhatsApp */}
-        <div className={`px-3 pt-2.5 pb-1.5 ${isWhatsApp ? 'bg-[#111B21]' : 'bg-white dark:bg-[#0B1224]'}`}>
-          <div className={`${isWhatsApp ? 'bg-[#202C33] border-[#222D34] focus-within:border-[#00A884] focus-within:bg-[#202C33]' : 'bg-slate-100 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 focus-within:border-blue-500 dark:focus-within:border-slate-500 focus-within:bg-white dark:focus-within:bg-[#0B1224]'} border rounded-xl px-3 py-2 flex items-center gap-2 transition-all`}>
+        {/* Barra de Busca WhatsApp (Contraste interno recuado sobre a coluna do Inbox) */}
+        <div className="px-3 pt-1 pb-2 bg-transparent">
+          <div className={`vallor-inbox-search-box ${isWhatsApp ? 'bg-[#111B21] border-[#253640] focus-within:border-[#00A884] focus-within:bg-[#111B21]' : 'bg-white dark:bg-[#0B1224] border-slate-200/90 dark:border-[#1F3158] focus-within:border-blue-500 dark:focus-within:border-cyan-500/60 focus-within:bg-white dark:focus-within:bg-[#0B1224] shadow-xs'} border rounded-xl px-3 py-2 flex items-center gap-2 transition-all`}>
             <Search size={15} className={`${isWhatsApp ? 'text-[#8696A0]' : 'text-slate-400'} shrink-0`} />
             <input 
               type="text" 
               placeholder="Pesquisar ou começar uma nova conversa" 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className={`w-full bg-transparent text-xs ${isWhatsApp ? 'text-[#E9EDEF] placeholder:text-[#8696A0]' : 'text-slate-800 dark:text-slate-100 placeholder:text-slate-400'} outline-none`}
+              className={`vallor-inbox-search-input w-full bg-transparent text-xs ${isWhatsApp ? 'text-[#E9EDEF] placeholder:text-[#8696A0]' : 'text-slate-800 dark:text-slate-100 placeholder:text-slate-400'} outline-none`}
             />
             {searchQuery && (
               <button onClick={() => setSearchQuery('')} className={`${isWhatsApp ? 'text-[#8696A0] hover:text-[#E9EDEF]' : 'text-slate-400 hover:text-slate-700 dark:hover:text-white'}`}>
@@ -2974,8 +2973,8 @@ function InboxContent() {
           </div>
         </div>
 
-        {/* Pílulas de Filtro (Padrão Exato WhatsApp Web - Imagem 2) */}
-        <div className={`px-3 py-2 flex items-center gap-1.5 overflow-x-auto no-scrollbar border-b ${isWhatsApp ? 'bg-[#111B21] border-[#222D34]' : 'bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800/60'} shrink-0`}>
+        {/* Pílulas de Filtro (Sem borda divisória dura) */}
+        <div className="px-3 py-2 flex items-center gap-1.5 overflow-x-auto no-scrollbar bg-transparent shrink-0">
           <button
             type="button"
             onClick={() => {
@@ -2985,7 +2984,7 @@ function InboxContent() {
             className={`px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
               activeFilterTab === 'all'
                 ? (isWhatsApp ? 'bg-[#103629] text-[#00A884] border border-[#00A884] font-semibold' : 'bg-blue-600 text-white font-medium shadow-sm')
-                : (isWhatsApp ? 'bg-[#202C33] text-[#8696A0] hover:bg-[#2A3942] border border-[#222D34]' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300')
+                : (isWhatsApp ? 'vallor-inbox-pill-idle bg-[#22333D] text-[#E9EDEF] hover:bg-[#2A3E4A] border border-[#2B3F4B]' : 'vallor-inbox-pill-idle bg-white text-slate-700 hover:bg-slate-50 border border-slate-200/80 dark:bg-[#1B2C52] dark:text-slate-200 dark:hover:bg-[#243968] dark:border-[#263C6E]')
             }`}
           >
             Tudo
@@ -3000,7 +2999,7 @@ function InboxContent() {
             className={`px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
               activeFilterTab === 'unread'
                 ? (isWhatsApp ? 'bg-[#103629] text-[#00A884] border border-[#00A884] font-semibold' : 'bg-blue-600 text-white font-medium shadow-sm')
-                : (isWhatsApp ? 'bg-[#202C33] text-[#8696A0] hover:bg-[#2A3942] border border-[#222D34]' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300')
+                : (isWhatsApp ? 'vallor-inbox-pill-idle bg-[#22333D] text-[#E9EDEF] hover:bg-[#2A3E4A] border border-[#2B3F4B]' : 'vallor-inbox-pill-idle bg-white text-slate-700 hover:bg-slate-50 border border-slate-200/80 dark:bg-[#1B2C52] dark:text-slate-200 dark:hover:bg-[#243968] dark:border-[#263C6E]')
             }`}
           >
             <span>Não lidas</span>
@@ -3023,7 +3022,7 @@ function InboxContent() {
             className={`px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
               activeFilterTab === 'waiting'
                 ? (isWhatsApp ? 'bg-[#103629] text-[#00A884] border border-[#00A884] font-semibold' : 'bg-blue-600 text-white font-medium shadow-sm')
-                : (isWhatsApp ? 'bg-[#202C33] text-[#8696A0] hover:bg-[#2A3942] border border-[#222D34]' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300')
+                : (isWhatsApp ? 'vallor-inbox-pill-idle bg-[#22333D] text-[#E9EDEF] hover:bg-[#2A3E4A] border border-[#2B3F4B]' : 'vallor-inbox-pill-idle bg-white text-slate-700 hover:bg-slate-50 border border-slate-200/80 dark:bg-[#1B2C52] dark:text-slate-200 dark:hover:bg-[#243968] dark:border-[#263C6E]')
             }`}
           >
             <span>Aguardando</span>
@@ -3048,7 +3047,7 @@ function InboxContent() {
             className={`px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
               activeFilterTab === 'mine'
                 ? (isWhatsApp ? 'bg-[#103629] text-[#00A884] border border-[#00A884] font-semibold' : 'bg-blue-600 text-white font-medium shadow-sm')
-                : (isWhatsApp ? 'bg-[#202C33] text-[#8696A0] hover:bg-[#2A3942] border border-[#222D34]' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300')
+                : (isWhatsApp ? 'vallor-inbox-pill-idle bg-[#22333D] text-[#E9EDEF] hover:bg-[#2A3E4A] border border-[#2B3F4B]' : 'vallor-inbox-pill-idle bg-white text-slate-700 hover:bg-slate-50 border border-slate-200/80 dark:bg-[#1B2C52] dark:text-slate-200 dark:hover:bg-[#243968] dark:border-[#263C6E]')
             }`}
           >
             <span>Meus</span>
@@ -3075,7 +3074,7 @@ function InboxContent() {
             className={`px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
               activeFilterTab === 'resolved'
                 ? (isWhatsApp ? 'bg-[#103629] text-[#00A884] border border-[#00A884] font-semibold' : 'bg-blue-600 text-white font-medium shadow-sm')
-                : (isWhatsApp ? 'bg-[#202C33] text-[#8696A0] hover:bg-[#2A3942] border border-[#222D34]' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300')
+                : (isWhatsApp ? 'vallor-inbox-pill-idle bg-[#22333D] text-[#E9EDEF] hover:bg-[#2A3E4A] border border-[#2B3F4B]' : 'vallor-inbox-pill-idle bg-white text-slate-700 hover:bg-slate-50 border border-slate-200/80 dark:bg-[#1B2C52] dark:text-slate-200 dark:hover:bg-[#243968] dark:border-[#263C6E]')
             }`}
           >
             Resolvidos
@@ -3186,12 +3185,12 @@ function InboxContent() {
                   });
                   setShowMuteSubmenu(false);
                 }}
-                className={`flex items-center gap-3.5 px-3.5 py-3 cursor-pointer transition-colors relative group border-b ${
-                  isWhatsApp ? 'border-[#222D34]' : 'border-slate-100 dark:border-slate-800/40'
+                className={`vallor-inbox-chat-row flex items-center gap-3.5 px-3.5 py-3 cursor-pointer transition-colors relative group border-b ${
+                  isWhatsApp ? 'border-[#21313B]' : 'border-slate-200/60 dark:border-white/[0.05]'
                 } ${
                   activeChat === contact.id
-                    ? (isWhatsApp ? 'bg-[#2A3942] border-l-4 border-[#00A884]' : 'bg-blue-50/80 dark:bg-blue-950/40 border-l-4 border-blue-600')
-                    : (isWhatsApp ? 'hover:bg-[#202C33]' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50')
+                    ? (isWhatsApp ? 'vallor-inbox-chat-active bg-[#243640] border-l-4 border-[#00A884]' : 'vallor-inbox-chat-active bg-white dark:bg-[#1B2D54] border-l-4 border-blue-600 dark:border-cyan-400 shadow-xs')
+                    : (isWhatsApp ? 'hover:bg-[#1E2E37]' : 'hover:bg-white/70 dark:hover:bg-[#172647]')
                 }`}
               >
                 {/* Avatar Circular 48x48 com Story Ring Pulsante */}
@@ -3252,12 +3251,12 @@ function InboxContent() {
                   </div>
 
                   {/* Status Indicator */}
-                  <div className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 ${isWhatsApp ? 'border-[#111B21]' : 'border-white dark:border-[#0B1224]'} shadow-sm`} />
+                  <div className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 ${isWhatsApp ? 'border-[#18262E]' : 'border-[#EDF2F7] dark:border-[#121F3B]'} shadow-sm`} />
 
                   {/* Badge de Story Recente (Zero Emojis - Ícone Vetorial Eye) */}
                   {hasRecentStory && (
                     <div 
-                      className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-blue-600 border-2 border-white dark:border-[#0B1224] flex items-center justify-center text-white shadow-sm"
+                      className={`absolute -top-1 -right-1 w-4 h-4 rounded-full bg-blue-600 border-2 ${isWhatsApp ? 'border-[#18262E]' : 'border-[#EDF2F7] dark:border-[#121F3B]'} flex items-center justify-center text-white shadow-sm`}
                       title="Visualizou Status nas últimas 24h (Clique para ver o Story)"
                     >
                       <Eye size={9} className="text-white" />
@@ -3453,7 +3452,7 @@ function InboxContent() {
         </div>
       </div>
 
-      {/* Separador Redimensionável Lateral (Padrão Lero / Vallor) */}
+      {/* Separador Redimensionável Lateral (Invisível em repouso para manter transição limpa de cor, acende ao passar o mouse) */}
       <div 
         onMouseDown={handleMouseDownResize}
         onDoubleClick={handleDoubleClickResize}
@@ -3463,8 +3462,8 @@ function InboxContent() {
           isResizingSidebar 
             ? 'bg-blue-500 w-1.5 shadow-[0_0_10px_rgba(59,130,246,0.5)]' 
             : isWhatsApp 
-              ? 'hover:bg-[#00A884]/80 bg-[#222D34]' 
-              : 'hover:bg-blue-500/70 bg-slate-200/80 dark:bg-slate-800/80'
+              ? 'hover:bg-[#00A884]/80 bg-transparent' 
+              : 'hover:bg-blue-500/70 bg-transparent'
         }`}
         title="Arraste para redimensionar (duplo clique para o padrão)"
       >
@@ -3476,8 +3475,8 @@ function InboxContent() {
         )}
       </div>
 
-      {/* 2. PAINEL CENTRAL: Janela de Chat (Estrutura WhatsApp Corporativo VERSUS) */}
-      <div className={`${!activeChat ? 'hidden md:flex' : 'flex'} flex-1 w-full ${isWhatsApp ? 'bg-[#0B141A] border-[#222D34]' : 'bg-slate-50 dark:bg-[#070D18] border-slate-200 dark:border-slate-800/80'} flex-col overflow-hidden relative border-r`}>
+      {/* 2. PAINEL CENTRAL: Janela de Chat (3ª Camada de Cor Profunda sem Borda Divisória) */}
+      <div className={`vallor-chat-main-col ${!activeChat ? 'hidden md:flex' : 'flex'} flex-1 w-full ${isWhatsApp ? 'bg-[#0B141A]' : 'bg-[#E2E8F0] dark:bg-[#050814]'} flex-col overflow-hidden relative`}>
         
         {/* Textura/Papel de Parede Sutil Autêntico WhatsApp adaptado ao Dark Mode Corporativo */}
         <div 

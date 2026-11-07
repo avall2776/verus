@@ -1618,3 +1618,116 @@ body.embed-mode .flex-1.overflow-y-auto {
   margin: 0 !important;
 }
 
+/* ==========================================================================
+   ARQUITETURA EM 3 CAMADAS DE PROFUNDIDADE (SURFACE LAYERING SEM BORDAS)
+   Garante separação visual nítida entre:
+   1. Menu Lateral VALLOR (.vallor-sidebar-col)
+   2. Coluna de Conversas do Inbox (.vallor-inbox-col)
+   3. Painel Principal / Chat (.vallor-chat-main-col)
+   em todos os 3 temas (Dark, Clean e WhatsApp)
+   ========================================================================== */
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* 1. TEMA DARK CORPORATIVO (VALLOR DEEP NAVY) */
+html.dark:not(.theme-whatsapp) .vallor-sidebar-col {
+  background-color: #0B1224 !important;
+  border-right: none !important;
+}
+html.dark:not(.theme-whatsapp) .vallor-inbox-col {
+  background-color: #121F3B !important;
+  border-right: none !important;
+}
+html.dark:not(.theme-whatsapp) .vallor-chat-main-col {
+  background-color: #050814 !important;
+  border-right: none !important;
+}
+html.dark:not(.theme-whatsapp) .vallor-inbox-search-box {
+  background-color: #0B1224 !important;
+  border-color: #1F3158 !important;
+}
+html.dark:not(.theme-whatsapp) .vallor-inbox-search-input {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+html.dark:not(.theme-whatsapp) .vallor-inbox-pill-idle {
+  background-color: #1B2C52 !important;
+  border-color: #263C6E !important;
+  color: #E2E8F0 !important;
+}
+html.dark:not(.theme-whatsapp) .vallor-inbox-pill-idle:hover {
+  background-color: #243968 !important;
+}
+
+/* 2. TEMA CLEAN (CORPORATIVO CLARO) */
+html:not(.dark):not(.theme-whatsapp) .vallor-sidebar-col {
+  background-color: #FFFFFF !important;
+  border-right: none !important;
+}
+html:not(.dark):not(.theme-whatsapp) .vallor-inbox-col {
+  background-color: #EDF2F7 !important;
+  border-right: none !important;
+}
+html:not(.dark):not(.theme-whatsapp) .vallor-chat-main-col {
+  background-color: #E2E8F0 !important;
+  border-right: none !important;
+}
+html:not(.dark):not(.theme-whatsapp) .vallor-inbox-search-box {
+  background-color: #FFFFFF !important;
+  border-color: #CBD5E1 !important;
+}
+html:not(.dark):not(.theme-whatsapp) .vallor-inbox-search-input {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+html:not(.dark):not(.theme-whatsapp) .vallor-inbox-pill-idle {
+  background-color: #FFFFFF !important;
+  border-color: #CBD5E1 !important;
+  color: #334155 !important;
+}
+html:not(.dark):not(.theme-whatsapp) .vallor-inbox-pill-idle:hover {
+  background-color: #F8FAFC !important;
+}
+
+/* 3. TEMA WHATSAPP OFICIAL */
+html.theme-whatsapp .vallor-sidebar-col {
+  background-color: #111B21 !important;
+  border-right: none !important;
+}
+html.theme-whatsapp .vallor-inbox-col {
+  background-color: #18262E !important;
+  border-right: none !important;
+}
+html.theme-whatsapp .vallor-chat-main-col {
+  background-color: #0B141A !important;
+  border-right: none !important;
+}
+html.theme-whatsapp .vallor-inbox-search-box {
+  background-color: #111B21 !important;
+  border-color: #253640 !important;
+}
+html.theme-whatsapp .vallor-inbox-search-input,
+html.theme-whatsapp .vallor-inbox-search-input:focus {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+html.theme-whatsapp .vallor-inbox-pill-idle {
+  background-color: #22333D !important;
+  border-color: #2B3F4B !important;
+  color: #E9EDEF !important;
+}
+html.theme-whatsapp .vallor-inbox-pill-idle:hover {
+  background-color: #2A3E4A !important;
+}
+
+
