@@ -314,6 +314,9 @@ model Deal {
 
   @@index([tenantId])
   @@index([tenantId, status])
+  @@index([tenantId, updatedAt(sort: Desc)])
+  @@index([tenantId, contactId])
+  @@index([tenantId, assignedTo])
 }
 
 model QuickReply {

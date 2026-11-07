@@ -74,9 +74,25 @@ function CrmContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isWhatsApp, theme } = useTheme();
-  const [deals, setDeals] = useState<any[]>([]);
+  const [deals, setDeals] = useState<any[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = sessionStorage.getItem('versus_crm_deals_cache');
+        if (cached) return JSON.parse(cached);
+      } catch {}
+    }
+    return [];
+  });
   const [columns, setColumns] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = sessionStorage.getItem('versus_crm_deals_cache');
+        if (cached && JSON.parse(cached).length > 0) return false;
+      } catch {}
+    }
+    return true;
+  });
   const [selectedDeal, setSelectedDeal] = useState<any | null>(null);
   const [collapsedCols, setCollapsedCols] = useState<string[]>([]);
   const [neutralMode, setNeutralMode] = useState(false);
@@ -369,6 +385,11 @@ function CrmContent() {
     try {
       const { data } = await api.get('/deals');
       setDeals(data);
+      if (typeof window !== 'undefined') {
+        try {
+          sessionStorage.setItem('versus_crm_deals_cache', JSON.stringify(data));
+        } catch {}
+      }
     } catch (error) {
       toast.error("Erro ao carregar Pipeline");
     } finally {
@@ -700,6 +721,30 @@ function CrmContent() {
       return true;
     });
   }, [deals, searchQuery, activeTab, currentUser, selectedStageFilter, activeDateRange, dateFilterType]);
+
+  // Agrupamento O(N) memoizado dos cards por coluna para performance instantânea no Kanban
+  const dealsByColumn = useMemo(() => {
+    const map: Record<string, any[]> = {};
+    for (const c of columns) {
+      map[c.id] = [];
+    }
+    for (const deal of filteredDeals) {
+      const colId = deal.status || 'new';
+      if (!map[colId]) map[colId] = [];
+      map[colId].push(deal);
+    }
+    for (const colId in map) {
+      map[colId].sort((a, b) => {
+        const posA = a.metadata?.position !== undefined && a.metadata?.position !== null ? Number(a.metadata.position) : 999999;
+        const posB = b.metadata?.position !== undefined && b.metadata?.position !== null ? Number(b.metadata.position) : 999999;
+        if (posA !== posB) return posA - posB;
+        const timeB = a._parsedTime || (a._parsedTime = new Date(a.updatedAt || a.createdAt || 0).getTime());
+        const timeA = b._parsedTime || (b._parsedTime = new Date(b.updatedAt || b.createdAt || 0).getTime());
+        return timeB - timeA;
+      });
+    }
+    return map;
+  }, [filteredDeals, columns]);
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
@@ -1376,14 +1421,7 @@ function CrmContent() {
           <div className="flex-1 flex gap-2 overflow-x-auto pb-4 custom-scrollbar items-start min-h-[500px]">
             {columns.map((col, idx) => {
               const isCollapsed = collapsedCols.includes(col.id);
-              const columnDeals = filteredDeals
-                .filter(d => d.status === col.id)
-                .sort((a, b) => {
-                  const posA = a.metadata?.position !== undefined && a.metadata?.position !== null ? Number(a.metadata.position) : 999999;
-                  const posB = b.metadata?.position !== undefined && b.metadata?.position !== null ? Number(b.metadata.position) : 999999;
-                  if (posA !== posB) return posA - posB;
-                  return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-                });
+              const columnDeals = dealsByColumn[col.id] || [];
               const totalValue = columnDeals.reduce((sum, d) => sum + (d.value ? Number(d.value) : 0), 0);
               
               const colColorClass = isWhatsApp ? 'text-[#00A884]' : neutralMode ? 'text-gray-300' : col.color;
@@ -2538,8 +2576,8 @@ function CrmContent() {
   );
 }
 
-// Componente Isolado do Card no Kanban
-function DealCard({ deal, index, col, onOpenDeal, setSelectedDeal, router }: any) {
+// Componente Isolado do Card no Kanban (Memoizado para alta performance com 1.000+ cards)
+const DealCard = React.memo(function DealCard({ deal, index, col, onOpenDeal, setSelectedDeal, router }: any) {
   const { isWhatsApp } = useTheme();
   const [isExpanded, setIsExpanded] = useState(false);
   const contactTags = deal.contact?.tags || [];
@@ -2811,7 +2849,7 @@ function DealCard({ deal, index, col, onOpenDeal, setSelectedDeal, router }: any
       )}
     </Draggable>
   );
-}
+});
 
 export default function CrmPage() {
   return (

@@ -278,6 +278,7 @@ export class CrmService {
     tenantId: string,
     dto: { contactId: string; stageId: string; title?: string; value?: number }
   ) {
+    this.clearDealsCache(tenantId);
     const { contactId, stageId, title, value } = dto;
     if (!contactId || !stageId) {
       throw new BadRequestException('contactId e stageId são obrigatórios.');
