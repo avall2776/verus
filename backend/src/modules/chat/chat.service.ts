@@ -225,8 +225,15 @@ export class ChatService {
     }
   }
 
-  async findAllConversations(tenantId: string, userId: string, userRole: string, tab: string = 'waiting', departmentId?: string) {
-    const cacheKey = `${tenantId}:${userId}:${tab}:${departmentId || 'all'}`;
+  async findAllConversations(
+    tenantId: string,
+    userId: string,
+    userRole: string,
+    tab: string = 'waiting',
+    departmentId?: string,
+    limit?: number,
+  ) {
+    const cacheKey = `${tenantId}:${userId}:${tab}:${departmentId || 'all'}:${limit || 200}`;
     const cached = this.conversationsCache.get(cacheKey);
     if (cached && Date.now() < cached.expiresAt) {
       return cached.data;
@@ -321,7 +328,8 @@ export class ChatService {
           }
         }
       },
-      orderBy: { updatedAt: 'desc' }
+      orderBy: { updatedAt: 'desc' },
+      take: limit && limit > 0 ? limit : 200,
     });
 
     // Anexa dados do operador responsável (incluindo seus setores) em lote com alta performance
@@ -618,6 +626,7 @@ export class ChatService {
     });
     
     const convWithUser = { ...updated, assignedUser: user || null };
+    this.clearConversationsCache(tenantId);
     this.chatGateway.emitConversationUpdated(tenantId, convWithUser);
     return convWithUser;
   }
@@ -647,6 +656,7 @@ export class ChatService {
       }
     });
     
+    this.clearConversationsCache(tenantId);
     this.chatGateway.emitConversationUpdated(tenantId, updated);
     return updated;
   }
@@ -677,6 +687,7 @@ export class ChatService {
       }
     });
 
+    this.clearConversationsCache(tenantId);
     this.chatGateway.emitConversationUpdated(tenantId, updated);
     return updated;
   }
@@ -707,6 +718,7 @@ export class ChatService {
       }
     });
 
+    this.clearConversationsCache(tenantId);
     this.chatGateway.emitConversationUpdated(tenantId, updated);
     return updated;
   }
@@ -786,6 +798,7 @@ export class ChatService {
 
     const convWithUser = { ...updated, assignedUser: assignedUser || null };
 
+    this.clearConversationsCache(tenantId);
     this.chatGateway.emitConversationUpdated(tenantId, convWithUser);
     this.chatGateway.emitConversationTransferred(tenantId, {
       conversationId: updated.id,
@@ -858,6 +871,7 @@ export class ChatService {
 
     const convWithUser = { ...updated, assignedUser: assignedUser || null };
 
+    this.clearConversationsCache(tenantId);
     this.chatGateway.emitConversationUpdated(tenantId, convWithUser);
     this.chatGateway.emitConversationTransferred(tenantId, {
       conversationId: updated.id,
@@ -1299,6 +1313,9 @@ export class ChatService {
         data: { updatedAt: new Date() }
       });
     }
+
+    // Invalida cache de conversas para refletir última mensagem instantaneamente
+    this.clearConversationsCache(tenantId);
 
     // Emite a mensagem via WebSocket para atualizar todos os atendentes
     this.chatGateway.emitNewMessage(tenantId, msg);

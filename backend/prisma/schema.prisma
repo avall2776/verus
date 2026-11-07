@@ -264,6 +264,9 @@ model Conversation {
   @@index([tenantId, updatedAt])
   @@index([tenantId, assignedTo])
   @@index([departmentId])
+  @@index([tenantId, departmentId])
+  @@index([tenantId, status, departmentId])
+  @@index([tenantId, status, updatedAt(sort: Desc)])
 }
 
 model Message {
@@ -292,6 +295,7 @@ model Message {
   @@index([conversationId, createdAt])
   @@index([tenantId, createdAt])
   @@index([tenantId, status, scheduledAt])
+  @@index([tenantId, conversationId, createdAt])
 }
 
 model Deal {

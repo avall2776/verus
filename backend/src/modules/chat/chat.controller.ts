@@ -18,9 +18,17 @@ export class ChatController {
     @Query('tab') tab?: string,
     @Query('status') status?: string,
     @Query('departmentId') departmentId?: string,
+    @Query('limit') limit?: string,
   ) {
     const selectedTab = tab || status || 'waiting';
-    return this.chatService.findAllConversations(tenantId, req.user.id, req.user.role, selectedTab, departmentId);
+    return this.chatService.findAllConversations(
+      tenantId,
+      req.user.id,
+      req.user.role,
+      selectedTab,
+      departmentId,
+      limit ? parseInt(limit, 10) : undefined,
+    );
   }
 
   @Post('sync')

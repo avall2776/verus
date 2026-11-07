@@ -97,7 +97,15 @@ function InboxContent() {
   const messagesCacheRef = useRef<{ [chatId: string]: any[] }>({});
 
   const [activeChat, setActiveChat] = useState<string | null>(null);
-  const [contacts, setContacts] = useState<any[]>([]);
+  const [contacts, setContacts] = useState<any[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = sessionStorage.getItem('versus_inbox_contacts_cache');
+        if (cached) return JSON.parse(cached);
+      } catch {}
+    }
+    return [];
+  });
   const [messages, setMessages] = useState<any[]>([]);
   const [inputText, setInputText] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -1685,6 +1693,12 @@ function InboxContent() {
         }
         return initialContacts;
       });
+
+      if (typeof window !== 'undefined') {
+        try {
+          sessionStorage.setItem('versus_inbox_contacts_cache', JSON.stringify(initialContacts.slice(0, 50)));
+        } catch {}
+      }
 
       setActiveChat(prev => {
         if (!prev) return null;
@@ -4278,7 +4292,7 @@ function InboxContent() {
                   const showDateDivider = i === 0 || currentDateLabel !== prevDateLabel;
 
                   return (
-                    <div key={i} className="flex flex-col">
+                    <div key={msg.id || `msg-${i}`} className="flex flex-col">
                       {/* Pílula de Data Centralizada (WhatsApp Date Divider) */}
                       {showDateDivider && (
                         <div className="flex justify-center my-2">
