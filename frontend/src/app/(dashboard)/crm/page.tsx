@@ -32,7 +32,7 @@ const DEFAULT_COLUMNS = [
   { id: "disqualified", title: "Duplicados/Desqualificados", color: "text-gray-600", bgLight: "bg-gray-600/10", borderLight: "border-gray-600/30", borderColor: "border-t-gray-600" }
 ];
 
-type ViewMode = 'kanban' | 'table' | 'timeline';
+type ViewMode = 'kanban' | 'table' | 'timeline' | 'funnel';
 
 // Função utilitária para pegar o domingo da semana correspondente
 function getSundayOfWeek(d: Date): Date {
@@ -115,6 +115,11 @@ function CrmContent() {
   );
   // Filtro de dia específico para Timeline no Mobile ('all' = semana toda)
   const [mobileTimelineSelectedDay, setMobileTimelineSelectedDay] = useState<string>('all');
+
+  // Estados da 4ª Visualização: Funil de Vendas Interativo
+  const [selectedFunnelStage, setSelectedFunnelStage] = useState<string>('new');
+  const [funnelSortBy, setFunnelSortBy] = useState<'value' | 'recent'>('value');
+  const funnelInspectorRef = useRef<HTMLDivElement>(null);
 
   const toggleTimelineStage = (stageId: string) => {
     setCollapsedTimelineStages(prev =>
@@ -930,6 +935,99 @@ function CrmContent() {
     return { weekTotalCards: cards, weekTotalAmount: amount };
   }, [weekDays, filteredDeals]);
 
+  // Métricas executivas e dados estruturados da 4ª Visualização: Funil de Vendas
+  const funnelAnalytics = useMemo(() => {
+    const allCols = columns.length > 0 ? columns : DEFAULT_COLUMNS;
+    const activeCols = allCols.filter(c => c.id !== 'lost' && c.id !== 'disqualified');
+    const lostCol = allCols.find(c => c.id === 'lost') || DEFAULT_COLUMNS[7];
+    const disqualifiedCol = allCols.find(c => c.id === 'disqualified') || DEFAULT_COLUMNS[8];
+
+    let openCount = 0;
+    let openValue = 0;
+    let bottleneckCol: any = activeCols[0] || DEFAULT_COLUMNS[0];
+    let maxOpenStageCount = -1;
+
+    activeCols.forEach((col) => {
+      const stageDeals = dealsByColumn[col.id] || [];
+      const stageVal = stageDeals.reduce((s, d) => s + (d.value ? Number(d.value) : 0), 0);
+      if (col.id !== 'won') {
+        openCount += stageDeals.length;
+        openValue += stageVal;
+        if (stageDeals.length > maxOpenStageCount) {
+          maxOpenStageCount = stageDeals.length;
+          bottleneckCol = col;
+        }
+      }
+    });
+
+    const wonDeals = dealsByColumn['won'] || [];
+    const wonValue = wonDeals.reduce((s, d) => s + (d.value ? Number(d.value) : 0), 0);
+    const lostDeals = dealsByColumn['lost'] || [];
+    const lostValue = lostDeals.reduce((s, d) => s + (d.value ? Number(d.value) : 0), 0);
+    const disqualifiedDeals = dealsByColumn['disqualified'] || [];
+    const disqualifiedValue = disqualifiedDeals.reduce((s, d) => s + (d.value ? Number(d.value) : 0), 0);
+
+    const totalPipelineDeals = openCount + wonDeals.length + lostDeals.length;
+    const globalConversionPct = totalPipelineDeals > 0
+      ? ((wonDeals.length / totalPipelineDeals) * 100).toFixed(1)
+      : '0.0';
+
+    const activeAndWonCount = openCount + wonDeals.length;
+    const avgTicket = activeAndWonCount > 0 ? (openValue + wonValue) / activeAndWonCount : 0;
+    const bottleneckPct = openCount > 0 && maxOpenStageCount > 0
+      ? Math.round((maxOpenStageCount / openCount) * 100)
+      : 0;
+
+    // Cumulativo de passagem para cálculo realista de avanço entre estágios
+    const cumulativeCounts: number[] = new Array(activeCols.length).fill(0);
+    let runningSum = 0;
+    for (let i = activeCols.length - 1; i >= 0; i--) {
+      const cDeals = dealsByColumn[activeCols[i].id] || [];
+      runningSum += cDeals.length;
+      cumulativeCounts[i] = runningSum;
+    }
+
+    const selectedColObj = allCols.find(c => c.id === selectedFunnelStage) || activeCols[0] || DEFAULT_COLUMNS[0];
+    const selectedColIdx = allCols.findIndex(c => c.id === selectedColObj.id);
+    const rawSelectedDeals = [...(dealsByColumn[selectedColObj.id] || [])];
+
+    rawSelectedDeals.sort((a, b) => {
+      if (funnelSortBy === 'value') {
+        const vDiff = (Number(b.value) || 0) - (Number(a.value) || 0);
+        if (vDiff !== 0) return vDiff;
+      }
+      const tB = new Date(b.updatedAt || b.createdAt || 0).getTime();
+      const tA = new Date(a.updatedAt || a.createdAt || 0).getTime();
+      return tB - tA;
+    });
+
+    const selectedStageTotalValue = rawSelectedDeals.reduce((s, d) => s + (d.value ? Number(d.value) : 0), 0);
+
+    return {
+      activeCols,
+      lostCol,
+      disqualifiedCol,
+      openCount,
+      openValue,
+      wonDeals,
+      wonValue,
+      lostDeals,
+      lostValue,
+      disqualifiedDeals,
+      disqualifiedValue,
+      globalConversionPct,
+      avgTicket,
+      bottleneckCol,
+      bottleneckCount: Math.max(0, maxOpenStageCount),
+      bottleneckPct,
+      cumulativeCounts,
+      selectedColObj,
+      selectedColIdx: selectedColIdx >= 0 ? selectedColIdx : 0,
+      selectedStageDeals: rawSelectedDeals,
+      selectedStageTotalValue,
+    };
+  }, [columns, dealsByColumn, selectedFunnelStage, funnelSortBy]);
+
   if (!mounted || loading) {
     return <div className="p-8 text-gray-500 font-semibold">Carregando CRM...</div>;
   }
@@ -1131,6 +1229,21 @@ function CrmContent() {
             >
               <CalendarDays size={13} />
               <span>Linha do Tempo</span>
+            </button>
+
+            <button
+              id="view-mode-funnel-btn"
+              type="button"
+              onClick={() => setViewMode('funnel')}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold transition-all whitespace-nowrap ${
+                viewMode === 'funnel' 
+                  ? 'bg-blue-600 text-white shadow-sm' 
+                  : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-gray-800/60'
+              }`}
+              title="Visualização em Funil de Vendas"
+            >
+              <Filter size={13} />
+              <span>Funil</span>
             </button>
           </div>
         </div>
@@ -2929,6 +3042,603 @@ function CrmContent() {
           </div>
         </div>
       )}
+
+      {/* ========================================================================= */}
+      {/* 4. VISUALIZAÇÃO EM FUNIL DE VENDAS INTERATIVO (CONVERSÃO + RAIO-X)        */}
+      {/* ========================================================================= */}
+      {viewMode === 'funnel' && (() => {
+        const {
+          activeCols,
+          lostCol,
+          disqualifiedCol,
+          openCount,
+          openValue,
+          wonDeals,
+          wonValue,
+          lostDeals,
+          lostValue,
+          disqualifiedDeals,
+          disqualifiedValue,
+          globalConversionPct,
+          avgTicket,
+          bottleneckCol,
+          bottleneckCount,
+          bottleneckPct,
+          cumulativeCounts,
+          selectedColObj,
+          selectedColIdx,
+          selectedStageDeals,
+          selectedStageTotalValue,
+        } = funnelAnalytics;
+
+        const getStageThemeStyle = (colId: string) => {
+          switch (colId) {
+            case 'seed':
+              return {
+                accentHex: '#9ca3af',
+                bgDark: 'rgba(156, 163, 175, 0.18)',
+                bgClean: 'rgba(241, 245, 249, 0.98)',
+                borderRgba: 'rgba(156, 163, 175, 0.55)',
+              };
+            case 'new':
+              return {
+                accentHex: '#3b82f6',
+                bgDark: 'rgba(59, 130, 246, 0.22)',
+                bgClean: 'rgba(239, 246, 255, 0.98)',
+                borderRgba: 'rgba(59, 130, 246, 0.65)',
+              };
+            case 'qualified':
+              return {
+                accentHex: '#a855f7',
+                bgDark: 'rgba(168, 85, 247, 0.22)',
+                bgClean: 'rgba(250, 245, 255, 0.98)',
+                borderRgba: 'rgba(168, 85, 247, 0.65)',
+              };
+            case 'follow-up':
+              return {
+                accentHex: '#eab308',
+                bgDark: 'rgba(234, 179, 8, 0.22)',
+                bgClean: 'rgba(254, 252, 232, 0.98)',
+                borderRgba: 'rgba(234, 179, 8, 0.70)',
+              };
+            case 'proposal':
+              return {
+                accentHex: '#10b981',
+                bgDark: 'rgba(16, 185, 129, 0.22)',
+                bgClean: 'rgba(236, 253, 245, 0.98)',
+                borderRgba: 'rgba(16, 185, 129, 0.65)',
+              };
+            case 'negotiation':
+              return {
+                accentHex: '#f97316',
+                bgDark: 'rgba(249, 115, 22, 0.24)',
+                bgClean: 'rgba(255, 247, 237, 0.98)',
+                borderRgba: 'rgba(249, 115, 22, 0.70)',
+              };
+            case 'won':
+              return {
+                accentHex: '#22c55e',
+                bgDark: 'rgba(34, 197, 94, 0.30)',
+                bgClean: 'rgba(240, 253, 244, 1)',
+                borderRgba: 'rgba(34, 197, 94, 0.85)',
+              };
+            case 'lost':
+              return {
+                accentHex: '#e11d48',
+                bgDark: 'rgba(225, 29, 72, 0.22)',
+                bgClean: 'rgba(255, 241, 242, 0.98)',
+                borderRgba: 'rgba(225, 29, 72, 0.65)',
+              };
+            default:
+              return {
+                accentHex: '#64748b',
+                bgDark: 'rgba(100, 116, 139, 0.20)',
+                bgClean: 'rgba(241, 245, 249, 0.98)',
+                borderRgba: 'rgba(100, 116, 139, 0.55)',
+              };
+          }
+        };
+
+        const handleSelectStage = (stageId: string) => {
+          setSelectedFunnelStage(stageId);
+          if (typeof window !== 'undefined' && window.innerWidth < 1024 && funnelInspectorRef.current) {
+            setTimeout(() => {
+              funnelInspectorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 80);
+          }
+        };
+
+        const selectedThemeStyle = getStageThemeStyle(selectedColObj.id);
+
+        return (
+          <div className="flex-1 flex flex-col gap-4 overflow-y-auto pb-8 custom-scrollbar">
+            {/* 1. KPIS EXECUTIVOS DO TOPO DO FUNIL */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
+              {/* KPI 1: Pipeline Ativo */}
+              <div className={`p-3.5 rounded-xl border shadow-xs flex flex-col justify-between ${
+                isWhatsApp
+                  ? 'bg-[#111B21] border-[#222D34]'
+                  : isClean
+                  ? 'bg-white border-slate-200'
+                  : 'bg-[#161b22] border-gray-800'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <span className={`text-xs font-bold uppercase tracking-wider ${
+                    isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-500' : 'text-gray-400'
+                  }`}>
+                    Pipeline Ativo
+                  </span>
+                  <DollarSign size={14} className="text-blue-500" />
+                </div>
+                <div className="text-base sm:text-xl font-black text-blue-500 font-mono mt-1">
+                  {formatCurrency(openValue)}
+                </div>
+                <div className={`text-xs mt-0.5 font-medium ${
+                  isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-600' : 'text-gray-400'
+                }`}>
+                  <strong>{openCount}</strong> oportunidades em aberto
+                </div>
+              </div>
+
+              {/* KPI 2: Fechado / Ganho */}
+              <div
+                onClick={() => handleSelectStage('won')}
+                className={`p-3.5 rounded-xl border shadow-xs flex flex-col justify-between cursor-pointer transition-all hover:scale-[1.01] ${
+                  isWhatsApp
+                    ? 'bg-[#111B21] border-[#222D34] hover:border-[#00A884]/50'
+                    : isClean
+                    ? 'bg-white border-slate-200 hover:border-emerald-400'
+                    : 'bg-[#161b22] border-gray-800 hover:border-emerald-500/50'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className={`text-xs font-bold uppercase tracking-wider ${
+                    isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-500' : 'text-gray-400'
+                  }`}>
+                    Fechado / Ganho
+                  </span>
+                  <CheckCircle2 size={14} className="text-emerald-500" />
+                </div>
+                <div className="text-base sm:text-xl font-black text-emerald-500 font-mono mt-1">
+                  {formatCurrency(wonValue)}
+                </div>
+                <div className="text-xs font-bold text-emerald-500 mt-0.5">
+                  ✓ {globalConversionPct}% conversão ({wonDeals.length} ganhos)
+                </div>
+              </div>
+
+              {/* KPI 3: Ticket Médio */}
+              <div className={`p-3.5 rounded-xl border shadow-xs flex flex-col justify-between ${
+                isWhatsApp
+                  ? 'bg-[#111B21] border-[#222D34]'
+                  : isClean
+                  ? 'bg-white border-slate-200'
+                  : 'bg-[#161b22] border-gray-800'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <span className={`text-xs font-bold uppercase tracking-wider ${
+                    isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-500' : 'text-gray-400'
+                  }`}>
+                    Ticket Médio
+                  </span>
+                  <Activity size={14} className="text-purple-500" />
+                </div>
+                <div className="text-base sm:text-xl font-black text-purple-500 font-mono mt-1">
+                  {formatCurrency(avgTicket)}
+                </div>
+                <div className={`text-xs mt-0.5 font-medium ${
+                  isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-600' : 'text-gray-400'
+                }`}>
+                  Média por negócio qualificado
+                </div>
+              </div>
+
+              {/* KPI 4: Gargalo Atual */}
+              <div
+                onClick={() => bottleneckCol && handleSelectStage(bottleneckCol.id)}
+                className={`p-3.5 rounded-xl border shadow-xs flex flex-col justify-between cursor-pointer transition-all hover:scale-[1.01] ${
+                  isWhatsApp
+                    ? 'bg-[#111B21] border-[#222D34] hover:border-amber-500/50'
+                    : isClean
+                    ? 'bg-white border-slate-200 hover:border-amber-400'
+                    : 'bg-[#161b22] border-gray-800 hover:border-amber-500/50'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className={`text-xs font-bold uppercase tracking-wider ${
+                    isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-500' : 'text-gray-400'
+                  }`}>
+                    Maior Concentração
+                  </span>
+                  <Target size={14} className="text-amber-500" />
+                </div>
+                <div className="text-sm sm:text-base font-black text-amber-500 mt-1 whitespace-nowrap overflow-hidden text-ellipsis">
+                  {bottleneckCol?.title || 'Follow-up'} ({bottleneckPct}%)
+                </div>
+                <div className={`text-xs mt-0.5 font-medium ${
+                  isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-600' : 'text-gray-400'
+                }`}>
+                  <strong>{bottleneckCount}</strong> cards acumulados nesta fase
+                </div>
+              </div>
+            </div>
+
+            {/* 2. GRID PRINCIPAL: DESENHO DO FUNIL CÔNICO (ESQUERDA) + RAIO-X DA ETAPA (DIREITA) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+              
+              {/* COLUNA ESQUERDA: O FUNIL VISUAL EM CAMADAS CÔNICAS (7 Colunas no Desktop) */}
+              <div className={`lg:col-span-7 p-4 sm:p-5 rounded-2xl border shadow-sm flex flex-col items-center w-full ${
+                isWhatsApp
+                  ? 'bg-[#111B21] border-[#222D34]'
+                  : isClean
+                  ? 'bg-white border-slate-200'
+                  : 'bg-[#161b22] border-gray-800'
+              }`}>
+                <div className="w-full flex items-center justify-between mb-4 pb-2.5 border-b border-slate-200 dark:border-gray-800">
+                  <div className="flex items-center gap-2">
+                    <Filter size={15} className={isWhatsApp ? 'text-[#00A884]' : 'text-blue-500'} />
+                    <h3 className={`text-xs sm:text-sm font-black uppercase tracking-wider ${
+                      isWhatsApp ? 'text-[#E9EDEF]' : isClean ? 'text-slate-900' : 'text-white'
+                    }`}>
+                      Arquitetura do Funil Comercial
+                    </h3>
+                  </div>
+                  <span className={`text-xs font-medium ${
+                    isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-500' : 'text-gray-400'
+                  }`}>
+                    Clique em qualquer etapa para inspecionar os cards
+                  </span>
+                </div>
+
+                {/* Camadas Cônicas Ativas (100% até 70% de largura - NUNCA corta texto) */}
+                <div className="w-full flex flex-col items-center">
+                  {activeCols.map((col, idx) => {
+                    const stageDeals = dealsByColumn[col.id] || [];
+                    const stageValue = stageDeals.reduce((s, d) => s + (d.value ? Number(d.value) : 0), 0);
+                    const widthPct = Math.max(70, 100 - idx * 5);
+                    const isSelected = selectedColObj.id === col.id;
+                    const stStyle = getStageThemeStyle(col.id);
+                    const numStr = String(idx + 1).padStart(2, '0');
+
+                    // Taxa de avanço para a próxima fase
+                    const hasNext = idx < activeCols.length - 1;
+                    const currCum = cumulativeCounts[idx] || 0;
+                    const nextCum = hasNext ? (cumulativeCounts[idx + 1] || 0) : 0;
+                    const passRate = currCum > 0 ? Math.round((nextCum / currCum) * 100) : 0;
+                    const nextStageTitle = hasNext ? activeCols[idx + 1].title : '';
+
+                    return (
+                      <div key={col.id} className="w-full flex flex-col items-center">
+                        <div
+                          onClick={() => handleSelectStage(col.id)}
+                          style={{
+                            width: `${widthPct}%`,
+                            backgroundColor: isClean ? stStyle.bgClean : stStyle.bgDark,
+                            borderColor: stStyle.borderRgba,
+                          }}
+                          className={`cursor-pointer rounded-xl border-2 px-3.5 sm:px-4 py-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 shadow-sm transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] min-w-[260px] sm:min-w-0 ${
+                            isSelected
+                              ? isClean
+                                ? 'ring-2 ring-blue-600 ring-offset-2 ring-offset-white shadow-md'
+                                : isWhatsApp
+                                ? 'ring-2 ring-[#00A884] ring-offset-2 ring-offset-[#111B21] shadow-lg'
+                                : 'ring-2 ring-white ring-offset-2 ring-offset-[#161b22] shadow-lg'
+                              : ''
+                          }`}
+                        >
+                          {/* Lado Esquerdo da Fatia: Número + Nome Completo da Etapa (SEM TRUNCATE) */}
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span
+                              style={{ color: stStyle.accentHex }}
+                              className="text-xs font-mono font-black"
+                            >
+                              {numStr}.
+                            </span>
+                            <span className={`text-xs sm:text-sm font-black uppercase tracking-wide whitespace-nowrap ${
+                              isClean ? 'text-slate-900' : 'text-white'
+                            }`}>
+                              {col.title}
+                            </span>
+                          </div>
+
+                          {/* Lado Direito da Fatia: Badge de Cards + Valor Total */}
+                          <div className="flex items-center gap-2 shrink-0 ml-auto">
+                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold whitespace-nowrap border ${
+                              isClean
+                                ? 'bg-white text-slate-800 border-slate-300 shadow-2xs'
+                                : 'bg-black/45 text-white border-white/15'
+                            }`}>
+                              {stageDeals.length} {stageDeals.length === 1 ? 'card' : 'cards'}
+                            </span>
+                            <span className={`text-xs sm:text-sm font-mono font-bold whitespace-nowrap ${
+                              isClean ? 'text-slate-900' : 'text-white'
+                            }`}>
+                              {formatCurrency(stageValue)}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Pílula Conectora de Conversão entre Etapas */}
+                        {hasNext && (
+                          <div className={`my-1 flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-semibold border ${
+                            isClean
+                              ? 'bg-slate-100 text-slate-600 border-slate-200'
+                              : isWhatsApp
+                              ? 'bg-[#0b141a] text-[#8696A0] border-[#222D34]'
+                              : 'bg-[#0d1117] text-gray-300 border-gray-800'
+                          }`}>
+                            <span>↓ {passRate}% avançam para {nextStageTitle}</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Barra de Vazamento do Funil (Saídas: Perdidos e Desqualificados) */}
+                <div className={`w-full mt-5 pt-4 border-t grid grid-cols-1 sm:grid-cols-2 gap-3 ${
+                  isWhatsApp ? 'border-[#222D34]' : isClean ? 'border-slate-200' : 'border-gray-800'
+                }`}>
+                  {/* Card Fechado / Perdido */}
+                  <div
+                    onClick={() => handleSelectStage(lostCol.id)}
+                    className={`p-3 rounded-xl border-2 cursor-pointer transition-all flex flex-wrap items-center justify-between gap-2 ${
+                      selectedColObj.id === lostCol.id
+                        ? 'ring-2 ring-rose-500 ring-offset-2 dark:ring-offset-[#161b22]'
+                        : ''
+                    } ${
+                      isClean
+                        ? 'bg-rose-50/90 hover:bg-rose-100/80 border-rose-300 text-rose-950'
+                        : 'bg-rose-950/25 hover:bg-rose-950/40 border-rose-800/60 text-rose-200'
+                    }`}
+                  >
+                    <div>
+                      <div className="text-xs font-black uppercase text-rose-500 whitespace-nowrap">
+                        {lostCol.title}
+                      </div>
+                      <div className={`text-xs ${isClean ? 'text-rose-700' : 'text-rose-300/80'}`}>
+                        Saídas por perda comercial
+                      </div>
+                    </div>
+                    <div className="text-right ml-auto">
+                      <div className="text-xs font-bold">{lostDeals.length} cards</div>
+                      <div className="text-xs font-mono font-bold">{formatCurrency(lostValue)}</div>
+                    </div>
+                  </div>
+
+                  {/* Card Duplicados / Desqualificados */}
+                  <div
+                    onClick={() => handleSelectStage(disqualifiedCol.id)}
+                    className={`p-3 rounded-xl border-2 cursor-pointer transition-all flex flex-wrap items-center justify-between gap-2 ${
+                      selectedColObj.id === disqualifiedCol.id
+                        ? 'ring-2 ring-gray-400 ring-offset-2 dark:ring-offset-[#161b22]'
+                        : ''
+                    } ${
+                      isClean
+                        ? 'bg-slate-100 hover:bg-slate-200/70 border-slate-300 text-slate-900'
+                        : 'bg-gray-800/40 hover:bg-gray-800/60 border-gray-700/70 text-gray-200'
+                    }`}
+                  >
+                    <div>
+                      <div className="text-xs font-black uppercase whitespace-nowrap">
+                        {disqualifiedCol.title}
+                      </div>
+                      <div className={`text-xs ${isClean ? 'text-slate-600' : 'text-gray-400'}`}>
+                        Fora de perfil / Duplicados
+                      </div>
+                    </div>
+                    <div className="text-right ml-auto">
+                      <div className="text-xs font-bold">{disqualifiedDeals.length} cards</div>
+                      <div className="text-xs font-mono font-bold">{formatCurrency(disqualifiedValue)}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* COLUNA DIREITA: PAINEL RAIO-X DA ETAPA SELECIONADA (5 Colunas no Desktop) */}
+              <div
+                ref={funnelInspectorRef}
+                className={`lg:col-span-5 p-4 sm:p-5 rounded-2xl border shadow-sm flex flex-col gap-3.5 lg:sticky lg:top-2 ${
+                  isWhatsApp
+                    ? 'bg-[#111B21] border-[#222D34]'
+                    : isClean
+                    ? 'bg-white border-slate-200'
+                    : 'bg-[#161b22] border-gray-800'
+                }`}
+              >
+                {/* Cabeçalho do Painel Raio-X */}
+                <div className={`flex flex-wrap items-start justify-between gap-2 pb-3 border-b ${
+                  isWhatsApp ? 'border-[#222D34]' : isClean ? 'border-slate-200' : 'border-gray-800'
+                }`}>
+                  <div>
+                    <span
+                      style={{ color: selectedThemeStyle.accentHex }}
+                      className="text-xs font-black uppercase tracking-wider block"
+                    >
+                      RAIO-X DA ETAPA {String(selectedColIdx + 1).padStart(2, '0')}
+                    </span>
+                    <h3 className={`text-base sm:text-lg font-black mt-0.5 ${
+                      isWhatsApp ? 'text-[#E9EDEF]' : isClean ? 'text-slate-900' : 'text-white'
+                    }`}>
+                      {selectedColObj.title} ({selectedStageDeals.length})
+                    </h3>
+                  </div>
+
+                  <div className="text-right ml-auto">
+                    <span className={`text-xs block ${
+                      isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-500' : 'text-gray-400'
+                    }`}>
+                      Volume na etapa
+                    </span>
+                    <span className="text-sm sm:text-base font-mono font-black text-emerald-500">
+                      {formatCurrency(selectedStageTotalValue)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Barra de Ordenação e Botão + Novo Cartão na Etapa */}
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className={`flex items-center gap-1 p-1 rounded-lg border text-xs font-bold ${
+                    isWhatsApp
+                      ? 'bg-[#0b141a] border-[#222D34]'
+                      : isClean
+                      ? 'bg-slate-100 border-slate-200'
+                      : 'bg-[#0d1117] border-gray-800'
+                  }`}>
+                    <button
+                      type="button"
+                      onClick={() => setFunnelSortBy('value')}
+                      className={`px-2.5 py-1 rounded-md transition-all ${
+                        funnelSortBy === 'value'
+                          ? 'bg-blue-600 text-white shadow-xs'
+                          : isClean
+                          ? 'text-slate-600 hover:text-slate-900'
+                          : 'text-gray-400 hover:text-white'
+                      }`}
+                    >
+                      Maior Valor
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFunnelSortBy('recent')}
+                      className={`px-2.5 py-1 rounded-md transition-all ${
+                        funnelSortBy === 'recent'
+                          ? 'bg-blue-600 text-white shadow-xs'
+                          : isClean
+                          ? 'text-slate-600 hover:text-slate-900'
+                          : 'text-gray-400 hover:text-white'
+                      }`}
+                    >
+                      Mais Recentes
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedDeal({
+                        id: `new-${Date.now()}`,
+                        title: "Nova Oportunidade",
+                        status: selectedColObj.id,
+                        value: 0,
+                        contact: { name: "", phone: "", email: "" },
+                        isNew: true,
+                      });
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 border transition-colors ${
+                      isWhatsApp
+                        ? 'bg-[#00A884] hover:bg-[#008f6f] text-white border-transparent'
+                        : 'bg-blue-600 hover:bg-blue-500 text-white border-transparent shadow-xs'
+                    }`}
+                  >
+                    <Plus size={13} />
+                    <span>Adicionar nesta etapa</span>
+                  </button>
+                </div>
+
+                {/* Lista de Oportunidades da Etapa Selecionada */}
+                <div className="flex flex-col gap-2.5 max-h-[500px] overflow-y-auto pr-1 custom-scrollbar">
+                  {selectedStageDeals.length === 0 ? (
+                    <div className={`py-12 px-4 text-center rounded-xl border border-dashed ${
+                      isWhatsApp
+                        ? 'border-[#222D34] text-[#8696A0]'
+                        : isClean
+                        ? 'border-slate-200 text-slate-500'
+                        : 'border-gray-800 text-gray-500'
+                    }`}>
+                      <p className="text-sm font-bold">Nenhuma oportunidade em {selectedColObj.title}</p>
+                      <p className="text-xs mt-1">Clique em &ldquo;Adicionar nesta etapa&rdquo; ou selecione outra fatia do funil.</p>
+                    </div>
+                  ) : (
+                    selectedStageDeals.map((deal) => {
+                      const leadName = deal.contact?.name || deal.title || "Sem nome";
+                      const phoneDisplay = deal.contact?.phone?.includes('@lid')
+                        ? 'WhatsApp (Privado)'
+                        : (deal.contact?.phone || 'Sem telefone');
+                      const sourceLabel = deal.contact?.source || deal.metadata?.source || 'WHATSAPP';
+
+                      return (
+                        <div
+                          key={deal.id}
+                          onClick={() => handleOpenDeal(deal)}
+                          className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-center justify-between gap-3 group ${
+                            isWhatsApp
+                              ? 'bg-[#202C33] hover:bg-[#2A3942] border-[#222D34] hover:border-[#00A884]/50'
+                              : isClean
+                              ? 'bg-slate-50 hover:bg-slate-100/90 border-slate-200 hover:border-blue-400'
+                              : 'bg-[#0d1117] hover:bg-[#1c222d] border-gray-800 hover:border-gray-700'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <div
+                              style={{ borderColor: selectedThemeStyle.borderRgba, color: selectedThemeStyle.accentHex }}
+                              className={`h-9 w-9 rounded-full border-2 flex items-center justify-center text-xs font-black shrink-0 ${
+                                isClean ? 'bg-white' : 'bg-black/30'
+                              }`}
+                            >
+                              {leadName[0]?.toUpperCase() || '?'}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <h4 className={`text-sm font-bold leading-snug break-words ${
+                                isWhatsApp
+                                  ? 'text-[#E9EDEF] group-hover:text-[#00A884]'
+                                  : isClean
+                                  ? 'text-slate-900 group-hover:text-blue-600'
+                                  : 'text-white group-hover:text-blue-400'
+                              }`}>
+                                {leadName}
+                              </h4>
+                              <div className={`flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs mt-0.5 ${
+                                isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-600' : 'text-gray-400'
+                              }`}>
+                                <span className="flex items-center gap-1">
+                                  <MessageCircle size={11} className="text-[#25D366] shrink-0" />
+                                  {phoneDisplay}
+                                </span>
+                                <span>• {sourceLabel}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col items-end gap-1 shrink-0">
+                            <span className="text-xs sm:text-sm font-mono font-black text-emerald-500">
+                              {formatCurrency(Number(deal.value || 0))}
+                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <span className={`text-[11px] ${
+                                isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-500' : 'text-gray-500'
+                              }`}>
+                                {formatRelativeTime(deal.updatedAt || deal.createdAt)}
+                              </span>
+                              <button
+                                type="button"
+                                title="Abrir conversa no Inbox"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const cId = deal.contactId || deal.contact?.id;
+                                  if (cId) {
+                                    router.push(`/inbox?contactId=${cId}`);
+                                  } else {
+                                    handleOpenDeal(deal, 'chat');
+                                  }
+                                }}
+                                className="p-1 rounded-md bg-[#25D366]/15 hover:bg-[#25D366]/25 text-[#25D366] transition-colors"
+                              >
+                                <ArrowUpRight size={13} />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
+            </div>
+          </div>
+        );
+      })()}
 
       {/* MODAL NOVA ETAPA (Mock) */}
       {showStageModal && (
