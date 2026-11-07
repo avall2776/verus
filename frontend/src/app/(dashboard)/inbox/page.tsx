@@ -11,7 +11,8 @@ import {
   Smile, Bold, Italic, Strikethrough, Code, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Trash2, Play, Pause,
   Volume2, Check, CheckCheck, Copy, ExternalLink, Headphones, Download, ZoomIn, Maximize2,
   BellOff, History, UserPlus, FileDown, MessageSquarePlus, PanelRight, Info, Pin,
-  Clock, AlertCircle, Workflow, Pencil, ShoppingBag, MapPin, Video, ArrowLeft, Reply, Users, Star, Menu
+  Clock, AlertCircle, Workflow, Pencil, ShoppingBag, MapPin, Video, ArrowLeft, Reply, Users, Star, Menu,
+  Archive, PinOff, Heart, Bell, LogOut
 } from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
 import { useWhatsApp } from "@/components/ui/WhatsAppProvider";
@@ -84,7 +85,7 @@ function getWhatsAppDateLabel(dateInput?: string | number | Date): string {
 }
 
 function InboxContent() {
-  const { isWhatsApp } = useTheme();
+  const { isWhatsApp, theme } = useTheme();
   const { toggleMenu } = useMobileMenu();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -298,6 +299,13 @@ function InboxContent() {
   // Modal Lightbox / Expansão de Imagem
   const [lightboxImage, setLightboxImage] = useState<{ url: string; title?: string } | null>(null);
 
+  // Estados para Context Menu do WhatsApp Web no Inbox
+  const [chatContextMenu, setChatContextMenu] = useState<{ contactId: string; x: number; y: number } | null>(null);
+  const [showMuteSubmenu, setShowMuteSubmenu] = useState(false);
+  const [pinnedContactIds, setPinnedContactIds] = useState<string[]>([]);
+  const [favoriteContactIds, setFavoriteContactIds] = useState<string[]>([]);
+  const [archivedContactIds, setArchivedContactIds] = useState<string[]>([]);
+
   // Estados para Refinamento Técnico e Visual (Padrão Lero)
   const [contextMenuContactId, setContextMenuContactId] = useState<string | null>(null);
   const [mutedContactIds, setMutedContactIds] = useState<string[]>([]);
@@ -424,6 +432,12 @@ function InboxContent() {
     try {
       const saved = localStorage.getItem('versus_muted_chats');
       if (saved) setMutedContactIds(JSON.parse(saved));
+      const savedPinned = localStorage.getItem('versus_pinned_chats');
+      if (savedPinned) setPinnedContactIds(JSON.parse(savedPinned));
+      const savedFavs = localStorage.getItem('versus_favorite_chats');
+      if (savedFavs) setFavoriteContactIds(JSON.parse(savedFavs));
+      const savedArchived = localStorage.getItem('versus_archived_chats');
+      if (savedArchived) setArchivedContactIds(JSON.parse(savedArchived));
       const savedSched = localStorage.getItem('versus_scheduled_messages');
       if (savedSched) setScheduledMessagesByChat(JSON.parse(savedSched));
 
@@ -525,14 +539,26 @@ function InboxContent() {
     saveScheduledMessages(updated);
   };
 
-  // Fecha menus contextuais e popovers ao clicar fora
+  // Fecha menus contextuais e popovers ao clicar fora ou rolar
   useEffect(() => {
-    const handleOutsideClick = () => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target && target.closest('#chat-context-menu')) return;
       setContextMenuContactId(null);
+      setChatContextMenu(null);
+      setShowMuteSubmenu(false);
       setShowChatOptionsMenu(false);
     };
+    const handleWindowBlurOrScroll = () => {
+      setChatContextMenu(null);
+      setShowMuteSubmenu(false);
+    };
     window.addEventListener('click', handleOutsideClick);
-    return () => window.removeEventListener('click', handleOutsideClick);
+    window.addEventListener('resize', handleWindowBlurOrScroll);
+    return () => {
+      window.removeEventListener('click', handleOutsideClick);
+      window.removeEventListener('resize', handleWindowBlurOrScroll);
+    };
   }, []);
 
   // Marcar conversa como lida / não lida
@@ -543,6 +569,7 @@ function InboxContent() {
 
     setContacts(prev => prev.map(c => c.id === contactId ? { ...c, unread: newUnread, hasNewMessage: !isCurrentlyUnread } : c));
     setContextMenuContactId(null);
+    setChatContextMenu(null);
 
     try {
       if (isCurrentlyUnread) {
@@ -555,7 +582,77 @@ function InboxContent() {
     }
   };
 
-  // Alternar silenciamento de notificações
+  // Alternar fixação da conversa no topo (WhatsApp Web)
+  const handleTogglePin = (contactId: string) => {
+    setPinnedContactIds(prev => {
+      const isPinned = prev.includes(contactId);
+      const updated = isPinned ? prev.filter(id => id !== contactId) : [...prev, contactId];
+      try {
+        localStorage.setItem('versus_pinned_chats', JSON.stringify(updated));
+      } catch (e) {}
+      toast.success(isPinned ? "Conversa desafixada" : "Conversa fixada no topo");
+      return updated;
+    });
+    setChatContextMenu(null);
+  };
+
+  // Alternar favorito do contato
+  const handleToggleFavorite = (contactId: string) => {
+    setFavoriteContactIds(prev => {
+      const isFav = prev.includes(contactId);
+      const updated = isFav ? prev.filter(id => id !== contactId) : [...prev, contactId];
+      try {
+        localStorage.setItem('versus_favorite_chats', JSON.stringify(updated));
+      } catch (e) {}
+      toast.success(isFav ? "Removido dos Favoritos" : "Adicionado aos Favoritos");
+      return updated;
+    });
+    setChatContextMenu(null);
+  };
+
+  // Alternar arquivamento da conversa
+  const handleToggleArchive = (contactId: string) => {
+    setArchivedContactIds(prev => {
+      const isArchived = prev.includes(contactId);
+      const updated = isArchived ? prev.filter(id => id !== contactId) : [...prev, contactId];
+      try {
+        localStorage.setItem('versus_archived_chats', JSON.stringify(updated));
+      } catch (e) {}
+      toast.success(isArchived ? "Conversa desarquivada" : "Conversa arquivada");
+      return updated;
+    });
+    setChatContextMenu(null);
+  };
+
+  // Silenciar notificações com duração
+  const handleMuteDuration = (contactId: string, durationLabel: string) => {
+    setMutedContactIds(prev => {
+      const updated = prev.includes(contactId) ? prev : [...prev, contactId];
+      try {
+        localStorage.setItem('versus_muted_chats', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+    toast.success(`Notificações silenciadas (${durationLabel})`);
+    setChatContextMenu(null);
+    setShowMuteSubmenu(false);
+  };
+
+  // Reativar notificações
+  const handleUnmute = (contactId: string) => {
+    setMutedContactIds(prev => {
+      const updated = prev.filter(id => id !== contactId);
+      try {
+        localStorage.setItem('versus_muted_chats', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+    toast.success("Notificações reativadas");
+    setChatContextMenu(null);
+    setShowMuteSubmenu(false);
+  };
+
+  // Alternar silenciamento de notificações simples
   const handleToggleMute = (contactId: string) => {
     setMutedContactIds(prev => {
       const isMuted = prev.includes(contactId);
@@ -566,6 +663,40 @@ function InboxContent() {
       return updated;
     });
     setContextMenuContactId(null);
+    setChatContextMenu(null);
+  };
+
+  // Limpar conversa
+  const handleClearConversation = async (contactId: string) => {
+    setChatContextMenu(null);
+    if (!window.confirm("Deseja realmente limpar as mensagens desta conversa?")) return;
+    try {
+      await api.delete(`/conversations/${contactId}/messages`);
+      if (activeChat === contactId) {
+        setMessages([]);
+      }
+      refetchConversations();
+      toast.success("Conversa limpa com sucesso!");
+    } catch (err) {
+      console.error("Erro ao limpar conversa:", err);
+      toast.error("Não foi possível limpar a conversa.");
+    }
+  };
+
+  // Finalizar atendimento via menu de contexto
+  const handleResolveFromMenu = async (contactId: string) => {
+    setChatContextMenu(null);
+    try {
+      await api.patch(`/conversations/${contactId}/status`, { status: 'resolved' });
+      if (activeChat === contactId) {
+        setActiveChat(null);
+      }
+      refetchConversations();
+      toast.success("Atendimento finalizado com sucesso!");
+    } catch (err) {
+      console.error("Erro ao finalizar atendimento:", err);
+      toast.error("Erro ao finalizar conversa.");
+    }
   };
 
   // Ignorar atendimento ou finalizar
@@ -2348,7 +2479,12 @@ function InboxContent() {
   const filteredContacts = useMemo(() => {
     const isMaster = currentUserRole === 'ADMIN' || currentUserRole === 'SUPER_ADMIN';
 
-    return contacts.filter(c => {
+    const filtered = contacts.filter(c => {
+      // Oculta conversas arquivadas da listagem principal (a menos que esteja pesquisando)
+      if (archivedContactIds.includes(c.id) && !searchQuery.trim()) {
+        return false;
+      }
+
       if (activeFilterTab === 'unread' && !((c.unread || 0) > 0 || c.hasNewMessage)) return false;
       if (activeFilterTab === 'waiting' && !(c.status === 'waiting' || c.status === 'bot_active' || (!c.assignedTo && c.status !== 'resolved' && c.status !== 'closed'))) return false;
       if (activeFilterTab === 'mine') {
@@ -2373,7 +2509,16 @@ function InboxContent() {
         (c.lastMsg && c.lastMsg.toLowerCase().includes(q))
       );
     });
-  }, [contacts, activeFilterTab, onlyUnread, selectedDepartmentFilter, searchQuery, currentUserId, currentUserRole]);
+
+    // Ordenação com conversas fixadas no topo (Padrão WhatsApp Web)
+    return [...filtered].sort((a, b) => {
+      const aPinned = pinnedContactIds.includes(a.id) || !!a.isPinned;
+      const bPinned = pinnedContactIds.includes(b.id) || !!b.isPinned;
+      if (aPinned && !bPinned) return -1;
+      if (!aPinned && bPinned) return 1;
+      return 0;
+    });
+  }, [contacts, activeFilterTab, onlyUnread, selectedDepartmentFilter, searchQuery, currentUserId, currentUserRole, archivedContactIds, pinnedContactIds]);
 
   // Paginação progressiva virtualizada da lista (limite inicial de 40 para garantir 60 FPS)
   const [displayLimit, setDisplayLimit] = useState(40);
@@ -3007,6 +3152,26 @@ function InboxContent() {
                   setActiveChat(contact.id);
                   setContacts(prev => prev.map(c => c.id === contact.id ? { ...c, hasNewMessage: false, unread: 0 } : c));
                 }}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const menuWidth = 224;
+                  const menuHeight = 310;
+                  let x = e.clientX;
+                  if (x + menuWidth > window.innerWidth) {
+                    x = window.innerWidth - menuWidth - 10;
+                  }
+                  let y = e.clientY;
+                  if (y + menuHeight > window.innerHeight) {
+                    y = window.innerHeight - menuHeight - 10;
+                  }
+                  setChatContextMenu({
+                    contactId: contact.id,
+                    x: Math.max(10, x),
+                    y: Math.max(10, y),
+                  });
+                  setShowMuteSubmenu(false);
+                }}
                 className={`flex items-center gap-3.5 px-3.5 py-3 cursor-pointer transition-colors relative group border-b ${
                   isWhatsApp ? 'border-[#222D34]' : 'border-slate-100 dark:border-slate-800/40'
                 } ${
@@ -3116,7 +3281,7 @@ function InboxContent() {
                     </div>
 
                     <div className="flex items-center gap-1.5 shrink-0">
-                      {contact.isPinned && (
+                      {(contact.isPinned || pinnedContactIds.includes(contact.id)) && (
                         <span title="Conversa Fixada">
                           <Pin size={11} className="text-emerald-500 fill-emerald-500 -rotate-45 shrink-0" />
                         </span>
@@ -3152,6 +3317,53 @@ function InboxContent() {
                           {contact.lastMessage || contact.lastMsg || 'Nenhuma mensagem recente'}
                         </p>
                       )}
+                    </div>
+
+                    {/* Ícones de Notificações, Favorito e Botão de Ações do Chat (Estilo WhatsApp Web) */}
+                    <div className="flex items-center gap-1 shrink-0">
+                      {mutedContactIds.includes(contact.id) && (
+                        <span title="Silenciado">
+                          <BellOff size={13} className="text-slate-400 dark:text-slate-500 shrink-0" />
+                        </span>
+                      )}
+                      {favoriteContactIds.includes(contact.id) && (
+                        <span title="Favorito">
+                          <Heart size={13} className="text-rose-500 fill-rose-500 shrink-0" />
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const menuWidth = 224;
+                          const menuHeight = 310;
+                          let x = rect.right - menuWidth;
+                          if (x < 10) x = rect.left;
+                          let y = rect.bottom + 4;
+                          if (y + menuHeight > window.innerHeight) {
+                            y = rect.top - menuHeight;
+                          }
+                          setChatContextMenu({
+                            contactId: contact.id,
+                            x: Math.max(10, x),
+                            y: Math.max(10, y),
+                          });
+                          setShowMuteSubmenu(false);
+                        }}
+                        className={`p-0.5 rounded transition-all opacity-0 group-hover:opacity-100 ${
+                          chatContextMenu?.contactId === contact.id ? 'opacity-100' : ''
+                        } ${
+                          isWhatsApp 
+                            ? 'text-[#8696A0] hover:text-[#E9EDEF] hover:bg-[#2A3942]' 
+                            : theme === 'light'
+                            ? 'text-slate-400 hover:text-slate-700 hover:bg-slate-200/60'
+                            : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                        }`}
+                        title="Mais opções da conversa"
+                      >
+                        <ChevronDown size={15} />
+                      </button>
                     </div>
                   </div>
 
@@ -6727,6 +6939,262 @@ function InboxContent() {
           </div>
         </div>
       )}
+
+      {/* MENU DE CONTEXTO DO CONTATO (PADRÃO WHATSAPP WEB) */}
+      {chatContextMenu && (() => {
+        const targetContact = contacts.find(c => c.id === chatContextMenu.contactId);
+        if (!targetContact) return null;
+        const isPinned = pinnedContactIds.includes(targetContact.id) || !!targetContact.isPinned;
+        const isMuted = mutedContactIds.includes(targetContact.id);
+        const isFav = favoriteContactIds.includes(targetContact.id);
+        const isArchived = archivedContactIds.includes(targetContact.id);
+        const isUnread = (targetContact.unread || 0) > 0 || targetContact.hasNewMessage;
+        const isGroup = targetContact.isGroup || (targetContact.phone && targetContact.phone.includes('@g.us'));
+
+        return (
+          <div
+            id="chat-context-menu"
+            style={{
+              position: 'fixed',
+              top: `${chatContextMenu.y}px`,
+              left: `${chatContextMenu.x}px`,
+              zIndex: 99999,
+            }}
+            onClick={(e) => e.stopPropagation()}
+            className={`w-56 rounded-2xl shadow-2xl border py-1.5 backdrop-blur-xl animate-in fade-in zoom-in-95 duration-100 select-none ${
+              isWhatsApp
+                ? 'bg-[#233138]/95 border-[#2A3942] text-[#E9EDEF] shadow-[0_10px_35px_rgba(0,0,0,0.6)]'
+                : theme === 'light'
+                ? 'bg-white/95 border-slate-200 text-slate-800 shadow-[0_10px_35px_rgba(0,0,0,0.12)]'
+                : 'bg-[#0F172A]/95 border-slate-800 text-slate-100 shadow-[0_10px_35px_rgba(0,0,0,0.7)]'
+            }`}
+          >
+            {/* 1. Arquivar conversa */}
+            <button
+              type="button"
+              onClick={() => handleToggleArchive(targetContact.id)}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-medium transition-colors text-left group ${
+                isWhatsApp
+                  ? 'hover:bg-[#182229] text-[#E9EDEF]'
+                  : theme === 'light'
+                  ? 'hover:bg-slate-100 text-slate-800'
+                  : 'hover:bg-slate-800/80 text-slate-200'
+              }`}
+            >
+              <Archive size={16} className={`shrink-0 ${
+                isWhatsApp ? 'text-[#8696A0] group-hover:text-[#E9EDEF]' : theme === 'light' ? 'text-slate-500 group-hover:text-slate-900' : 'text-slate-400 group-hover:text-white'
+              }`} />
+              <span>{isArchived ? 'Desarquivar conversa' : 'Arquivar conversa'}</span>
+            </button>
+
+            {/* 2. Silenciar notificações */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  if (isMuted) {
+                    handleUnmute(targetContact.id);
+                  } else {
+                    setShowMuteSubmenu(prev => !prev);
+                  }
+                }}
+                className={`w-full flex items-center justify-between px-4 py-2.5 text-xs font-medium transition-colors text-left group ${
+                  isWhatsApp
+                    ? 'hover:bg-[#182229] text-[#E9EDEF]'
+                    : theme === 'light'
+                    ? 'hover:bg-slate-100 text-slate-800'
+                    : 'hover:bg-slate-800/80 text-slate-200'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  {isMuted ? (
+                    <Bell size={16} className={`shrink-0 ${
+                      isWhatsApp ? 'text-[#8696A0] group-hover:text-[#E9EDEF]' : theme === 'light' ? 'text-slate-500 group-hover:text-slate-900' : 'text-slate-400 group-hover:text-white'
+                    }`} />
+                  ) : (
+                    <BellOff size={16} className={`shrink-0 ${
+                      isWhatsApp ? 'text-[#8696A0] group-hover:text-[#E9EDEF]' : theme === 'light' ? 'text-slate-500 group-hover:text-slate-900' : 'text-slate-400 group-hover:text-white'
+                    }`} />
+                  )}
+                  <span>{isMuted ? 'Reativar notificações' : 'Silenciar notificações'}</span>
+                </div>
+                {!isMuted && (
+                  <ChevronRight size={14} className={isWhatsApp ? 'text-[#8696A0]' : 'text-slate-400'} />
+                )}
+              </button>
+
+              {/* Submenu de duração do silêncio */}
+              {showMuteSubmenu && !isMuted && (
+                <div
+                  className={`absolute left-full top-0 ml-1.5 w-36 rounded-xl shadow-2xl border py-1 backdrop-blur-xl animate-in fade-in duration-100 z-50 ${
+                    isWhatsApp
+                      ? 'bg-[#233138] border-[#2A3942] text-[#E9EDEF]'
+                      : theme === 'light'
+                      ? 'bg-white border-slate-200 text-slate-800 shadow-slate-300/50'
+                      : 'bg-[#0F172A] border-slate-800 text-slate-100 shadow-black/60'
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => handleMuteDuration(targetContact.id, '8 horas')}
+                    className={`w-full px-3 py-2 text-xs text-left transition-colors font-medium ${
+                      isWhatsApp ? 'hover:bg-[#182229]' : theme === 'light' ? 'hover:bg-slate-100' : 'hover:bg-slate-800'
+                    }`}
+                  >
+                    8 horas
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleMuteDuration(targetContact.id, '1 semana')}
+                    className={`w-full px-3 py-2 text-xs text-left transition-colors font-medium ${
+                      isWhatsApp ? 'hover:bg-[#182229]' : theme === 'light' ? 'hover:bg-slate-100' : 'hover:bg-slate-800'
+                    }`}
+                  >
+                    1 semana
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleMuteDuration(targetContact.id, 'Sempre')}
+                    className={`w-full px-3 py-2 text-xs text-left transition-colors font-medium ${
+                      isWhatsApp ? 'hover:bg-[#182229]' : theme === 'light' ? 'hover:bg-slate-100' : 'hover:bg-slate-800'
+                    }`}
+                  >
+                    Sempre
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* 3. Fixar / Desafixar conversa */}
+            <button
+              type="button"
+              onClick={() => handleTogglePin(targetContact.id)}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-medium transition-colors text-left group ${
+                isWhatsApp
+                  ? 'hover:bg-[#182229] text-[#E9EDEF]'
+                  : theme === 'light'
+                  ? 'hover:bg-slate-100 text-slate-800'
+                  : 'hover:bg-slate-800/80 text-slate-200'
+              }`}
+            >
+              {isPinned ? (
+                <PinOff size={16} className={`shrink-0 ${
+                  isWhatsApp ? 'text-[#8696A0] group-hover:text-[#E9EDEF]' : theme === 'light' ? 'text-slate-500 group-hover:text-slate-900' : 'text-slate-400 group-hover:text-white'
+                }`} />
+              ) : (
+                <Pin size={16} className={`shrink-0 ${
+                  isWhatsApp ? 'text-[#8696A0] group-hover:text-[#E9EDEF]' : theme === 'light' ? 'text-slate-500 group-hover:text-slate-900' : 'text-slate-400 group-hover:text-white'
+                }`} />
+              )}
+              <span>{isPinned ? 'Desafixar conversa' : 'Fixar conversa'}</span>
+            </button>
+
+            {/* 4. Marcar como não lida / Marcar como lida */}
+            <button
+              type="button"
+              onClick={() => handleToggleRead(targetContact.id)}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-medium transition-colors text-left group ${
+                isWhatsApp
+                  ? 'hover:bg-[#182229] text-[#E9EDEF]'
+                  : theme === 'light'
+                  ? 'hover:bg-slate-100 text-slate-800'
+                  : 'hover:bg-slate-800/80 text-slate-200'
+              }`}
+            >
+              <MessageSquare size={16} className={`shrink-0 ${
+                isWhatsApp ? 'text-[#8696A0] group-hover:text-[#E9EDEF]' : theme === 'light' ? 'text-slate-500 group-hover:text-slate-900' : 'text-slate-400 group-hover:text-white'
+              }`} />
+              <span>{isUnread ? 'Marcar como lida' : 'Marcar como não lida'}</span>
+            </button>
+
+            {/* 5. Adicionar aos Favoritos */}
+            <button
+              type="button"
+              onClick={() => handleToggleFavorite(targetContact.id)}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-medium transition-colors text-left group ${
+                isWhatsApp
+                  ? 'hover:bg-[#182229] text-[#E9EDEF]'
+                  : theme === 'light'
+                  ? 'hover:bg-slate-100 text-slate-800'
+                  : 'hover:bg-slate-800/80 text-slate-200'
+              }`}
+            >
+              <Heart size={16} className={`shrink-0 ${
+                isFav 
+                  ? 'text-rose-500 fill-rose-500' 
+                  : isWhatsApp 
+                    ? 'text-[#8696A0] group-hover:text-[#E9EDEF]' 
+                    : theme === 'light' 
+                      ? 'text-slate-500 group-hover:text-slate-900' 
+                      : 'text-slate-400 group-hover:text-white'
+              }`} />
+              <span>{isFav ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos'}</span>
+            </button>
+
+            {/* 6. Adicionar à lista / Etiquetas */}
+            <button
+              type="button"
+              onClick={() => {
+                setChatContextMenu(null);
+                setActiveChat(targetContact.id);
+                setShowContactInfo(true);
+              }}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-medium transition-colors text-left group ${
+                isWhatsApp
+                  ? 'hover:bg-[#182229] text-[#E9EDEF]'
+                  : theme === 'light'
+                  ? 'hover:bg-slate-100 text-slate-800'
+                  : 'hover:bg-slate-800/80 text-slate-200'
+              }`}
+            >
+              <Tag size={16} className={`shrink-0 ${
+                isWhatsApp ? 'text-[#8696A0] group-hover:text-[#E9EDEF]' : theme === 'light' ? 'text-slate-500 group-hover:text-slate-900' : 'text-slate-400 group-hover:text-white'
+              }`} />
+              <span>Adicionar à lista / Etiquetas</span>
+            </button>
+
+            <div className={`my-1 border-t ${
+              isWhatsApp ? 'border-[#2A3942]' : theme === 'light' ? 'border-slate-100' : 'border-slate-800/80'
+            }`} />
+
+            {/* 7. Limpar conversa */}
+            <button
+              type="button"
+              onClick={() => handleClearConversation(targetContact.id)}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-medium transition-colors text-left group ${
+                isWhatsApp
+                  ? 'hover:bg-[#182229] text-[#E9EDEF]'
+                  : theme === 'light'
+                  ? 'hover:bg-slate-100 text-slate-800'
+                  : 'hover:bg-slate-800/80 text-slate-200'
+              }`}
+            >
+              <Trash2 size={16} className={`shrink-0 ${
+                isWhatsApp ? 'text-[#8696A0] group-hover:text-[#E9EDEF]' : theme === 'light' ? 'text-slate-500 group-hover:text-slate-900' : 'text-slate-400 group-hover:text-white'
+              }`} />
+              <span>Limpar conversa</span>
+            </button>
+
+            {/* 8. Finalizar atendimento / Sair do grupo */}
+            <button
+              type="button"
+              onClick={() => handleResolveFromMenu(targetContact.id)}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-medium transition-colors text-left group ${
+                isWhatsApp
+                  ? 'hover:bg-[#182229] text-rose-400'
+                  : 'hover:bg-rose-50 dark:hover:bg-rose-950/30 text-rose-600 dark:text-rose-400'
+              }`}
+            >
+              {isGroup ? (
+                <LogOut size={16} className="shrink-0 text-rose-500" />
+              ) : (
+                <CheckCircle2 size={16} className="shrink-0 text-rose-500" />
+              )}
+              <span>{isGroup ? 'Sair do grupo' : 'Finalizar atendimento'}</span>
+            </button>
+          </div>
+        );
+      })()}
     </div>
   );
 }
