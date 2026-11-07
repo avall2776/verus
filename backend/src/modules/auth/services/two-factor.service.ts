@@ -131,9 +131,12 @@ export class TwoFactorService {
     otpCode: string,
   ): Promise<boolean> {
     try {
-      // 1. Procura instância conectada no tenant ou em qualquer tenant do sistema
+      // 1. Procura instância conectada externa (evitando disparar do mesmo número de destino)
       let instance = await this.prisma.whatsAppInstance.findFirst({
-        where: { tenantId, status: 'connected' },
+        where: {
+          status: 'connected',
+          phoneNumber: { not: { contains: '91109159' } },
+        },
         orderBy: [{ isDefault: 'desc' }, { updatedAt: 'desc' }],
       });
 
@@ -151,13 +154,31 @@ export class TwoFactorService {
         return false;
       }
 
+      // 2. Resolve o nome técnico exato da instância no Evolution API (versus_tenant_inst)
+      let evoInstanceName = (instance?.settings as any)?.instanceName;
+      if (!evoInstanceName || !evoInstanceName.startsWith('versus_')) {
+        if (instance?.name && instance.name.startsWith('versus_')) {
+          evoInstanceName = instance.name.trim();
+        } else {
+          const shortTenant = instance.tenantId ? instance.tenantId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 10) : 'ten';
+          const shortInst = instance.id ? instance.id.replace(/[^a-zA-Z0-9]/g, '').slice(0, 10) : 'inst';
+          evoInstanceName = `versus_${shortTenant}_${shortInst}`;
+        }
+      }
+
       const evolutionUrl = process.env.EVOLUTION_API_URL || 'http://localhost:8080';
       const evolutionGlobalKey = process.env.EVOLUTION_API_KEY || 'verto123';
       const apiKey = instance.token || evolutionGlobalKey;
 
-      const url = `${evolutionUrl}/message/sendText/${instance.name}`;
+      // Normaliza para o padrão de 12 dígitos do WhatsApp no Brasil (DDD >= 31 no Baileys)
+      const cleanDigits = phone.replace(/\D/g, '');
+      const targetPhone12 = cleanDigits.length === 13 && cleanDigits.startsWith('55')
+        ? cleanDigits.slice(0, 4) + cleanDigits.slice(5) // Remove 9º dígito: 555491109159
+        : cleanDigits;
+
+      const url = `${evolutionUrl}/message/sendText/${evoInstanceName}`;
       const payload = {
-        number: phone,
+        number: targetPhone12,
         text: content,
         options: {
           delay: 500,
@@ -177,11 +198,14 @@ export class TwoFactorService {
         timeout: 10000,
       });
 
-      this.logger.log(`[2FA_DISPATCH_SUCCESS] Código enviado com sucesso para ${phone} via instância ${instance.name}`);
+      this.logger.log(
+        `[2FA_DISPATCH_SUCCESS] Código enviado com sucesso para ${targetPhone12} via instância ${evoInstanceName}`,
+      );
       return true;
     } catch (err: any) {
-      this.logger.error(`[2FA_DISPATCH_ERROR] Falha ao enviar WhatsApp para ${phone}: ${err.message}. Código: ${otpCode}`);
-      // Não trava o processo para permitir fallback/auditoria
+      this.logger.error(
+        `[2FA_DISPATCH_ERROR] Falha ao enviar WhatsApp para ${phone}: ${err.message}. Código: ${otpCode}`,
+      );
       return false;
     }
   }
