@@ -21,7 +21,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import ModalPortal from "@/components/ui/ModalPortal";
 
 const DEFAULT_COLUMNS = [
-  { id: "seed", title: "LEADS SEED", color: "text-gray-400", bgLight: "bg-gray-500/10", borderLight: "border-gray-500/30", borderColor: "border-t-gray-500" },
+  { id: "seed", title: "LEADS SEED", color: "text-cyan-400", bgLight: "bg-cyan-500/10", borderLight: "border-cyan-500/30", borderColor: "border-t-cyan-400" },
   { id: "new", title: "Novo Contato", color: "text-blue-500", bgLight: "bg-blue-500/10", borderLight: "border-blue-500/30", borderColor: "border-t-blue-500" },
   { id: "qualified", title: "Em Qualificação", color: "text-purple-500", bgLight: "bg-purple-500/10", borderLight: "border-purple-500/30", borderColor: "border-t-purple-500" },
   { id: "follow-up", title: "Follow-up", color: "text-yellow-500", bgLight: "bg-yellow-500/10", borderLight: "border-yellow-500/30", borderColor: "border-t-yellow-500" },
@@ -29,7 +29,7 @@ const DEFAULT_COLUMNS = [
   { id: "negotiation", title: "Negociação", color: "text-orange-500", bgLight: "bg-orange-500/10", borderLight: "border-orange-500/30", borderColor: "border-t-orange-500" },
   { id: "won", title: "Fechado/Ganho", color: "text-green-500", bgLight: "bg-green-500/10", borderLight: "border-green-500/30", borderColor: "border-t-green-500" },
   { id: "lost", title: "Fechado/Perdido", color: "text-rose-600", bgLight: "bg-rose-600/10", borderLight: "border-rose-600/30", borderColor: "border-t-rose-600" },
-  { id: "disqualified", title: "Duplicados/Desqualificados", color: "text-gray-600", bgLight: "bg-gray-600/10", borderLight: "border-gray-600/30", borderColor: "border-t-gray-600" }
+  { id: "disqualified", title: "Duplicados/Desqualificados", color: "text-slate-400", bgLight: "bg-slate-500/10", borderLight: "border-slate-500/30", borderColor: "border-t-slate-500" }
 ];
 
 type ViewMode = 'kanban' | 'table' | 'timeline' | 'funnel';
@@ -325,8 +325,17 @@ function CrmContent() {
     const savedCols = localStorage.getItem('crm_columns');
     if (savedCols) {
       try {
-        const parsed = JSON.parse(savedCols);
+        const parsed = JSON.parse(savedCols).map((col: any) => {
+          if (col.id === 'seed' && col.color === 'text-gray-400') {
+            return { ...col, color: "text-cyan-400", bgLight: "bg-cyan-500/10", borderLight: "border-cyan-500/30", borderColor: "border-t-cyan-400" };
+          }
+          if (col.id === 'disqualified' && col.color === 'text-gray-600') {
+            return { ...col, color: "text-slate-400", bgLight: "bg-slate-500/10", borderLight: "border-slate-500/30", borderColor: "border-t-slate-500" };
+          }
+          return col;
+        });
         setColumns(parsed);
+        localStorage.setItem('crm_columns', JSON.stringify(parsed));
         setCollapsedTableStages(parsed.map((c: any) => c.id));
         setCollapsedTimelineStages(parsed.map((c: any) => c.id));
       } catch (e) {
@@ -892,7 +901,7 @@ function CrmContent() {
   const getTimelineStageAccent = (colId: string) => {
     switch (colId) {
       case 'seed':
-        return { barBg: 'bg-gray-400', badgeBg: 'bg-gray-500/10', badgeText: 'text-gray-400', borderLight: 'border-gray-500/30' };
+        return { barBg: 'bg-cyan-400', badgeBg: 'bg-cyan-500/10', badgeText: 'text-cyan-400', borderLight: 'border-cyan-500/30' };
       case 'new':
         return { barBg: 'bg-blue-500', badgeBg: 'bg-blue-500/10', badgeText: 'text-blue-400', borderLight: 'border-blue-500/30' };
       case 'qualified':
@@ -908,7 +917,7 @@ function CrmContent() {
       case 'lost':
         return { barBg: 'bg-rose-600', badgeBg: 'bg-rose-600/10', badgeText: 'text-rose-400', borderLight: 'border-rose-600/30' };
       case 'disqualified':
-        return { barBg: 'bg-gray-600', badgeBg: 'bg-gray-600/10', badgeText: 'text-gray-400', borderLight: 'border-gray-600/30' };
+        return { barBg: 'bg-slate-500', badgeBg: 'bg-slate-500/10', badgeText: 'text-slate-400', borderLight: 'border-slate-500/30' };
       default:
         return { barBg: 'bg-primary', badgeBg: 'bg-primary/10', badgeText: 'text-primary', borderLight: 'border-primary/30' };
     }
@@ -1038,7 +1047,7 @@ function CrmContent() {
       ref={crmContainerRef}
       className={`flex flex-col gap-3.5 relative transition-all duration-200 ${
         isFullscreen 
-          ? 'fixed inset-0 z-50 bg-slate-100 dark:bg-[#0a0c10] p-4 h-screen w-screen overflow-y-auto text-white' 
+          ? 'fixed inset-0 z-50 bg-slate-100 dark:bg-[#050814] p-4 h-screen w-screen overflow-y-auto text-white' 
           : 'h-full w-full'
       }`}
     >
@@ -1055,16 +1064,16 @@ function CrmContent() {
       {/* Modal de Perda */}
       {lossModalState.isOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-[#161b22] border border-gray-800 w-full max-w-sm rounded-xl shadow-2xl flex flex-col p-6 animate-in zoom-in-95">
-            <h2 className="text-lg font-bold text-white mb-4">Marcar como Perdido</h2>
+          <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 w-full max-w-sm rounded-xl shadow-2xl flex flex-col p-6 animate-in zoom-in-95">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Marcar como Perdido</h2>
             <div className="space-y-3 mb-4">
               {["Cliente achou caro", "Cliente enrolou", "Comprou do concorrente", "Contato inválido / sem interesse"].map(reason => (
-                <label key={reason} className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+                <label key={reason} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 cursor-pointer">
                   <input type="radio" name="lossReason" value={reason} checked={lossReason === reason} onChange={(e) => setLossReason(e.target.value)} className="accent-rose-500" />
                   {reason}
                 </label>
               ))}
-              <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+              <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 cursor-pointer">
                 <input type="radio" name="lossReason" value="outro" checked={lossReason === 'outro'} onChange={(e) => setLossReason(e.target.value)} className="accent-rose-500" />
                 Outro...
               </label>
@@ -1073,7 +1082,7 @@ function CrmContent() {
               placeholder="Comentário (opcional)..."
               value={lossComment}
               onChange={(e) => setLossComment(e.target.value)}
-              className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-lg p-2.5 text-sm text-slate-200 outline-none focus:border-rose-500 mb-6 min-h-[80px]"
+              className="w-full bg-slate-100 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 rounded-lg p-2.5 text-sm text-slate-800 dark:text-slate-200 outline-none focus:border-rose-500 mb-6 min-h-[80px]"
             />
             <div className="flex justify-end gap-3">
               <button 
@@ -1110,15 +1119,15 @@ function CrmContent() {
         </div>
       )}
 
-      {/* Barra Superior em Linha Única (Single-Row Flexbox - Padrão Executivo Lero) */}
-      <div className="flex items-center justify-between gap-3 w-full bg-white dark:bg-[#161b22] p-2.5 sm:p-3 rounded-xl border border-slate-200 dark:border-gray-800/60 overflow-x-auto custom-scrollbar shadow-sm shrink-0 relative z-30">
+      {/* Barra Superior em Linha Única (Single-Row Flexbox - Padrão Executivo Vallor) */}
+      <div className="flex items-center justify-between gap-3 w-full bg-white dark:bg-[#0B1224] p-2.5 sm:p-3 rounded-xl border border-slate-200 dark:border-slate-800 overflow-x-auto custom-scrollbar shadow-sm shrink-0 relative z-30">
         
         {/* LADO ESQUERDO: FUNIL PRINCIPAL COM EDIÇÃO (Edit2) + ABAS DE VISUALIZAÇÃO */}
         <div className="flex items-center gap-2.5 shrink-0">
           {/* Funil Principal Interativo com Edição */}
-          <div className="flex items-center pr-2.5 border-r border-slate-200 dark:border-gray-800 shrink-0">
+          <div className="flex items-center pr-2.5 border-r border-slate-200 dark:border-slate-800 shrink-0">
             {isEditingFunnel ? (
-              <div className="flex items-center gap-1 bg-slate-100 dark:bg-[#0d1117] border border-primary/60 rounded-lg px-2 py-0.5 shadow-inner">
+              <div className="flex items-center gap-1 bg-slate-100 dark:bg-[#070D1B] border border-primary/60 rounded-lg px-2 py-0.5 shadow-inner">
                 <input
                   type="text"
                   value={tempFunnelName}
@@ -1181,8 +1190,8 @@ function CrmContent() {
             )}
           </div>
           
-          {/* ABAS DE VISUALIZAÇÃO: QUADRO | TABELA | LINHA DO TEMPO */}
-          <div className="flex bg-slate-100 dark:bg-[#0d1117] rounded-lg p-0.5 border border-slate-200 dark:border-gray-800 shadow-inner shrink-0">
+          {/* ABAS DE VISUALIZAÇÃO: QUADRO | TABELA | LINHA DO TEMPO | FUNIL */}
+          <div className="flex bg-slate-100 dark:bg-[#070D1B] rounded-lg p-0.5 border border-slate-200 dark:border-slate-800 shadow-inner shrink-0">
             <button
               id="view-mode-kanban-btn"
               type="button"
@@ -1190,7 +1199,7 @@ function CrmContent() {
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold transition-all whitespace-nowrap ${
                 viewMode === 'kanban' 
                   ? 'bg-blue-600 text-white shadow-sm' 
-                  : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-gray-800/60'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-[#161f36]'
               }`}
               title="Visualização em Quadro Kanban"
             >
@@ -1208,7 +1217,7 @@ function CrmContent() {
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold transition-all whitespace-nowrap ${
                 viewMode === 'table' 
                   ? 'bg-blue-600 text-white shadow-sm' 
-                  : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-gray-800/60'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-[#161f36]'
               }`}
               title="Visualização em Tabela Densa"
             >
@@ -1223,7 +1232,7 @@ function CrmContent() {
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold transition-all whitespace-nowrap ${
                 viewMode === 'timeline' 
                   ? 'bg-blue-600 text-white shadow-sm' 
-                  : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-gray-800/60'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-[#161f36]'
               }`}
               title="Visualização em Linha do Tempo Semanal"
             >
@@ -1238,7 +1247,7 @@ function CrmContent() {
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold transition-all whitespace-nowrap ${
                 viewMode === 'funnel' 
                   ? 'bg-blue-600 text-white shadow-sm' 
-                  : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-gray-800/60'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-[#161f36]'
               }`}
               title="Visualização em Funil de Vendas"
             >
@@ -1252,14 +1261,14 @@ function CrmContent() {
         <div className="flex items-center gap-2.5 shrink-0">
           {/* Input de Busca Compactado */}
           <div className="relative w-36 sm:w-44 lg:w-52 shrink-0">
-            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-gray-500" />
+            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
             <input 
               id="crm-search-input"
               type="text" 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Buscar oportunidade..." 
-              className="bg-slate-50 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 rounded-lg pl-7 pr-6 py-1 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-gray-500 outline-none focus:border-blue-600 w-full transition-colors"
+              className="bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 rounded-lg pl-7 pr-6 py-1 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-blue-600 w-full transition-colors"
             />
             {searchQuery && (
               <button
@@ -1282,7 +1291,7 @@ function CrmContent() {
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-semibold transition-all whitespace-nowrap shadow-xs ${
                 datePreset !== 'all'
                   ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                  : 'bg-white hover:bg-slate-50 dark:bg-[#0d1117] dark:hover:bg-gray-800 text-slate-700 hover:text-slate-900 dark:text-gray-300 dark:hover:text-white border-slate-200 dark:border-gray-800'
+                  : 'bg-white hover:bg-slate-50 dark:bg-[#070D1B] dark:hover:bg-[#161f36] text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white border-slate-200 dark:border-slate-800'
               }`}
               title="Filtrar por período (Data de Início ou Data de Fechamento)"
             >
@@ -1317,10 +1326,10 @@ function CrmContent() {
                 
                 <div 
                   style={{ top: `${dropdownPosition.top}px`, left: `${dropdownPosition.left}px` }}
-                  className="fixed z-[9999] w-80 sm:w-96 bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-700/80 rounded-xl shadow-2xl p-4 flex flex-col gap-3.5 animate-in fade-in zoom-in-95 text-slate-800 dark:text-slate-100"
+                  className="fixed z-[9999] w-80 sm:w-96 bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-700/80 rounded-xl shadow-2xl p-4 flex flex-col gap-3.5 animate-in fade-in zoom-in-95 text-slate-800 dark:text-slate-100"
                 >
                   {/* Topo do Popover: Título e Botão Limpar */}
-                  <div className="flex items-center justify-between border-b border-slate-200 dark:border-gray-800/80 pb-2.5">
+                  <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800/80 pb-2.5">
                     <div className="flex items-center gap-1.5">
                       <CalendarDays size={14} className="text-blue-600 dark:text-blue-400" />
                       <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Filtrar por Período</span>
@@ -1342,17 +1351,17 @@ function CrmContent() {
 
                   {/* Segmented Control: Data de Início vs Data de Fechamento */}
                   <div>
-                    <label className="text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider block mb-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">
                       Filtrar Oportunidades Por:
                     </label>
-                    <div className="grid grid-cols-2 gap-1.5 bg-slate-100 dark:bg-[#0d1117] p-1 rounded-lg border border-slate-200 dark:border-gray-800">
+                    <div className="grid grid-cols-2 gap-1.5 bg-slate-100 dark:bg-[#070D1B] p-1 rounded-lg border border-slate-200 dark:border-slate-800">
                       <button
                         type="button"
                         onClick={() => setDateFilterType('created')}
                         className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md text-xs font-bold transition-all ${
                           dateFilterType === 'created'
                             ? 'bg-blue-600 text-white shadow-sm'
-                            : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                         }`}
                       >
                         <Calendar size={13} className={dateFilterType === 'created' ? 'text-white' : 'text-blue-500'} />
@@ -1364,14 +1373,14 @@ function CrmContent() {
                         className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md text-xs font-bold transition-all ${
                           dateFilterType === 'closed'
                             ? 'bg-blue-600 text-white shadow-sm'
-                            : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                         }`}
                       >
                         <CheckCircle2 size={13} className={dateFilterType === 'closed' ? 'text-white' : 'text-emerald-500'} />
                         <span>Data de Fim</span>
                       </button>
                     </div>
-                    <p className="text-[10px] text-slate-500 dark:text-gray-400 mt-1 italic">
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 italic">
                       {dateFilterType === 'created' 
                         ? 'Exibindo quando a oportunidade foi iniciada/criada no CRM.'
                         : 'Exibindo quando a oportunidade foi ganha, perdida ou finalizada.'}
@@ -1380,7 +1389,7 @@ function CrmContent() {
 
                   {/* Grade de Presets Rápidos */}
                   <div>
-                    <label className="text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider block mb-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">
                       Atalhos Rápidos de Período
                     </label>
                     <div className="grid grid-cols-2 gap-1.5">
@@ -1403,7 +1412,7 @@ function CrmContent() {
                           className={`py-1.5 px-2.5 rounded-lg text-xs font-semibold text-left transition-all border ${
                             datePreset === preset.id
                               ? 'bg-blue-600 text-white border-blue-600 font-bold shadow-xs'
-                              : 'bg-slate-50 hover:bg-slate-100 dark:bg-[#0d1117] dark:hover:bg-gray-800 text-slate-700 hover:text-slate-900 dark:text-gray-300 dark:hover:text-white border-slate-200 dark:border-gray-800'
+                              : 'bg-slate-50 hover:bg-slate-100 dark:bg-[#070D1B] dark:hover:bg-[#161f36] text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white border-slate-200 dark:border-slate-800'
                           }`}
                         >
                           {preset.label}
@@ -1414,25 +1423,25 @@ function CrmContent() {
 
                   {/* Campos de Data Personalizada */}
                   {datePreset === 'custom' && (
-                    <div className="bg-slate-50 dark:bg-[#0d1117] p-2.5 rounded-xl border border-slate-200 dark:border-gray-800 space-y-2 animate-in fade-in-50">
-                      <span className="text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase block">Faixa Personalizada</span>
+                    <div className="bg-slate-50 dark:bg-[#070D1B] p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2 animate-in fade-in-50">
+                      <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase block">Faixa Personalizada</span>
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className="text-[10px] text-slate-500 dark:text-gray-400 block mb-0.5">De:</label>
+                          <label className="text-[10px] text-slate-500 dark:text-slate-400 block mb-0.5">De:</label>
                           <input
                             type="date"
                             value={customStartDate}
                             onChange={(e) => setCustomStartDate(e.target.value)}
-                            className="w-full bg-white dark:bg-[#161b22] border border-slate-300 dark:border-gray-700 rounded-lg p-1.5 text-xs text-slate-900 dark:text-white outline-none focus:border-blue-600"
+                            className="w-full bg-white dark:bg-[#0B1224] border border-slate-300 dark:border-slate-700 rounded-lg p-1.5 text-xs text-slate-900 dark:text-white outline-none focus:border-blue-600"
                           />
                         </div>
                         <div>
-                          <label className="text-[10px] text-slate-500 dark:text-gray-400 block mb-0.5">Até:</label>
+                          <label className="text-[10px] text-slate-500 dark:text-slate-400 block mb-0.5">Até:</label>
                           <input
                             type="date"
                             value={customEndDate}
                             onChange={(e) => setCustomEndDate(e.target.value)}
-                            className="w-full bg-white dark:bg-[#161b22] border border-slate-300 dark:border-gray-700 rounded-lg p-1.5 text-xs text-slate-900 dark:text-white outline-none focus:border-blue-600"
+                            className="w-full bg-white dark:bg-[#0B1224] border border-slate-300 dark:border-slate-700 rounded-lg p-1.5 text-xs text-slate-900 dark:text-white outline-none focus:border-blue-600"
                           />
                         </div>
                       </div>
@@ -1440,8 +1449,8 @@ function CrmContent() {
                   )}
 
                   {/* Rodapé com Indicador de Oportunidades e Botão Aplicar */}
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-gray-800/80">
-                    <span className="text-[11px] text-slate-500 dark:text-gray-400">
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-slate-800/80">
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400">
                       <strong className="text-slate-900 dark:text-white font-mono">{filteredDeals.length}</strong> {filteredDeals.length === 1 ? 'oportunidade' : 'oportunidades'}
                     </span>
                     <button
@@ -1459,7 +1468,7 @@ function CrmContent() {
           </div>
 
           {/* Filtros Rápidos (Tudo, Minhas, Contatos, Empresas) */}
-          <div className="flex bg-slate-100 dark:bg-[#0d1117] rounded-lg p-0.5 border border-slate-200 dark:border-gray-800 shrink-0">
+          <div className="flex bg-slate-100 dark:bg-[#070D1B] rounded-lg p-0.5 border border-slate-200 dark:border-slate-800 shrink-0">
             {[
               { id: 'all', label: 'Tudo', icon: Activity },
               { id: 'mine', label: 'Minhas', icon: FileText },
@@ -1474,7 +1483,7 @@ function CrmContent() {
                 className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold transition-all whitespace-nowrap ${
                   activeTab === tab.id 
                     ? 'bg-blue-600 text-white shadow font-bold' 
-                    : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-gray-800/60'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-[#161f36]'
                 }`}
               >
                 <tab.icon size={12} />
@@ -1483,7 +1492,7 @@ function CrmContent() {
             ))}
           </div>
 
-          <div className="h-4 w-px bg-slate-200 dark:bg-gray-800 shrink-0 hidden sm:block"></div>
+          <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 shrink-0 hidden sm:block"></div>
 
           {/* Botões de Ação */}
           <button 
@@ -1492,7 +1501,7 @@ function CrmContent() {
             className={`px-2.5 py-1 rounded-lg border text-xs font-bold transition-all whitespace-nowrap shadow-xs ${
               neutralMode 
                 ? 'bg-blue-600 text-white border-blue-600 shadow-sm' 
-                : 'bg-white hover:bg-slate-100 dark:bg-[#0d1117] dark:hover:bg-gray-800 text-slate-700 hover:text-slate-900 dark:text-gray-300 dark:hover:text-white border-slate-300 dark:border-gray-800'
+                : 'bg-white hover:bg-slate-100 dark:bg-[#070D1B] dark:hover:bg-[#161f36] text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white border-slate-300 dark:border-slate-800'
             }`}
           >
             Neutro
@@ -1510,7 +1519,7 @@ function CrmContent() {
           <button 
             type="button"
             onClick={() => setShowManageStagesModal(true)} 
-            className="bg-white hover:bg-slate-100 dark:bg-[#0d1117] dark:hover:bg-gray-800 text-slate-700 hover:text-slate-900 dark:text-gray-300 dark:hover:text-white border border-slate-300 dark:border-gray-800 px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 whitespace-nowrap shadow-xs"
+            className="bg-white hover:bg-slate-100 dark:bg-[#070D1B] dark:hover:bg-[#161f36] text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 whitespace-nowrap shadow-xs"
           >
             <Settings size={13}/>
             <span className="hidden sm:inline">Gerenciar Etapas</span>
@@ -1524,7 +1533,7 @@ function CrmContent() {
             className={`p-1.5 rounded-lg border transition-all flex items-center justify-center shrink-0 ${
               isFullscreen 
                 ? 'bg-blue-600/15 text-blue-600 dark:text-blue-400 border-blue-500/40 hover:bg-blue-600/25' 
-                : 'bg-white hover:bg-slate-100 dark:bg-[#0d1117] dark:hover:bg-gray-800 text-slate-700 hover:text-slate-900 dark:text-gray-300 dark:hover:text-white border-slate-300 dark:border-gray-800 shadow-xs'
+                : 'bg-white hover:bg-slate-100 dark:bg-[#070D1B] dark:hover:bg-[#161f36] text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white border-slate-300 dark:border-slate-800 shadow-xs'
             }`}
           >
             {isFullscreen ? <Minimize2 size={13}/> : <Maximize2 size={13}/>}
@@ -1557,16 +1566,16 @@ function CrmContent() {
                         className={`w-full h-full flex-shrink-0 flex flex-col border border-t-2 ${borderTopClass} rounded-xl items-center py-4 cursor-pointer transition-colors group ${
                           isWhatsApp 
                             ? 'bg-[#111B21] border-[#222D34] hover:bg-[#202C33]' 
-                            : 'bg-slate-50 dark:bg-[#1c1d22] border-gray-800 hover:bg-gray-800/50'
+                            : 'bg-slate-50 dark:bg-[#0B1224] border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-[#161f36]'
                         }`} 
                         onClick={() => toggleColumn(col.id)}
                       >
-                         <button className={`${isWhatsApp ? 'text-[#8696A0] group-hover:text-[#00A884]' : 'text-gray-500 group-hover:text-white'} mb-6`}>
+                         <button className={`${isWhatsApp ? 'text-[#8696A0] group-hover:text-[#00A884]' : 'text-slate-500 group-hover:text-white'} mb-6`}>
                            <Maximize2 size={16} />
                          </button>
                          <div className="flex-1 relative w-full">
                            <div className={`absolute top-0 left-1/2 -translate-x-1/2 origin-top-left -rotate-90 whitespace-nowrap font-bold text-sm tracking-widest uppercase ${
-                             isWhatsApp ? 'text-[#00A884]' : 'text-gray-500'
+                             isWhatsApp ? 'text-[#00A884]' : 'text-slate-400'
                            }`}>
                              {col.title} ({columnDeals.length})
                            </div>
@@ -1578,7 +1587,7 @@ function CrmContent() {
                         <div className={`p-4 rounded-xl border border-t-2 ${borderTopClass} flex flex-col shadow-sm shrink-0 ${
                           isWhatsApp 
                             ? 'bg-[#111B21] border-[#222D34] shadow-md shadow-black/20' 
-                            : 'border-slate-200 dark:border-gray-800 bg-slate-50 dark:bg-[#1c1d22]'
+                            : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0B1224]'
                         }`}>
                           <div className="flex justify-between items-center mb-2">
                             <h3 className={`text-sm font-black uppercase tracking-wider ${colColorClass}`}>
@@ -1590,7 +1599,7 @@ function CrmContent() {
                                 className={`p-1 rounded transition-colors ${
                                   isWhatsApp 
                                     ? 'text-[#8696A0] hover:text-[#E9EDEF] hover:bg-[#202C33]' 
-                                    : 'text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-gray-700'
+                                    : 'text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800'
                                 }`}
                               >
                                 <Minimize2 size={14} />
@@ -1600,17 +1609,17 @@ function CrmContent() {
                           <div className={`flex items-center justify-between text-xs font-semibold px-3 py-1.5 rounded-lg border shadow-xs ${
                             isWhatsApp
                               ? 'bg-[#202C33] border-[#222D34]'
-                              : 'bg-white dark:bg-[#0B1224] border-slate-200 dark:border-gray-800/50'
+                              : 'bg-white dark:bg-[#070D1B] border-slate-200 dark:border-slate-800'
                           }`}>
                             <span className={`px-2 py-0.5 rounded-full font-bold border ${
                               isWhatsApp
                                 ? 'bg-[#111B21] text-[#00A884] border-[#00A884]/30'
-                                : 'bg-slate-100 dark:bg-gray-800 text-slate-700 dark:text-white border-slate-200 dark:border-transparent'
+                                : 'bg-slate-100 dark:bg-[#0B1224] text-slate-700 dark:text-white border-slate-200 dark:border-slate-700/80'
                             }`}>
                               {columnDeals.length} cards
                             </span>
                             <span className={`font-mono font-bold ${
-                              isWhatsApp ? 'text-[#E9EDEF]' : 'text-slate-700 dark:text-gray-300'
+                              isWhatsApp ? 'text-[#E9EDEF]' : 'text-slate-700 dark:text-slate-200'
                             }`}>
                               {formatCurrency(totalValue)}
                             </span>
@@ -1660,7 +1669,7 @@ function CrmContent() {
                           className={`mt-auto shrink-0 w-full rounded-xl py-3 text-sm font-semibold transition-colors flex items-center justify-center gap-2 shadow-xs border ${
                             isWhatsApp
                               ? 'bg-[#111B21] hover:bg-[#202C33] border-[#222D34] hover:border-[#00A884]/40 text-[#8696A0] hover:text-[#00A884]'
-                              : 'bg-white hover:bg-slate-50 dark:bg-[#161b22] dark:hover:bg-[#1c2128] border-slate-200 dark:border-gray-800 hover:border-slate-300 dark:hover:border-gray-600 text-slate-600 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white'
+                              : 'bg-white hover:bg-slate-50 dark:bg-[#0B1224] dark:hover:bg-[#161f36] border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-600 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
                           }`}
                         >
                           <Plus size={16} /> Adicionar novo cartão
@@ -1684,15 +1693,15 @@ function CrmContent() {
       )}
 
       {/* ========================================================================= */}
-      {/* 2. VISÃO EM TABELA DO CRM (Densa e alinhada ao Padrão Lero)              */}
+      {/* 2. VISÃO EM TABELA DO CRM (Densa e alinhada ao Padrão Vallor)            */}
       {/* ========================================================================= */}
       {viewMode === 'table' && (() => {
         const visibleColCount = Object.values(visibleColumns).filter(Boolean).length || 1;
 
         return (
-          <div className="flex-1 flex flex-col bg-white dark:bg-[#161b22] border border-gray-800 rounded-xl overflow-hidden shadow-lg animate-in fade-in-50 duration-200">
+          <div className="flex-1 flex flex-col bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-lg animate-in fade-in-50 duration-200">
             {/* Barra de Ferramentas da Tabela: Filtros, Visibilidade de Colunas e Adição Rápida */}
-            <div className="bg-slate-100 dark:bg-[#1c2128] border-b border-gray-800 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 shrink-0">
+            <div className="bg-slate-100 dark:bg-[#070D1B] border-b border-slate-200 dark:border-slate-800 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 shrink-0">
               <div className="flex items-center gap-2">
                 {/* Botão [Filtros] com badge numérico */}
                 <div className="relative">
@@ -1702,10 +1711,10 @@ function CrmContent() {
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
                       activeFilterCount > 0 
                         ? 'bg-blue-600/15 border-blue-600 text-blue-700 dark:text-blue-400 shadow-sm' 
-                        : 'bg-white dark:bg-[#0B1224] border-slate-200 dark:border-gray-700 text-slate-700 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-gray-800'
+                        : 'bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-[#161f36]'
                     }`}
                   >
-                    <Filter size={13} className={activeFilterCount > 0 ? "text-primary" : "text-gray-400"} />
+                    <Filter size={13} className={activeFilterCount > 0 ? "text-primary" : "text-slate-400"} />
                     <span>Filtros</span>
                     {activeFilterCount > 0 && (
                       <span className="bg-primary text-white text-[10px] font-black px-1.5 py-0.2 rounded-full">
@@ -1716,9 +1725,9 @@ function CrmContent() {
 
                   {/* Popover de Filtros Avançados da Tabela */}
                   {showFilterDropdown && (
-                    <div className="absolute left-0 top-full mt-2 w-72 bg-white dark:bg-[#161b22] border border-gray-700 rounded-xl shadow-2xl p-3.5 z-30 flex flex-col gap-3 animate-in fade-in zoom-in-95">
-                      <div className="flex items-center justify-between border-b border-gray-800 pb-2">
-                        <span className="text-xs font-bold text-white">Filtros da Tabela</span>
+                    <div className="absolute left-0 top-full mt-2 w-72 bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl p-3.5 z-30 flex flex-col gap-3 animate-in fade-in zoom-in-95">
+                      <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+                        <span className="text-xs font-bold text-slate-900 dark:text-white">Filtros da Tabela</span>
                         {activeFilterCount > 0 && (
                           <button 
                             type="button" 
@@ -1739,11 +1748,11 @@ function CrmContent() {
 
                       {/* 1. Estágio */}
                       <div>
-                        <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Estágio</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Estágio</label>
                         <select
                           value={selectedStageFilter}
                           onChange={(e) => setSelectedStageFilter(e.target.value)}
-                          className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-700 text-white rounded-lg p-1.5 text-xs outline-none focus:border-primary"
+                          className="w-full bg-slate-100 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg p-1.5 text-xs outline-none focus:border-primary"
                         >
                           <option value="all">Todos os Estágios</option>
                           {columns.map(c => (
@@ -1754,13 +1763,13 @@ function CrmContent() {
 
                       {/* 2. Tipo de Data */}
                       <div>
-                        <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Filtrar Data Por</label>
-                        <div className="grid grid-cols-2 gap-1 bg-slate-100 dark:bg-[#0d1117] p-0.5 rounded-lg border border-gray-800">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Filtrar Data Por</label>
+                        <div className="grid grid-cols-2 gap-1 bg-slate-100 dark:bg-[#070D1B] p-0.5 rounded-lg border border-slate-200 dark:border-slate-800">
                           <button
                             type="button"
                             onClick={() => setDateFilterType('created')}
                             className={`flex items-center justify-center gap-1 py-1 px-1.5 rounded text-[11px] font-bold transition-all ${
-                              dateFilterType === 'created' ? 'bg-primary text-white shadow-xs' : 'text-gray-400 hover:text-white'
+                              dateFilterType === 'created' ? 'bg-primary text-white shadow-xs' : 'text-slate-400 hover:text-white'
                             }`}
                           >
                             <Calendar size={11} />
@@ -1770,7 +1779,7 @@ function CrmContent() {
                             type="button"
                             onClick={() => setDateFilterType('closed')}
                             className={`flex items-center justify-center gap-1 py-1 px-1.5 rounded text-[11px] font-bold transition-all ${
-                              dateFilterType === 'closed' ? 'bg-primary text-white shadow-xs' : 'text-gray-400 hover:text-white'
+                              dateFilterType === 'closed' ? 'bg-primary text-white shadow-xs' : 'text-slate-400 hover:text-white'
                             }`}
                           >
                             <CheckCircle2 size={11} />
@@ -1781,11 +1790,11 @@ function CrmContent() {
 
                       {/* 3. Atalho de Período */}
                       <div>
-                        <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Período</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Período</label>
                         <select
                           value={datePreset}
                           onChange={(e) => setDatePreset(e.target.value as any)}
-                          className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-700 text-white rounded-lg p-1.5 text-xs outline-none focus:border-primary"
+                          className="w-full bg-slate-100 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg p-1.5 text-xs outline-none focus:border-primary"
                         >
                           <option value="all">Todo o histórico</option>
                           <option value="today">Hoje</option>
@@ -1808,17 +1817,17 @@ function CrmContent() {
                   <button
                     type="button"
                     onClick={() => setShowColumnVisibility(!showColumnVisibility)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-gray-700 text-slate-700 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-gray-800 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-[#161f36] transition-colors"
                     title="Configurar colunas visíveis"
                   >
-                    <Columns size={13} className="text-gray-400" />
+                    <Columns size={13} className="text-slate-400" />
                     <span>Colunas</span>
                   </button>
 
                   {/* Popover de Visibilidade de Colunas */}
                   {showColumnVisibility && (
-                    <div className="absolute left-0 top-full mt-2 w-56 bg-white dark:bg-[#161b22] border border-gray-700 rounded-xl shadow-2xl p-3 z-30 flex flex-col gap-2 animate-in fade-in zoom-in-95">
-                      <span className="text-xs font-bold text-white border-b border-gray-800 pb-2">Exibir Colunas</span>
+                    <div className="absolute left-0 top-full mt-2 w-56 bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl p-3 z-30 flex flex-col gap-2 animate-in fade-in zoom-in-95">
+                      <span className="text-xs font-bold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-800 pb-2">Exibir Colunas</span>
                       {[
                         { id: 'title', label: 'Título' },
                         { id: 'contact', label: 'Contato' },
@@ -1900,7 +1909,7 @@ function CrmContent() {
             <div className="overflow-x-auto custom-scrollbar">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-100 dark:bg-[#0f141c] border-b border-slate-200 dark:border-gray-800 text-[11px] font-bold text-slate-700 dark:text-gray-400 uppercase tracking-wider">
+                  <tr className="bg-slate-100 dark:bg-[#070D1B] border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-700 dark:text-slate-400 uppercase tracking-wider">
                     {/* 1. Título */}
                     {visibleColumns.title && (
                       <th 
@@ -2108,19 +2117,19 @@ function CrmContent() {
                         {/* Linha Cabeçalho do Estágio com Montante Total Acumulado */}
                         <tr 
                           onClick={() => toggleTableStage(col.id)}
-                          className="bg-slate-100 dark:bg-[#1c2128] hover:bg-slate-200/80 dark:hover:bg-[#222832] cursor-pointer transition-colors border-t border-b border-slate-200 dark:border-gray-800"
+                          className="bg-slate-100 dark:bg-[#0B1224] hover:bg-slate-200/80 dark:hover:bg-[#161f36] cursor-pointer transition-colors border-t border-b border-slate-200 dark:border-slate-800"
                         >
                           <td colSpan={visibleColCount} className="py-2.5 px-3.5">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2.5">
-                                <span className="text-slate-400 dark:text-gray-400">
+                                <span className="text-slate-400 dark:text-slate-400">
                                   {isCollapsed ? <ChevronRight size={15} /> : <ChevronDown size={15} />}
                                 </span>
                                 <div className={`w-2.5 h-2.5 rounded-full ${col.color.replace('text-', 'bg-')}`}></div>
                                 <span className="font-extrabold text-slate-800 dark:text-white uppercase tracking-wider text-xs">
                                   {col.title}
                                 </span>
-                                <span className="bg-slate-200 dark:bg-gray-800/80 border border-slate-300 dark:border-gray-700 text-slate-700 dark:text-gray-300 font-bold px-2 py-0.5 rounded-full text-[10px]">
+                                <span className="bg-slate-200 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold px-2 py-0.5 rounded-full text-[10px]">
                                   {stageDeals.length} {stageDeals.length === 1 ? 'card' : 'cards'}
                                 </span>
                               </div>
@@ -2152,8 +2161,8 @@ function CrmContent() {
 
                         {/* Linhas das Oportunidades do Estágio */}
                         {!isCollapsed && sortedStageDeals.length === 0 && (
-                          <tr className="bg-slate-50/50 dark:bg-[#12161f]/30">
-                            <td colSpan={visibleColCount} className="py-3 px-6 text-slate-400 dark:text-gray-500 italic text-center text-xs">
+                          <tr className="bg-slate-50/50 dark:bg-[#070D1B]/40">
+                            <td colSpan={visibleColCount} className="py-3 px-6 text-slate-400 dark:text-slate-500 italic text-center text-xs">
                               Nenhuma oportunidade nesta etapa.
                             </td>
                           </tr>
@@ -2168,7 +2177,7 @@ function CrmContent() {
                             <tr 
                               key={deal.id}
                               onClick={() => handleOpenDeal(deal)}
-                              className="hover:bg-slate-100/70 dark:hover:bg-[#1f2530] transition-colors cursor-pointer group border-b border-slate-100 dark:border-gray-800/40"
+                              className="hover:bg-slate-100/70 dark:hover:bg-[#161f36] transition-colors cursor-pointer group border-b border-slate-100 dark:border-slate-800/60"
                             >
                               {/* 1. Título (com link interativo para abrir o DealModal) */}
                               {visibleColumns.title && (
@@ -2235,7 +2244,7 @@ function CrmContent() {
                                 <td className="py-2.5 px-3.5 max-w-[320px]">
                                   <div className="flex flex-col gap-1" onClick={(e) => e.stopPropagation()}>
                                     <div className="flex items-center gap-1.5 flex-wrap">
-                                      <span className="text-[9px] font-bold text-slate-600 dark:text-gray-400 bg-slate-100 dark:bg-[#0B1224] border border-slate-200 dark:border-gray-800 px-1.5 py-0.2 rounded uppercase">
+                                      <span className="text-[9px] font-bold text-slate-600 dark:text-gray-400 bg-slate-100 dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 px-1.5 py-0.2 rounded uppercase">
                                         {originSource}
                                       </span>
                                     </div>
@@ -2342,7 +2351,7 @@ function CrmContent() {
               ? 'bg-[#111B21] border-[#222D34] text-[#E9EDEF]' 
               : isClean 
               ? 'bg-white border-slate-200 text-slate-800' 
-              : 'bg-[#161b22] border-gray-800 text-white'
+              : 'bg-[#0B1224] border-slate-800 text-white'
           }`}>
             <div className="flex flex-wrap items-center gap-2">
               <button
@@ -2353,7 +2362,7 @@ function CrmContent() {
                     ? 'bg-[#202C33] hover:bg-[#2A3942] text-[#E9EDEF] border-[#222D34]' 
                     : isClean 
                     ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300' 
-                    : 'bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white border-gray-700'
+                    : 'bg-[#070D1B] hover:bg-[#161f36] text-slate-300 hover:text-white border-slate-700'
                 }`}
                 title="Semana Anterior"
               >
@@ -2384,7 +2393,7 @@ function CrmContent() {
                     ? 'bg-[#202C33] hover:bg-[#2A3942] text-[#E9EDEF] border-[#222D34]' 
                     : isClean 
                     ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300' 
-                    : 'bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white border-gray-700'
+                    : 'bg-[#070D1B] hover:bg-[#161f36] text-slate-300 hover:text-white border-slate-700'
                 }`}
                 title="Próxima Semana"
               >
@@ -2392,14 +2401,14 @@ function CrmContent() {
                 <ChevronRight size={15} />
               </button>
 
-              <div className={`h-5 w-px mx-1 ${isWhatsApp ? 'bg-[#222D34]' : isClean ? 'bg-slate-200' : 'bg-gray-800'}`} />
+              <div className={`h-5 w-px mx-1 ${isWhatsApp ? 'bg-[#222D34]' : isClean ? 'bg-slate-200' : 'bg-slate-800'}`} />
 
               <div className={`flex items-center gap-2 font-bold text-sm px-3 py-1.5 rounded-lg border shadow-inner ${
                 isWhatsApp 
                   ? 'bg-[#202C33] border-[#222D34] text-[#E9EDEF]' 
                   : isClean 
                   ? 'bg-slate-100 border-slate-200 text-slate-800' 
-                  : 'bg-[#0d1117] border-gray-800/80 text-white'
+                  : 'bg-[#070D1B] border-slate-800 text-white'
               }`}>
                 <CalendarDays size={15} className={`shrink-0 ${isWhatsApp ? 'text-[#00A884]' : 'text-primary'}`} />
                 <span className="capitalize">{timelineWeekLabel}</span>
@@ -2413,7 +2422,7 @@ function CrmContent() {
                   ? 'bg-[#202C33] border-[#222D34] text-[#8696A0]' 
                   : isClean 
                   ? 'bg-slate-50 border-slate-200 text-slate-700' 
-                  : 'bg-[#0B1224] border-gray-800 text-gray-300'
+                  : 'bg-[#070D1B] border-slate-800 text-slate-300'
               }`}>
                 <span className={`font-bold ${isWhatsApp ? 'text-[#E9EDEF]' : isClean ? 'text-slate-900' : 'text-white'}`}>
                   {weekTotalCards}
@@ -2441,7 +2450,7 @@ function CrmContent() {
           <div className="md:hidden flex-1 flex flex-col gap-3 min-h-0 overflow-y-auto custom-scrollbar">
             {/* Seletor Horizontal de Dias da Semana (Mobile) */}
             <div className={`p-2.5 rounded-xl border flex flex-col gap-2 shadow-sm ${
-              isWhatsApp ? 'bg-[#111B21] border-[#222D34]' : isClean ? 'bg-white border-slate-200' : 'bg-[#161b22] border-gray-800'
+              isWhatsApp ? 'bg-[#111B21] border-[#222D34]' : isClean ? 'bg-white border-slate-200' : 'bg-[#0B1224] border-slate-800'
             }`}>
               <div className="flex items-center justify-between text-[11px] font-bold px-1">
                 <span className={isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-500' : 'text-gray-400'}>
@@ -2564,7 +2573,7 @@ function CrmContent() {
                         ? 'bg-[#111B21] border-[#222D34]' 
                         : isClean 
                         ? 'bg-white border-slate-200' 
-                        : 'bg-[#161b22] border-gray-800'
+                        : 'bg-[#0B1224] border-slate-800'
                     }`}
                   >
                     {/* Cabeçalho do Estágio Tocável */}
@@ -2576,12 +2585,12 @@ function CrmContent() {
                           ? 'hover:bg-[#202C33]'
                           : isClean
                           ? 'hover:bg-slate-50'
-                          : 'hover:bg-gray-800/40'
+                          : 'hover:bg-[#161f36]'
                       }`}
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         <span className={`p-1 rounded-md transition-transform duration-200 ${
-                          isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-400' : 'text-gray-400'
+                          isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-400' : 'text-slate-400'
                         }`}>
                           {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
                         </span>
@@ -2610,11 +2619,11 @@ function CrmContent() {
                     {/* Cards do Estágio (quando expandido) */}
                     {!isCollapsed && (
                       <div className={`p-3 pt-1 flex flex-col gap-2 border-t ${
-                        isWhatsApp ? 'border-[#222D34] bg-[#0C1317]/50' : isClean ? 'border-slate-100 bg-slate-50/50' : 'border-gray-800/60 bg-[#0d1117]/50'
+                        isWhatsApp ? 'border-[#222D34] bg-[#0C1317]/50' : isClean ? 'border-slate-100 bg-slate-50/50' : 'border-slate-800/80 bg-[#070D1B]/60'
                       }`}>
                         {dealsInWeek.length === 0 ? (
                           <div className={`p-4 text-center text-xs italic ${
-                            isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-400' : 'text-gray-500'
+                            isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-400' : 'text-slate-500'
                           }`}>
                             Nenhuma oportunidade neste estágio {mobileTimelineSelectedDay !== 'all' ? 'para o dia selecionado' : 'nesta semana'}.
                           </div>
@@ -2636,7 +2645,7 @@ function CrmContent() {
                                     ? 'bg-[#111B21] hover:bg-[#202C33] border-[#222D34] text-[#E9EDEF]' 
                                     : isClean 
                                     ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-800' 
-                                    : 'bg-[#161b22] hover:bg-[#1f2633] border-gray-800 text-white'
+                                    : 'bg-[#0B1224] hover:bg-[#161f36] border-slate-800 text-white'
                                 }`}
                               >
                                 {/* Barra lateral de cor do estágio */}
@@ -2671,7 +2680,7 @@ function CrmContent() {
                                   )}
                                 </div>
 
-                                <div className="flex items-center justify-between text-xs pt-1 border-t border-dashed border-slate-200 dark:border-gray-800/80">
+                                <div className="flex items-center justify-between text-xs pt-1 border-t border-dashed border-slate-200 dark:border-slate-800/80">
                                   <div className="flex items-center gap-1.5">
                                     <span className={`text-[11px] font-semibold capitalize ${
                                       isTodayDeal 
@@ -2715,7 +2724,7 @@ function CrmContent() {
               ? 'bg-[#111B21] border-[#222D34]' 
               : isClean 
               ? 'bg-white border-slate-200' 
-              : 'bg-[#161b22] border-gray-800'
+              : 'bg-[#0B1224] border-slate-800'
           }`}>
             <div className="flex-1 overflow-auto custom-scrollbar">
               <table className="w-full text-left border-collapse min-w-[1100px]">
@@ -2725,7 +2734,7 @@ function CrmContent() {
                     ? 'bg-[#202C33] border-[#222D34] text-[#E9EDEF]' 
                     : isClean 
                     ? 'bg-slate-100 border-slate-200 text-slate-700' 
-                    : 'bg-[#1c2128] border-gray-800 text-gray-300'
+                    : 'bg-[#070D1B] border-slate-800 text-slate-300'
                 }`}>
                   <tr>
                     {/* Coluna Fixa à Esquerda: Estágios do Funil */}
@@ -2734,7 +2743,7 @@ function CrmContent() {
                         ? 'bg-[#202C33] border-[#222D34]' 
                         : isClean 
                         ? 'bg-slate-100 border-slate-200' 
-                        : 'bg-[#1c2128] border-gray-800'
+                        : 'bg-[#070D1B] border-slate-800'
                     }`}>
                       <div className="flex items-center justify-between text-xs font-extrabold uppercase tracking-wider">
                         <div className="flex items-center gap-2">
@@ -2780,7 +2789,7 @@ function CrmContent() {
                         <th 
                           key={`timeline-th-${dayIndex}`}
                           className={`p-3 min-w-[145px] border-r last:border-r-0 ${
-                            isWhatsApp ? 'border-[#222D34]' : isClean ? 'border-slate-200' : 'border-gray-800/80'
+                            isWhatsApp ? 'border-[#222D34]' : isClean ? 'border-slate-200' : 'border-slate-800/80'
                           } ${
                             day.isToday 
                               ? isWhatsApp ? 'bg-[#00A884]/15' : 'bg-primary/10' 
@@ -2869,8 +2878,8 @@ function CrmContent() {
                         key={`timeline-stage-row-${col.id}`}
                         className={`transition-colors ${
                           isCollapsed 
-                            ? isWhatsApp ? 'bg-[#111B21]/90' : isClean ? 'bg-slate-50/80' : 'bg-[#12161f]/80' 
-                            : isWhatsApp ? 'hover:bg-[#202C33]/50' : isClean ? 'hover:bg-slate-50/60' : 'hover:bg-gray-900/30'
+                            ? isWhatsApp ? 'bg-[#111B21]/90' : isClean ? 'bg-slate-50/80' : 'bg-[#070D1B]/80' 
+                            : isWhatsApp ? 'hover:bg-[#202C33]/50' : isClean ? 'hover:bg-slate-50/60' : 'hover:bg-[#161f36]/40'
                         }`}
                       >
                         {/* Célula Lateral Esquerda: Cabeçalho Colapsável do Estágio */}
@@ -2879,7 +2888,7 @@ function CrmContent() {
                             ? 'bg-[#111B21] border-[#222D34]' 
                             : isClean 
                             ? 'bg-white border-slate-200' 
-                            : 'bg-[#161b22] border-gray-800'
+                            : 'bg-[#0B1224] border-slate-800'
                         }`}>
                           <div className="flex flex-col gap-1.5">
                             <button
@@ -2932,7 +2941,7 @@ function CrmContent() {
                               <td 
                                 key={`stage-${col.id}-day-${dayIndex}`}
                                 className={`p-2 border-r last:border-r-0 ${
-                                  isWhatsApp ? 'border-[#222D34]/50' : isClean ? 'border-slate-200/60' : 'border-gray-800/40'
+                                  isWhatsApp ? 'border-[#222D34]/50' : isClean ? 'border-slate-200/60' : 'border-slate-800/40'
                                 } ${
                                   day.isToday ? isWhatsApp ? 'bg-[#00A884]/5' : 'bg-primary/5' : ''
                                 }`}
@@ -2956,7 +2965,7 @@ function CrmContent() {
                             <td
                               key={`stage-${col.id}-day-${dayIndex}`}
                               className={`p-2 align-top border-r last:border-r-0 min-w-[145px] transition-colors ${
-                                isWhatsApp ? 'border-[#222D34]' : isClean ? 'border-slate-200/80' : 'border-gray-800/60'
+                                isWhatsApp ? 'border-[#222D34]' : isClean ? 'border-slate-200/80' : 'border-slate-800/60'
                               } ${
                                 day.isToday ? isWhatsApp ? 'bg-[#00A884]/10' : 'bg-primary/5' : ''
                               }`}
@@ -2983,7 +2992,7 @@ function CrmContent() {
                                             ? 'bg-[#202C33] hover:bg-[#2A3942] border-[#222D34] text-[#E9EDEF]' 
                                             : isClean 
                                             ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-800 hover:border-slate-300' 
-                                            : 'bg-[#0d1117] hover:bg-[#1f2633] border-gray-800 hover:border-gray-700 text-white'
+                                            : 'bg-[#070D1B] hover:bg-[#161f36] border-slate-800 hover:border-slate-700 text-white'
                                         }`}
                                       >
                                         {/* Barra lateral colorida do estágio */}
@@ -3075,10 +3084,10 @@ function CrmContent() {
           switch (colId) {
             case 'seed':
               return {
-                accentHex: '#9ca3af',
-                bgDark: 'rgba(156, 163, 175, 0.18)',
-                bgClean: 'rgba(241, 245, 249, 0.98)',
-                borderRgba: 'rgba(156, 163, 175, 0.55)',
+                accentHex: '#06b6d4',
+                bgDark: 'rgba(6, 182, 212, 0.22)',
+                bgClean: 'rgba(236, 254, 255, 0.98)',
+                borderRgba: 'rgba(6, 182, 212, 0.65)',
               };
             case 'new':
               return {
@@ -3131,10 +3140,10 @@ function CrmContent() {
               };
             default:
               return {
-                accentHex: '#64748b',
-                bgDark: 'rgba(100, 116, 139, 0.20)',
-                bgClean: 'rgba(241, 245, 249, 0.98)',
-                borderRgba: 'rgba(100, 116, 139, 0.55)',
+                accentHex: '#38bdf8',
+                bgDark: 'rgba(56, 189, 248, 0.20)',
+                bgClean: 'rgba(240, 249, 255, 0.98)',
+                borderRgba: 'rgba(56, 189, 248, 0.55)',
               };
           }
         };
@@ -3160,11 +3169,11 @@ function CrmContent() {
                   ? 'bg-[#111B21] border-[#222D34]'
                   : isClean
                   ? 'bg-white border-slate-200'
-                  : 'bg-[#161b22] border-gray-800'
+                  : 'bg-[#0B1224] border-slate-800'
               }`}>
                 <div className="flex items-center justify-between">
                   <span className={`text-xs font-bold uppercase tracking-wider ${
-                    isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-500' : 'text-gray-400'
+                    isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-500' : 'text-slate-400'
                   }`}>
                     Pipeline Ativo
                   </span>
@@ -3174,7 +3183,7 @@ function CrmContent() {
                   {formatCurrency(openValue)}
                 </div>
                 <div className={`text-xs mt-0.5 font-medium ${
-                  isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-600' : 'text-gray-400'
+                  isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-600' : 'text-slate-400'
                 }`}>
                   <strong>{openCount}</strong> oportunidades em aberto
                 </div>
@@ -3188,12 +3197,12 @@ function CrmContent() {
                     ? 'bg-[#111B21] border-[#222D34] hover:border-[#00A884]/50'
                     : isClean
                     ? 'bg-white border-slate-200 hover:border-emerald-400'
-                    : 'bg-[#161b22] border-gray-800 hover:border-emerald-500/50'
+                    : 'bg-[#0B1224] border-slate-800 hover:border-emerald-500/50'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <span className={`text-xs font-bold uppercase tracking-wider ${
-                    isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-500' : 'text-gray-400'
+                    isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-500' : 'text-slate-400'
                   }`}>
                     Fechado / Ganho
                   </span>
@@ -3213,11 +3222,11 @@ function CrmContent() {
                   ? 'bg-[#111B21] border-[#222D34]'
                   : isClean
                   ? 'bg-white border-slate-200'
-                  : 'bg-[#161b22] border-gray-800'
+                  : 'bg-[#0B1224] border-slate-800'
               }`}>
                 <div className="flex items-center justify-between">
                   <span className={`text-xs font-bold uppercase tracking-wider ${
-                    isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-500' : 'text-gray-400'
+                    isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-500' : 'text-slate-400'
                   }`}>
                     Ticket Médio
                   </span>
@@ -3227,7 +3236,7 @@ function CrmContent() {
                   {formatCurrency(avgTicket)}
                 </div>
                 <div className={`text-xs mt-0.5 font-medium ${
-                  isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-600' : 'text-gray-400'
+                  isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-600' : 'text-slate-400'
                 }`}>
                   Média por negócio qualificado
                 </div>
@@ -3241,12 +3250,12 @@ function CrmContent() {
                     ? 'bg-[#111B21] border-[#222D34] hover:border-amber-500/50'
                     : isClean
                     ? 'bg-white border-slate-200 hover:border-amber-400'
-                    : 'bg-[#161b22] border-gray-800 hover:border-amber-500/50'
+                    : 'bg-[#0B1224] border-slate-800 hover:border-amber-500/50'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <span className={`text-xs font-bold uppercase tracking-wider ${
-                    isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-500' : 'text-gray-400'
+                    isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-500' : 'text-slate-400'
                   }`}>
                     Maior Concentração
                   </span>
@@ -3256,7 +3265,7 @@ function CrmContent() {
                   {bottleneckCol?.title || 'Follow-up'} ({bottleneckPct}%)
                 </div>
                 <div className={`text-xs mt-0.5 font-medium ${
-                  isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-600' : 'text-gray-400'
+                  isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-600' : 'text-slate-400'
                 }`}>
                   <strong>{bottleneckCount}</strong> cards acumulados nesta fase
                 </div>
@@ -3272,9 +3281,9 @@ function CrmContent() {
                   ? 'bg-[#111B21] border-[#222D34]'
                   : isClean
                   ? 'bg-white border-slate-200'
-                  : 'bg-[#161b22] border-gray-800'
+                  : 'bg-[#0B1224] border-slate-800'
               }`}>
-                <div className="w-full flex items-center justify-between mb-4 pb-2.5 border-b border-slate-200 dark:border-gray-800">
+                <div className="w-full flex items-center justify-between mb-4 pb-2.5 border-b border-slate-200 dark:border-slate-800">
                   <div className="flex items-center gap-2">
                     <Filter size={15} className={isWhatsApp ? 'text-[#00A884]' : 'text-blue-500'} />
                     <h3 className={`text-xs sm:text-sm font-black uppercase tracking-wider ${
@@ -3284,7 +3293,7 @@ function CrmContent() {
                     </h3>
                   </div>
                   <span className={`text-xs font-medium ${
-                    isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-500' : 'text-gray-400'
+                    isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-500' : 'text-slate-400'
                   }`}>
                     Clique em qualquer etapa para inspecionar os cards
                   </span>
@@ -3322,7 +3331,7 @@ function CrmContent() {
                                 ? 'ring-2 ring-blue-600 ring-offset-2 ring-offset-white shadow-md'
                                 : isWhatsApp
                                 ? 'ring-2 ring-[#00A884] ring-offset-2 ring-offset-[#111B21] shadow-lg'
-                                : 'ring-2 ring-white ring-offset-2 ring-offset-[#161b22] shadow-lg'
+                                : 'ring-2 ring-white ring-offset-2 ring-offset-[#0B1224] shadow-lg'
                               : ''
                           }`}
                         >
@@ -3346,7 +3355,7 @@ function CrmContent() {
                             <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold whitespace-nowrap border ${
                               isClean
                                 ? 'bg-white text-slate-800 border-slate-300 shadow-2xs'
-                                : 'bg-black/45 text-white border-white/15'
+                                : 'bg-[#070D1B]/75 text-white border-white/15'
                             }`}>
                               {stageDeals.length} {stageDeals.length === 1 ? 'card' : 'cards'}
                             </span>
@@ -3365,7 +3374,7 @@ function CrmContent() {
                               ? 'bg-slate-100 text-slate-600 border-slate-200'
                               : isWhatsApp
                               ? 'bg-[#0b141a] text-[#8696A0] border-[#222D34]'
-                              : 'bg-[#0d1117] text-gray-300 border-gray-800'
+                              : 'bg-[#070D1B] text-slate-300 border-slate-800'
                           }`}>
                             <span>↓ {passRate}% avançam para {nextStageTitle}</span>
                           </div>
@@ -3377,14 +3386,14 @@ function CrmContent() {
 
                 {/* Barra de Vazamento do Funil (Saídas: Perdidos e Desqualificados) */}
                 <div className={`w-full mt-5 pt-4 border-t grid grid-cols-1 sm:grid-cols-2 gap-3 ${
-                  isWhatsApp ? 'border-[#222D34]' : isClean ? 'border-slate-200' : 'border-gray-800'
+                  isWhatsApp ? 'border-[#222D34]' : isClean ? 'border-slate-200' : 'border-slate-800'
                 }`}>
                   {/* Card Fechado / Perdido */}
                   <div
                     onClick={() => handleSelectStage(lostCol.id)}
                     className={`p-3 rounded-xl border-2 cursor-pointer transition-all flex flex-wrap items-center justify-between gap-2 ${
                       selectedColObj.id === lostCol.id
-                        ? 'ring-2 ring-rose-500 ring-offset-2 dark:ring-offset-[#161b22]'
+                        ? 'ring-2 ring-rose-500 ring-offset-2 dark:ring-offset-[#0B1224]'
                         : ''
                     } ${
                       isClean
@@ -3411,19 +3420,19 @@ function CrmContent() {
                     onClick={() => handleSelectStage(disqualifiedCol.id)}
                     className={`p-3 rounded-xl border-2 cursor-pointer transition-all flex flex-wrap items-center justify-between gap-2 ${
                       selectedColObj.id === disqualifiedCol.id
-                        ? 'ring-2 ring-gray-400 ring-offset-2 dark:ring-offset-[#161b22]'
+                        ? 'ring-2 ring-slate-400 ring-offset-2 dark:ring-offset-[#0B1224]'
                         : ''
                     } ${
                       isClean
                         ? 'bg-slate-100 hover:bg-slate-200/70 border-slate-300 text-slate-900'
-                        : 'bg-gray-800/40 hover:bg-gray-800/60 border-gray-700/70 text-gray-200'
+                        : 'bg-[#070D1B] hover:bg-[#161f36] border-slate-700/70 text-slate-200'
                     }`}
                   >
                     <div>
                       <div className="text-xs font-black uppercase whitespace-nowrap">
                         {disqualifiedCol.title}
                       </div>
-                      <div className={`text-xs ${isClean ? 'text-slate-600' : 'text-gray-400'}`}>
+                      <div className={`text-xs ${isClean ? 'text-slate-600' : 'text-slate-400'}`}>
                         Fora de perfil / Duplicados
                       </div>
                     </div>
@@ -3443,12 +3452,12 @@ function CrmContent() {
                     ? 'bg-[#111B21] border-[#222D34]'
                     : isClean
                     ? 'bg-white border-slate-200'
-                    : 'bg-[#161b22] border-gray-800'
+                    : 'bg-[#0B1224] border-slate-800'
                 }`}
               >
                 {/* Cabeçalho do Painel Raio-X */}
                 <div className={`flex flex-wrap items-start justify-between gap-2 pb-3 border-b ${
-                  isWhatsApp ? 'border-[#222D34]' : isClean ? 'border-slate-200' : 'border-gray-800'
+                  isWhatsApp ? 'border-[#222D34]' : isClean ? 'border-slate-200' : 'border-slate-800'
                 }`}>
                   <div>
                     <span
@@ -3466,7 +3475,7 @@ function CrmContent() {
 
                   <div className="text-right ml-auto">
                     <span className={`text-xs block ${
-                      isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-500' : 'text-gray-400'
+                      isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-500' : 'text-slate-400'
                     }`}>
                       Volume na etapa
                     </span>
@@ -3483,7 +3492,7 @@ function CrmContent() {
                       ? 'bg-[#0b141a] border-[#222D34]'
                       : isClean
                       ? 'bg-slate-100 border-slate-200'
-                      : 'bg-[#0d1117] border-gray-800'
+                      : 'bg-[#070D1B] border-slate-800'
                   }`}>
                     <button
                       type="button"
@@ -3493,7 +3502,7 @@ function CrmContent() {
                           ? 'bg-blue-600 text-white shadow-xs'
                           : isClean
                           ? 'text-slate-600 hover:text-slate-900'
-                          : 'text-gray-400 hover:text-white'
+                          : 'text-slate-400 hover:text-white'
                       }`}
                     >
                       Maior Valor
@@ -3506,7 +3515,7 @@ function CrmContent() {
                           ? 'bg-blue-600 text-white shadow-xs'
                           : isClean
                           ? 'text-slate-600 hover:text-slate-900'
-                          : 'text-gray-400 hover:text-white'
+                          : 'text-slate-400 hover:text-white'
                       }`}
                     >
                       Mais Recentes
@@ -3544,7 +3553,7 @@ function CrmContent() {
                         ? 'border-[#222D34] text-[#8696A0]'
                         : isClean
                         ? 'border-slate-200 text-slate-500'
-                        : 'border-gray-800 text-gray-500'
+                        : 'border-slate-800 text-slate-500'
                     }`}>
                       <p className="text-sm font-bold">Nenhuma oportunidade em {selectedColObj.title}</p>
                       <p className="text-xs mt-1">Clique em &ldquo;Adicionar nesta etapa&rdquo; ou selecione outra fatia do funil.</p>
@@ -3566,14 +3575,14 @@ function CrmContent() {
                               ? 'bg-[#202C33] hover:bg-[#2A3942] border-[#222D34] hover:border-[#00A884]/50'
                               : isClean
                               ? 'bg-slate-50 hover:bg-slate-100/90 border-slate-200 hover:border-blue-400'
-                              : 'bg-[#0d1117] hover:bg-[#1c222d] border-gray-800 hover:border-gray-700'
+                              : 'bg-[#070D1B] hover:bg-[#161f36] border-slate-800 hover:border-slate-700'
                           }`}
                         >
                           <div className="flex items-center gap-3 min-w-0 flex-1">
                             <div
                               style={{ borderColor: selectedThemeStyle.borderRgba, color: selectedThemeStyle.accentHex }}
                               className={`h-9 w-9 rounded-full border-2 flex items-center justify-center text-xs font-black shrink-0 ${
-                                isClean ? 'bg-white' : 'bg-black/30'
+                                isClean ? 'bg-white' : 'bg-[#0B1224]'
                               }`}
                             >
                               {leadName[0]?.toUpperCase() || '?'}
@@ -3589,7 +3598,7 @@ function CrmContent() {
                                 {leadName}
                               </h4>
                               <div className={`flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs mt-0.5 ${
-                                isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-600' : 'text-gray-400'
+                                isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-600' : 'text-slate-400'
                               }`}>
                                 <span className="flex items-center gap-1">
                                   <MessageCircle size={11} className="text-[#25D366] shrink-0" />
@@ -3606,7 +3615,7 @@ function CrmContent() {
                             </span>
                             <div className="flex items-center gap-1.5">
                               <span className={`text-[11px] ${
-                                isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-500' : 'text-gray-500'
+                                isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-500' : 'text-slate-400'
                               }`}>
                                 {formatRelativeTime(deal.updatedAt || deal.createdAt)}
                               </span>
@@ -3644,15 +3653,15 @@ function CrmContent() {
       {showStageModal && (
         <ModalPortal>
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-[#1c1d22] border border-slate-200 dark:border-gray-800 w-full max-w-sm rounded-xl shadow-2xl flex flex-col p-6 animate-in zoom-in-95">
+          <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 w-full max-w-sm rounded-xl shadow-2xl flex flex-col p-6 animate-in zoom-in-95">
             <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Nova Etapa</h2>
             <div className="space-y-4">
               <div>
-                <label className="text-xs text-slate-500 dark:text-gray-400 uppercase font-bold mb-1 block">Nome da Etapa</label>
-                <input type="text" className="w-full bg-slate-50 dark:bg-[#0B1224] border border-slate-300 dark:border-gray-700 rounded-lg p-2 text-slate-900 dark:text-white outline-none focus:border-blue-600" placeholder="Ex: Demonstração" />
+                <label className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold mb-1 block">Nome da Etapa</label>
+                <input type="text" className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-white outline-none focus:border-blue-600" placeholder="Ex: Demonstração" />
               </div>
               <div>
-                <label className="text-xs text-gray-400 uppercase font-bold mb-2 block">Cor</label>
+                <label className="text-xs text-slate-400 uppercase font-bold mb-2 block">Cor</label>
                 <div className="flex gap-2 flex-wrap">
                   {['bg-blue-500', 'bg-purple-500', 'bg-yellow-500', 'bg-emerald-500', 'bg-orange-500', 'bg-rose-500'].map(color => (
                     <button key={color} className={`w-8 h-8 rounded-full ${color} cursor-pointer hover:scale-110 transition-transform ring-2 ring-transparent focus:ring-white`}></button>
@@ -3661,7 +3670,7 @@ function CrmContent() {
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-8">
-              <button onClick={() => setShowStageModal(false)} className="text-gray-400 text-sm font-bold">Cancelar</button>
+              <button onClick={() => setShowStageModal(false)} className="text-slate-400 text-sm font-bold">Cancelar</button>
               <button onClick={() => { setShowStageModal(false); toast.success("Etapa Criada (Simulado)"); }} className="bg-primary hover:bg-primary/90 text-white text-sm font-bold px-4 py-2 rounded-lg">Salvar</button>
             </div>
           </div>
@@ -3673,21 +3682,21 @@ function CrmContent() {
       {showManageStagesModal && (
         <ModalPortal>
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-slate-50 dark:bg-[#1c1d22] border border-gray-800 w-full max-w-lg rounded-xl shadow-2xl flex flex-col p-6 animate-in zoom-in-95 max-h-[80vh] overflow-y-auto">
-            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+          <div className="bg-slate-50 dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 w-full max-w-lg rounded-xl shadow-2xl flex flex-col p-6 animate-in zoom-in-95 max-h-[80vh] overflow-y-auto">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
               <Settings size={18} className="text-primary" /> Gerenciar Etapas do Funil
             </h2>
-            <p className="text-xs text-gray-400 mb-4">Arraste para reordenar, ou altere as propriedades abaixo.</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Arraste para reordenar, ou altere as propriedades abaixo.</p>
             
             <div className="flex flex-col gap-2">
               {columns.map((col, idx) => (
-                <div key={col.id} className="bg-[#25262c] border border-gray-800 rounded-lg p-3 flex items-center justify-between group cursor-move hover:border-gray-600 transition-colors">
+                <div key={col.id} className="bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 rounded-lg p-3 flex items-center justify-between group cursor-move hover:border-slate-400 dark:hover:border-slate-600 transition-colors">
                   <div className="flex items-center gap-3">
                     <div className={`w-3 h-3 rounded-full ${col.color.replace('text-', 'bg-')}`}></div>
-                    <span className="text-sm font-bold text-white">{col.title}</span>
+                    <span className="text-sm font-bold text-slate-900 dark:text-white">{col.title}</span>
                   </div>
                   <div className="flex gap-2">
-                    <button className="p-1.5 bg-gray-800 rounded text-gray-400 hover:text-white" title="Alerta de estagnação">
+                    <button className="p-1.5 bg-slate-100 dark:bg-slate-800 rounded text-slate-400 hover:text-white" title="Alerta de estagnação">
                       <Clock size={14} />
                     </button>
                     {idx === columns.length - 2 && (
@@ -3701,7 +3710,7 @@ function CrmContent() {
             </div>
 
             <div className="flex justify-end gap-3 mt-8">
-              <button onClick={() => setShowManageStagesModal(false)} className="bg-gray-800 hover:bg-gray-700 text-white text-sm font-bold px-4 py-2 rounded-lg">Concluído</button>
+              <button onClick={() => setShowManageStagesModal(false)} className="bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold px-4 py-2 rounded-lg">Concluído</button>
             </div>
           </div>
         </div>
@@ -3733,7 +3742,7 @@ const DealCard = React.memo(function DealCard({ deal, index, col, onOpenDeal }: 
       className={`group relative flex flex-col gap-2.5 rounded-xl border p-4 shadow-sm transition-all cursor-pointer active:scale-[0.99] select-none ${
         isWhatsApp
           ? 'bg-[#111B21] hover:bg-[#162229] border-[#222D34] hover:border-[#00A884]/40 text-[#E9EDEF]'
-          : 'border-slate-200 dark:border-slate-800/80 bg-white dark:bg-[#161b22] text-slate-800 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-700'
+          : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B1224] dark:hover:bg-[#161f36] text-slate-800 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-700'
       }`}
     >
       {/* CABEÇALHO: ID E BADGE */}
@@ -3758,7 +3767,7 @@ const DealCard = React.memo(function DealCard({ deal, index, col, onOpenDeal }: 
               <div className={`flex shrink-0 h-9 w-9 items-center justify-center rounded-full text-sm font-bold shadow-sm ring-2 ${
                 isWhatsApp
                   ? 'bg-[#202C33] text-[#00A884] ring-[#00A884]/40'
-                  : `bg-slate-100 dark:bg-[#0d1117] ring-${col.color.replace('text-', '')}/40 ${col.color.replace('500', '400').replace('600', '400')}`
+                  : `bg-slate-100 dark:bg-[#070D1B] ring-${col.color.replace('text-', '')}/40 ${col.color.replace('500', '400').replace('600', '400')}`
               }`}>
                 {deal.contact?.name?.[0]?.toUpperCase() || "?"}
               </div>
@@ -3784,11 +3793,11 @@ const DealCard = React.memo(function DealCard({ deal, index, col, onOpenDeal }: 
             <span>Lead</span>
           </div>
 
-          {/* CAIXA CINZA DE METADADOS & ACCORDION */}
+          {/* CAIXA DE METADADOS & ACCORDION */}
           <div className={`rounded-lg p-3 text-xs border ${
             isWhatsApp
               ? 'bg-[#0C1317] border-[#222D34] text-[#8696A0]'
-              : 'bg-slate-50 dark:bg-[#0d1117] text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800/60'
+              : 'bg-slate-50 dark:bg-[#070D1B] text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800/80'
           }`} onClick={(e) => e.stopPropagation()}>
             <p className={`font-bold ${isWhatsApp ? 'text-[#E9EDEF]' : 'text-slate-800 dark:text-slate-200'}`}>ORIGEM: [{deal.contact?.source || deal.metadata?.source || 'WHATSAPP'}]</p>
             {Boolean(deal.metadata?.formName || deal.metadata?.campaign) && (
@@ -3932,7 +3941,7 @@ const DealCard = React.memo(function DealCard({ deal, index, col, onOpenDeal }: 
           </div>
 
           {/* DATAS DA NEGOCIAÇÃO: INÍCIO E FECHAMENTO */}
-          <div className="flex items-center justify-between text-[10px] px-2 py-1 bg-slate-100 dark:bg-[#0d1117] rounded-md border border-slate-200 dark:border-gray-800 mt-0.5">
+          <div className="flex items-center justify-between text-[10px] px-2 py-1 bg-slate-100 dark:bg-[#070D1B] rounded-md border border-slate-200 dark:border-slate-800 mt-0.5">
             <span className="flex items-center gap-1 text-slate-600 dark:text-slate-300" title="Data de início / criação da oportunidade">
               <Calendar size={11} className="text-blue-600 dark:text-blue-400 shrink-0" />
               <span>Início: <strong className="text-slate-900 dark:text-white font-mono font-bold">{formatDate(deal.metadata?.startDate || deal.createdAt)}</strong></span>
