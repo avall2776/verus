@@ -1,5 +1,5 @@
 // Service Worker do Vallor Omnichannel (PWA)
-const CACHE_NAME = 'vallor-pwa-v1';
+const CACHE_NAME = 'vallor-pwa-v2';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -27,10 +27,16 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network-first com fallback
+  // Network-first com fallback seguro para Response
   event.respondWith(
-    fetch(event.request).catch(() => {
-      return caches.match(event.request);
+    fetch(event.request).catch(async () => {
+      const cached = await caches.match(event.request);
+      if (cached) return cached;
+      return new Response('Offline', {
+        status: 503,
+        statusText: 'Service Unavailable',
+        headers: new Headers({ 'Content-Type': 'text/plain' })
+      });
     })
   );
 });

@@ -75,7 +75,7 @@ function CrmContent() {
   const searchParams = useSearchParams();
   const { isWhatsApp, isClean, isDark, theme } = useTheme();
   const [deals, setDeals] = useState<any[]>([]);
-  const [columns, setColumns] = useState<any[]>([]);
+  const [columns, setColumns] = useState<any[]>(DEFAULT_COLUMNS);
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedDeal, setSelectedDeal] = useState<any | null>(null);
   const [collapsedCols, setCollapsedCols] = useState<string[]>([]);
@@ -473,9 +473,9 @@ function CrmContent() {
   }, []);
 
   // Sincronização automática com dealId ou contactId vindo da URL (deep-link / notificações / base de contatos)
-  const dealIdFromUrl = searchParams.get('dealId') || searchParams.get('id');
-  const contactIdFromUrl = searchParams.get('contactId');
-  const searchQueryFromUrl = searchParams.get('search') || searchParams.get('q');
+  const dealIdFromUrl = searchParams ? (searchParams.get('dealId') || searchParams.get('id')) : null;
+  const contactIdFromUrl = searchParams ? searchParams.get('contactId') : null;
+  const searchQueryFromUrl = searchParams ? (searchParams.get('search') || searchParams.get('q')) : null;
 
   useEffect(() => {
     if (searchQueryFromUrl && searchQuery !== searchQueryFromUrl) {

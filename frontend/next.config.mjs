@@ -25,30 +25,6 @@ const nextConfig = {
     if (!dev) {
       // Impede geração de devtools / source maps
       config.devtool = false;
-
-      // Ofuscação e otimização do pipeline de minificação do lado cliente
-      if (!isServer && config.optimization && config.optimization.minimizer) {
-        config.optimization.minimizer.forEach((minimizer) => {
-          if (minimizer.constructor && minimizer.constructor.name === 'TerserPlugin') {
-            minimizer.options.terserOptions = {
-              ...minimizer.options.terserOptions,
-              compress: {
-                ...minimizer.options.terserOptions?.compress,
-                drop_debugger: true,
-                dead_code: true,
-                passes: 2,
-              },
-              mangle: {
-                toplevel: true,
-                safari10: true,
-              },
-              format: {
-                comments: false, // Remove comentários de código e licenças no bundle final
-              },
-            };
-          }
-        });
-      }
     }
     return config;
   },
