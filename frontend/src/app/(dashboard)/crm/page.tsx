@@ -422,7 +422,7 @@ function CrmContent() {
     const dealId = target ? target.id : dealOrId;
 
     if (!target && dealId) {
-      target = deals.find(d => d.id === dealId) || filteredDeals.find(d => d.id === dealId);
+      target = deals.find(d => d.id === dealId);
       if (!target && typeof dealId === 'string' && !dealId.startsWith('new-')) {
         try {
           const { data } = await api.get(`/deals/${dealId}`);
@@ -452,7 +452,7 @@ function CrmContent() {
     } else if (dealId && !loading && deals.length > 0) {
       toast.error("Oportunidade não encontrada no CRM.");
     }
-  }, [deals, filteredDeals, loading]);
+  }, [deals, loading]);
 
   const handleCloseDealModal = React.useCallback(() => {
     setSelectedDeal(null);
