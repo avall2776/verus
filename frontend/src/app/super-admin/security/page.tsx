@@ -22,6 +22,7 @@ import {
   AlertTriangle,
   Radio,
   Fingerprint,
+  ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/lib/api";
@@ -85,14 +86,17 @@ export default function SecurityAuditPage() {
   const [activeTab, setActiveTab] = useState<"sessions" | "audit">("sessions");
   const [loading, setLoading] = useState(true);
   const [killingId, setKillingId] = useState<string | null>(null);
+  const [killingAll, setKillingAll] = useState(false);
   const [unlockingId, setUnlockingId] = useState<string | null>(null);
 
   // Carrega lista de empresas para o filtro multi-tenant
   useEffect(() => {
     api
-      .get("/tenants")
+      .get("/tenants", { params: { limit: 100 } })
       .then((res) => {
-        const list = Array.isArray(res.data) ? res.data : res.data?.tenants || [];
+        const list = Array.isArray(res.data)
+          ? res.data
+          : (res.data?.data || res.data?.tenants || []);
         setTenants(list);
       })
       .catch(() => {});
@@ -136,6 +140,25 @@ export default function SecurityAuditPage() {
       toast.error(err.response?.data?.message || "Erro ao derrubar sessão.");
     } finally {
       setKillingId(null);
+    }
+  };
+
+  // Derrubada Global de Todas as Sessões Conectadas
+  const handleKillAllSessions = async () => {
+    const confirm = window.confirm(
+      "Atenção de Segurança SOC:\n\nDeseja derrubar TODAS as conexões ativas agora?\n\nTodos os usuários conectados em todas as empresas serão desconectados imediatamente e o 2FA via WhatsApp Master será exigido no próximo login.",
+    );
+    if (!confirm) return;
+
+    setKillingAll(true);
+    try {
+      const res = await api.post("/auth/admin/kill-all-sessions", { preserveCurrent: true });
+      toast.success(res.data?.message || "Todas as conexões foram derrubadas com sucesso!");
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Erro ao derrubar conexões.");
+    } finally {
+      setKillingAll(false);
     }
   };
 
@@ -233,31 +256,53 @@ export default function SecurityAuditPage() {
           </p>
         </div>
 
-        {/* Controles: Filtro Multi-tenant e Botão Atualizar */}
+        {/* Controles: Filtro Multi-tenant, Derrubada Global e Botão Atualizar */}
         <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
-          <div className="relative">
+          {/* Seletor Corporativo de Empresa (Multi-tenant) */}
+          <div className="relative flex items-center">
+            <Building2
+              size={14}
+              className="absolute left-3 text-slate-400 dark:text-slate-500 pointer-events-none"
+            />
             <select
               value={selectedTenantId}
               onChange={(e) => setSelectedTenantId(e.target.value)}
-              className="bg-white dark:bg-[#0B1224] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-200 text-xs font-semibold rounded-lg px-3 py-2 outline-none focus:border-blue-500 transition-all cursor-pointer shadow-sm pr-8"
+              className="appearance-none bg-white dark:bg-[#0B1224] border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-xs font-semibold rounded-lg pl-9 pr-8 py-2 outline-none focus:border-blue-500 transition-all cursor-pointer shadow-sm hover:border-slate-400 dark:hover:border-slate-600"
             >
-              <option value="ALL">🏢 Todas as Empresas (Global)</option>
+              <option value="ALL">Todas as Empresas (Global)</option>
               {tenants.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.name}
                 </option>
               ))}
             </select>
+            <ChevronDown
+              size={13}
+              className="absolute right-2.5 text-slate-400 dark:text-slate-500 pointer-events-none"
+            />
           </div>
 
+          {/* Botão de Derrubada Global de Conexões */}
+          <button
+            type="button"
+            onClick={handleKillAllSessions}
+            disabled={killingAll || loading}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-700 dark:text-rose-400 text-xs font-semibold border border-rose-500/30 transition-all cursor-pointer disabled:opacity-50 shadow-sm"
+            title="Derrubar todas as conexões ativas e exigir 2FA para todos os usuários"
+          >
+            <PowerOff size={13} className={killingAll ? "animate-spin" : ""} />
+            <span>{killingAll ? "Derrubando..." : "Derrubar Todas as Conexões"}</span>
+          </button>
+
+          {/* Botão Atualizar Telemetria */}
           <button
             type="button"
             onClick={fetchData}
             disabled={loading}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold border border-slate-300 dark:border-slate-700 transition-all cursor-pointer disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold border border-slate-300 dark:border-slate-700 transition-all cursor-pointer disabled:opacity-50 shadow-sm"
             title="Atualizar lista"
           >
-            <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+            <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
             <span>Atualizar</span>
           </button>
         </div>

@@ -8,6 +8,7 @@ import { showLeadMessageToast, showTransferAlertToast, showLeadQualifiedToast } 
 import { sanitizeAvatarUrl } from '@/lib/avatarUtils';
 
 import { getStoredToken } from '@/lib/api';
+import { clearAuthCookie } from '@/lib/authCookies';
 import { 
   getSoundSettings, 
   isSoundChannelMuted, 
@@ -538,6 +539,27 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
             });
           }
         }
+      }
+    });
+
+    // Escuta global de Encerramento Remoto de Sessão (SOC Security)
+    socketInstance.on('session_terminated', (data: { sessionId?: string; userId?: string; all?: boolean; exceptUserId?: string; reason?: string }) => {
+      const currentUser = getStoredUserSync();
+      if (!currentUser) return;
+
+      if (data?.exceptUserId && data.exceptUserId === currentUser.id) {
+        return; // Preserva o SuperAdmin que executou a ação
+      }
+
+      if (data?.all || (data?.userId && data.userId === currentUser.id)) {
+        console.warn('🚨 [SOC Security] Sessão encerrada pela central de segurança.', data);
+        clearAuthCookie();
+        localStorage.removeItem('versus_auth_token');
+        localStorage.removeItem('versus_token');
+        localStorage.removeItem('token');
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('versus_user');
+        window.location.href = '/login?revoked=true';
       }
     });
 

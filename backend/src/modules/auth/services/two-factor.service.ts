@@ -46,17 +46,20 @@ export class TwoFactorService {
     }).format(new Date());
 
     const message = [
-      `🛡️ *[VALLOR SECURITY] - Código de Acesso Bancário*`,
+      `🔐 *[VALLOR SECURITY] · Autorização de Acesso*`,
       `━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
-      `🏢 *Empresa:* ${tenantName || 'Vallor Omnichannel'}`,
-      `👤 *Usuário:* ${user.name} (${user.email})`,
-      `📍 *Local:* ${telemetry.city}, ${telemetry.state} (IP: \`${telemetry.ip}\`)`,
-      `💻 *Dispositivo:* ${telemetry.browser} no ${telemetry.device}`,
+      `👤 *Usuário Solicitante:* *${user.name || 'Operador'}*`,
+      `📧 *E-mail de Login:* *${user.email}*`,
+      `🏢 *Empresa / Tenant:* ${tenantName || 'Vallor Omnichannel'}`,
+      `📍 *Local:* ${telemetry.city || 'Desconhecido'}, ${telemetry.state || 'BR'} (IP: \`${telemetry.ip || '0.0.0.0'}\`)`,
+      `💻 *Dispositivo:* ${telemetry.browser || 'Navegador'} no ${telemetry.device || 'Desktop/Mobile'}`,
       `⏰ *Horário:* ${nowBr}`,
       `━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
-      `🔑 Código de Verificação: *${otpCode}*`,
+      `🔑 *SEU CÓDIGO DE AUTORIZAÇÃO:*`,
+      `👉 *${otpCode}*`,
+      `━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
       `⏱️ *Validade:* 10 minutos.`,
-      `⚠️ _Se você não reconhece esta tentativa de acesso, bloqueie imediatamente a sessão no painel SuperAdmin._`,
+      `⚠️ *Atenção:* Se você não autoriza este acesso ou não reconhece o usuário acima, não repasse este código.`,
     ].join('\n');
 
     // 4. Dispara mensagem via WhatsApp Master

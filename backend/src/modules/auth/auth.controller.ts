@@ -81,6 +81,29 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard, SuperAdminGuard)
+  @Post('admin/kill-all-sessions')
+  async killAllSessions(
+    @Req() req: any,
+    @Body('preserveCurrent') preserveCurrent: boolean = true,
+  ) {
+    const currentUserId = preserveCurrent ? req.user?.id : undefined;
+    const result = await this.sessionService.killAllSessions(currentUserId);
+
+    // Emite encerramento forçado via WebSocket para todos os navegadores conectados
+    try {
+      if (this.chatGateway?.server) {
+        this.chatGateway.server.emit('session_terminated', {
+          all: true,
+          exceptUserId: currentUserId,
+          reason: 'Todas as conexões foram encerradas por auditoria global de segurança.',
+        });
+      }
+    } catch (e) {}
+
+    return result;
+  }
+
+  @UseGuards(JwtAuthGuard, SuperAdminGuard)
   @Post('admin/unlock-user')
   async unlockUser(@Body('userId') userId: string) {
     return this.sessionService.unlockUser(userId);
