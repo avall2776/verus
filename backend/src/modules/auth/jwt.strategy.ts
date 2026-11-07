@@ -9,6 +9,10 @@ interface CachedUserSession {
 }
 const userCache = new Map<string, CachedUserSession>();
 
+export function clearUserSessionCache() {
+  userCache.clear();
+}
+
 // Limpeza periódica da memória a cada 5 minutos
 setInterval(() => {
   const now = Date.now();
@@ -27,10 +31,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       ]),
       ignoreExpiration: false,
       secretOrKey: process.env.JWT_SECRET || 'super-secret-key-change-me',
+      passReqToCallback: true,
     });
   }
 
-  async validate(payload: any) {
+  async validate(req: any, payload: any) {
     const userId = payload?.sub || payload?.id || payload?.userId;
 
     if (!userId) {
@@ -40,8 +45,31 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       });
     }
 
-    // Cache em memória de alta performance (TTL 30s) para evitar sobrecarga no banco em requisições simultâneas
-    const cached = userCache.get(userId);
+    // 1. CHECAGEM OBRIGATÓRIA DE SESSÃO ATIVA (Nível Bancário SOC)
+    // Extrai o token bruto recebido no cabeçalho ou query param
+    const rawToken =
+      ExtractJwt.fromAuthHeaderAsBearerToken()(req) ||
+      (typeof req.query?.token === 'string' ? req.query.token : null);
+
+    if (rawToken) {
+      const activeSession = await this.prisma.activeSession.findUnique({
+        where: { sessionToken: rawToken },
+        select: { id: true, isRevoked: true },
+      });
+
+      // Se a sessão não está registrada na tabela de sessões ativas (token legado antigo)
+      // OU se a sessão foi revogada remotamente pelo administrador:
+      if (!activeSession || activeSession.isRevoked) {
+        throw new UnauthorizedException({
+          code: 'SESSION_REVOKED',
+          message: 'Sua sessão foi encerrada pela central de segurança. Realize login com 2FA.',
+        });
+      }
+    }
+
+    // Cache em memória de alta performance por token (TTL 15s)
+    const cacheKey = `${userId}:${rawToken || 'no-token'}`;
+    const cached = userCache.get(cacheKey);
     if (cached && Date.now() < cached.expiresAt) {
       return cached.result;
     }
@@ -147,7 +175,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       plan: user.tenant?.plan || null,
     };
 
-    userCache.set(userId, { result, expiresAt: Date.now() + 30000 });
+    userCache.set(cacheKey, { result, expiresAt: Date.now() + 15000 });
     return result;
   }
 }

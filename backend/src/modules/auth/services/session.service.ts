@@ -2,6 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../shared/database/prisma.service';
 import { ClientTelemetry } from '../utils/client-telemetry.util';
 import * as crypto from 'crypto';
+import { clearUserSessionCache } from '../jwt.strategy';
 
 @Injectable()
 export class SessionService {
@@ -172,10 +173,10 @@ export class SessionService {
   /**
    * Encerra todas as sessões ativas globalmente e enforça 2FA para todos os usuários
    */
-  async killAllSessions(exceptUserId?: string) {
+  async killAllSessions(exceptToken?: string) {
     const where: any = { isRevoked: false };
-    if (exceptUserId) {
-      where.userId = { not: exceptUserId };
+    if (exceptToken) {
+      where.sessionToken = { not: exceptToken };
     }
 
     const updated = await this.prisma.activeSession.updateMany({
@@ -192,22 +193,18 @@ export class SessionService {
         twoFactorEnabled: true,
         twoFactorMethod: 'WHATSAPP',
         twoFactorPhone: '555491109159',
-      },
-    });
-
-    // Limpa dispositivos confiáveis (exceto do usuário que executou a ação, caso preserve)
-    await this.prisma.user.updateMany({
-      where: exceptUserId ? { id: { not: exceptUserId } } : {},
-      data: {
         trustedDevices: [],
       },
     });
+
+    // Limpa cache em memória de autenticação
+    clearUserSessionCache();
 
     this.logger.log(`[KILL_ALL_SESSIONS] ${updated.count} sessões ativas foram encerradas. 2FA Master ativado globalmente.`);
     return {
       success: true,
       revokedCount: updated.count,
-      message: `${updated.count} conexões encerradas. 2FA Master ativado para todos os usuários do sistema.`,
+      message: `Todas as conexões ativas foram encerradas com sucesso. Acesso bloqueado para todos os dispositivos até nova validação 2FA via WhatsApp Master.`,
     };
   }
 

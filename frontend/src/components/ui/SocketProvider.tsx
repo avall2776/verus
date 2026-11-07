@@ -543,15 +543,16 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     // Escuta global de Encerramento Remoto de Sessão (SOC Security)
-    socketInstance.on('session_terminated', (data: { sessionId?: string; userId?: string; all?: boolean; exceptUserId?: string; reason?: string }) => {
-      const currentUser = getStoredUserSync();
-      if (!currentUser) return;
-
-      if (data?.exceptUserId && data.exceptUserId === currentUser.id) {
-        return; // Preserva o SuperAdmin que executou a ação
+    socketInstance.on('session_terminated', (data: { sessionId?: string; userId?: string; all?: boolean; exceptUserId?: string; exceptToken?: string; reason?: string }) => {
+      const currentToken = getStoredToken();
+      if (data?.exceptToken && currentToken && (data.exceptToken === currentToken || data.exceptToken.includes(currentToken) || currentToken.includes(data.exceptToken))) {
+        return; // Preserva a aba atual que disparou a derrubada
       }
 
-      if (data?.all || (data?.userId && data.userId === currentUser.id)) {
+      const currentUser = getStoredUserSync();
+      if (!currentUser && !currentToken) return;
+
+      if (data?.all || (data?.userId && currentUser && data.userId === currentUser.id)) {
         console.warn('🚨 [SOC Security] Sessão encerrada pela central de segurança.', data);
         clearAuthCookie();
         localStorage.removeItem('versus_auth_token');

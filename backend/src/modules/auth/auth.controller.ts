@@ -86,15 +86,15 @@ export class AuthController {
     @Req() req: any,
     @Body('preserveCurrent') preserveCurrent: boolean = true,
   ) {
-    const currentUserId = preserveCurrent ? req.user?.id : undefined;
-    const result = await this.sessionService.killAllSessions(currentUserId);
+    const rawToken = req.headers?.authorization?.replace(/^Bearer\s+/i, '') || req.query?.token;
+    const result = await this.sessionService.killAllSessions(preserveCurrent ? rawToken : undefined);
 
     // Emite encerramento forçado via WebSocket para todos os navegadores conectados
     try {
       if (this.chatGateway?.server) {
         this.chatGateway.server.emit('session_terminated', {
           all: true,
-          exceptUserId: currentUserId,
+          exceptToken: preserveCurrent ? rawToken : undefined,
           reason: 'Todas as conexões foram encerradas por auditoria global de segurança.',
         });
       }
