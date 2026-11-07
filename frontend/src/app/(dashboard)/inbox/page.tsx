@@ -1621,6 +1621,10 @@ function InboxContent() {
           name: c.name,
           phone: c.phone,
           email: c.email,
+          state: c.state,
+          city: c.city,
+          departmentId: c.departmentId,
+          department: c.department,
           avatarUrl: sanitizeAvatarUrl(c.avatarUrl),
           tags: c.tags || []
         }));
@@ -1631,6 +1635,124 @@ function InboxContent() {
     enabled: showContactsModal,
     staleTime: 30000,
   });
+
+  // Resolve de forma inteligente a Região/Setor e sua cor oficial cadastrada para qualquer cliente
+  const resolveContactDepartment = useCallback((contact: any): { id?: string; name: string; color: string } | null => {
+    if (!contact) return null;
+
+    // 1. Busca direta na lista viva de departamentos pelo ID (reflete edições de cor e novas regiões na hora)
+    const targetDeptId = contact.departmentId || contact.department?.id;
+    if (targetDeptId && departments.length > 0) {
+      const liveById = departments.find((d: any) => d.id === targetDeptId);
+      if (liveById && liveById.color) {
+        return { id: liveById.id, name: liveById.name, color: liveById.color };
+      }
+    }
+
+    // 2. Se já vier com objeto department e cor definida no próprio registro
+    if (contact.department?.color) {
+      if (departments.length > 0 && contact.department.name) {
+        const liveByName = departments.find(
+          (d: any) => d.name?.trim().toUpperCase() === contact.department.name?.trim().toUpperCase()
+        );
+        if (liveByName?.color) {
+          return { id: liveByName.id, name: liveByName.name, color: liveByName.color };
+        }
+      }
+      return {
+        id: contact.department.id,
+        name: contact.department.name || 'Setor',
+        color: contact.department.color,
+      };
+    }
+
+    // 3. Se tiver nome de departamento mas sem cor, busca na lista viva de departamentos
+    if (contact.department?.name && departments.length > 0) {
+      const liveByName = departments.find(
+        (d: any) => d.name?.trim().toUpperCase() === contact.department.name?.trim().toUpperCase()
+      );
+      if (liveByName?.color) {
+        return { id: liveByName.id, name: liveByName.name, color: liveByName.color };
+      }
+    }
+
+    // 4. Se for um item da Agenda de Contatos (directoryContacts), verifica se há conversa ativa correspondente
+    const matchingConv = contacts.find(
+      (c: any) =>
+        (contact.id && (c.contactId === contact.id || c.id === contact.id)) ||
+        (contact.phone && c.phone && c.phone === contact.phone)
+    );
+    if (matchingConv?.department?.color) {
+      return {
+        id: matchingConv.department.id,
+        name: matchingConv.department.name || 'Setor',
+        color: matchingConv.department.color,
+      };
+    }
+    if (matchingConv?.departmentId && departments.length > 0) {
+      const fromConvDept = departments.find((d: any) => d.id === matchingConv.departmentId);
+      if (fromConvDept?.color) {
+        return { id: fromConvDept.id, name: fromConvDept.name, color: fromConvDept.color };
+      }
+    }
+
+    // 5. Inferência inteligente por UF ou DDD do telefone usando os departamentos reais cadastrados
+    if (departments.length > 0 && (contact.phone || contact.state)) {
+      const dddToUf: Record<string, string> = {
+        '51': 'RS', '53': 'RS', '54': 'RS', '55': 'RS',
+        '47': 'SC', '48': 'SC', '49': 'SC',
+        '41': 'PR', '42': 'PR', '43': 'PR', '44': 'PR', '45': 'PR', '46': 'PR',
+        '67': 'MS', '65': 'MT', '66': 'MT',
+        '91': 'PA', '93': 'PA', '94': 'PA', '69': 'RO', '95': 'RR', '68': 'AC', '92': 'AM', '97': 'AM', '96': 'AP',
+        '62': 'GO', '64': 'GO', '61': 'DF',
+        '31': 'MG', '32': 'MG', '33': 'MG', '34': 'MG', '35': 'MG', '37': 'MG', '38': 'MG',
+        '11': 'SP', '12': 'SP', '13': 'SP', '14': 'SP', '15': 'SP', '16': 'SP', '17': 'SP', '18': 'SP', '19': 'SP',
+        '21': 'RJ', '22': 'RJ', '24': 'RJ', '27': 'ES', '28': 'ES',
+        '63': 'TO', '71': 'BA', '73': 'BA', '74': 'BA', '75': 'BA', '77': 'BA',
+        '98': 'MA', '99': 'MA', '86': 'PI', '89': 'PI',
+        '85': 'CE', '88': 'CE', '84': 'RN', '83': 'PB', '79': 'SE', '81': 'PE', '87': 'PE', '82': 'AL'
+      };
+      const ufToRegion: Record<string, number> = {
+        'RS': 1, 'SC': 1, 'PR': 1,
+        'MS': 2, 'MT': 2, 'PA': 2, 'RO': 2, 'RR': 2, 'AC': 2, 'AM': 2, 'AP': 2,
+        'GO': 3, 'MG': 3, 'SP': 3, 'DF': 3, 'RJ': 3, 'ES': 3,
+        'TO': 4, 'BA': 4,
+        'MA': 5, 'PI': 5,
+        'CE': 6, 'RN': 6, 'PB': 6, 'SE': 6, 'PE': 6, 'AL': 6
+      };
+
+      let uf = contact.state ? String(contact.state).trim().toUpperCase() : '';
+      if (!uf && contact.phone && !String(contact.phone).includes('@lid')) {
+        const clean = String(contact.phone).replace(/\D/g, '');
+        let ddd = '';
+        if (clean.startsWith('55') && clean.length >= 12) ddd = clean.substring(2, 4);
+        else if (clean.length === 10 || clean.length === 11) ddd = clean.substring(0, 2);
+        if (ddd && dddToUf[ddd]) uf = dddToUf[ddd];
+        else if (clean.startsWith('595')) uf = 'RS';
+      }
+
+      if (uf) {
+        const byUfToken = departments.find((d: any) =>
+          new RegExp(`(^|[^A-ZÀ-Ú])${uf}([^A-ZÀ-Ú]|$)`).test(String(d.name || '').toUpperCase())
+        );
+        if (byUfToken?.color) {
+          return { id: byUfToken.id, name: byUfToken.name, color: byUfToken.color };
+        }
+        const regNum = ufToRegion[uf];
+        if (regNum) {
+          const byRegNum = departments.find((d: any) => {
+            const upper = String(d.name || '').toUpperCase();
+            return upper.includes(`REGIÃO ${regNum}`) || upper.includes(`REGIAO ${regNum}`);
+          });
+          if (byRegNum?.color) {
+            return { id: byRegNum.id, name: byRegNum.name, color: byRegNum.color };
+          }
+        }
+      }
+    }
+
+    return null;
+  }, [departments, contacts]);
 
   const queryTab = (activeFilterTab === 'unread' || activeFilterTab === 'all') ? 'all' : activeFilterTab;
 
@@ -1867,6 +1989,13 @@ function InboxContent() {
         contact.lastMsg = data.content;
         contact.time = formatCardTimestamp(data.createdAt || Date.now());
         
+        if (data.departmentId) {
+          contact.departmentId = data.departmentId;
+        }
+        if (data.department) {
+          contact.department = data.department;
+        }
+
         if (data.contact) {
           const sanitizedNewAvatar = sanitizeAvatarUrl(data.contact.avatarUrl);
           if (sanitizedNewAvatar && (!contact.avatarUrl || contact.avatarUrl !== sanitizedNewAvatar)) {
@@ -3150,6 +3279,8 @@ function InboxContent() {
                   (last8.length === 8 && recentStorySuffixSet.has(last8))
                 )
               );
+              const resolvedDept = resolveContactDepartment(contact);
+              const regionColor = resolvedDept?.color || null;
 
               return (
               <div
@@ -3193,7 +3324,7 @@ function InboxContent() {
                     : (isWhatsApp ? 'hover:bg-[#1E2E37]' : 'hover:bg-white/70 dark:hover:bg-[#172647]')
                 }`}
               >
-                {/* Avatar Circular 48x48 com Story Ring Pulsante */}
+                {/* Avatar Circular 48x48 com Anel Inteligente de Região/Setor e Story Ring */}
                 <div
                   onClick={(e) => {
                     if (hasRecentStory && activeLineStories.length > 0) {
@@ -3222,13 +3353,31 @@ function InboxContent() {
                     }
                   }}
                   className="relative shrink-0"
-                  title={hasRecentStory ? "Clique no anel para ver o Story visualizado por este contato" : undefined}
+                  title={
+                    hasRecentStory
+                      ? `Clique para ver o Story visualizado${resolvedDept?.name ? ` • Região/Setor: ${resolvedDept.name}` : ''}`
+                      : resolvedDept?.name
+                      ? `Setor / Região: ${resolvedDept.name}`
+                      : undefined
+                  }
                 >
-                  <div className={`p-[2.5px] rounded-full transition-all ${
-                    hasRecentStory 
-                      ? 'bg-gradient-to-tr from-emerald-500 via-teal-400 to-blue-500 shadow-[0_0_12px_rgba(16,185,129,0.35)] animate-pulse hover:scale-105' 
-                      : ''
-                  }`}>
+                  <div
+                    className={`p-[2.5px] rounded-full transition-all ${
+                      hasRecentStory && !regionColor
+                        ? 'bg-gradient-to-tr from-emerald-500 via-teal-400 to-blue-500 shadow-[0_0_12px_rgba(16,185,129,0.35)] animate-pulse hover:scale-105'
+                        : hasRecentStory
+                        ? 'hover:scale-105'
+                        : ''
+                    }`}
+                    style={
+                      regionColor
+                        ? {
+                            backgroundColor: regionColor,
+                            boxShadow: `0 0 0 1px ${regionColor}45, 0 2px 8px ${regionColor}35`,
+                          }
+                        : undefined
+                    }
+                  >
                     <div className={`w-12 h-12 rounded-full overflow-hidden ${isWhatsApp ? 'bg-[#202C33] border-[#222D34]' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700/60'} border flex items-center justify-center text-slate-700 dark:text-white font-bold text-sm shadow-inner`}>
                       {isAvatarUrlValid(contact.avatarUrl) ? (
                         <img 
@@ -3403,7 +3552,8 @@ function InboxContent() {
                         const operatorName = contact.assignedUser?.name
                           || (contact.status === 'bot_active' ? `IA ${aiAgentName || 'Sofia'}` : (contact.assignedTo ? 'Atendente' : 'Comercial'));
                         
-                        const departmentName = contact.department?.name 
+                        const departmentName = resolvedDept?.name
+                          || contact.department?.name 
                           || (contact.status === 'bot_active' ? 'IA' : 'Comercial');
 
                         return (
@@ -3412,7 +3562,10 @@ function InboxContent() {
                               {operatorName}
                             </span>
                             <span className="text-slate-400 dark:text-slate-600">•</span>
-                            <span className="text-slate-500 dark:text-slate-400 truncate max-w-[95px]">
+                            <span
+                              className="text-slate-500 dark:text-slate-400 truncate max-w-[95px]"
+                              style={regionColor ? { color: regionColor, fontWeight: 600 } : undefined}
+                            >
                               {departmentName}
                             </span>
                           </div>
@@ -3630,44 +3783,50 @@ function InboxContent() {
                   title="Clique para ver dados do contato"
                 >
                   {/* Avatar WhatsApp com indicador de status e anel da cor da região (respeita proporção e dimensão exata) */}
-                  <div 
-                    className="relative shrink-0 flex items-center justify-center my-auto"
-                    title={activeContactData.department?.name ? `Setor / Região: ${activeContactData.department.name}` : undefined}
-                  >
-                    <div 
-                      className="w-10 h-10 sm:w-11 sm:h-11 rounded-full p-[2.5px] transition-all flex items-center justify-center shrink-0 aspect-square"
-                      style={{
-                        backgroundColor: activeContactData.department?.color ? activeContactData.department.color : 'transparent',
-                      }}
-                    >
-                      <div className={`w-full h-full rounded-full ${isWhatsApp ? 'bg-[#2A3942]' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700/60'} border flex items-center justify-center text-slate-700 dark:text-white font-bold shrink-0 relative overflow-hidden shadow-inner text-xs sm:text-sm aspect-square`}>
-                        {(() => {
-                          const isSelfOrMainLine = activeContactData.name?.includes('(você)') || (activeContactData.phone && activeInstance?.phoneNumber && activeContactData.phone.replace(/\D/g, '') === activeInstance.phoneNumber.replace(/\D/g, ''));
-                          const rawContactPhoto = activeContactData.avatarUrl || (isSelfOrMainLine ? (activeInstance?.profilePicUrl || waStatus?.profilePicUrl) : null);
-                          const contactPhoto = sanitizeAvatarUrl(rawContactPhoto);
+                  {(() => {
+                    const activeDept = resolveContactDepartment(activeContactData);
+                    return (
+                      <div 
+                        className="relative shrink-0 flex items-center justify-center my-auto"
+                        title={activeDept?.name ? `Setor / Região: ${activeDept.name}` : undefined}
+                      >
+                        <div 
+                          className="w-10 h-10 sm:w-11 sm:h-11 rounded-full p-[2.5px] transition-all flex items-center justify-center shrink-0 aspect-square"
+                          style={{
+                            backgroundColor: activeDept?.color ? activeDept.color : 'transparent',
+                            boxShadow: activeDept?.color ? `0 0 0 1px ${activeDept.color}45, 0 2px 8px ${activeDept.color}35` : undefined,
+                          }}
+                        >
+                          <div className={`w-full h-full rounded-full ${isWhatsApp ? 'bg-[#2A3942]' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700/60'} border flex items-center justify-center text-slate-700 dark:text-white font-bold shrink-0 relative overflow-hidden shadow-inner text-xs sm:text-sm aspect-square`}>
+                            {(() => {
+                              const isSelfOrMainLine = activeContactData.name?.includes('(você)') || (activeContactData.phone && activeInstance?.phoneNumber && activeContactData.phone.replace(/\D/g, '') === activeInstance.phoneNumber.replace(/\D/g, ''));
+                              const rawContactPhoto = activeContactData.avatarUrl || (isSelfOrMainLine ? (activeInstance?.profilePicUrl || waStatus?.profilePicUrl) : null);
+                              const contactPhoto = sanitizeAvatarUrl(rawContactPhoto);
 
-                          return contactPhoto ? (
-                            <img 
-                              src={contactPhoto} 
-                              alt={activeContactData.name} 
-                              referrerPolicy="no-referrer"
-                              className="w-full h-full object-cover rounded-full block aspect-square"
-                              onError={(e) => {
-                                (e.currentTarget as HTMLElement).style.display = 'none';
-                                const fallback = e.currentTarget.parentElement?.querySelector('.avatar-initials') as HTMLElement;
-                                if (fallback) fallback.classList.remove('hidden');
-                              }}
-                            />
-                          ) : null;
-                        })()}
-                        <span className={`avatar-initials ${activeContactData.avatarUrl ? "hidden" : ""} text-xs sm:text-sm font-bold`}>
-                          {getContactInitials(activeContactData.name, activeContactData.phone)}
-                        </span>
+                              return contactPhoto ? (
+                                <img 
+                                  src={contactPhoto} 
+                                  alt={activeContactData.name} 
+                                  referrerPolicy="no-referrer"
+                                  className="w-full h-full object-cover rounded-full block aspect-square"
+                                  onError={(e) => {
+                                    (e.currentTarget as HTMLElement).style.display = 'none';
+                                    const fallback = e.currentTarget.parentElement?.querySelector('.avatar-initials') as HTMLElement;
+                                    if (fallback) fallback.classList.remove('hidden');
+                                  }}
+                                />
+                              ) : null;
+                            })()}
+                            <span className={`avatar-initials ${activeContactData.avatarUrl ? "hidden" : ""} text-xs sm:text-sm font-bold`}>
+                              {getContactInitials(activeContactData.name, activeContactData.phone)}
+                            </span>
+                          </div>
+                        </div>
+                        {/* Status Indicator */}
+                        <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-500 border-2 ${isWhatsApp ? 'border-[#202C33]' : 'border-white dark:border-[#0B1224]'}`} />
                       </div>
-                    </div>
-                    {/* Status Indicator */}
-                    <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-500 border-2 ${isWhatsApp ? 'border-[#202C33]' : 'border-white dark:border-[#0B1224]'}`} />
-                  </div>
+                    );
+                  })()}
                   
                   {/* Título e Subtítulo Limpos e Elegantes (sem sobreposição de leitura) */}
                   <div className="min-w-0 flex-1 overflow-hidden pr-2">
@@ -5526,33 +5685,38 @@ function InboxContent() {
 
           {/* Cartão de Perfil Circular */}
           <div className="p-6 flex flex-col items-center border-b border-slate-200 dark:border-slate-800/80 relative bg-gradient-to-b from-slate-100/60 dark:from-[#17253D]/40 to-transparent">
-            <div 
-              className="w-24 h-24 rounded-full bg-slate-200 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700/80 flex items-center justify-center text-slate-800 dark:text-white font-black text-2xl shadow-xl mb-3 overflow-hidden relative transition-all"
-              style={activeContactData.department?.color ? {
-                boxShadow: `0 0 0 3px ${activeContactData.department.color}`,
-                borderColor: activeContactData.department.color,
-              } : undefined}
-              title={activeContactData.department?.name ? `Setor / Região: ${activeContactData.department.name}` : undefined}
-            >
-              {isAvatarUrlValid(activeContactData.avatarUrl) ? (
-                <img 
-                  src={activeContactData.avatarUrl!} 
-                  alt={activeContactData.name} 
-                  referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover rounded-full"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLElement).style.display = 'none';
-                    const fallback = e.currentTarget.parentElement?.querySelector('.avatar-initials') as HTMLElement;
-                    if (fallback) fallback.classList.remove('hidden');
-                  }}
-                />
-              ) : null}
+            {(() => {
+              const drawerDept = resolveContactDepartment(activeContactData);
+              return (
+                <div 
+                  className="w-24 h-24 rounded-full bg-slate-200 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700/80 flex items-center justify-center text-slate-800 dark:text-white font-black text-2xl shadow-xl mb-3 overflow-hidden relative transition-all"
+                  style={drawerDept?.color ? {
+                    boxShadow: `0 0 0 3px ${drawerDept.color}`,
+                    borderColor: drawerDept.color,
+                  } : undefined}
+                  title={drawerDept?.name ? `Setor / Região: ${drawerDept.name}` : undefined}
+                >
+                  {isAvatarUrlValid(activeContactData.avatarUrl) ? (
+                    <img 
+                      src={activeContactData.avatarUrl!} 
+                      alt={activeContactData.name} 
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-cover rounded-full"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLElement).style.display = 'none';
+                        const fallback = e.currentTarget.parentElement?.querySelector('.avatar-initials') as HTMLElement;
+                        if (fallback) fallback.classList.remove('hidden');
+                      }}
+                    />
+                  ) : null}
 
-              <span className={`avatar-initials ${activeContactData.avatarUrl ? "hidden" : ""}`}>
-                {getContactInitials(activeContactData.name, activeContactData.phone)}
-              </span>
-              <div className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white dark:border-[#0B1224] shadow-sm" />
-            </div>
+                  <span className={`avatar-initials ${activeContactData.avatarUrl ? "hidden" : ""}`}>
+                    {getContactInitials(activeContactData.name, activeContactData.phone)}
+                  </span>
+                  <div className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white dark:border-[#0B1224] shadow-sm" />
+                </div>
+              );
+            })()}
 
             {isEditingName ? (
               <div className="flex items-center gap-1.5 w-full justify-center max-w-xs mt-1">
@@ -5977,23 +6141,27 @@ function InboxContent() {
                 <div className="flex flex-col col-span-2 pt-1 border-t border-slate-200/60 dark:border-slate-800/60">
                   <span className="text-[10px] text-slate-500">Departamento / Setor</span>
                   <div className="flex items-center justify-between mt-1">
-                    {activeContactData.department ? (
-                      <span
-                        className="text-[11px] font-bold px-2 py-0.5 rounded-md border flex items-center gap-1.5"
-                        style={{
-                          backgroundColor: (activeContactData.department.color || "#3b82f6") + "20",
-                          borderColor: (activeContactData.department.color || "#3b82f6") + "40",
-                          color: activeContactData.department.color || "#60a5fa",
-                        }}
-                      >
+                    {(() => {
+                      const drawerDept = resolveContactDepartment(activeContactData);
+                      return drawerDept ? (
                         <span
-                          className="w-1.5 h-1.5 rounded-full shrink-0"
-                          style={{ backgroundColor: activeContactData.department.color || "#3b82f6" }}
-                        />
-                        <span>{activeContactData.department.name}</span>
-                      </span>
-                    ) : (
-                      <span className="text-xs text-slate-400 dark:text-slate-500">Nenhum setor definido</span>
+                          className="text-[11px] font-bold px-2 py-0.5 rounded-md border flex items-center gap-1.5"
+                          style={{
+                            backgroundColor: (drawerDept.color || "#3b82f6") + "20",
+                            borderColor: (drawerDept.color || "#3b82f6") + "40",
+                            color: drawerDept.color || "#60a5fa",
+                          }}
+                        >
+                          <span
+                            className="w-1.5 h-1.5 rounded-full shrink-0"
+                            style={{ backgroundColor: drawerDept.color || "#3b82f6" }}
+                          />
+                          <span>{drawerDept.name}</span>
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-400 dark:text-slate-500">Nenhum setor definido</span>
+                      );
+                    })()}
                     )}
                     <button
                       type="button"
@@ -6242,7 +6410,9 @@ function InboxContent() {
                   return <p className="text-xs text-slate-400 dark:text-slate-500 text-center py-6">Nenhum contato encontrado.</p>;
                 }
 
-                return list.map((c: any) => (
+                return list.map((c: any) => {
+                  const modalDept = resolveContactDepartment(c);
+                  return (
                   <div 
                     key={c.id} 
                     onClick={async () => {
@@ -6260,36 +6430,60 @@ function InboxContent() {
                     }}
                     className="p-3 rounded-xl bg-slate-50 dark:bg-[#1E293B]/60 hover:bg-slate-100 dark:hover:bg-[#1E293B] border border-slate-200 dark:border-slate-800 hover:border-blue-500/50 flex items-center justify-between transition-all cursor-pointer group"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-gradient-to-tr dark:from-slate-700 dark:to-slate-800 flex items-center justify-center text-xs font-bold text-slate-800 dark:text-white relative overflow-hidden shrink-0">
-                        {isAvatarUrlValid(c.avatarUrl) ? (
-                          <img 
-                            src={c.avatarUrl!} 
-                            alt={c.name} 
-                            referrerPolicy="no-referrer"
-                            className="w-full h-full object-cover rounded-full"
-                            onError={(e) => {
-                              (e.currentTarget as HTMLElement).style.display = 'none';
-                              const fallback = e.currentTarget.parentElement?.querySelector('.avatar-initials') as HTMLElement;
-                              if (fallback) fallback.classList.remove('hidden');
-                            }}
-                          />
-                        ) : null}
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div
+                        className="p-[2px] rounded-full shrink-0 transition-all"
+                        style={
+                          modalDept?.color
+                            ? {
+                                backgroundColor: modalDept.color,
+                                boxShadow: `0 0 0 1px ${modalDept.color}40, 0 2px 6px ${modalDept.color}30`,
+                              }
+                            : undefined
+                        }
+                        title={modalDept?.name ? `Setor / Região: ${modalDept.name}` : undefined}
+                      >
+                        <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-gradient-to-tr dark:from-slate-700 dark:to-slate-800 flex items-center justify-center text-xs font-bold text-slate-800 dark:text-white relative overflow-hidden shrink-0">
+                          {isAvatarUrlValid(c.avatarUrl) ? (
+                            <img 
+                              src={c.avatarUrl!} 
+                              alt={c.name} 
+                              referrerPolicy="no-referrer"
+                              className="w-full h-full object-cover rounded-full"
+                              onError={(e) => {
+                                (e.currentTarget as HTMLElement).style.display = 'none';
+                                const fallback = e.currentTarget.parentElement?.querySelector('.avatar-initials') as HTMLElement;
+                                if (fallback) fallback.classList.remove('hidden');
+                              }}
+                            />
+                          ) : null}
 
-                        <span className={`avatar-initials ${c.avatarUrl ? "hidden" : ""}`}>
-                          {getContactInitials(c.name, c.phone)}
-                        </span>
+                          <span className={`avatar-initials ${c.avatarUrl ? "hidden" : ""}`}>
+                            {getContactInitials(c.name, c.phone)}
+                          </span>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{formatContactDisplayName(c.name, c.phone)}</h4>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400">{c.phone || 'Sem telefone'}</p>
+                      <div className="min-w-0">
+                        <h4 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">{formatContactDisplayName(c.name, c.phone)}</h4>
+                        <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                          <span>{c.phone || 'Sem telefone'}</span>
+                          {modalDept?.name && (
+                            <>
+                              <span>•</span>
+                              <span className="font-semibold truncate" style={{ color: modalDept.color }}>
+                                {modalDept.name}
+                              </span>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
-                    <span className="text-[10px] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 px-2 py-0.5 rounded">
+                    <span className="text-[10px] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 px-2 py-0.5 rounded shrink-0">
                       Conversar
                     </span>
                   </div>
-                ));
+                  );
+                });
               })()}
             </div>
           </div>

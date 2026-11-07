@@ -501,6 +501,11 @@ export class WebhookProcessor extends WorkerHost {
       },
       update: {
         ...(targetDeptId ? { departmentId: targetDeptId } : {})
+      },
+      include: {
+        department: {
+          select: { id: true, name: true, color: true }
+        }
       }
     });
 
@@ -508,7 +513,12 @@ export class WebhookProcessor extends WorkerHost {
     if (!conversation.departmentId && targetDeptId) {
       conversation = await this.prisma.conversation.update({
         where: { id: conversation.id },
-        data: { departmentId: targetDeptId }
+        data: { departmentId: targetDeptId },
+        include: {
+          department: {
+            select: { id: true, name: true, color: true }
+          }
+        }
       });
     }
 
@@ -519,6 +529,11 @@ export class WebhookProcessor extends WorkerHost {
         data: { 
           status: 'human_takeover',
           updatedAt: new Date() 
+        },
+        include: {
+          department: {
+            select: { id: true, name: true, color: true }
+          }
         }
       });
 
@@ -541,7 +556,12 @@ export class WebhookProcessor extends WorkerHost {
       // Reabre a mesma conversa na Fila Aguardando
       conversation = await this.prisma.conversation.update({
         where: { id: conversation.id },
-        data: { status: initialStatus, assignedTo: null }
+        data: { status: initialStatus, assignedTo: null },
+        include: {
+          department: {
+            select: { id: true, name: true, color: true }
+          }
+        }
       });
       this.logger.log(`Conversa [${conversation.id}] reaberta (status -> ${initialStatus}, assignedTo -> null).`);
       
@@ -632,6 +652,7 @@ export class WebhookProcessor extends WorkerHost {
       ...savedMessage,
       conversationId: conversation.id,
       departmentId: conversation.departmentId,
+      department: (conversation as any).department || null,
       assignedTo: conversation.assignedTo,
       contact: { 
         id: contact.id,
@@ -667,7 +688,12 @@ export class WebhookProcessor extends WorkerHost {
         );
         conversation = await this.prisma.conversation.update({
           where: { id: conversation.id },
-          data: { status: 'bot_active', assignedTo: null, updatedAt: new Date() }
+          data: { status: 'bot_active', assignedTo: null, updatedAt: new Date() },
+          include: {
+            department: {
+              select: { id: true, name: true, color: true }
+            }
+          }
         });
         this.chatGateway.emitConversationUpdated(tenantId, conversation);
       } else {
@@ -684,7 +710,12 @@ export class WebhookProcessor extends WorkerHost {
       if (conversation.status === 'bot_active') {
         conversation = await this.prisma.conversation.update({
           where: { id: conversation.id },
-          data: { status: 'waiting', updatedAt: new Date() }
+          data: { status: 'waiting', updatedAt: new Date() },
+          include: {
+            department: {
+              select: { id: true, name: true, color: true }
+            }
+          }
         });
         this.chatGateway.emitConversationUpdated(tenantId, conversation);
       }
@@ -694,7 +725,12 @@ export class WebhookProcessor extends WorkerHost {
       if (conversation.status !== 'bot_active') {
         conversation = await this.prisma.conversation.update({
           where: { id: conversation.id },
-          data: { status: 'bot_active', updatedAt: new Date() }
+          data: { status: 'bot_active', updatedAt: new Date() },
+          include: {
+            department: {
+              select: { id: true, name: true, color: true }
+            }
+          }
         });
         this.chatGateway.emitConversationUpdated(tenantId, conversation);
       }
@@ -823,6 +859,8 @@ export class WebhookProcessor extends WorkerHost {
 
       if (!targetRegionNum && state) {
         const uf = state.trim().toUpperCase();
+        const byToken = departments.find(d => new RegExp(`(^|[^A-ZÀ-Ú])${uf}([^A-ZÀ-Ú]|$)`).test(d.name.toUpperCase()));
+        if (byToken) return byToken.id;
         if (ufToRegion[uf]) targetRegionNum = ufToRegion[uf];
       }
 

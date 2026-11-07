@@ -273,7 +273,8 @@ export class AiProcessor extends WorkerHost {
       });
     }
 
-    // 4.5 Enriquecimento contínuo de Contato e Deal a partir da inteligência extraída pela IA
+    // 4.5 Enriquecimento contínuo de Contato, Região/Setor e Deal a partir da inteligência extraída pela IA
+    let resolvedDeptId: string | null = conversation.departmentId || null;
     try {
       const contactUpdateData: any = {};
       if (aiResponse.email_cliente && !conversation.contact.email) {
@@ -290,11 +291,45 @@ export class AiProcessor extends WorkerHost {
         contactUpdateData.name = aiResponse.nome_cliente;
       }
 
+      let extractedState: string | null = (conversation.contact as any).state || null;
+      if (aiResponse.cidade_uf && aiResponse.cidade_uf !== 'Não informado') {
+        const ufMatch = String(aiResponse.cidade_uf).toUpperCase().match(/\b(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/);
+        if (ufMatch) {
+          extractedState = ufMatch[1];
+          contactUpdateData.state = extractedState;
+        }
+        const cityPart = String(aiResponse.cidade_uf).split(/[-/,]/)[0]?.trim();
+        if (cityPart && cityPart.length >= 2) {
+          contactUpdateData.city = cityPart;
+        }
+      }
+
       if (Object.keys(contactUpdateData).length > 0) {
         await this.prisma.contact.update({
           where: { id: contactId },
           data: contactUpdateData,
         }).catch(() => {});
+      }
+
+      // Classificação Inteligente e Automática da Região/Setor assim que a IA identifica UF ou Telefone
+      const candidatePhone = aiResponse.telefone_cliente || conversation.contact.phone;
+      const autoDeptId = await this.resolveDepartmentSmart(tenantId, candidatePhone, extractedState);
+      if (autoDeptId) {
+        resolvedDeptId = autoDeptId;
+        if (conversation.departmentId !== autoDeptId) {
+          const convWithDept = await this.prisma.conversation.update({
+            where: { id: conversationId },
+            data: { departmentId: autoDeptId },
+            include: {
+              contact: true,
+              department: { select: { id: true, name: true, color: true } },
+            },
+          }).catch(() => null);
+
+          if (convWithDept) {
+            this.chatGateway.emitConversationUpdated(tenantId, convWithDept);
+          }
+        }
       }
 
       // Buscar deal existente associado a este contato no tenant
@@ -375,8 +410,15 @@ export class AiProcessor extends WorkerHost {
       // Transfere o atendimento para o consultor humano e silencia a IA
       const updatedConv = await this.prisma.conversation.update({
         where: { id: conversationId },
-        data: { status: 'open', assignedTo },
-        include: { contact: true }
+        data: {
+          status: 'open',
+          assignedTo,
+          ...(resolvedDeptId ? { departmentId: resolvedDeptId } : {}),
+        },
+        include: {
+          contact: true,
+          department: { select: { id: true, name: true, color: true } },
+        }
       });
 
       // Emissão em tempo real para o Inbox transferindo para atendimento humano
@@ -578,5 +620,71 @@ export class AiProcessor extends WorkerHost {
     }
 
     return { formatted: `+${digits}`, isRealPhone: true, cleanDigits: digits };
+  }
+
+  /**
+   * Identifica e resolve a Região/Departamento de forma inteligente (DDD, UF ou nova Região criada)
+   */
+  private async resolveDepartmentSmart(tenantId: string, phone?: string | null, state?: string | null): Promise<string | null> {
+    if (!phone && !state) return null;
+    try {
+      const departments = await this.prisma.department.findMany({
+        where: { tenantId },
+        select: { id: true, name: true },
+      });
+      if (!departments || departments.length === 0) return null;
+
+      const dddToUf: Record<string, string> = {
+        '51': 'RS', '53': 'RS', '54': 'RS', '55': 'RS',
+        '47': 'SC', '48': 'SC', '49': 'SC',
+        '41': 'PR', '42': 'PR', '43': 'PR', '44': 'PR', '45': 'PR', '46': 'PR',
+        '67': 'MS', '65': 'MT', '66': 'MT',
+        '91': 'PA', '93': 'PA', '94': 'PA', '69': 'RO', '95': 'RR', '68': 'AC', '92': 'AM', '97': 'AM', '96': 'AP',
+        '62': 'GO', '64': 'GO', '61': 'DF',
+        '31': 'MG', '32': 'MG', '33': 'MG', '34': 'MG', '35': 'MG', '37': 'MG', '38': 'MG',
+        '11': 'SP', '12': 'SP', '13': 'SP', '14': 'SP', '15': 'SP', '16': 'SP', '17': 'SP', '18': 'SP', '19': 'SP',
+        '21': 'RJ', '22': 'RJ', '24': 'RJ', '27': 'ES', '28': 'ES',
+        '63': 'TO', '71': 'BA', '73': 'BA', '74': 'BA', '75': 'BA', '77': 'BA',
+        '98': 'MA', '99': 'MA', '86': 'PI', '89': 'PI',
+        '85': 'CE', '88': 'CE', '84': 'RN', '83': 'PB', '79': 'SE', '81': 'PE', '87': 'PE', '82': 'AL'
+      };
+
+      const ufToRegion: Record<string, number> = {
+        'RS': 1, 'SC': 1, 'PR': 1,
+        'MS': 2, 'MT': 2, 'PA': 2, 'RO': 2, 'RR': 2, 'AC': 2, 'AM': 2, 'AP': 2,
+        'GO': 3, 'MG': 3, 'SP': 3, 'DF': 3, 'RJ': 3, 'ES': 3,
+        'TO': 4, 'BA': 4,
+        'MA': 5, 'PI': 5,
+        'CE': 6, 'RN': 6, 'PB': 6, 'SE': 6, 'PE': 6, 'AL': 6
+      };
+
+      let uf = state ? state.trim().toUpperCase() : '';
+      if (!uf && phone && !phone.includes('@lid')) {
+        const clean = phone.replace(/\D/g, '');
+        let ddd = '';
+        if (clean.startsWith('55') && clean.length >= 12) ddd = clean.substring(2, 4);
+        else if (clean.length === 10 || clean.length === 11) ddd = clean.substring(0, 2);
+        if (ddd && dddToUf[ddd]) uf = dddToUf[ddd];
+        else if (clean.startsWith('595')) uf = 'RS';
+      }
+      if (!uf) return null;
+
+      // 1. Verifica se algum departamento menciona explicitamente a UF (funciona para novas regiões criadas!)
+      const byToken = departments.find(d => new RegExp(`(^|[^A-ZÀ-Ú])${uf}([^A-ZÀ-Ú]|$)`).test(d.name.toUpperCase()));
+      if (byToken) return byToken.id;
+
+      // 2. Fallback para numeração oficial REGIÃO 1..6
+      const targetRegionNum = ufToRegion[uf];
+      if (targetRegionNum) {
+        const matched = departments.find(d => {
+          const upper = d.name.toUpperCase();
+          return upper.includes(`REGIÃO ${targetRegionNum}`) || upper.includes(`REGIAO ${targetRegionNum}`);
+        });
+        if (matched) return matched.id;
+      }
+    } catch (e: any) {
+      this.logger.warn(`Erro ao resolver departamento pela IA: ${e.message}`);
+    }
+    return null;
   }
 }

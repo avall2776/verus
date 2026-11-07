@@ -46,22 +46,98 @@ export class ContactsService {
       return cached.data;
     }
 
-    const contacts = await this.prisma.contact.findMany({
-      where: { tenantId },
-      orderBy: { updatedAt: 'desc' },
-      include: {
-        deals: {
-          select: {
-            id: true,
-            title: true,
-            status: true,
-            value: true,
-            createdAt: true,
-            updatedAt: true,
+    const [contacts, departments] = await Promise.all([
+      this.prisma.contact.findMany({
+        where: { tenantId },
+        orderBy: { updatedAt: 'desc' },
+        include: {
+          deals: {
+            select: {
+              id: true,
+              title: true,
+              status: true,
+              value: true,
+              createdAt: true,
+              updatedAt: true,
+            }
+          },
+          conversations: {
+            orderBy: { updatedAt: 'desc' },
+            take: 1,
+            select: {
+              id: true,
+              status: true,
+              departmentId: true,
+              assignedTo: true,
+              department: {
+                select: {
+                  id: true,
+                  name: true,
+                  color: true,
+                }
+              }
+            }
           }
         }
+      }),
+      this.prisma.department.findMany({
+        where: { tenantId },
+        select: { id: true, name: true, color: true }
+      })
+    ]);
+
+    const dddToUf: Record<string, string> = {
+      '51': 'RS', '53': 'RS', '54': 'RS', '55': 'RS',
+      '47': 'SC', '48': 'SC', '49': 'SC',
+      '41': 'PR', '42': 'PR', '43': 'PR', '44': 'PR', '45': 'PR', '46': 'PR',
+      '67': 'MS', '65': 'MT', '66': 'MT',
+      '91': 'PA', '93': 'PA', '94': 'PA', '69': 'RO', '95': 'RR', '68': 'AC', '92': 'AM', '97': 'AM', '96': 'AP',
+      '62': 'GO', '64': 'GO', '61': 'DF',
+      '31': 'MG', '32': 'MG', '33': 'MG', '34': 'MG', '35': 'MG', '37': 'MG', '38': 'MG',
+      '11': 'SP', '12': 'SP', '13': 'SP', '14': 'SP', '15': 'SP', '16': 'SP', '17': 'SP', '18': 'SP', '19': 'SP',
+      '21': 'RJ', '22': 'RJ', '24': 'RJ', '27': 'ES', '28': 'ES',
+      '63': 'TO', '71': 'BA', '73': 'BA', '74': 'BA', '75': 'BA', '77': 'BA',
+      '98': 'MA', '99': 'MA', '86': 'PI', '89': 'PI',
+      '85': 'CE', '88': 'CE', '84': 'RN', '83': 'PB', '79': 'SE', '81': 'PE', '87': 'PE', '82': 'AL'
+    };
+
+    const ufToRegion: Record<string, number> = {
+      'RS': 1, 'SC': 1, 'PR': 1,
+      'MS': 2, 'MT': 2, 'PA': 2, 'RO': 2, 'RR': 2, 'AC': 2, 'AM': 2, 'AP': 2,
+      'GO': 3, 'MG': 3, 'SP': 3, 'DF': 3, 'RJ': 3, 'ES': 3,
+      'TO': 4, 'BA': 4,
+      'MA': 5, 'PI': 5,
+      'CE': 6, 'RN': 6, 'PB': 6, 'SE': 6, 'PE': 6, 'AL': 6
+    };
+
+    const resolveContactDept = (phone?: string | null, state?: string | null) => {
+      if (!departments.length) return null;
+      let uf = state ? state.trim().toUpperCase() : '';
+      if (!uf && phone && !phone.includes('@lid')) {
+        const clean = phone.replace(/\D/g, '');
+        let ddd = '';
+        if (clean.startsWith('55') && clean.length >= 12) ddd = clean.substring(2, 4);
+        else if (clean.length === 10 || clean.length === 11) ddd = clean.substring(0, 2);
+        if (ddd && dddToUf[ddd]) uf = dddToUf[ddd];
+        else if (clean.startsWith('595')) uf = 'RS';
       }
-    });
+      if (!uf) return null;
+
+      const byToken = departments.find(d => {
+        const upper = d.name.toUpperCase();
+        return new RegExp(`(^|[^A-ZÀ-Ú])${uf}([^A-ZÀ-Ú]|$)`).test(upper);
+      });
+      if (byToken) return byToken;
+
+      const regNum = ufToRegion[uf];
+      if (regNum) {
+        return departments.find(d => {
+          const upper = d.name.toUpperCase();
+          return upper.includes(`REGIÃO ${regNum}`) || upper.includes(`REGIAO ${regNum}`);
+        }) || null;
+      }
+      return null;
+    };
 
     const result = contacts.map(c => {
       let tags = Array.isArray(c.tags) ? [...c.tags] : [];
@@ -129,6 +205,9 @@ export class ContactsService {
         .replace(/versus\s*/gi, 'Vallor ')
         .trim();
 
+      const latestConv = (c as any).conversations?.[0] || null;
+      const resolvedDepartment = latestConv?.department || resolveContactDept(c.phone, c.state);
+
       return {
         id: c.id,
         name: c.name,
@@ -151,6 +230,8 @@ export class ContactsService {
         source: cleanSource,
         avatarUrl,
         tags,
+        departmentId: resolvedDepartment?.id || latestConv?.departmentId || null,
+        department: resolvedDepartment || null,
         statusCategory, // 'won' (Cliente que comprou) | 'hot' (Em negociação) | 'cold' (Frio) | 'lost' | 'collaborator' | 'partner'
         isClient,
         dealsCount: deals.length,

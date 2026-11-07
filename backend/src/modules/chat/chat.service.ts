@@ -363,19 +363,14 @@ export class ChatService {
       }
     }
 
-    // Ordenação estritamente cronológica por mensagem recente (padrão WhatsApp / Lero), com conversas fixadas no topo (ex: Rodrigo Trojan)
+    // Ordenação estritamente cronológica por mensagem recente (padrão WhatsApp / Lero)
     conversations.sort((a, b) => {
-      const isPinA = a.contact?.phone?.includes('556699844152') || (a.contact?.name && a.contact.name.toLowerCase().includes('trojan'));
-      const isPinB = b.contact?.phone?.includes('556699844152') || (b.contact?.name && b.contact.name.toLowerCase().includes('trojan'));
-      if (isPinA && !isPinB) return -1;
-      if (!isPinA && isPinB) return 1;
-
       const timeA = a.messages && a.messages.length > 0 && a.messages[0].createdAt
         ? new Date(a.messages[0].createdAt).getTime()
-        : new Date(a.createdAt).getTime();
+        : new Date(a.updatedAt || a.createdAt).getTime();
       const timeB = b.messages && b.messages.length > 0 && b.messages[0].createdAt
         ? new Date(b.messages[0].createdAt).getTime()
-        : new Date(b.createdAt).getTime();
+        : new Date(b.updatedAt || b.createdAt).getTime();
       return timeB - timeA;
     });
 
@@ -445,6 +440,8 @@ export class ChatService {
 
       if (!targetRegionNum && state) {
         const uf = state.trim().toUpperCase();
+        const byToken = departments.find(d => new RegExp(`(^|[^A-ZÀ-Ú])${uf}([^A-ZÀ-Ú]|$)`).test(d.name.toUpperCase()));
+        if (byToken) return byToken.id;
         if (ufToRegion[uf]) targetRegionNum = ufToRegion[uf];
       }
 
@@ -470,7 +467,10 @@ export class ChatService {
         messages: {
           orderBy: { createdAt: 'asc' }
         },
-        contact: true
+        contact: true,
+        department: {
+          select: { id: true, name: true, color: true }
+        }
       }
     });
 
@@ -496,7 +496,10 @@ export class ChatService {
             messages: {
               orderBy: { createdAt: 'asc' }
             },
-            contact: true
+            contact: true,
+            department: {
+              select: { id: true, name: true, color: true }
+            }
           }
         });
       }
@@ -515,7 +518,10 @@ export class ChatService {
             messages: {
               orderBy: { createdAt: 'asc' }
             },
-            contact: true
+            contact: true,
+            department: {
+              select: { id: true, name: true, color: true }
+            }
           }
         });
       } else if (!conversation.departmentId && contact.phone) {
@@ -529,7 +535,10 @@ export class ChatService {
               messages: {
                 orderBy: { createdAt: 'asc' }
               },
-              contact: true
+              contact: true,
+              department: {
+                select: { id: true, name: true, color: true }
+              }
             }
           });
         }

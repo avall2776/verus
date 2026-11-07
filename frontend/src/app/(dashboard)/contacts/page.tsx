@@ -46,6 +46,12 @@ interface Contact {
   source: string;
   avatarUrl?: string | null;
   tags: string[];
+  departmentId?: string | null;
+  department?: {
+    id: string;
+    name: string;
+    color?: string | null;
+  } | null;
   statusCategory?: 'won' | 'hot' | 'cold' | 'lost' | 'collaborator' | 'partner';
   isClient?: boolean;
   dealsCount?: number;
@@ -81,6 +87,7 @@ export default function ContactsPage() {
   const { isWhatsApp } = useTheme();
 
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [departments, setDepartments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -110,9 +117,15 @@ export default function ContactsPage() {
 
   const fetchContacts = () => {
     setLoading(true);
-    api.get('/contacts')
-      .then(res => {
+    Promise.all([
+      api.get('/contacts'),
+      api.get('/departments').catch(() => ({ data: [] })),
+    ])
+      .then(([res, deptRes]) => {
         setContacts(res.data);
+        if (Array.isArray(deptRes.data)) {
+          setDepartments(deptRes.data);
+        }
         setError(false);
       })
       .catch(err => {
@@ -124,6 +137,70 @@ export default function ContactsPage() {
         }
       })
       .finally(() => setLoading(false));
+  };
+
+  const resolveContactDept = (contact: Contact): { id?: string; name: string; color: string } | null => {
+    if (!contact) return null;
+    const targetId = contact.departmentId || contact.department?.id;
+    if (targetId && departments.length > 0) {
+      const live = departments.find((d: any) => d.id === targetId);
+      if (live?.color) return { id: live.id, name: live.name, color: live.color };
+    }
+    if (contact.department?.color) {
+      return {
+        id: contact.department.id,
+        name: contact.department.name || 'Setor',
+        color: contact.department.color,
+      };
+    }
+    if (departments.length > 0 && (contact.phone || contact.state)) {
+      const dddToUf: Record<string, string> = {
+        '51': 'RS', '53': 'RS', '54': 'RS', '55': 'RS',
+        '47': 'SC', '48': 'SC', '49': 'SC',
+        '41': 'PR', '42': 'PR', '43': 'PR', '44': 'PR', '45': 'PR', '46': 'PR',
+        '67': 'MS', '65': 'MT', '66': 'MT',
+        '91': 'PA', '93': 'PA', '94': 'PA', '69': 'RO', '95': 'RR', '68': 'AC', '92': 'AM', '97': 'AM', '96': 'AP',
+        '62': 'GO', '64': 'GO', '61': 'DF',
+        '31': 'MG', '32': 'MG', '33': 'MG', '34': 'MG', '35': 'MG', '37': 'MG', '38': 'MG',
+        '11': 'SP', '12': 'SP', '13': 'SP', '14': 'SP', '15': 'SP', '16': 'SP', '17': 'SP', '18': 'SP', '19': 'SP',
+        '21': 'RJ', '22': 'RJ', '24': 'RJ', '27': 'ES', '28': 'ES',
+        '63': 'TO', '71': 'BA', '73': 'BA', '74': 'BA', '75': 'BA', '77': 'BA',
+        '98': 'MA', '99': 'MA', '86': 'PI', '89': 'PI',
+        '85': 'CE', '88': 'CE', '84': 'RN', '83': 'PB', '79': 'SE', '81': 'PE', '87': 'PE', '82': 'AL'
+      };
+      const ufToRegion: Record<string, number> = {
+        'RS': 1, 'SC': 1, 'PR': 1,
+        'MS': 2, 'MT': 2, 'PA': 2, 'RO': 2, 'RR': 2, 'AC': 2, 'AM': 2, 'AP': 2,
+        'GO': 3, 'MG': 3, 'SP': 3, 'DF': 3, 'RJ': 3, 'ES': 3,
+        'TO': 4, 'BA': 4,
+        'MA': 5, 'PI': 5,
+        'CE': 6, 'RN': 6, 'PB': 6, 'SE': 6, 'PE': 6, 'AL': 6
+      };
+      let uf = contact.state ? String(contact.state).trim().toUpperCase() : '';
+      if (!uf && contact.phone && !String(contact.phone).includes('@lid')) {
+        const clean = String(contact.phone).replace(/\D/g, '');
+        let ddd = '';
+        if (clean.startsWith('55') && clean.length >= 12) ddd = clean.substring(2, 4);
+        else if (clean.length === 10 || clean.length === 11) ddd = clean.substring(0, 2);
+        if (ddd && dddToUf[ddd]) uf = dddToUf[ddd];
+        else if (clean.startsWith('595')) uf = 'RS';
+      }
+      if (uf) {
+        const byUfToken = departments.find((d: any) =>
+          new RegExp(`(^|[^A-ZÀ-Ú])${uf}([^A-ZÀ-Ú]|$)`).test(String(d.name || '').toUpperCase())
+        );
+        if (byUfToken?.color) return { id: byUfToken.id, name: byUfToken.name, color: byUfToken.color };
+        const regNum = ufToRegion[uf];
+        if (regNum) {
+          const byReg = departments.find((d: any) => {
+            const upper = String(d.name || '').toUpperCase();
+            return upper.includes(`REGIÃO ${regNum}`) || upper.includes(`REGIAO ${regNum}`);
+          });
+          if (byReg?.color) return { id: byReg.id, name: byReg.name, color: byReg.color };
+        }
+      }
+    }
+    return null;
   };
 
   useEffect(() => {
@@ -917,53 +994,84 @@ export default function ContactsPage() {
                       onClick={() => handleOpenContact(contact)}
                       className="group hover:bg-slate-50/90 dark:hover:bg-slate-800/40 transition-colors cursor-pointer"
                     >
-                      {/* Nome e Avatar */}
+                      {/* Nome e Avatar com Anel Inteligente da Região/Setor */}
                       <td className="py-3.5 px-4">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs shrink-0 border ${
-                            isClient
-                              ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700/60"
-                              : isHot
-                                ? "bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700/60"
-                                : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
-                          }`}>
-                            {contact.avatarUrl ? (
-                              <img src={contact.avatarUrl} alt={contact.name} className="w-full h-full rounded-full object-cover" />
-                            ) : (
-                              <span>{contact.name?.charAt(0).toUpperCase() || "C"}</span>
-                            )}
-                          </div>
-                          <div className="min-w-[160px] max-w-[260px]">
-                            <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
-                              <span className="truncate">{contact.name}</span>
-                              {(isClient || contact.isFaturado) && (
-                                <span title="Cliente Confirmado (Faturado)">
-                                  <BadgeCheck size={14} className="text-emerald-500 shrink-0" />
-                                </span>
-                              )}
+                        {(() => {
+                          const contactDept = resolveContactDept(contact);
+                          return (
+                            <div className="flex items-center gap-3">
+                              <div
+                                className="p-[2px] rounded-full shrink-0 transition-all"
+                                style={
+                                  contactDept?.color
+                                    ? {
+                                        backgroundColor: contactDept.color,
+                                        boxShadow: `0 0 0 1px ${contactDept.color}40, 0 2px 6px ${contactDept.color}30`,
+                                      }
+                                    : undefined
+                                }
+                                title={contactDept?.name ? `Setor / Região: ${contactDept.name}` : undefined}
+                              >
+                                <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs shrink-0 border ${
+                                  isClient
+                                    ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700/60"
+                                    : isHot
+                                      ? "bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700/60"
+                                      : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
+                                }`}>
+                                  {contact.avatarUrl ? (
+                                    <img src={contact.avatarUrl} alt={contact.name} className="w-full h-full rounded-full object-cover" />
+                                  ) : (
+                                    <span>{contact.name?.charAt(0).toUpperCase() || "C"}</span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="min-w-[160px] max-w-[260px]">
+                                <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
+                                  <span className="truncate">{contact.name}</span>
+                                  {(isClient || contact.isFaturado) && (
+                                    <span title="Cliente Confirmado (Faturado)">
+                                      <BadgeCheck size={14} className="text-emerald-500 shrink-0" />
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                  <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
+                                    #{contact.id.slice(0, 8)}
+                                  </span>
+                                  {contactDept?.name && (
+                                    <span
+                                      className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[9px] font-bold border shrink-0"
+                                      style={{
+                                        backgroundColor: `${contactDept.color}18`,
+                                        borderColor: `${contactDept.color}40`,
+                                        color: contactDept.color,
+                                      }}
+                                    >
+                                      <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: contactDept.color }} />
+                                      {contactDept.name}
+                                    </span>
+                                  )}
+                                  {(contact.dataHealthScore || 0) >= 75 || (contact.cpfCnpj && contact.cep) ? (
+                                    <span 
+                                      title="Ficha Cadastral Completa (100%)" 
+                                      className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[9px] font-bold bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/30 shrink-0"
+                                    >
+                                      <ShieldCheck size={10} className="text-cyan-500 dark:text-cyan-400" /> Ficha 100%
+                                    </span>
+                                  ) : (
+                                    <span 
+                                      title="Cadastro Básico (Pendente de CPF/Endereço)" 
+                                      className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[9px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 shrink-0"
+                                    >
+                                      <FileText size={9} className="text-slate-400" /> Básico
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
-                                #{contact.id.slice(0, 8)}
-                              </span>
-                              {(contact.dataHealthScore || 0) >= 75 || (contact.cpfCnpj && contact.cep) ? (
-                                <span 
-                                  title="Ficha Cadastral Completa (100%)" 
-                                  className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[9px] font-bold bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/30 shrink-0"
-                                >
-                                  <ShieldCheck size={10} className="text-cyan-500 dark:text-cyan-400" /> Ficha 100%
-                                </span>
-                              ) : (
-                                <span 
-                                  title="Cadastro Básico (Pendente de CPF/Endereço)" 
-                                  className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[9px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 shrink-0"
-                                >
-                                  <FileText size={9} className="text-slate-400" /> Básico
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
+                          );
+                        })()}
                       </td>
 
                       {/* Contato Info: Telefone / Email / CPF / Cidade */}
