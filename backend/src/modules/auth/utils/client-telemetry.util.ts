@@ -62,6 +62,18 @@ export function parseDeviceAndBrowser(userAgentHeader?: string): { device: strin
   return { device, browser };
 }
 
+export function isMobilePlatform(userAgent?: string, device?: string): boolean {
+  const ua = userAgent || '';
+  const dev = device || '';
+  if (/mobile|android|iphone|ipad|ipod|blackberry|opera mini|iemobile|wpdesktop/i.test(ua)) {
+    return true;
+  }
+  if (['iPhone', 'iPad', 'Android', 'Mobile'].includes(dev)) {
+    return true;
+  }
+  return false;
+}
+
 export async function resolveClientLocation(ip: string): Promise<{ city: string; state: string; country: string }> {
   // IPs locais ou privados
   if (

@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../shared/database/prisma.service';
-import { ClientTelemetry } from '../utils/client-telemetry.util';
+import { ClientTelemetry, isMobilePlatform } from '../utils/client-telemetry.util';
 import * as crypto from 'crypto';
 import { clearUserSessionCache } from '../jwt.strategy';
 
@@ -12,6 +12,7 @@ export class SessionService {
 
   /**
    * Registra uma nova sessão ativa após login bem-sucedido
+   * Aplica o Modelo Híbrido Inteligente (1 Web + 1 Mobile por usuário simultaneamente)
    */
   async createSession(params: {
     userId: string;
@@ -22,6 +23,40 @@ export class SessionService {
     trustedUntil?: Date;
   }) {
     try {
+      // 1. Enforça Modelo Híbrido Inteligente: 1 Web + 1 Mobile por usuário
+      const incomingIsMobile = isMobilePlatform(params.telemetry.userAgent, params.telemetry.device);
+      const incomingPlatform = incomingIsMobile ? 'MOBILE' : 'WEB';
+
+      // Busca sessões ativas existentes do mesmo usuário
+      const existingSessions = await this.prisma.activeSession.findMany({
+        where: {
+          userId: params.userId,
+          isRevoked: false,
+        },
+      });
+
+      // Revoga sessões da MESMA plataforma (Web derruba Web anterior; Mobile derruba Mobile anterior)
+      for (const s of existingSessions) {
+        const sIsMobile = isMobilePlatform(s.userAgent || '', s.device || '');
+        const sPlatform = sIsMobile ? 'MOBILE' : 'WEB';
+
+        if (sPlatform === incomingPlatform) {
+          await this.prisma.activeSession.update({
+            where: { id: s.id },
+            data: {
+              isRevoked: true,
+              revokedAt: new Date(),
+            },
+          });
+          this.logger.log(
+            `[HYBRID_SESSION_ENFORCED] Sessão ${s.id} (${sPlatform}) do usuário ${params.userId} revogada devido a novo login na plataforma ${incomingPlatform}.`,
+          );
+        }
+      }
+
+      // Limpa cache de sessões em memória para refletir revogação imediatamente
+      clearUserSessionCache();
+
       return await this.prisma.activeSession.create({
         data: {
           userId: params.userId,
