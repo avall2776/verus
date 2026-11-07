@@ -4290,6 +4290,94 @@ function InboxContent() {
                   const prevDateLabel = prevMsg ? getWhatsAppDateLabel(prevMsg.createdAt) : null;
                   const showDateDivider = i === 0 || currentDateLabel !== prevDateLabel;
 
+                  // Classificação de Tipo para Remover Balão Externo ao Redor de Mídias (Áudio, Documento, Vídeo, Imagem, Localização)
+                  const isAudioMsg = Boolean(
+                    msg.type === 'audio' ||
+                    msg.type === 'voice' ||
+                    msg.type === 'ptt' ||
+                    (!!msg.mediaUrl && /\.(ogg|opus|mp3|m4a|wav|webm)($|\?)/i.test(msg.mediaUrl)) ||
+                    msg.content?.includes('🎤')
+                  );
+                  const isVideoMsg = Boolean(
+                    msg.type === 'video' ||
+                    (msg.type !== 'image' && msg.type !== 'document' && !!msg.mediaUrl && /\.(mp4|mov|webm|mkv|avi)($|\?)/i.test(msg.mediaUrl))
+                  );
+                  const isImageMsg = Boolean(msg.mediaUrl && msg.type === 'image');
+                  const isLocationMsg = Boolean(
+                    msg.type === 'location' ||
+                    (!!msg.mediaUrl && msg.mediaUrl.includes('maps.google.com')) ||
+                    msg.content?.includes('📍')
+                  );
+                  const isDocMsg = Boolean(
+                    msg.type === 'document' ||
+                    (!!msg.mediaUrl &&
+                      !/\.(mp4|mov|webm|ogg|opus|mp3|m4a|wav|jpg|jpeg|png|webp|gif)($|\?)/i.test(msg.mediaUrl) &&
+                      !msg.mediaUrl.includes('maps.google.com') &&
+                      msg.type !== 'audio' &&
+                      msg.type !== 'video' &&
+                      msg.type !== 'image' &&
+                      msg.type !== 'location')
+                  );
+
+                  let cleanedTextContent = msg.content || '';
+                  if (isImageMsg) {
+                    cleanedTextContent = cleanedTextContent.replace(/\n*📷 \[Análise da Imagem\]:[\s\S]*$/i, '').trim();
+                    if (cleanedTextContent === '📷 Foto') cleanedTextContent = '';
+                  }
+                  if (isVideoMsg && cleanedTextContent.startsWith('📹')) {
+                    cleanedTextContent = '';
+                  }
+                  const hasVisibleText = Boolean(
+                    cleanedTextContent &&
+                    !isAudioMsg &&
+                    !isDocMsg &&
+                    !isLocationMsg &&
+                    !cleanedTextContent.startsWith('📍')
+                  );
+                  const isBorderlessMedia = Boolean(
+                    !msg.isInternal && (isAudioMsg || isDocMsg || isVideoMsg || isImageMsg || isLocationMsg)
+                  );
+
+                  const formattedMsgTime = new Date(msg.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                  const statusTicksNode = isMe && !msg.isInternal ? (
+                    <span 
+                      title={
+                        msg.status === 'read' ? 'Lida' :
+                        msg.status === 'delivered' ? 'Entregue' :
+                        msg.status === 'sent' ? 'Enviada' :
+                        msg.status === 'failed' || msg.status === 'error' ? 'Falha no envio da mensagem.' :
+                        'Enviando...'
+                      } 
+                      onClick={(e) => {
+                        if (msg.status === 'failed' || msg.status === 'error') {
+                          e.stopPropagation();
+                          handleRetryFailedMessage(msg);
+                        }
+                      }}
+                      className={`inline-flex items-center ${msg.status === 'failed' || msg.status === 'error' ? 'cursor-pointer hover:scale-110 transition-transform' : ''}`}
+                    >
+                      {msg.status === 'read' ? (
+                        <CheckCheck size={14} className="text-blue-600 dark:text-[#53bdeb] shrink-0" />
+                      ) : msg.status === 'delivered' ? (
+                        <CheckCheck size={14} className="text-slate-500 dark:text-slate-300 shrink-0" />
+                      ) : msg.status === 'sent' ? (
+                        <Check size={14} className="text-slate-500 dark:text-slate-300 shrink-0" />
+                      ) : msg.status === 'failed' || msg.status === 'error' ? (
+                        <AlertCircle size={13} className="text-rose-500 dark:text-rose-400 shrink-0" />
+                      ) : (
+                        <Clock size={12} className="text-slate-500 dark:text-slate-300 shrink-0" />
+                      )}
+                    </span>
+                  ) : null;
+
+                  const mediaSurfaceClasses = isMe
+                    ? (isWhatsApp
+                        ? 'vallor-media-item vallor-msg-outbound bg-[#005C4B] text-[#E9EDEF] border border-[#00A884]/25'
+                        : 'vallor-media-item vallor-msg-outbound bg-[#DBEAFE] text-slate-900 border border-blue-200/90 dark:bg-[#1C325E] dark:text-white dark:border-sky-400/20')
+                    : (isWhatsApp
+                        ? 'vallor-media-item vallor-msg-inbound bg-[#202C33] text-[#E9EDEF] border border-[#2A3942]'
+                        : 'vallor-media-item vallor-msg-inbound bg-white text-slate-800 border border-slate-200/90 dark:bg-[#111C35] dark:text-slate-100 dark:border-slate-700/50');
+
                   return (
                     <div key={msg.id || `msg-${i}`} className="flex flex-col">
                       {/* Pílula de Data Centralizada (WhatsApp Date Divider) */}
@@ -4301,22 +4389,24 @@ function InboxContent() {
                         </div>
                       )}
 
-                      {/* Balão de Mensagem WhatsApp */}
+                      {/* Container da Mensagem (Balão apenas para Texto; Mídias ficam diretas sem balão externo) */}
                       <div 
                         id={`msg-${msg.id}`} 
                         onClick={() => setSelectedMessageForAction(prev => prev === msg.id ? null : msg.id)}
                         className={`flex flex-col max-w-[85%] sm:max-w-[70%] md:max-w-[65%] ${isMe ? 'self-end items-end' : 'self-start items-start'} relative group my-0.5 cursor-pointer sm:cursor-default`}
                       >
-                        <div className={`text-sm shadow-sm relative transition-all pt-1.5 pb-1.5 px-3 min-w-[85px] ${
-                          msg.isInternal
-                            ? 'bg-amber-50 text-amber-900 border border-amber-300 dark:bg-[#281b0a] dark:text-amber-100 dark:border-amber-500/30 rounded-lg rounded-tr-none'
-                            : isMe
-                              ? (isWhatsApp 
-                                  ? 'bg-[#005C4B] text-[#E9EDEF] shadow-sm border border-[rgba(0,92,75,0.4)] rounded-lg rounded-tr-none' 
-                                  : 'bg-blue-600 text-white shadow-sm border border-blue-500/30 dark:bg-blue-600 dark:text-white dark:border-blue-700/30 rounded-lg rounded-tr-none')
-                              : (isWhatsApp 
-                                  ? 'bg-[#202C33] text-[#E9EDEF] shadow-sm border border-[#222D34] rounded-lg rounded-tl-none' 
-                                  : 'bg-white text-slate-800 shadow-sm border border-slate-200/80 dark:bg-[#1E293B] dark:text-slate-100 dark:border-slate-700/50 rounded-lg rounded-tl-none')
+                        <div className={`text-sm relative transition-all ${
+                          isBorderlessMedia
+                            ? 'bg-transparent border-none shadow-none p-0 min-w-0'
+                            : msg.isInternal
+                              ? 'pt-1.5 pb-1.5 px-3 min-w-[85px] shadow-sm bg-amber-50 text-amber-900 border border-amber-300 dark:bg-[#281b0a] dark:text-amber-100 dark:border-amber-500/30 rounded-2xl rounded-tr-sm'
+                              : isMe
+                                ? (isWhatsApp 
+                                    ? 'vallor-text-bubble vallor-msg-outbound pt-1.5 pb-1.5 px-3.5 min-w-[85px] shadow-sm bg-[#005C4B] text-[#E9EDEF] border border-[#00A884]/25 rounded-2xl rounded-tr-sm' 
+                                    : 'vallor-text-bubble vallor-msg-outbound pt-1.5 pb-1.5 px-3.5 min-w-[85px] shadow-sm bg-[#DBEAFE] text-slate-900 border border-blue-200/90 dark:bg-[#1C325E] dark:text-white dark:border-sky-400/20 rounded-2xl rounded-tr-sm')
+                                : (isWhatsApp 
+                                    ? 'vallor-text-bubble vallor-msg-inbound pt-1.5 pb-1.5 px-3.5 min-w-[85px] shadow-sm bg-[#202C33] text-[#E9EDEF] border border-[#2A3942] rounded-2xl rounded-tl-sm' 
+                                    : 'vallor-text-bubble vallor-msg-inbound pt-1.5 pb-1.5 px-3.5 min-w-[85px] shadow-sm bg-white text-slate-800 border border-slate-200/90 dark:bg-[#111C35] dark:text-slate-100 dark:border-slate-700/50 rounded-2xl rounded-tl-sm')
                         }`}>
                           {/* Barra de Ações (Hover no desktop e toque no mobile) com Ícones Vetoriais de Alto Padrão */}
                           {!msg.isInternal && (
@@ -4387,21 +4477,6 @@ function InboxContent() {
                             </>
                           )}
 
-                          {/* Cauda SVG do Balão WhatsApp */}
-                          {msg.isInternal ? (
-                            <svg className="absolute -top-[0.5px] -right-2 text-amber-50 dark:text-[#281b0a] pointer-events-none drop-shadow-sm" width="9" height="13" viewBox="0 0 9 13">
-                              <path fill="currentColor" d="M0 0h6.5c1.1 0 1.8.9 1.3 1.9l-5.2 9.8c-.7 1.4-2.6.8-2.6-.8V0z" />
-                            </svg>
-                          ) : isMe ? (
-                            <svg className={`absolute -top-[0.5px] -right-2 ${isWhatsApp ? 'text-[#005C4B]' : 'text-blue-600 dark:text-blue-600'} pointer-events-none drop-shadow-sm`} width="9" height="13" viewBox="0 0 9 13">
-                              <path fill="currentColor" d="M0 0h6.5c1.1 0 1.8.9 1.3 1.9l-5.2 9.8c-.7 1.4-2.6.8-2.6-.8V0z" />
-                            </svg>
-                          ) : (
-                            <svg className={`absolute -top-[0.5px] -left-2 ${isWhatsApp ? 'text-[#202C33]' : 'text-white dark:text-[#1E293B]'} pointer-events-none drop-shadow-sm`} width="9" height="13" viewBox="0 0 9 13">
-                              <path fill="currentColor" d="M9 0H2.5C1.4 0 .7.9 1.2 1.9l5.2 9.8c.7 1.4 2.6.8 2.6-.8V0z" />
-                            </svg>
-                          )}
-
                           {/* Identificador de Nota Interna */}
                           {msg.isInternal && (
                             <div className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400 font-bold mb-1 pb-0.5 border-b border-amber-300 dark:border-amber-500/20 text-[10px] uppercase tracking-wider">
@@ -4425,26 +4500,24 @@ function InboxContent() {
                                 e.stopPropagation();
                                 scrollToMessage(msg.quotedMessage.id);
                               }}
-                              className={`mb-2 p-2 rounded-lg border-l-4 text-xs cursor-pointer select-none transition-all ${
-                                isMe 
-                                  ? 'bg-black/25 hover:bg-black/35 border-white text-white' 
-                                  : 'bg-slate-100/95 hover:bg-slate-200/90 border-emerald-600 text-slate-900 border border-slate-200/90 dark:bg-black/40 dark:hover:bg-black/50 dark:border-emerald-400 dark:text-slate-100 dark:border-transparent'
+                              className={`mb-1.5 p-2 rounded-xl border-l-4 text-xs cursor-pointer select-none transition-all ${
+                                isBorderlessMedia
+                                  ? `${mediaSurfaceClasses} border-l-cyan-400`
+                                  : isMe 
+                                    ? 'bg-black/10 dark:bg-black/25 hover:bg-black/15 dark:hover:bg-black/35 border-blue-600 dark:border-cyan-400 text-slate-900 dark:text-white' 
+                                    : 'bg-slate-100/95 hover:bg-slate-200/90 border-emerald-600 text-slate-900 dark:bg-black/30 dark:hover:bg-black/40 dark:border-emerald-400 dark:text-slate-100'
                               }`}
                               title="Ir para a mensagem original"
                             >
                               <div className={`font-bold text-[11px] flex items-center gap-1 mb-0.5 ${
                                 isMe 
-                                  ? 'text-white' 
-                                  : 'text-emerald-800 dark:text-emerald-400'
+                                  ? 'text-blue-700 dark:text-cyan-300' 
+                                  : 'text-emerald-700 dark:text-emerald-400'
                               }`}>
                                 <Reply size={11} className="rotate-180 shrink-0" />
                                 <span className="truncate">{msg.quotedMessage.senderName || (msg.quotedMessage.direction === 'OUTBOUND' ? 'Você' : (activeContactData?.name || 'Cliente'))}</span>
                               </div>
-                              <div className={`text-[11px] font-medium line-clamp-2 ${
-                                isMe 
-                                  ? 'text-white/95' 
-                                  : 'text-slate-900 dark:text-slate-100'
-                              }`}>
+                              <div className="text-[11px] font-medium line-clamp-2 opacity-90">
                                 {msg.quotedMessage.content || (
                                   msg.quotedMessage.type === 'image' ? '📷 Foto' :
                                   msg.quotedMessage.type === 'video' ? '🎥 Vídeo' :
@@ -4455,19 +4528,19 @@ function InboxContent() {
                             </div>
                           )}
 
-                          {/* Renderização de Imagens */}
-                          {msg.mediaUrl && msg.type === 'image' && (
-                            <div className="mb-2">
+                          {/* Renderização de Imagens (Sem balão externo ao redor) */}
+                          {isImageMsg && (
+                            <div className="flex flex-col">
                               {getMediaUrl(msg.mediaUrl, 'image') ? (
                                 <div 
                                   onClick={() => setLightboxImage({ url: getMediaUrl(msg.mediaUrl, 'image'), title: msg.content || 'Imagem' })}
-                                  className="relative group cursor-pointer overflow-hidden rounded-xl border border-slate-200 dark:border-white/10 shadow-md inline-block max-w-full"
+                                  className="relative group cursor-pointer overflow-hidden rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-md inline-block max-w-full"
                                   title="Clique para expandir em tela cheia"
                                 >
                                   <img 
                                     src={getMediaUrl(msg.mediaUrl, 'image')} 
                                     alt={msg.content || "Anexo"} 
-                                    className="rounded-xl max-h-64 sm:max-h-72 object-cover transition-transform duration-300 group-hover:scale-[1.02]" 
+                                    className="rounded-2xl max-h-64 sm:max-h-72 object-cover transition-transform duration-300 group-hover:scale-[1.02]" 
                                     onError={(e) => {
                                       const driveId = extractGoogleDriveId(msg.mediaUrl);
                                       const target = e.currentTarget;
@@ -4476,11 +4549,18 @@ function InboxContent() {
                                       } else {
                                         target.style.display = 'none';
                                         if (target.parentElement) {
-                                          target.parentElement.innerHTML = '<div class="flex items-center gap-2 p-3 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-400 text-xs"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg><span>Mídia indisponível</span></div>';
+                                          target.parentElement.innerHTML = '<div class="flex items-center gap-2 p-3 rounded-2xl bg-slate-100 dark:bg-[#111C35] border border-slate-200 dark:border-white/10 text-slate-400 text-xs"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg><span>Mídia indisponível</span></div>';
                                         }
                                       }
                                     }}
                                   />
+                                  {/* Horário Flutuante no Canto da Imagem (Estilo WhatsApp) */}
+                                  {!hasVisibleText && (
+                                    <span className="absolute bottom-2 right-2.5 px-2 py-0.5 rounded-full bg-black/60 text-white text-[10px] inline-flex items-center gap-1 backdrop-blur-xs select-none">
+                                      <span>{formattedMsgTime}</span>
+                                      {statusTicksNode}
+                                    </span>
+                                  )}
                                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
                                     <div className="p-2.5 rounded-full bg-black/60 text-white backdrop-blur-sm shadow-xl flex items-center gap-1.5 text-xs font-semibold transform translate-y-1 group-hover:translate-y-0 transition-transform duration-200">
                                       <ZoomIn size={16} className="text-cyan-400" />
@@ -4489,16 +4569,18 @@ function InboxContent() {
                                   </div>
                                 </div>
                               ) : (
-                                <div className={`flex items-center gap-2.5 p-3 rounded-xl border text-xs shadow-sm ${
-                                  isMe
-                                    ? 'bg-white border-slate-200/90 text-slate-900'
-                                    : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400'
-                                }`}>
-                                  <ImageIcon size={18} className={`shrink-0 ${isMe ? 'text-slate-600' : 'opacity-50 text-slate-400'}`} />
-                                  <div className="flex flex-col min-w-0">
-                                    <span className={`font-bold ${isMe ? 'text-slate-900' : 'text-slate-700 dark:text-slate-300'}`}>Imagem expirada do WhatsApp</span>
-                                    <span className={`text-[10px] ${isMe ? 'text-slate-600 font-medium' : 'text-slate-400'}`}>Mídia expirada no servidor original do WhatsApp</span>
+                                <div className={`${mediaSurfaceClasses} flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-2xl text-xs shadow-sm`}>
+                                  <div className="flex items-center gap-2.5 min-w-0">
+                                    <ImageIcon size={17} className="shrink-0 opacity-70" />
+                                    <div className="flex flex-col min-w-0">
+                                      <span className="font-semibold truncate leading-tight">Imagem expirada do WhatsApp</span>
+                                      <span className="text-[10px] opacity-75 truncate leading-tight">Mídia expirada no servidor original</span>
+                                    </div>
                                   </div>
+                                  <span className="inline-flex items-center gap-1 text-[11px] opacity-75 shrink-0 self-end leading-none">
+                                    <span>{formattedMsgTime}</span>
+                                    {statusTicksNode}
+                                  </span>
                                 </div>
                               )}
                             </div>
@@ -4506,7 +4588,7 @@ function InboxContent() {
 
                           {/* Botão de Análise de Imagem sob demanda ou Card Colapsável */}
                           {msg.type === 'image' && (
-                            <div className="px-1 flex flex-col gap-1 mb-2">
+                            <div className="px-1 flex flex-col gap-1 mt-1">
                               {msg.content?.includes('📷 [Análise da Imagem]:') ? (
                                 <>
                                   <button
@@ -4517,31 +4599,19 @@ function InboxContent() {
                                         [msg.id]: !prev[msg.id]
                                       }));
                                     }}
-                                    className={`flex items-center gap-1.5 text-[11px] font-bold transition-colors cursor-pointer self-start ${
-                                      isMe
-                                        ? 'text-white hover:text-white/80 bg-white/20 hover:bg-white/30 border border-white/25 px-2 py-0.5 rounded-lg'
-                                        : 'text-blue-600 hover:text-blue-700 dark:text-cyan-400 dark:hover:text-cyan-300'
-                                    }`}
+                                    className="flex items-center gap-1.5 text-[11px] font-bold transition-colors cursor-pointer self-start text-blue-600 hover:text-blue-700 dark:text-cyan-400 dark:hover:text-cyan-300"
                                   >
                                     <Sparkles size={12} className="shrink-0" />
                                     <span>{expandedImageAnalyses[msg.id] ? 'Ocultar análise da imagem' : 'Ver análise da imagem'}</span>
                                   </button>
 
                                   {expandedImageAnalyses[msg.id] && (
-                                    <div className={`rounded-xl p-2.5 text-xs animate-in fade-in slide-in-from-top-1 shadow-inner ${
-                                      isMe
-                                        ? 'bg-white text-slate-900 border border-slate-200 shadow-md'
-                                        : 'bg-slate-100 dark:bg-black/40 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-cyan-500/30'
-                                    }`}>
-                                      <div className={`flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider mb-1 ${
-                                        isMe ? 'text-blue-600' : 'text-blue-600 dark:text-cyan-400'
-                                      }`}>
+                                    <div className={`${mediaSurfaceClasses} rounded-xl p-2.5 text-xs animate-in fade-in slide-in-from-top-1 shadow-sm`}>
+                                      <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider mb-1 text-blue-600 dark:text-cyan-400">
                                         <Sparkles size={11} />
                                         <span>Análise Visual por IA</span>
                                       </div>
-                                      <p className={`italic leading-relaxed text-[11px] ${
-                                        isMe ? 'text-slate-800 font-medium' : 'text-slate-700 dark:text-slate-300'
-                                      }`}>
+                                      <p className="italic leading-relaxed text-[11px] opacity-90">
                                         "{msg.content.split('📷 [Análise da Imagem]:')[1]?.trim()}"
                                       </p>
                                     </div>
@@ -4552,11 +4622,7 @@ function InboxContent() {
                                   type="button"
                                   disabled={analyzingImageIds[msg.id]}
                                   onClick={() => handleAnalyzeImage(msg.id)}
-                                  className={`flex items-center gap-1.5 text-[11px] font-bold disabled:opacity-50 transition-colors cursor-pointer self-start mt-0.5 ${
-                                    isMe
-                                      ? 'text-white hover:text-white/80 bg-white/20 hover:bg-white/30 border border-white/25 px-2.5 py-1 rounded-lg backdrop-blur-sm'
-                                      : 'text-blue-600 hover:text-blue-700 dark:text-cyan-400 dark:hover:text-cyan-300'
-                                  }`}
+                                  className="flex items-center gap-1.5 text-[11px] font-bold disabled:opacity-50 transition-colors cursor-pointer self-start text-blue-600 hover:text-blue-700 dark:text-cyan-400 dark:hover:text-cyan-300"
                                   title="Analisar e descrever o conteúdo desta imagem com IA sob demanda"
                                 >
                                   <Sparkles size={12} className={`shrink-0 ${analyzingImageIds[msg.id] ? 'animate-spin' : ''}`} />
@@ -4566,30 +4632,36 @@ function InboxContent() {
                             </div>
                           )}
 
-                          {/* Renderização de Vídeos (WhatsApp Nativo e Google Drive) */}
-                          {(msg.type === 'video' || (msg.type !== 'image' && msg.type !== 'document' && !!msg.mediaUrl && /\.(mp4|mov|webm|mkv|avi)($|\?)/i.test(msg.mediaUrl))) && (
-                            <div className="mb-2 max-w-[320px] sm:max-w-[380px]">
+                          {/* Renderização de Vídeos (Sem balão externo ao redor) */}
+                          {isVideoMsg && (
+                            <div className="max-w-[320px] sm:max-w-[380px]">
                               {msg.mediaUrl?.includes('lvdphjhftfjdifnzuazd.supabase.co') ? (
-                                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-700 dark:text-amber-400 text-xs">
-                                  <Video size={18} className="shrink-0 opacity-70" />
-                                  <div className="flex flex-col min-w-0">
-                                    <span className="font-semibold text-slate-800 dark:text-slate-200">Vídeo histórico indisponível</span>
-                                    <span className="text-[10px] text-slate-500 dark:text-slate-400">Armazenamento do CRM anterior desativado</span>
+                                <div className={`${mediaSurfaceClasses} flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-2xl text-xs shadow-sm`}>
+                                  <div className="flex items-center gap-2.5 min-w-0">
+                                    <Video size={17} className="shrink-0 text-amber-500 dark:text-amber-400" />
+                                    <div className="flex flex-col min-w-0">
+                                      <span className="font-semibold truncate leading-tight">Vídeo histórico indisponível</span>
+                                      <span className="text-[10px] opacity-75 truncate leading-tight">Armazenamento do CRM anterior desativado</span>
+                                    </div>
                                   </div>
+                                  <span className="inline-flex items-center gap-1 text-[11px] opacity-75 shrink-0 self-end leading-none">
+                                    <span>{formattedMsgTime}</span>
+                                    {statusTicksNode}
+                                  </span>
                                 </div>
                               ) : getMediaUrl(msg.mediaUrl, 'video') ? (
-                                <div className="relative overflow-hidden rounded-xl border border-slate-200 dark:border-white/10 shadow-md bg-black">
+                                <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-md bg-black">
                                   <video
                                     src={getMediaUrl(msg.mediaUrl, 'video')}
                                     controls
                                     preload="metadata"
                                     playsInline
-                                    className="rounded-xl w-full max-h-72 object-contain bg-black"
+                                    className="rounded-2xl w-full max-h-72 object-contain bg-black"
                                     onError={(e) => {
                                       const target = e.currentTarget;
                                       const driveId = extractGoogleDriveId(msg.mediaUrl);
                                       if (driveId && target.parentElement) {
-                                        target.parentElement.innerHTML = `<div class="p-4 flex flex-col items-center justify-center gap-2 text-center bg-slate-900/95 text-white rounded-xl border border-white/10 shadow-lg"><div class="flex items-center gap-2 text-cyan-400 text-xs font-bold"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>Vídeo Google Drive</div><p class="text-[11px] text-slate-300">Reprodução em aba externa para visualização integral</p><a href="https://drive.google.com/file/d/${driveId}/view?usp=sharing" target="_blank" rel="noopener noreferrer" class="mt-1 px-4 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold transition-all shadow-md flex items-center gap-1.5">Abrir Vídeo ↗</a></div>`;
+                                        target.parentElement.innerHTML = `<div class="p-4 flex flex-col items-center justify-center gap-2 text-center bg-slate-900/95 text-white rounded-2xl border border-white/10 shadow-lg"><div class="flex items-center gap-2 text-cyan-400 text-xs font-bold"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>Vídeo Google Drive</div><p class="text-[11px] text-slate-300">Reprodução em aba externa para visualização integral</p><a href="https://drive.google.com/file/d/${driveId}/view?usp=sharing" target="_blank" rel="noopener noreferrer" class="mt-1 px-4 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold transition-all shadow-md flex items-center gap-1.5">Abrir Vídeo ↗</a></div>`;
                                         return;
                                       }
                                       target.style.display = 'none';
@@ -4600,46 +4672,57 @@ function InboxContent() {
                                   >
                                     Seu navegador não suporta reprodução de vídeo.
                                   </video>
+                                  {!hasVisibleText && (
+                                    <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-black/60 text-white text-[10px] inline-flex items-center gap-1 backdrop-blur-xs select-none pointer-events-none">
+                                      <span>{formattedMsgTime}</span>
+                                      {statusTicksNode}
+                                    </span>
+                                  )}
                                 </div>
                               ) : (
-                                <div className={`flex items-center gap-2.5 p-3 rounded-xl border text-xs shadow-sm ${
-                                  isMe
-                                    ? 'bg-white border-slate-200/90 text-slate-900'
-                                    : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400'
-                                }`}>
-                                  <Video size={18} className={`shrink-0 ${isMe ? 'text-slate-600' : 'opacity-50'}`} />
-                                  <div className="flex flex-col min-w-0">
-                                    <span className={`font-bold ${isMe ? 'text-slate-900' : 'text-slate-700 dark:text-slate-300'}`}>Vídeo expirado do WhatsApp</span>
-                                    <span className={`text-[10px] ${isMe ? 'text-slate-600 font-medium' : 'text-slate-400'}`}>Arquivo expirou no servidor da Meta</span>
+                                <div className={`${mediaSurfaceClasses} flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-2xl text-xs shadow-sm`}>
+                                  <div className="flex items-center gap-2.5 min-w-0">
+                                    <Video size={17} className="shrink-0 opacity-70" />
+                                    <div className="flex flex-col min-w-0">
+                                      <span className="font-semibold truncate leading-tight">Vídeo expirado do WhatsApp</span>
+                                      <span className="text-[10px] opacity-75 truncate leading-tight">Arquivo expirou no servidor da Meta</span>
+                                    </div>
                                   </div>
+                                  <span className="inline-flex items-center gap-1 text-[11px] opacity-75 shrink-0 self-end leading-none">
+                                    <span>{formattedMsgTime}</span>
+                                    {statusTicksNode}
+                                  </span>
                                 </div>
-                              )}
-                              {msg.content && !msg.content.startsWith('📹') && (
-                                <p className="text-xs text-slate-700 dark:text-slate-300 mt-1 px-1">{msg.content}</p>
                               )}
                             </div>
                           )}
 
-                          {/* Renderização de Localização (Mapas e Coordenadas) */}
-                          {(msg.type === 'location' || (!!msg.mediaUrl && msg.mediaUrl.includes('maps.google.com')) || msg.content?.includes('📍')) && (
-                            <div className="flex flex-col gap-2 p-3 my-1.5 rounded-xl bg-emerald-50 dark:bg-slate-900/80 border border-emerald-300 dark:border-emerald-500/40 text-slate-800 dark:text-white max-w-[320px] shadow-lg">
-                              <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
-                                  <MapPin size={18} />
+                          {/* Renderização de Localização (Sem balão externo ao redor) */}
+                          {isLocationMsg && (
+                            <div className={`${mediaSurfaceClasses} flex flex-col gap-2 p-3 rounded-2xl max-w-[320px] shadow-sm`}>
+                              <div className="flex items-center justify-between gap-2.5">
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+                                    <MapPin size={18} />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <h4 className="text-xs font-bold truncate">Localização compartilhada</h4>
+                                    <p className="text-[11px] opacity-80 truncate">
+                                      {msg.content?.replace(/^📍\s*/, '') || 'Coordenadas do WhatsApp'}
+                                    </p>
+                                  </div>
                                 </div>
-                                <div className="min-w-0">
-                                  <h4 className="text-xs font-bold text-emerald-950 dark:text-white truncate">Localização compartilhada</h4>
-                                  <p className="text-[11px] text-emerald-800 dark:text-slate-300 truncate">
-                                    {msg.content?.replace(/^📍\s*/, '') || 'Coordenadas do WhatsApp'}
-                                  </p>
-                                </div>
+                                <span className="inline-flex items-center gap-1 text-[11px] opacity-75 shrink-0 self-end leading-none">
+                                  <span>{formattedMsgTime}</span>
+                                  {statusTicksNode}
+                                </span>
                               </div>
                               {(msg.mediaUrl || msg.content?.includes('http')) && (
                                 <a
                                   href={msg.mediaUrl || (msg.content?.match(/https?:\/\/[^\s]+/)?.[0] || '#')}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-700 dark:text-emerald-300 hover:text-emerald-900 dark:hover:text-white text-xs font-semibold transition-colors mt-0.5"
+                                  className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-700 dark:text-emerald-300 text-xs font-semibold transition-colors"
                                 >
                                   <MapPin size={13} />
                                   <span>Abrir no Google Maps</span>
@@ -4649,35 +4732,41 @@ function InboxContent() {
                             </div>
                           )}
 
-                          {/* Player de Áudio Monocromático VERSUS com Play/Pause Fluido, Barra Interativa, Velocidade (1x, 1.5x, 2x) e Transcrição Whisper */}
-                          {(msg.type === 'audio' || msg.type === 'voice' || msg.type === 'ptt' || (!!msg.mediaUrl && /\.(ogg|opus|mp3|m4a|wav|webm)($|\?)/i.test(msg.mediaUrl)) || msg.content?.includes('🎤')) && (
-                            <div className="flex flex-col gap-1.5 my-1.5 w-full min-w-[260px] max-w-[340px] mb-2">
+                          {/* Player de Áudio Direto na Tela (Sem Balão Externo ao Redor) */}
+                          {isAudioMsg && (
+                            <div className="flex flex-col gap-1 w-full min-w-[260px] max-w-[340px]">
                               {getAudioSrc(msg.mediaUrl) ? (
                                 <VersusAudioPlayer
                                   src={getAudioSrc(msg.mediaUrl)}
                                   downloadName={`audio_${msg.id || Date.now()}.ogg`}
                                   isOutbound={isMe}
+                                  timestamp={formattedMsgTime}
+                                  statusNode={statusTicksNode}
                                 />
                               ) : msg.mediaUrl?.includes('mmg.whatsapp.net') ? (
-                                <div className={`flex items-center gap-2.5 p-3 rounded-2xl border text-xs shadow-sm ${
-                                  isMe
-                                    ? 'bg-white border-slate-200/90 text-slate-900'
-                                    : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400'
-                                }`}>
-                                  <Volume2 size={16} className={`shrink-0 ${isMe ? 'text-slate-600' : 'opacity-50 text-slate-400'}`} />
-                                  <div className="flex flex-col min-w-0">
-                                    <span className={`font-bold ${isMe ? 'text-slate-900' : 'text-slate-700 dark:text-slate-300'}`}>Áudio expirado do WhatsApp</span>
-                                    <span className={`text-[10px] ${isMe ? 'text-slate-600 font-medium' : 'text-slate-400'}`}>Arquivo criptografado expirou no servidor da Meta</span>
+                                <div className={`${mediaSurfaceClasses} flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-2xl text-xs shadow-sm`}>
+                                  <div className="flex items-center gap-2.5 min-w-0">
+                                    <Volume2 size={16} className="shrink-0 opacity-70" />
+                                    <div className="flex flex-col min-w-0">
+                                      <span className="font-semibold truncate leading-tight">Áudio expirado do WhatsApp</span>
+                                      <span className="text-[10px] opacity-75 truncate leading-tight">Arquivo criptografado expirou na Meta</span>
+                                    </div>
                                   </div>
+                                  <span className="inline-flex items-center gap-1 text-[11px] opacity-75 shrink-0 self-end leading-none">
+                                    <span>{formattedMsgTime}</span>
+                                    {statusTicksNode}
+                                  </span>
                                 </div>
                               ) : (
-                                <div className={`flex items-center gap-2 p-3 rounded-2xl border text-xs shadow-md ${
-                                  isMe
-                                    ? 'bg-white border-slate-200/90 text-slate-900'
-                                    : 'bg-amber-50 dark:bg-[#0B1224] border-amber-300 dark:border-amber-500/30 text-amber-800 dark:text-amber-300'
-                                }`}>
-                                  <Volume2 size={16} className={`shrink-0 animate-pulse ${isMe ? 'text-blue-600' : 'text-amber-500 dark:text-amber-400'}`} />
-                                  <span className={isMe ? 'font-semibold text-slate-900' : ''}>Processando áudio recebido...</span>
+                                <div className={`${mediaSurfaceClasses} flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-2xl text-xs shadow-sm`}>
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <Volume2 size={16} className="shrink-0 animate-pulse text-cyan-500 dark:text-cyan-400" />
+                                    <span className="font-medium truncate">Processando áudio recebido...</span>
+                                  </div>
+                                  <span className="inline-flex items-center gap-1 text-[11px] opacity-75 shrink-0 self-end leading-none">
+                                    <span>{formattedMsgTime}</span>
+                                    {statusTicksNode}
+                                  </span>
                                 </div>
                               )}
 
@@ -4693,31 +4782,19 @@ function InboxContent() {
                                           [audioKey]: !prev[audioKey]
                                         }));
                                       }}
-                                      className={`flex items-center gap-1.5 text-[11px] font-bold transition-colors cursor-pointer self-start ${
-                                        isMe
-                                          ? 'text-white hover:text-white/80 bg-white/20 hover:bg-white/30 border border-white/25 px-2 py-0.5 rounded-lg'
-                                          : 'text-blue-600 hover:text-blue-700 dark:text-cyan-400 dark:hover:text-cyan-300'
-                                      }`}
+                                      className="flex items-center gap-1.5 text-[11px] font-bold transition-colors cursor-pointer self-start text-blue-600 hover:text-blue-700 dark:text-cyan-400 dark:hover:text-cyan-300"
                                     >
                                       <FileText size={12} className="shrink-0" />
                                       <span>{expandedTranscriptions[audioKey] ? 'Ocultar transcrição' : 'Ver transcrição'}</span>
                                     </button>
 
                                     {expandedTranscriptions[audioKey] && (
-                                      <div className={`rounded-xl p-2.5 text-xs animate-in fade-in slide-in-from-top-1 shadow-inner ${
-                                        isMe
-                                          ? 'bg-white text-slate-900 border border-slate-200 shadow-md'
-                                          : 'bg-slate-100 dark:bg-black/40 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-cyan-500/30'
-                                      }`}>
-                                        <div className={`flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider mb-1 ${
-                                          isMe ? 'text-blue-600' : 'text-blue-600 dark:text-cyan-400'
-                                        }`}>
+                                      <div className={`${mediaSurfaceClasses} rounded-xl p-2.5 text-xs animate-in fade-in slide-in-from-top-1 shadow-sm`}>
+                                        <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider mb-1 text-blue-600 dark:text-cyan-400">
                                           <Sparkles size={11} />
                                           <span>Transcrição por IA</span>
                                         </div>
-                                        <p className={`italic leading-relaxed text-[11px] ${
-                                          isMe ? 'text-slate-800 font-medium' : 'text-slate-700 dark:text-slate-300'
-                                        }`}>
+                                        <p className="italic leading-relaxed text-[11px] opacity-90">
                                           "{msg.audioTranscription}"
                                         </p>
                                       </div>
@@ -4728,11 +4805,7 @@ function InboxContent() {
                                     type="button"
                                     disabled={transcribingMessageIds[msg.id]}
                                     onClick={() => handleTranscribeAudio(msg.id)}
-                                    className={`flex items-center gap-1.5 text-[11px] font-bold disabled:opacity-50 transition-colors cursor-pointer self-start mt-0.5 ${
-                                      isMe
-                                        ? 'text-white hover:text-white/80 bg-white/20 hover:bg-white/30 border border-white/25 px-2.5 py-1 rounded-lg backdrop-blur-sm'
-                                        : 'text-blue-600 hover:text-blue-700 dark:text-cyan-400 dark:hover:text-cyan-300'
-                                    }`}
+                                    className="flex items-center gap-1.5 text-[11px] font-bold disabled:opacity-50 transition-colors cursor-pointer self-start text-blue-600 hover:text-blue-700 dark:text-cyan-400 dark:hover:text-cyan-300"
                                     title="Transcrever áudio sob demanda com IA"
                                   >
                                     {transcribingMessageIds[msg.id] ? (
@@ -4752,102 +4825,60 @@ function InboxContent() {
                             </div>
                           )}
 
-                          {/* Documentos e Anexos Diversos */}
-                          {(msg.type === 'document' || (!!msg.mediaUrl && !/\.(mp4|mov|webm|ogg|opus|mp3|m4a|wav|jpg|jpeg|png|webp|gif)($|\?)/i.test(msg.mediaUrl) && !msg.mediaUrl.includes('maps.google.com') && msg.type !== 'audio' && msg.type !== 'video' && msg.type !== 'image' && msg.type !== 'location')) && (
-                            <div className={`flex items-center gap-2.5 p-2.5 rounded-xl transition-colors mb-2 max-w-[340px] ${
-                              isMe
-                                ? 'bg-white border border-slate-200/90 shadow-sm'
-                                : 'bg-slate-100 hover:bg-slate-200 border border-slate-200 dark:bg-black/30 dark:hover:bg-black/40 dark:border-white/10'
-                            }`}>
-                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                                isMe ? 'bg-rose-100 border border-rose-300 text-rose-600' : 'bg-rose-500/20 border border-rose-500/40 text-rose-600 dark:text-rose-400'
-                              }`}>
-                                <FileText size={18} />
+                          {/* Documentos e Anexos Diretos na Tela (Sem Balão Externo ao Redor) */}
+                          {isDocMsg && (
+                            <div className={`${mediaSurfaceClasses} flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl transition-colors max-w-[350px] shadow-sm`}>
+                              <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-rose-500/15 border border-rose-500/30 text-rose-600 dark:text-rose-400">
+                                <FileText size={17} />
                               </div>
                               <div className="min-w-0 flex-1">
-                                <span className={`text-xs truncate font-bold block ${
-                                  isMe ? 'text-slate-900' : 'text-slate-800 dark:text-slate-200'
-                                }`} title={msg.content || 'Documento anexo'}>
+                                <span className="text-xs truncate font-bold block leading-tight" title={msg.content || 'Documento anexo'}>
                                   {msg.content?.replace(/^📄\s*\[Documento:\s*([^\]]+)\][\s\S]*$/, '$1') || (isGoogleDriveUrl(msg.mediaUrl) ? 'Catálogo / PDF (Google Drive)' : 'Documento anexo')}
                                 </span>
-                                <span className={`text-[10px] uppercase tracking-wider font-semibold ${
-                                  isMe ? 'text-slate-500' : 'text-slate-500 dark:text-slate-400'
-                                }`}>
-                                  {isGoogleDriveUrl(msg.mediaUrl) ? 'GOOGLE DRIVE' : msg.mediaUrl?.includes('lvdphjhftfjdifnzuazd.supabase.co') ? 'ARQUIVO HISTÓRICO' : (msg.mediaUrl ? (msg.mediaUrl.split('.').pop()?.split('?')[0] || 'PDF') : 'DOCUMENTO')}
-                                </span>
+                                <div className="flex items-center gap-1.5 text-[10px] opacity-75 font-medium mt-0.5">
+                                  <span className="uppercase tracking-wider">
+                                    {isGoogleDriveUrl(msg.mediaUrl) ? 'GOOGLE DRIVE' : msg.mediaUrl?.includes('lvdphjhftfjdifnzuazd.supabase.co') ? 'ARQUIVO HISTÓRICO' : (msg.mediaUrl ? (msg.mediaUrl.split('.').pop()?.split('?')[0] || 'PDF') : 'DOCUMENTO')}
+                                  </span>
+                                  <span>•</span>
+                                  <span className="inline-flex items-center gap-1">
+                                    <span>{formattedMsgTime}</span>
+                                    {statusTicksNode}
+                                  </span>
+                                </div>
                               </div>
                               {getMediaUrl(msg.mediaUrl, 'document') && !msg.mediaUrl?.includes('lvdphjhftfjdifnzuazd.supabase.co') ? (
                                 <a 
                                   href={getMediaUrl(msg.mediaUrl, 'document')} 
                                   target="_blank" 
                                   rel="noopener noreferrer" 
-                                  className={`ml-auto p-1 rounded-lg transition-colors ${
-                                    isMe ? 'text-blue-600 hover:text-blue-800 hover:bg-blue-50' : 'text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-white hover:bg-white/10'
-                                  }`}
+                                  className="ml-auto p-1.5 rounded-lg transition-colors text-blue-600 dark:text-cyan-400 hover:bg-black/10 dark:hover:bg-white/10"
                                   title="Abrir anexo"
                                 >
                                   <ExternalLink size={14} />
                                 </a>
                               ) : msg.mediaUrl?.includes('mmg.whatsapp.net') ? (
-                                <span className="ml-auto text-slate-400 text-[10px] italic">Expirado</span>
+                                <span className="ml-auto opacity-60 text-[10px] italic">Expirado</span>
                               ) : null}
                             </div>
                           )}
 
                           {/* Conteúdo de Texto com Horário e Ticks Inline WhatsApp */}
-                          <div className="text-[0.92rem] leading-relaxed break-words relative">
-                            {(() => {
-                              let textToRender = msg.content || '';
-                              if (msg.type === 'image') {
-                                textToRender = textToRender.replace(/\n*📷 \[Análise da Imagem\]:[\s\S]*$/i, '').trim();
-                                if (textToRender === '📷 Foto') textToRender = '';
-                              }
-                              if (textToRender && msg.type !== 'audio' && msg.type !== 'document' && msg.type !== 'location' && !textToRender.startsWith('📍')) {
-                                return <span className="whitespace-pre-wrap select-text">{textToRender}</span>;
-                              }
-                              return null;
-                            })()}
-                            {/* Horário e Ticks WhatsApp (Float-Right Inline) */}
-                            <span className={`inline-flex items-center gap-1 float-right ml-2.5 mt-1 select-none text-[11px] ${
-                              msg.isInternal 
-                                ? 'text-amber-700/80 dark:text-amber-400/80' 
-                                : isMe 
-                                  ? 'text-blue-100' 
-                                  : 'text-slate-400'
-                            }`}>
-                              <span>{new Date(msg.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                              {isMe && !msg.isInternal && (
-                                <span 
-                                  title={
-                                    msg.status === 'read' ? 'Lida' :
-                                    msg.status === 'delivered' ? 'Entregue' :
-                                    msg.status === 'sent' ? 'Enviada' :
-                                    msg.status === 'failed' || msg.status === 'error' ? 'Falha no envio da mensagem.' :
-                                    'Enviando...'
-                                  } 
-                                  onClick={(e) => {
-                                    if (msg.status === 'failed' || msg.status === 'error') {
-                                      e.stopPropagation();
-                                      handleRetryFailedMessage(msg);
-                                    }
-                                  }}
-                                  className={`inline-flex items-center ${msg.status === 'failed' || msg.status === 'error' ? 'cursor-pointer hover:scale-110 transition-transform' : ''}`}
-                                >
-                                  {msg.status === 'read' ? (
-                                    <CheckCheck size={14} className="text-white dark:text-[#53bdeb] shrink-0" />
-                                  ) : msg.status === 'delivered' ? (
-                                    <CheckCheck size={14} className="text-blue-100 dark:text-slate-400 shrink-0" />
-                                  ) : msg.status === 'sent' ? (
-                                    <Check size={14} className="text-blue-100 dark:text-slate-400 shrink-0" />
-                                  ) : msg.status === 'failed' || msg.status === 'error' ? (
-                                    <AlertCircle size={13} className="text-rose-300 dark:text-rose-400 shrink-0" />
-                                  ) : (
-                                    <Clock size={12} className="text-blue-100 dark:text-slate-400 shrink-0" />
-                                  )}
-                                </span>
+                          {(!isBorderlessMedia || hasVisibleText) && (
+                            <div className={`text-[0.92rem] leading-relaxed break-words relative ${isBorderlessMedia && hasVisibleText ? `${mediaSurfaceClasses} mt-1 px-3.5 py-2 rounded-2xl shadow-sm` : ''}`}>
+                              {hasVisibleText && (
+                                <span className="whitespace-pre-wrap select-text">{cleanedTextContent}</span>
                               )}
-                            </span>
-                          </div>
+                              {/* Horário e Ticks WhatsApp (Float-Right Inline) */}
+                              <span className={`inline-flex items-center gap-1 float-right ml-2.5 mt-1 select-none text-[11px] ${
+                                msg.isInternal 
+                                  ? 'text-amber-700/80 dark:text-amber-400/80' 
+                                  : 'opacity-75'
+                              }`}>
+                                <span>{formattedMsgTime}</span>
+                                {statusTicksNode}
+                              </span>
+                            </div>
+                          )}
 
                           {/* Alerta de Falha de Envio */}
                           {isMe && !msg.isInternal && (msg.status === 'failed' || msg.status === 'error') && (

@@ -1730,4 +1730,44 @@ html.theme-whatsapp .vallor-inbox-pill-idle:hover {
   background-color: #2A3E4A !important;
 }
 
+/* ==========================================================================
+   VARIAÇÃO TONAL DE MENSAGENS DO INBOX (CLIENTE vs OPERADOR) NOS 3 TEMAS
+   ========================================================================== */
+/* 1. TEMA DARK */
+html.dark:not(.theme-whatsapp) .vallor-msg-inbound {
+  background-color: #111C35 !important;
+  border-color: rgba(148, 163, 184, 0.16) !important;
+  color: #F1F5F9 !important;
+}
+html.dark:not(.theme-whatsapp) .vallor-msg-outbound {
+  background-color: #1C325E !important;
+  border-color: rgba(56, 189, 248, 0.24) !important;
+  color: #FFFFFF !important;
+}
+
+/* 2. TEMA CLEAN */
+html:not(.dark):not(.theme-whatsapp) .vallor-msg-inbound {
+  background-color: #FFFFFF !important;
+  border-color: #CBD5E1 !important;
+  color: #0F172A !important;
+}
+html:not(.dark):not(.theme-whatsapp) .vallor-msg-outbound {
+  background-color: #DBEAFE !important;
+  border-color: #BFDBFE !important;
+  color: #0F172A !important;
+}
+
+/* 3. TEMA WHATSAPP */
+html.theme-whatsapp .vallor-msg-inbound {
+  background-color: #202C33 !important;
+  border-color: #2A3942 !important;
+  color: #E9EDEF !important;
+}
+html.theme-whatsapp .vallor-msg-outbound {
+  background-color: #005C4B !important;
+  border-color: rgba(0, 168, 132, 0.3) !important;
+  color: #E9EDEF !important;
+}
+
+
 

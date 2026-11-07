@@ -8,6 +8,8 @@ interface VersusAudioPlayerProps {
   downloadName?: string;
   className?: string;
   isOutbound?: boolean;
+  timestamp?: string;
+  statusNode?: React.ReactNode;
 }
 
 export const VersusAudioPlayer: React.FC<VersusAudioPlayerProps> = ({
@@ -15,6 +17,8 @@ export const VersusAudioPlayer: React.FC<VersusAudioPlayerProps> = ({
   downloadName = 'audio_vallor.ogg',
   className = '',
   isOutbound = false,
+  timestamp,
+  statusNode,
 }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const progressBarRef = useRef<HTMLDivElement | null>(null);
@@ -114,26 +118,34 @@ export const VersusAudioPlayer: React.FC<VersusAudioPlayerProps> = ({
 
   if (hasError) {
     return (
-      <div className={`flex items-center gap-2.5 p-2.5 rounded-2xl select-none ${
+      <div className={`vallor-media-item ${isOutbound ? 'vallor-msg-outbound' : 'vallor-msg-inbound'} flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-2xl select-none shadow-sm ${
         isOutbound 
-          ? 'bg-white border border-slate-200/90 text-slate-900 shadow-sm' 
-          : 'bg-amber-500/10 border border-amber-500/25 text-amber-700 dark:text-amber-400'
+          ? 'bg-[#DBEAFE] dark:bg-[#1C325E] border border-blue-200/90 dark:border-sky-400/20 text-slate-900 dark:text-white' 
+          : 'bg-white dark:bg-[#111C35] border border-slate-200/90 dark:border-slate-700/50 text-slate-800 dark:text-slate-100'
       } ${className}`}>
-        <Volume2 size={16} className={`shrink-0 ${isOutbound ? 'text-slate-600' : 'opacity-70'}`} />
-        <div className="flex flex-col min-w-0">
-          <span className={`text-xs font-bold truncate ${isOutbound ? 'text-slate-900' : 'text-slate-800 dark:text-slate-200'}`}>Áudio histórico indisponível</span>
-          <span className={`text-[10px] ${isOutbound ? 'text-slate-600 font-medium' : 'text-slate-500 dark:text-slate-400'}`}>Armazenamento do CRM anterior desativado</span>
+        <div className="flex items-center gap-2.5 min-w-0">
+          <Volume2 size={16} className={`shrink-0 ${isOutbound ? 'text-blue-600 dark:text-cyan-400' : 'text-amber-500 dark:text-amber-400'}`} />
+          <div className="flex flex-col min-w-0">
+            <span className="text-xs font-semibold truncate leading-tight">Áudio histórico indisponível</span>
+            <span className="text-[10px] opacity-75 truncate leading-tight">Armazenamento do CRM anterior desativado</span>
+          </div>
         </div>
+        {(timestamp || statusNode) && (
+          <span className="inline-flex items-center gap-1 text-[11px] opacity-75 shrink-0 self-end leading-none ml-1">
+            {timestamp && <span>{timestamp}</span>}
+            {statusNode}
+          </span>
+        )}
       </div>
     );
   }
 
   return (
     <div
-      className={`flex flex-col gap-2 p-3 rounded-2xl select-none ${
+      className={`vallor-media-item ${isOutbound ? 'vallor-msg-outbound' : 'vallor-msg-inbound'} flex flex-col gap-1.5 px-3.5 py-2.5 rounded-2xl select-none shadow-sm ${
         isOutbound
-          ? 'bg-white border border-slate-200/90 shadow-md text-slate-900'
-          : 'bg-slate-100 dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800/90 shadow-sm dark:shadow-lg text-slate-800 dark:text-white'
+          ? 'bg-[#DBEAFE] dark:bg-[#1C325E] border border-blue-200/90 dark:border-sky-400/20 text-slate-900 dark:text-white'
+          : 'bg-white dark:bg-[#111C35] border border-slate-200/90 dark:border-slate-700/50 text-slate-800 dark:text-slate-100'
       } ${className}`}
     >
       {/* Elemento de áudio nativo */}
@@ -159,49 +171,48 @@ export const VersusAudioPlayer: React.FC<VersusAudioPlayerProps> = ({
       />
 
       {/* Linha Principal de Controles */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5">
         {/* Botão Play / Pause Fluido */}
         <button
           type="button"
           onClick={togglePlay}
-          className="w-10 h-10 rounded-full bg-gradient-to-tr from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 active:scale-95 flex items-center justify-center text-white shadow-[0_0_15px_rgba(6,182,212,0.35)] transition-all cursor-pointer shrink-0"
+          className="w-9 h-9 rounded-full bg-gradient-to-tr from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 active:scale-95 flex items-center justify-center text-white shadow-sm transition-all cursor-pointer shrink-0"
           title={isPlaying ? 'Pausar áudio' : 'Reproduzir áudio'}
         >
           {isPlaying ? (
-            <Pause size={18} className="fill-current text-white" />
+            <Pause size={16} className="fill-current text-white" />
           ) : (
-            <Play size={18} className="fill-current text-white ml-0.5" />
+            <Play size={16} className="fill-current text-white ml-0.5" />
           )}
         </button>
 
         {/* Trilha e Barra de Progresso Interativa */}
-        <div className="flex-1 flex flex-col justify-center gap-1.5 py-1">
+        <div className="flex-1 flex flex-col justify-center gap-1 pt-1">
           <div
             ref={progressBarRef}
             onClick={handleSeek}
-            className={`relative h-2 w-full hover:h-2.5 rounded-full cursor-pointer transition-all overflow-hidden group/bar ${
-              isOutbound ? 'bg-slate-200 border border-slate-300/50' : 'bg-slate-200 dark:bg-slate-800/90'
-            }`}
+            className="relative h-1.5 w-full hover:h-2 rounded-full cursor-pointer transition-all overflow-hidden group/bar bg-slate-300/70 dark:bg-slate-950/60"
             title="Clique para avançar ou retroceder"
           >
             {/* Barra preenchida com gradiente monocromático ciano/azul do Vallor */}
             <div
-              className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all group-hover/bar:brightness-125"
+              className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full transition-all group-hover/bar:brightness-125"
               style={{ width: `${progressPercent}%` }}
             />
             {/* Marcador deslizante de posição */}
             <div
-              className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-[0_0_6px_rgba(0,0,0,0.6)] opacity-0 group-hover/bar:opacity-100 transition-opacity pointer-events-none"
-              style={{ left: `calc(${progressPercent}% - 6px)` }}
+              className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-white rounded-full shadow opacity-0 group-hover/bar:opacity-100 transition-opacity pointer-events-none"
+              style={{ left: `calc(${progressPercent}% - 5px)` }}
             />
           </div>
 
-          {/* Timers de Reprodução com Alto Contraste */}
-          <div className={`flex items-center justify-between text-[11px] font-mono ${
-            isOutbound ? 'text-slate-800 font-bold' : 'text-slate-600 dark:text-slate-300 font-medium'
-          }`}>
-            <span>{formatTime(currentTime)}</span>
-            <span>{formatTime(duration)}</span>
+          {/* Timers de Reprodução + Horário da Mensagem */}
+          <div className="flex items-center justify-between text-[10px] font-mono opacity-80 leading-none pt-0.5">
+            <span>{isPlaying || currentTime > 0 ? formatTime(currentTime) : formatTime(duration)}</span>
+            <span className="inline-flex items-center gap-1 font-sans">
+              {timestamp && <span>{timestamp}</span>}
+              {statusNode}
+            </span>
           </div>
         </div>
 
@@ -209,11 +220,7 @@ export const VersusAudioPlayer: React.FC<VersusAudioPlayerProps> = ({
         <button
           type="button"
           onClick={cyclePlaybackRate}
-          className={`px-2 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer shrink-0 shadow-sm ${
-            isOutbound
-              ? 'bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-900 active:scale-95'
-              : 'bg-white hover:bg-slate-200 border border-slate-300 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 dark:border-slate-700/60 dark:hover:border-cyan-500/50 text-cyan-600 dark:text-cyan-300 hover:text-cyan-700 dark:hover:text-white'
-          }`}
+          className="px-2 py-0.5 rounded-full text-[10px] font-bold transition-all cursor-pointer shrink-0 bg-black/10 dark:bg-black/25 hover:bg-black/20 dark:hover:bg-black/40"
           title="Alterar velocidade de reprodução"
         >
           {playbackRate}x
@@ -225,14 +232,10 @@ export const VersusAudioPlayer: React.FC<VersusAudioPlayerProps> = ({
           download={downloadName}
           target="_blank"
           rel="noopener noreferrer"
-          className={`p-2 rounded-lg transition-all cursor-pointer shrink-0 shadow-sm ${
-            isOutbound
-              ? 'bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-800 hover:text-slate-950 active:scale-95'
-              : 'bg-white hover:bg-slate-200 border border-slate-300 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 dark:border-slate-700/60 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white'
-          }`}
+          className="p-1.5 rounded-full transition-all cursor-pointer shrink-0 bg-black/10 dark:bg-black/25 hover:bg-black/20 dark:hover:bg-black/40 opacity-80 hover:opacity-100"
           title="Baixar áudio"
         >
-          <Download size={14} />
+          <Download size={13} />
         </a>
       </div>
     </div>
