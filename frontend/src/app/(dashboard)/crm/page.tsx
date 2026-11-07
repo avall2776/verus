@@ -15,19 +15,10 @@ import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 import { useRouter, useSearchParams } from "next/navigation";
-import dynamic from "next/dynamic";
+import { DealModal } from "@/components/crm/DealModal";
 import { useSocket } from "@/components/ui/SocketProvider";
 import { useTheme } from "@/contexts/ThemeContext";
 import ModalPortal from "@/components/ui/ModalPortal";
-
-// Carregamento assíncrono sob demanda do DealModal para carregamento instantâneo do CRM
-const DealModal = dynamic(
-  () => import("@/components/crm/DealModal").then((mod) => mod.DealModal),
-  {
-    ssr: false,
-    loading: () => null,
-  }
-);
 
 const DEFAULT_COLUMNS = [
   { id: "seed", title: "LEADS SEED", color: "text-gray-400", bgLight: "bg-gray-500/10", borderLight: "border-gray-500/30", borderColor: "border-t-gray-500" },
@@ -124,29 +115,6 @@ function CrmContent() {
   );
   // Filtro de dia específico para Timeline no Mobile ('all' = semana toda)
   const [mobileTimelineSelectedDay, setMobileTimelineSelectedDay] = useState<string>('all');
-
-  // Limite progressivo de cards por coluna para performance extrema no Mobile
-  const [isMobile, setIsMobile] = useState<boolean>(false);
-  const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({});
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(typeof window !== 'undefined' && window.innerWidth < 768);
-    };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  // Pré-carrega o chunk do DealModal em background para resposta imediata (0ms) ao tocar no card
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const timer = setTimeout(() => {
-        import("@/components/crm/DealModal").catch(() => {});
-      }, 600);
-      return () => clearTimeout(timer);
-    }
-  }, []);
 
   const toggleTimelineStage = (stageId: string) => {
     setCollapsedTimelineStages(prev =>
@@ -962,7 +930,9 @@ function CrmContent() {
     return { weekTotalCards: cards, weekTotalAmount: amount };
   }, [weekDays, filteredDeals]);
 
-  if (loading) return <div className="p-8 text-gray-500 font-semibold">Carregando CRM...</div>;
+  if (!mounted || loading) {
+    return <div className="p-8 text-gray-500 font-semibold">Carregando CRM...</div>;
+  }
 
   return (
     <div 
@@ -1536,81 +1506,52 @@ function CrmContent() {
 
                         {/* Droppable Area */}
                         <Droppable droppableId={col.id}>
-                          {(provided, snapshot) => {
-                            const defaultLimit = isMobile ? 15 : 40;
-                            const limit = visibleCounts[col.id] || defaultLimit;
-                            const displayedDeals = columnDeals.slice(0, limit);
-                            const hasMore = columnDeals.length > limit;
-
-                            return (
-                              <div 
-                                ref={provided.innerRef}
-                                {...provided.droppableProps}
-                                className={`flex-1 flex flex-col gap-3 overflow-y-auto rounded-xl p-1 transition-all duration-200 ease-out custom-scrollbar min-h-[150px] ${
-                                  snapshot.isDraggingOver 
-                                    ? isWhatsApp 
-                                      ? 'border-2 border-dashed border-[#00A884]/50 bg-[#00A884]/5'
-                                      : `border-2 border-dashed ${col.borderColor.replace('border-t-', 'border-')}/40 bg-${col.color.replace('text-', '').split('-')[0]}-500/5` 
-                                    : 'border-2 border-transparent'
-                                }`}
-                              >
-                                {displayedDeals.map((deal, index) => (
-                                  <DealCard 
-                                    key={deal.id} 
-                                    deal={deal} 
-                                    index={index} 
-                                    col={col} 
-                                    onOpenDeal={handleOpenDeal}
-                                    isMobile={isMobile}
-                                  />
-                                ))}
-                                {provided.placeholder}
-
-                                {hasMore && (
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setVisibleCounts(prev => ({
-                                        ...prev,
-                                        [col.id]: (prev[col.id] || defaultLimit) + 30
-                                      }));
-                                    }}
-                                    className={`w-full py-2.5 px-3 text-xs font-bold rounded-xl transition-all border my-1 shadow-sm flex items-center justify-center gap-1.5 active:scale-98 ${
-                                      isWhatsApp
-                                        ? 'bg-[#202C33] hover:bg-[#2A3942] text-[#00A884] border-[#222D34]'
-                                        : 'bg-slate-100 hover:bg-slate-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-slate-700 dark:text-gray-200 border-slate-300 dark:border-gray-700'
-                                    }`}
-                                  >
-                                    <span>Ver mais {columnDeals.length - limit} cards</span>
-                                    <ChevronDown size={14} />
-                                  </button>
-                                )}
-                                
-                                {/* Add Card Button (Footer da coluna) */}
-                                <button 
-                                  onClick={() => {
-                                    setSelectedDeal({
-                                      id: `new-${Date.now()}`,
-                                      title: "Nova Oportunidade",
-                                      status: col.id,
-                                      value: 0,
-                                      contact: { name: "", phone: "", email: "" },
-                                      isNew: true
-                                    });
-                                  }}
-                                  className={`mt-auto shrink-0 w-full rounded-xl py-3 text-sm font-semibold transition-colors flex items-center justify-center gap-2 shadow-xs border ${
-                                    isWhatsApp
-                                      ? 'bg-[#111B21] hover:bg-[#202C33] border-[#222D34] hover:border-[#00A884]/40 text-[#8696A0] hover:text-[#00A884]'
-                                      : 'bg-white hover:bg-slate-50 dark:bg-[#161b22] dark:hover:bg-[#1c2128] border-slate-200 dark:border-gray-800 hover:border-slate-300 dark:hover:border-gray-600 text-slate-600 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white'
-                                  }`}
-                                >
-                                  <Plus size={16} /> Adicionar novo cartão
-                                </button>
-                              </div>
-                            );
-                          }}
+                          {(provided, snapshot) => (
+                            <div 
+                              ref={provided.innerRef}
+                              {...provided.droppableProps}
+                              className={`flex-1 flex flex-col gap-3 overflow-y-auto rounded-xl p-1 transition-all duration-200 ease-out custom-scrollbar min-h-[150px] ${
+                                snapshot.isDraggingOver 
+                                  ? isWhatsApp 
+                                    ? 'border-2 border-dashed border-[#00A884]/50 bg-[#00A884]/5'
+                                    : `border-2 border-dashed ${col.borderColor.replace('border-t-', 'border-')}/40 bg-${col.color.replace('text-', '').split('-')[0]}-500/5` 
+                                  : 'border-2 border-transparent'
+                              }`}
+                            >
+                              {columnDeals.map((deal, index) => (
+                                <DealCard 
+                                  key={deal.id} 
+                                  deal={deal} 
+                                  index={index} 
+                                  col={col} 
+                                  onOpenDeal={handleOpenDeal}
+                                />
+                              ))}
+                              {provided.placeholder}
+                            </div>
+                          )}
                         </Droppable>
+
+                        {/* Add Card Button (Footer da coluna) */}
+                        <button 
+                          onClick={() => {
+                            setSelectedDeal({
+                              id: `new-${Date.now()}`,
+                              title: "Nova Oportunidade",
+                              status: col.id,
+                              value: 0,
+                              contact: { name: "", phone: "", email: "" },
+                              isNew: true
+                            });
+                          }}
+                          className={`mt-auto shrink-0 w-full rounded-xl py-3 text-sm font-semibold transition-colors flex items-center justify-center gap-2 shadow-xs border ${
+                            isWhatsApp
+                              ? 'bg-[#111B21] hover:bg-[#202C33] border-[#222D34] hover:border-[#00A884]/40 text-[#8696A0] hover:text-[#00A884]'
+                              : 'bg-white hover:bg-slate-50 dark:bg-[#161b22] dark:hover:bg-[#1c2128] border-slate-200 dark:border-gray-800 hover:border-slate-300 dark:hover:border-gray-600 text-slate-600 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white'
+                          }`}
+                        >
+                          <Plus size={16} /> Adicionar novo cartão
+                        </button>
                       </div>
                     )}
                   </div>
@@ -3062,7 +3003,7 @@ function CrmContent() {
 }
 
 // Componente Isolado do Card no Kanban (Memoizado com comparação cirúrgica para 0ms de lag)
-const DealCard = React.memo(function DealCard({ deal, index, col, onOpenDeal, isMobile }: any) {
+const DealCard = React.memo(function DealCard({ deal, index, col, onOpenDeal }: any) {
   const { isWhatsApp } = useTheme();
   const [isExpanded, setIsExpanded] = useState(false);
   const contactTags = deal.contact?.tags || [];
@@ -3322,11 +3263,6 @@ const DealCard = React.memo(function DealCard({ deal, index, col, onOpenDeal, is
 
         </div>
   );
-
-  // No mobile, renderiza direto como div nativa: 0ms de lag, zero conflitos de toque e 0 overhead de drag
-  if (isMobile) {
-    return cardContent;
-  }
 
   return (
     <Draggable draggableId={deal.id} index={index}>
