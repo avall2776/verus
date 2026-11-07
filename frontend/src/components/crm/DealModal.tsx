@@ -47,6 +47,9 @@ function safeFormatDate(dateVal?: any, formatStr = "dd/MM/yyyy HH:mm"): string {
   }
 }
 
+// Cache em memória de usuários para resposta instantânea ao abrir cards
+let cachedDealUsers: any[] | null = null;
+
 export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: DealModalProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -194,12 +197,24 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
       ];
       setTimelineEvents(initialTimeline);
 
-      // Carregar Colaboradores
-      api.get('/deals/users')
-        .then(res => setUsers(res.data || []))
-        .catch(() => {
-          api.get('/users').then(res => setUsers(res.data || [])).catch(console.error);
-        });
+      // Carregar Colaboradores com cache instantâneo
+      if (cachedDealUsers && cachedDealUsers.length > 0) {
+        setUsers(cachedDealUsers);
+      } else {
+        api.get('/deals/users')
+          .then(res => {
+            const list = res.data || [];
+            cachedDealUsers = list;
+            setUsers(list);
+          })
+          .catch(() => {
+            api.get('/users').then(res => {
+              const list = res.data || [];
+              cachedDealUsers = list;
+              setUsers(list);
+            }).catch(console.error);
+          });
+      }
     }
   }, [isOpen, deal?.id]);
 

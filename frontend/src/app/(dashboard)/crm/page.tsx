@@ -15,10 +15,19 @@ import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 import { useRouter, useSearchParams } from "next/navigation";
-import { DealModal } from "@/components/crm/DealModal";
+import dynamic from "next/dynamic";
 import { useSocket } from "@/components/ui/SocketProvider";
 import { useTheme } from "@/contexts/ThemeContext";
 import ModalPortal from "@/components/ui/ModalPortal";
+
+// Carregamento assíncrono sob demanda do DealModal para carregamento instantâneo do CRM
+const DealModal = dynamic(
+  () => import("@/components/crm/DealModal").then((mod) => mod.DealModal),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);
 
 const DEFAULT_COLUMNS = [
   { id: "seed", title: "LEADS SEED", color: "text-gray-400", bgLight: "bg-gray-500/10", borderLight: "border-gray-500/30", borderColor: "border-t-gray-500" },
@@ -73,7 +82,7 @@ function formatRelativeTime(dateStr?: string | Date): string {
 function CrmContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isWhatsApp, theme } = useTheme();
+  const { isWhatsApp, isClean, isDark, theme } = useTheme();
   const [deals, setDeals] = useState<any[]>(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -125,8 +134,12 @@ function CrmContent() {
   );
   const [expandedDescriptions, setExpandedDescriptions] = useState<Record<string, boolean>>({});
 
-  // Linha do tempo: estágios colapsados
-  const [collapsedTimelineStages, setCollapsedTimelineStages] = useState<string[]>([]);
+  // Linha do tempo: estágios colapsados (INICIA SEMPRE COM TODOS OS ESTÁGIOS MINIMIZADOS/COLAPSADOS)
+  const [collapsedTimelineStages, setCollapsedTimelineStages] = useState<string[]>(() =>
+    DEFAULT_COLUMNS.map(c => c.id)
+  );
+  // Filtro de dia específico para Timeline no Mobile ('all' = semana toda)
+  const [mobileTimelineSelectedDay, setMobileTimelineSelectedDay] = useState<string>('all');
 
   const toggleTimelineStage = (stageId: string) => {
     setCollapsedTimelineStages(prev =>
@@ -335,13 +348,16 @@ function CrmContent() {
         const parsed = JSON.parse(savedCols);
         setColumns(parsed);
         setCollapsedTableStages(parsed.map((c: any) => c.id));
+        setCollapsedTimelineStages(parsed.map((c: any) => c.id));
       } catch (e) {
         setColumns(DEFAULT_COLUMNS);
         setCollapsedTableStages(DEFAULT_COLUMNS.map(c => c.id));
+        setCollapsedTimelineStages(DEFAULT_COLUMNS.map(c => c.id));
       }
     } else {
       setColumns(DEFAULT_COLUMNS);
       setCollapsedTableStages(DEFAULT_COLUMNS.map(c => c.id));
+      setCollapsedTimelineStages(DEFAULT_COLUMNS.map(c => c.id));
       localStorage.setItem('crm_columns', JSON.stringify(DEFAULT_COLUMNS));
     }
     const savedWidths = localStorage.getItem('crm_columns_widths');
@@ -451,8 +467,10 @@ function CrmContent() {
       setSelectedDeal(target);
       if (typeof window !== 'undefined' && target.id && !target.id.startsWith('new-')) {
         const url = new URL(window.location.href);
-        url.searchParams.set('dealId', target.id);
-        window.history.replaceState(null, '', url.toString());
+        if (url.searchParams.get('dealId') !== target.id) {
+          url.searchParams.set('dealId', target.id);
+          window.history.replaceState(null, '', url.toString());
+        }
       }
     } else if (dealId && !loading && deals.length > 0) {
       toast.error("Oportunidade não encontrada no CRM.");
@@ -464,10 +482,12 @@ function CrmContent() {
     setDealAction(null);
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
-      url.searchParams.delete('dealId');
-      url.searchParams.delete('id');
-      url.searchParams.delete('contactId');
-      window.history.replaceState(null, '', url.toString());
+      if (url.searchParams.has('dealId') || url.searchParams.has('id') || url.searchParams.has('contactId')) {
+        url.searchParams.delete('dealId');
+        url.searchParams.delete('id');
+        url.searchParams.delete('contactId');
+        window.history.replaceState(null, '', url.toString());
+      }
     }
   };
 
@@ -483,9 +503,10 @@ function CrmContent() {
   }, [searchQueryFromUrl]);
 
   useEffect(() => {
-    if (dealIdFromUrl && (!selectedDeal || selectedDeal.id !== dealIdFromUrl)) {
+    if (dealIdFromUrl) {
+      if (selectedDeal?.id === dealIdFromUrl) return;
       handleOpenDeal(dealIdFromUrl);
-    } else if (!dealIdFromUrl && contactIdFromUrl && (!selectedDeal || (selectedDeal.contactId !== contactIdFromUrl && selectedDeal.contact?.id !== contactIdFromUrl))) {
+    } else if (contactIdFromUrl && (!selectedDeal || (selectedDeal.contactId !== contactIdFromUrl && selectedDeal.contact?.id !== contactIdFromUrl))) {
       // 1. Procura primeiro oportunidade em andamento deste contato na memória
       const match = deals.find(d => 
         (d.contactId === contactIdFromUrl || d.contact?.id === contactIdFromUrl) &&
@@ -511,7 +532,7 @@ function CrmContent() {
           });
       }
     }
-  }, [dealIdFromUrl, contactIdFromUrl, deals, loading]);
+  }, [dealIdFromUrl, contactIdFromUrl]);
 
   const handleUpdateDeal = async (dealId: string, data: any) => {
     try {
@@ -940,13 +961,15 @@ function CrmContent() {
           : 'h-full w-full'
       }`}
     >
-      <DealModal 
-        deal={selectedDeal} 
-        isOpen={!!selectedDeal} 
-        onClose={handleCloseDealModal} 
-        onUpdate={handleUpdateDeal}
-        initialAction={dealAction}
-      />
+      {selectedDeal && (
+        <DealModal 
+          deal={selectedDeal} 
+          isOpen={!!selectedDeal} 
+          onClose={handleCloseDealModal} 
+          onUpdate={handleUpdateDeal}
+          initialAction={dealAction}
+        />
+      )}
 
       {/* Modal de Perda */}
       {lossModalState.isOpen && (
@@ -2218,14 +2241,26 @@ function CrmContent() {
       {/* 3. VISÃO EM LINHA DO TEMPO (TIMELINE SEMANAL)                             */}
       {/* ========================================================================= */}
       {viewMode === 'timeline' && (
-        <div className="flex-1 flex flex-col gap-4 animate-in fade-in-50 duration-200 overflow-hidden">
-          {/* Barra de Navegação do Período Semanal Sincronizada */}
-          <div className="bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800 rounded-xl p-3 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm shrink-0">
+        <div className="flex-1 flex flex-col gap-3.5 animate-in fade-in-50 duration-200 overflow-hidden">
+          {/* Barra de Navegação do Período Semanal Sincronizada (Compatível com os 3 Temas) */}
+          <div className={`p-3 rounded-xl border flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm shrink-0 transition-colors ${
+            isWhatsApp 
+              ? 'bg-[#111B21] border-[#222D34] text-[#E9EDEF]' 
+              : isClean 
+              ? 'bg-white border-slate-200 text-slate-800' 
+              : 'bg-[#161b22] border-gray-800 text-white'
+          }`}>
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={handlePrevWeek}
-                className="p-1.5 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border border-slate-300 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-300 dark:hover:text-white dark:border-gray-700 transition-colors flex items-center gap-1 text-xs font-semibold"
+                className={`p-1.5 px-2.5 rounded-lg border transition-colors flex items-center gap-1 text-xs font-semibold ${
+                  isWhatsApp 
+                    ? 'bg-[#202C33] hover:bg-[#2A3942] text-[#E9EDEF] border-[#222D34]' 
+                    : isClean 
+                    ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300' 
+                    : 'bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white border-gray-700'
+                }`}
                 title="Semana Anterior"
               >
                 <ChevronLeft size={15} />
@@ -2235,58 +2270,384 @@ function CrmContent() {
               <button
                 type="button"
                 onClick={handleTodayWeek}
-                className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 hover:text-slate-900 border border-slate-300 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 dark:border-gray-700 text-xs font-bold transition-colors flex items-center gap-1.5 shadow-sm"
+                className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors flex items-center gap-1.5 shadow-sm ${
+                  isWhatsApp 
+                    ? 'bg-[#00A884]/20 hover:bg-[#00A884]/30 text-[#00A884] border-[#00A884]/40' 
+                    : isClean 
+                    ? 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200' 
+                    : 'bg-primary/20 hover:bg-primary/30 text-primary-light border-primary/40'
+                }`}
               >
-                <Calendar size={13} className="text-primary" />
+                <Calendar size={13} className={isWhatsApp ? 'text-[#00A884]' : 'text-primary'} />
                 <span>Semana Atual</span>
               </button>
 
               <button
                 type="button"
                 onClick={handleNextWeek}
-                className="p-1.5 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border border-slate-300 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-300 dark:hover:text-white dark:border-gray-700 transition-colors flex items-center gap-1 text-xs font-semibold"
+                className={`p-1.5 px-2.5 rounded-lg border transition-colors flex items-center gap-1 text-xs font-semibold ${
+                  isWhatsApp 
+                    ? 'bg-[#202C33] hover:bg-[#2A3942] text-[#E9EDEF] border-[#222D34]' 
+                    : isClean 
+                    ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300' 
+                    : 'bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white border-gray-700'
+                }`}
                 title="Próxima Semana"
               >
                 <span className="hidden sm:inline">Próxima</span>
                 <ChevronRight size={15} />
               </button>
 
-              <div className="h-5 w-px bg-slate-200 dark:bg-gray-800 mx-1"></div>
+              <div className={`h-5 w-px mx-1 ${isWhatsApp ? 'bg-[#222D34]' : isClean ? 'bg-slate-200' : 'bg-gray-800'}`} />
 
-              <div className="flex items-center gap-2 text-slate-800 dark:text-white font-bold text-sm bg-slate-100 dark:bg-[#0d1117] px-3 py-1.5 rounded-lg border border-slate-200 dark:border-gray-800/80 shadow-inner">
-                <CalendarDays size={15} className="text-primary shrink-0" />
+              <div className={`flex items-center gap-2 font-bold text-sm px-3 py-1.5 rounded-lg border shadow-inner ${
+                isWhatsApp 
+                  ? 'bg-[#202C33] border-[#222D34] text-[#E9EDEF]' 
+                  : isClean 
+                  ? 'bg-slate-100 border-slate-200 text-slate-800' 
+                  : 'bg-[#0d1117] border-gray-800/80 text-white'
+              }`}>
+                <CalendarDays size={15} className={`shrink-0 ${isWhatsApp ? 'text-[#00A884]' : 'text-primary'}`} />
                 <span className="capitalize">{timelineWeekLabel}</span>
               </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-2.5 text-xs">
               {/* Badge Contador Semanal */}
-              <span className="bg-slate-50 dark:bg-[#0B1224] border border-slate-200 dark:border-gray-800 px-3 py-1.5 rounded-lg font-semibold text-slate-700 dark:text-gray-300 flex items-center gap-1.5 shadow-sm">
-                <span className="text-slate-900 dark:text-white font-bold">{weekTotalCards}</span> {weekTotalCards === 1 ? 'card nesta semana' : 'cards nesta semana'}
+              <span className={`px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 shadow-sm border ${
+                isWhatsApp 
+                  ? 'bg-[#202C33] border-[#222D34] text-[#8696A0]' 
+                  : isClean 
+                  ? 'bg-slate-50 border-slate-200 text-slate-700' 
+                  : 'bg-[#0B1224] border-gray-800 text-gray-300'
+              }`}>
+                <span className={`font-bold ${isWhatsApp ? 'text-[#E9EDEF]' : isClean ? 'text-slate-900' : 'text-white'}`}>
+                  {weekTotalCards}
+                </span> {weekTotalCards === 1 ? 'card na semana' : 'cards na semana'}
               </span>
 
               {/* Montante Financeiro Semanal */}
               {weekTotalAmount > 0 && (
-                <span className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 px-3 py-1.5 rounded-lg font-mono font-bold text-emerald-600 dark:text-emerald-400 shadow-sm">
+                <span className={`px-3 py-1.5 rounded-lg font-mono font-bold shadow-sm border ${
+                  isWhatsApp 
+                    ? 'bg-[#00A884]/15 border-[#00A884]/40 text-[#00A884]' 
+                    : isClean 
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-700' 
+                    : 'bg-emerald-950/30 border-emerald-800/40 text-emerald-400'
+                }`}>
                   Total: {formatCurrency(weekTotalAmount)}
                 </span>
               )}
             </div>
           </div>
 
-          {/* Grade da Timeline: Estágios na Lateral Esquerda + 7 Colunas dos Dias da Semana */}
-          <div className="flex-1 bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-lg flex flex-col min-h-0">
+          {/* ========================================================================= */}
+          {/* VISÃO MOBILE DEDICADA (< md) - ACORDEÃO DE ESTÁGIOS + CARDS OTIMIZADOS     */}
+          {/* ========================================================================= */}
+          <div className="md:hidden flex-1 flex flex-col gap-3 min-h-0 overflow-y-auto custom-scrollbar">
+            {/* Seletor Horizontal de Dias da Semana (Mobile) */}
+            <div className={`p-2.5 rounded-xl border flex flex-col gap-2 shadow-sm ${
+              isWhatsApp ? 'bg-[#111B21] border-[#222D34]' : isClean ? 'bg-white border-slate-200' : 'bg-[#161b22] border-gray-800'
+            }`}>
+              <div className="flex items-center justify-between text-[11px] font-bold px-1">
+                <span className={isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-500' : 'text-gray-400'}>
+                  Filtrar por Dia:
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (collapsedTimelineStages.length === columns.length) {
+                      setCollapsedTimelineStages([]);
+                    } else {
+                      setCollapsedTimelineStages(columns.map(c => c.id));
+                    }
+                  }}
+                  className={`text-[10px] uppercase font-extrabold tracking-wider transition-colors ${
+                    isWhatsApp ? 'text-[#00A884] hover:text-emerald-400' : 'text-primary hover:underline'
+                  }`}
+                >
+                  {collapsedTimelineStages.length === columns.length ? 'Expandir Todos' : 'Colapsar Todos'}
+                </button>
+              </div>
+
+              {/* Pílulas de Dias */}
+              <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1">
+                <button
+                  type="button"
+                  onClick={() => setMobileTimelineSelectedDay('all')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold shrink-0 transition-all border ${
+                    mobileTimelineSelectedDay === 'all'
+                      ? isWhatsApp
+                        ? 'bg-[#00A884] text-white border-[#00A884] shadow-sm'
+                        : 'bg-primary text-white border-primary shadow-sm'
+                      : isWhatsApp
+                      ? 'bg-[#202C33] text-[#8696A0] hover:text-[#E9EDEF] border-[#222D34]'
+                      : isClean
+                      ? 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-slate-200'
+                      : 'bg-gray-800 text-gray-300 hover:text-white border-gray-700'
+                  }`}
+                >
+                  Semana Toda ({weekTotalCards})
+                </button>
+
+                {weekDays.map((day, idx) => {
+                  const dayStr = day.date.toDateString();
+                  const isSelected = mobileTimelineSelectedDay === dayStr;
+                  const dayDealsCount = filteredDeals.filter(deal => {
+                    const rawDate = deal.expectedCloseDate || deal.updatedAt || deal.createdAt;
+                    if (!rawDate) return false;
+                    const d = new Date(rawDate);
+                    return !isNaN(d.getTime()) && d.toDateString() === dayStr;
+                  }).length;
+
+                  return (
+                    <button
+                      key={`mob-day-${idx}`}
+                      type="button"
+                      onClick={() => setMobileTimelineSelectedDay(isSelected ? 'all' : dayStr)}
+                      className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold shrink-0 transition-all border flex items-center gap-1.5 ${
+                        isSelected
+                          ? isWhatsApp
+                            ? 'bg-[#00A884] text-white border-[#00A884] shadow-sm'
+                            : 'bg-primary text-white border-primary shadow-sm'
+                          : day.isToday
+                          ? isWhatsApp
+                            ? 'bg-[#00A884]/20 text-[#00A884] border-[#00A884]/40 font-bold'
+                            : isClean
+                            ? 'bg-blue-50 text-blue-700 border-blue-200 font-bold'
+                            : 'bg-primary/20 text-primary-light border-primary/40 font-bold'
+                          : isWhatsApp
+                          ? 'bg-[#202C33] text-[#8696A0] hover:text-[#E9EDEF] border-[#222D34]'
+                          : isClean
+                          ? 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-slate-200'
+                          : 'bg-gray-800 text-gray-300 hover:text-white border-gray-700'
+                      }`}
+                    >
+                      <span>{day.dayName.slice(0, 3)}</span>
+                      <span className="text-[10px] opacity-80">{day.formattedDate.split('/')[0]}</span>
+                      {dayDealsCount > 0 && (
+                        <span className={`text-[10px] font-bold px-1 rounded-full ${
+                          isSelected ? 'bg-white/20 text-white' : 'bg-primary/20 text-primary'
+                        }`}>
+                          {dayDealsCount}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Lista em Acordeão de Estágios do Funil (Mobile) */}
+            <div className="flex flex-col gap-2.5 pb-4">
+              {columns.map(col => {
+                const stageAccent = getTimelineStageAccent(col.id);
+                const isCollapsed = collapsedTimelineStages.includes(col.id);
+                
+                // Filtra os deals deste estágio dentro da semana (e respeita o dia se selecionado)
+                const dealsInWeek = filteredDeals.filter(d => {
+                  if (d.status !== col.id) return false;
+                  const rawDate = d.expectedCloseDate || d.updatedAt || d.createdAt;
+                  if (!rawDate) return false;
+                  const dealDate = new Date(rawDate);
+                  if (isNaN(dealDate.getTime())) return false;
+
+                  if (mobileTimelineSelectedDay !== 'all') {
+                    return dealDate.toDateString() === mobileTimelineSelectedDay;
+                  }
+
+                  // Verificar se está dentro dos 7 dias da semana
+                  return weekDays.some(w => w.date.toDateString() === dealDate.toDateString());
+                });
+
+                const stageTotal = dealsInWeek.reduce((sum, d) => sum + (d.value ? Number(d.value) : 0), 0);
+
+                return (
+                  <div 
+                    key={`mob-stage-${col.id}`}
+                    className={`rounded-xl border transition-all shadow-sm overflow-hidden ${
+                      isWhatsApp 
+                        ? 'bg-[#111B21] border-[#222D34]' 
+                        : isClean 
+                        ? 'bg-white border-slate-200' 
+                        : 'bg-[#161b22] border-gray-800'
+                    }`}
+                  >
+                    {/* Cabeçalho do Estágio Tocável */}
+                    <button
+                      type="button"
+                      onClick={() => toggleTimelineStage(col.id)}
+                      className={`w-full p-3 flex items-center justify-between text-left transition-colors select-none ${
+                        isWhatsApp
+                          ? 'hover:bg-[#202C33]'
+                          : isClean
+                          ? 'hover:bg-slate-50'
+                          : 'hover:bg-gray-800/40'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span className={`p-1 rounded-md transition-transform duration-200 ${
+                          isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-400' : 'text-gray-400'
+                        }`}>
+                          {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+                        </span>
+                        <span className={`w-3 h-3 rounded-full shrink-0 ${stageAccent.barBg} shadow-sm`} />
+                        <span className={`font-bold text-xs uppercase tracking-wider truncate ${
+                          isWhatsApp ? 'text-[#E9EDEF]' : isClean ? 'text-slate-800' : 'text-white'
+                        }`}>
+                          {col.title}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${stageAccent.badgeBg} ${stageAccent.badgeText} ${stageAccent.borderLight}`}>
+                          {dealsInWeek.length} {dealsInWeek.length === 1 ? 'card' : 'cards'}
+                        </span>
+                        {stageTotal > 0 && (
+                          <span className={`font-mono font-bold text-[11px] ${
+                            isWhatsApp ? 'text-[#00A884]' : isClean ? 'text-emerald-600' : 'text-emerald-400'
+                          }`}>
+                            {formatCurrency(stageTotal)}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+
+                    {/* Cards do Estágio (quando expandido) */}
+                    {!isCollapsed && (
+                      <div className={`p-3 pt-1 flex flex-col gap-2 border-t ${
+                        isWhatsApp ? 'border-[#222D34] bg-[#0C1317]/50' : isClean ? 'border-slate-100 bg-slate-50/50' : 'border-gray-800/60 bg-[#0d1117]/50'
+                      }`}>
+                        {dealsInWeek.length === 0 ? (
+                          <div className={`p-4 text-center text-xs italic ${
+                            isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-400' : 'text-gray-500'
+                          }`}>
+                            Nenhuma oportunidade neste estágio {mobileTimelineSelectedDay !== 'all' ? 'para o dia selecionado' : 'nesta semana'}.
+                          </div>
+                        ) : (
+                          dealsInWeek.map(deal => {
+                            const leadName = deal.contact?.name || deal.title || "Oportunidade";
+                            const rawDate = deal.expectedCloseDate || deal.updatedAt || deal.createdAt;
+                            const d = rawDate ? new Date(rawDate) : null;
+                            const isTodayDeal = d ? d.toDateString() === new Date().toDateString() : false;
+                            const dayLabel = d ? d.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' }) : '';
+                            const hasPhone = !!deal.contact?.phone;
+
+                            return (
+                              <div
+                                key={`mob-deal-card-${deal.id}`}
+                                onClick={() => handleOpenDeal(deal)}
+                                className={`relative flex flex-col gap-2 p-3 pl-3.5 rounded-xl border transition-all cursor-pointer shadow-sm active:scale-[0.99] ${
+                                  isWhatsApp 
+                                    ? 'bg-[#111B21] hover:bg-[#202C33] border-[#222D34] text-[#E9EDEF]' 
+                                    : isClean 
+                                    ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-800' 
+                                    : 'bg-[#161b22] hover:bg-[#1f2633] border-gray-800 text-white'
+                                }`}
+                              >
+                                {/* Barra lateral de cor do estágio */}
+                                <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-xl ${stageAccent.barBg}`} />
+
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex flex-col min-w-0">
+                                    <h4 className={`text-sm font-bold truncate ${
+                                      isWhatsApp ? 'text-[#E9EDEF]' : isClean ? 'text-slate-900' : 'text-white'
+                                    }`}>
+                                      {leadName}
+                                    </h4>
+                                    {deal.title && deal.title !== leadName && (
+                                      <span className={`text-[11px] truncate ${
+                                        isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-500' : 'text-gray-400'
+                                      }`}>
+                                        {deal.title}
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {deal.value && Number(deal.value) > 0 && (
+                                    <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-md border shrink-0 ${
+                                      isWhatsApp 
+                                        ? 'bg-[#00A884]/15 border-[#00A884]/30 text-[#00A884]' 
+                                        : isClean 
+                                        ? 'bg-emerald-50 border-emerald-200 text-emerald-700' 
+                                        : 'bg-emerald-950/30 border-emerald-800/40 text-emerald-400'
+                                    }`}>
+                                      {formatCurrency(Number(deal.value))}
+                                    </span>
+                                  )}
+                                </div>
+
+                                <div className="flex items-center justify-between text-xs pt-1 border-t border-dashed border-slate-200 dark:border-gray-800/80">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className={`text-[11px] font-semibold capitalize ${
+                                      isTodayDeal 
+                                        ? isWhatsApp ? 'text-[#00A884] font-bold' : 'text-primary font-bold'
+                                        : isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-500' : 'text-gray-400'
+                                    }`}>
+                                      {isTodayDeal ? `Hoje (${dayLabel})` : dayLabel}
+                                    </span>
+                                  </div>
+
+                                  {hasPhone && (
+                                    <div 
+                                      className="flex items-center gap-1 text-[11px] font-bold text-[#25D366] bg-[#25D366]/10 px-2 py-0.5 rounded-md"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        window.open(`https://wa.me/${deal.contact.phone.replace(/\D/g, '')}`, '_blank');
+                                      }}
+                                    >
+                                      <MessageCircle size={12} className="text-[#25D366]" />
+                                      <span>WhatsApp</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ========================================================================= */}
+          {/* VISÃO DESKTOP (>= md) - GRADE TABULAR SEMANAL COMPLETA COM 7 DIAS          */}
+          {/* ========================================================================= */}
+          <div className={`hidden md:flex flex-1 rounded-xl overflow-hidden shadow-lg flex-col min-h-0 border ${
+            isWhatsApp 
+              ? 'bg-[#111B21] border-[#222D34]' 
+              : isClean 
+              ? 'bg-white border-slate-200' 
+              : 'bg-[#161b22] border-gray-800'
+          }`}>
             <div className="flex-1 overflow-auto custom-scrollbar">
               <table className="w-full text-left border-collapse min-w-[1100px]">
                 {/* Cabeçalho da Grade */}
-                <thead className="sticky top-0 z-30 bg-slate-100 dark:bg-[#1c2128] border-b border-slate-200 dark:border-gray-800 text-xs font-bold text-slate-700 dark:text-gray-300 shadow-sm">
+                <thead className={`sticky top-0 z-30 border-b text-xs font-bold shadow-sm ${
+                  isWhatsApp 
+                    ? 'bg-[#202C33] border-[#222D34] text-[#E9EDEF]' 
+                    : isClean 
+                    ? 'bg-slate-100 border-slate-200 text-slate-700' 
+                    : 'bg-[#1c2128] border-gray-800 text-gray-300'
+                }`}>
                   <tr>
                     {/* Coluna Fixa à Esquerda: Estágios do Funil */}
-                    <th className="p-3 w-64 min-w-[240px] max-w-[260px] sticky left-0 z-40 bg-slate-100 dark:bg-[#1c2128] border-r border-slate-200 dark:border-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_5px_-2px_rgba(0,0,0,0.5)]">
-                      <div className="flex items-center justify-between text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-gray-300">
+                    <th className={`p-3 w-64 min-w-[240px] max-w-[260px] sticky left-0 z-40 border-r shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] ${
+                      isWhatsApp 
+                        ? 'bg-[#202C33] border-[#222D34]' 
+                        : isClean 
+                        ? 'bg-slate-100 border-slate-200' 
+                        : 'bg-[#1c2128] border-gray-800'
+                    }`}>
+                      <div className="flex items-center justify-between text-xs font-extrabold uppercase tracking-wider">
                         <div className="flex items-center gap-2">
-                          <LayoutDashboard size={14} className="text-primary" />
-                          <span>Estágios do Funil</span>
+                          <LayoutDashboard size={14} className={isWhatsApp ? 'text-[#00A884]' : 'text-primary'} />
+                          <span className={isWhatsApp ? 'text-[#E9EDEF]' : isClean ? 'text-slate-800' : 'text-gray-200'}>
+                            Estágios do Funil
+                          </span>
                         </div>
                         <button
                           type="button"
@@ -2297,7 +2658,13 @@ function CrmContent() {
                               setCollapsedTimelineStages(columns.map(c => c.id));
                             }
                           }}
-                          className="text-[10px] text-slate-500 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white transition-colors uppercase font-bold tracking-wider"
+                          className={`text-[10px] uppercase font-bold tracking-wider transition-colors ${
+                            isWhatsApp 
+                              ? 'text-[#00A884] hover:text-emerald-400' 
+                              : isClean 
+                              ? 'text-slate-500 hover:text-slate-900' 
+                              : 'text-gray-400 hover:text-white'
+                          }`}
                           title="Alternar expansão de todos os estágios"
                         >
                           {collapsedTimelineStages.length === columns.length ? 'Expandir' : 'Colapsar'}
@@ -2318,42 +2685,66 @@ function CrmContent() {
                       return (
                         <th 
                           key={`timeline-th-${dayIndex}`}
-                          className={`p-3 min-w-[145px] border-r border-slate-200 dark:border-gray-800/80 last:border-r-0 ${
-                            day.isToday ? 'bg-primary/10' : ''
+                          className={`p-3 min-w-[145px] border-r last:border-r-0 ${
+                            isWhatsApp ? 'border-[#222D34]' : isClean ? 'border-slate-200' : 'border-gray-800/80'
+                          } ${
+                            day.isToday 
+                              ? isWhatsApp ? 'bg-[#00A884]/15' : 'bg-primary/10' 
+                              : ''
                           }`}
                         >
                           <div className="flex flex-col gap-1">
                             <div className="flex items-center justify-between">
                               <span className={`text-xs font-extrabold uppercase tracking-wider ${
-                                day.isToday ? 'text-primary' : 'text-slate-500 dark:text-gray-400'
+                                day.isToday 
+                                  ? isWhatsApp ? 'text-[#00A884]' : 'text-primary' 
+                                  : isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-500' : 'text-gray-400'
                               }`}>
                                 {day.dayName}
                               </span>
                               <div className="flex items-center gap-1">
                                 {day.isToday && (
-                                  <span className="bg-primary text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider shadow-sm">
+                                  <span className={`text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider shadow-sm ${
+                                    isWhatsApp ? 'bg-[#00A884]' : 'bg-primary'
+                                  }`}>
                                     Hoje
                                   </span>
                                 )}
                                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border transition-all ${
                                   dayDeals.length > 0 
-                                    ? 'bg-primary/20 text-primary border-primary/40 font-extrabold'
-                                    : 'bg-slate-200 text-slate-600 border-slate-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700/60'
+                                    ? isWhatsApp
+                                      ? 'bg-[#00A884]/20 text-[#00A884] border-[#00A884]/40 font-extrabold'
+                                      : 'bg-primary/20 text-primary border-primary/40 font-extrabold'
+                                    : isWhatsApp
+                                    ? 'bg-[#111B21] text-[#8696A0] border-[#222D34]'
+                                    : isClean
+                                    ? 'bg-slate-200 text-slate-600 border-slate-300'
+                                    : 'bg-gray-800 text-gray-400 border-gray-700/60'
                                 }`}>
                                   {dayDeals.length}
                                 </span>
                               </div>
                             </div>
                             <div className="flex items-baseline justify-between text-[11px]">
-                              <span className={`font-black ${day.isToday ? 'text-primary dark:text-white' : 'text-slate-800 dark:text-slate-200'}`}>
+                              <span className={`font-black ${
+                                day.isToday 
+                                  ? isWhatsApp ? 'text-[#00A884]' : 'text-primary dark:text-white' 
+                                  : isWhatsApp ? 'text-[#E9EDEF]' : isClean ? 'text-slate-800' : 'text-slate-200'
+                              }`}>
                                 {day.formattedDate}
                               </span>
                               {dayAmount > 0 ? (
-                                <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                                <span className={`text-[10px] font-mono font-bold ${
+                                  isWhatsApp ? 'text-[#00A884]' : isClean ? 'text-emerald-600' : 'text-emerald-400'
+                                }`}>
                                   {formatCurrency(dayAmount)}
                                 </span>
                               ) : (
-                                <span className="text-[9px] font-mono text-slate-400 dark:text-gray-600">R$ 0</span>
+                                <span className={`text-[9px] font-mono ${
+                                  isWhatsApp ? 'text-[#8696A0]/60' : isClean ? 'text-slate-400' : 'text-gray-600'
+                                }`}>
+                                  R$ 0
+                                </span>
                               )}
                             </div>
                           </div>
@@ -2364,7 +2755,13 @@ function CrmContent() {
                 </thead>
 
                 {/* Corpo da Grade: Agrupado por Estágios do Funil */}
-                <tbody className="divide-y divide-slate-100 dark:divide-gray-800/80 text-xs">
+                <tbody className={`divide-y text-xs ${
+                  isWhatsApp 
+                    ? 'divide-[#222D34]' 
+                    : isClean 
+                    ? 'divide-slate-200' 
+                    : 'divide-gray-800/80'
+                }`}>
                   {columns.map(col => {
                     const stageAccent = getTimelineStageAccent(col.id);
                     const isCollapsed = collapsedTimelineStages.includes(col.id);
@@ -2376,10 +2773,20 @@ function CrmContent() {
                     return (
                       <tr 
                         key={`timeline-stage-row-${col.id}`}
-                        className={`transition-colors ${isCollapsed ? 'bg-slate-50/80 dark:bg-[#12161f]/80' : 'hover:bg-slate-50/60 dark:hover:bg-gray-900/30'}`}
+                        className={`transition-colors ${
+                          isCollapsed 
+                            ? isWhatsApp ? 'bg-[#111B21]/90' : isClean ? 'bg-slate-50/80' : 'bg-[#12161f]/80' 
+                            : isWhatsApp ? 'hover:bg-[#202C33]/50' : isClean ? 'hover:bg-slate-50/60' : 'hover:bg-gray-900/30'
+                        }`}
                       >
                         {/* Célula Lateral Esquerda: Cabeçalho Colapsável do Estágio */}
-                        <td className="p-3 align-top sticky left-0 z-20 bg-white dark:bg-[#161b22] border-r border-slate-200 dark:border-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_5px_-2px_rgba(0,0,0,0.5)]">
+                        <td className={`p-3 align-top sticky left-0 z-20 border-r shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] ${
+                          isWhatsApp 
+                            ? 'bg-[#111B21] border-[#222D34]' 
+                            : isClean 
+                            ? 'bg-white border-slate-200' 
+                            : 'bg-[#161b22] border-gray-800'
+                        }`}>
                           <div className="flex flex-col gap-1.5">
                             <button
                               type="button"
@@ -2387,22 +2794,36 @@ function CrmContent() {
                               className="flex items-center justify-between text-left group/btn w-full select-none"
                             >
                               <div className="flex items-center gap-2 min-w-0">
-                                <span className="text-slate-400 group-hover/btn:text-slate-900 dark:text-gray-400 dark:group-hover/btn:text-white transition-colors">
+                                <span className={`transition-colors ${
+                                  isWhatsApp 
+                                    ? 'text-[#8696A0] group-hover/btn:text-[#00A884]' 
+                                    : isClean 
+                                    ? 'text-slate-400 group-hover/btn:text-slate-900' 
+                                    : 'text-gray-400 group-hover/btn:text-white'
+                                }`}>
                                   {isCollapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
                                 </span>
                                 <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${stageAccent.barBg} ring-2 ring-transparent group-hover/btn:ring-primary/30 transition-all`} />
-                                <span className="font-bold text-xs text-slate-800 dark:text-white uppercase tracking-wider truncate group-hover/btn:text-primary transition-colors">
+                                <span className={`font-bold text-xs uppercase tracking-wider truncate transition-colors ${
+                                  isWhatsApp 
+                                    ? 'text-[#E9EDEF] group-hover/btn:text-[#00A884]' 
+                                    : isClean 
+                                    ? 'text-slate-800 group-hover/btn:text-primary' 
+                                    : 'text-white group-hover/btn:text-primary'
+                                }`}>
                                   {col.title}
                                 </span>
                               </div>
                             </button>
 
-                            <div className="flex items-center justify-between pl-5 text-[11px] text-slate-500 dark:text-gray-400">
+                            <div className="flex items-center justify-between pl-5 text-[11px]">
                               <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${stageAccent.badgeBg} ${stageAccent.badgeText} ${stageAccent.borderLight}`}>
                                 {stageDeals.length} {stageDeals.length === 1 ? 'card' : 'cards'}
                               </span>
                               {stageTotal > 0 && (
-                                <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 text-[10px]">
+                                <span className={`font-mono font-bold text-[10px] ${
+                                  isWhatsApp ? 'text-[#00A884]' : isClean ? 'text-emerald-600' : 'text-emerald-400'
+                                }`}>
                                   {formatCurrency(stageTotal)}
                                 </span>
                               )}
@@ -2416,12 +2837,14 @@ function CrmContent() {
                             return (
                               <td 
                                 key={`stage-${col.id}-day-${dayIndex}`}
-                                className={`p-2 border-r border-slate-200/60 dark:border-gray-800/40 last:border-r-0 ${
-                                  day.isToday ? 'bg-primary/5' : ''
+                                className={`p-2 border-r last:border-r-0 ${
+                                  isWhatsApp ? 'border-[#222D34]/50' : isClean ? 'border-slate-200/60' : 'border-gray-800/40'
+                                } ${
+                                  day.isToday ? isWhatsApp ? 'bg-[#00A884]/5' : 'bg-primary/5' : ''
                                 }`}
                               >
                                 <div className="h-6 flex items-center justify-center">
-                                  <span className="text-slate-300 dark:text-gray-700 text-xs">-</span>
+                                  <span className={isWhatsApp ? 'text-[#8696A0]/40' : isClean ? 'text-slate-300' : 'text-gray-700'}>-</span>
                                 </div>
                               </td>
                             );
@@ -2438,14 +2861,18 @@ function CrmContent() {
                           return (
                             <td
                               key={`stage-${col.id}-day-${dayIndex}`}
-                              className={`p-2 align-top border-r border-slate-200/80 dark:border-gray-800/60 last:border-r-0 min-w-[145px] transition-colors ${
-                                day.isToday ? 'bg-primary/5' : ''
+                              className={`p-2 align-top border-r last:border-r-0 min-w-[145px] transition-colors ${
+                                isWhatsApp ? 'border-[#222D34]' : isClean ? 'border-slate-200/80' : 'border-gray-800/60'
+                              } ${
+                                day.isToday ? isWhatsApp ? 'bg-[#00A884]/10' : 'bg-primary/5' : ''
                               }`}
                             >
                               <div className="flex flex-col gap-1.5 min-h-[50px]">
                                 {dealsForCell.length === 0 ? (
-                                  <div className="flex-1 flex items-center justify-center py-2 text-slate-300 dark:text-gray-700">
-                                    <span className="text-[11px] opacity-40 select-none">-</span>
+                                  <div className="flex-1 flex items-center justify-center py-2">
+                                    <span className={`text-[11px] opacity-40 select-none ${
+                                      isWhatsApp ? 'text-[#8696A0]' : isClean ? 'text-slate-400' : 'text-gray-600'
+                                    }`}>-</span>
                                   </div>
                                 ) : (
                                   dealsForCell.map(deal => {
@@ -2457,14 +2884,26 @@ function CrmContent() {
                                         key={`timeline-bar-${deal.id}`}
                                         onClick={() => handleOpenDeal(deal)}
                                         title={`${deal.title || 'Sem título'} | ${leadName} | ${col.title} | ${formatCurrency(Number(deal.value || 0))}`}
-                                        className="relative flex items-center justify-between gap-1.5 pl-2.5 pr-2 py-1.5 rounded-lg bg-white dark:bg-[#0d1117] hover:bg-slate-100 dark:hover:bg-[#1f2633] border border-slate-200 dark:border-gray-800 hover:border-slate-300 dark:hover:border-gray-700 cursor-pointer transition-all duration-150 shadow-sm text-left group overflow-hidden"
+                                        className={`relative flex items-center justify-between gap-1.5 pl-2.5 pr-2 py-1.5 rounded-lg border cursor-pointer transition-all duration-150 shadow-sm text-left group overflow-hidden ${
+                                          isWhatsApp 
+                                            ? 'bg-[#202C33] hover:bg-[#2A3942] border-[#222D34] text-[#E9EDEF]' 
+                                            : isClean 
+                                            ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-800 hover:border-slate-300' 
+                                            : 'bg-[#0d1117] hover:bg-[#1f2633] border-gray-800 hover:border-gray-700 text-white'
+                                        }`}
                                       >
                                         {/* Barra lateral colorida do estágio */}
                                         <div className={`absolute left-0 top-0 bottom-0 w-1 ${stageAccent.barBg}`} />
 
                                         {/* Nome do Lead / Título em destaque */}
                                         <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                                          <span className="text-xs font-bold text-slate-800 dark:text-white group-hover:text-primary truncate transition-colors">
+                                          <span className={`text-xs font-bold truncate transition-colors ${
+                                            isWhatsApp 
+                                              ? 'text-[#E9EDEF] group-hover:text-[#00A884]' 
+                                              : isClean 
+                                              ? 'text-slate-800 group-hover:text-primary' 
+                                              : 'text-white group-hover:text-primary'
+                                          }`}>
                                             {leadName}
                                           </span>
                                         </div>
@@ -2481,7 +2920,13 @@ function CrmContent() {
                                           )}
 
                                           {deal.value && Number(deal.value) > 0 && (
-                                            <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 px-1 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/30">
+                                            <span className={`text-[10px] font-mono font-bold px-1 py-0.5 rounded border ${
+                                              isWhatsApp 
+                                                ? 'bg-[#00A884]/15 border-[#00A884]/30 text-[#00A884]' 
+                                                : isClean 
+                                                ? 'bg-emerald-50 border-emerald-200 text-emerald-700' 
+                                                : 'bg-emerald-950/20 border-emerald-800/30 text-emerald-400'
+                                            }`}>
                                               {formatCurrency(Number(deal.value))}
                                             </span>
                                           )}
