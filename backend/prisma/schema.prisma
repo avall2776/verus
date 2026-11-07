@@ -73,6 +73,8 @@ model Tenant {
   marketingCampaigns    MarketingCampaign[]
   marketingTimeLogs     MarketingTimeLog[]
   apiTokens             ApiToken[]
+  activeSessions        ActiveSession[]
+  loginAuditLogs        LoginAuditLog[]
   createdAt             DateTime            @default(now())
   updatedAt             DateTime            @updatedAt
 
@@ -135,6 +137,15 @@ model User {
   csatSurveys          CsatSurvey[]
   marketingCards       MarketingCard[]    @relation("AssignedMarketingCards")
   marketingTimeLogs    MarketingTimeLog[]
+  // Segurança de Nível Bancário & 2FA Master
+  twoFactorEnabled     Boolean            @default(false)
+  twoFactorMethod      String             @default("MASTER_PHONE")
+  twoFactorPhone       String?
+  failedLoginAttempts  Int                @default(0)
+  lockedUntil          DateTime?
+  trustedDevices       Json?              // [{ deviceId, fingerprint, trustedUntil, name, ip }]
+  activeSessions       ActiveSession[]
+  loginAuditLogs       LoginAuditLog[]
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
 
@@ -1025,3 +1036,83 @@ model WhatsAppStatusView {
 
   @@map("whatsapp_status_views")
 }
+
+// ------------------------------------------------------
+// CENTRAL DE SEGURANÇA BANCÁRIA, SESSÕES & AUDITORIA SOC
+// ------------------------------------------------------
+
+model ActiveSession {
+  id              String    @id @default(uuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenantId        String
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sessionToken    String    @unique
+  ipAddress       String?
+  city            String?
+  state           String?
+  country         String?   @default("BR")
+  device          String?   // "Windows PC", "Mac", "iPhone", etc.
+  browser         String?   // "Chrome", "Firefox", "Safari", etc.
+  userAgent       String?
+  isTrustedDevice Boolean   @default(false)
+  trustedUntil    DateTime?
+  isRevoked       Boolean   @default(false)
+  revokedAt       DateTime?
+  lastActiveAt    DateTime  @default(now())
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([tenantId])
+  @@index([isRevoked])
+  @@index([lastActiveAt])
+  @@map("active_sessions")
+}
+
+model LoginAuditLog {
+  id          String   @id @default(uuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  tenantId    String?
+  tenant      Tenant?  @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  email       String
+  userName    String?
+  tenantName  String?
+  status      String   // "SUCCESS", "FAILED_PASSWORD", "FAILED_2FA", "ACCOUNT_LOCKED", "2FA_REQUESTED"
+  failReason  String?
+  ipAddress   String?
+  city        String?
+  state       String?
+  country     String?  @default("BR")
+  device      String?
+  browser     String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  @@index([email])
+  @@index([tenantId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("login_audit_logs")
+}
+
+model TwoFactorVerification {
+  id          String   @id @default(uuid())
+  userId      String
+  email       String
+  tenantId    String
+  code        String   // OTP de 6 dígitos
+  tempToken   String   @unique
+  targetPhone String   // Número para onde o código foi disparado (5554991109159)
+  attempts    Int      @default(0)
+  isVerified  Boolean  @default(false)
+  expiresAt   DateTime // Expira em 10 minutos
+  createdAt   DateTime @default(now())
+
+  @@index([tempToken])
+  @@index([userId])
+  @@map("two_factor_verifications")
+}
+

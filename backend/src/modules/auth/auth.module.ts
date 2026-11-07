@@ -5,7 +5,8 @@ import { JwtStrategy } from './jwt.strategy';
 import { AuthController } from './auth.controller';
 import { UsersController } from './users.controller';
 import { AuthService } from './auth.service';
-
+import { TwoFactorService } from './services/two-factor.service';
+import { SessionService } from './services/session.service';
 import { EmailsModule } from '../emails/emails.module';
 
 @Global()
@@ -19,7 +20,12 @@ import { EmailsModule } from '../emails/emails.module';
     EmailsModule,
   ],
   controllers: [AuthController, UsersController],
-  providers: [JwtStrategy, AuthService],
-  exports: [JwtStrategy, PassportModule, AuthService],
+  providers: [
+    JwtStrategy,
+    AuthService,
+    TwoFactorService,
+    SessionService,
+  ],
+  exports: [JwtStrategy, PassportModule, AuthService, SessionService, TwoFactorService],
 })
 export class AuthModule {}

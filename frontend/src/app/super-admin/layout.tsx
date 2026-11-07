@@ -41,6 +41,7 @@ const ADMIN_MENU = [
   { name: "Engenharia", icon: Cpu, href: "/super-admin/engineering" },
   { name: "Motion Studio", icon: Film, href: "/super-admin/motion-studio" },
   { name: "Planos e Permissões", icon: ShieldCheck, href: "/super-admin/planos" },
+  { name: "Segurança & Sessões", icon: ShieldAlert, href: "/super-admin/security" },
 ];
 
 export default function SuperAdminLayout({

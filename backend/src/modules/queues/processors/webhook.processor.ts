@@ -254,14 +254,39 @@ export class WebhookProcessor extends WorkerHost {
       }
     }
 
+    // Gera variações normalizadas de telefone (com +, sem +, com 9º dígito e sem 9º dígito)
+    const phoneCandidates = new Set<string>();
+    const addPhoneVariants = (p: string | null | undefined) => {
+      if (!p || p.includes('@lid')) return;
+      const clean = p.replace(/\D/g, '');
+      if (clean.length >= 8) {
+        phoneCandidates.add(clean);
+        phoneCandidates.add(`+${clean}`);
+        if (clean.startsWith('55') && clean.length === 13) {
+          const without9 = clean.slice(0, 4) + clean.slice(5);
+          phoneCandidates.add(without9);
+          phoneCandidates.add(`+${without9}`);
+        } else if (clean.startsWith('55') && clean.length === 12) {
+          const with9 = clean.slice(0, 4) + '9' + clean.slice(4);
+          phoneCandidates.add(with9);
+          phoneCandidates.add(`+${with9}`);
+        }
+      }
+    };
+
+    addPhoneVariants(remoteJid);
+    addPhoneVariants(realPhone);
+
+    const phoneOrFilters = Array.from(phoneCandidates).map(p => ({ phone: p }));
+
     // Busca contato existente por telefone direto, whatsappLid ou número real
     let existingContact = await this.prisma.contact.findFirst({
       where: {
         tenantId,
         OR: [
           ...(lidId ? [{ whatsappLid: lidId }, { phone: lidId }] : []),
-          { phone: remoteJid },
-          ...(realPhone ? [{ phone: realPhone }, { whatsappLid: realPhone }] : []),
+          ...phoneOrFilters,
+          ...(realPhone ? [{ whatsappLid: realPhone }] : []),
         ],
       },
     });

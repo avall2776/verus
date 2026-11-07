@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, Loader2, ArrowRight, ShieldCheck, KeyRound, Laptop, Check, RefreshCw } from "lucide-react";
 import * as THREE from "three";
 import { AnimatePresence } from "framer-motion";
 import VersusPreloader from "@/components/ui/VersusPreloader";
@@ -159,6 +159,15 @@ export default function LoginPage() {
   const [availableTenants, setAvailableTenants] = useState<any[]>([]);
   const [isSelectingTenant, setIsSelectingTenant] = useState(false);
 
+  // Estados de Segurança Bancária 2FA (WhatsApp Master)
+  const [isVerifying2FA, setIsVerifying2FA] = useState(false);
+  const [twoFactorTempToken, setTwoFactorTempToken] = useState("");
+  const [twoFactorCode, setTwoFactorCode] = useState("");
+  const [twoFactorUser, setTwoFactorUser] = useState<any>(null);
+  const [maskedPhone, setMaskedPhone] = useState("(54) 9****-9159");
+  const [rememberDevice, setRememberDevice] = useState(true);
+  const [selectedTenantIdState, setSelectedTenantIdState] = useState<string | undefined>(undefined);
+
   // A tela de login é SEMPRE no azul clássico corporativo (dark)
   useEffect(() => {
     if (typeof document !== "undefined") {
@@ -176,10 +185,13 @@ export default function LoginPage() {
 
     try {
       const { default: api } = await import("@/lib/api");
+      const trustedDeviceToken = typeof window !== "undefined" ? localStorage.getItem("versus_trusted_device") || undefined : undefined;
+
       const { data } = await api.post("/auth/login", { 
         email, 
         password,
-        tenantId: selectedTenantId 
+        tenantId: selectedTenantId,
+        trustedDeviceToken,
       });
 
       // Se o usuário possui contas em múltiplas empresas e precisa escolher uma
@@ -190,34 +202,79 @@ export default function LoginPage() {
         return;
       }
 
-      localStorage.setItem("versus_auth_token", data.access_token);
-      localStorage.setItem("versus_user", JSON.stringify(data.user));
-      setAuthCookie(data.access_token, data.user?.role);
-      if (data.user?.tenantId) {
-        localStorage.setItem("tenantId", data.user.tenantId);
+      // Se a conta exige validação em duas etapas (2FA)
+      if (data.requires2FA) {
+        setTwoFactorTempToken(data.tempToken);
+        setTwoFactorUser(data.user);
+        if (data.maskedPhone) setMaskedPhone(data.maskedPhone);
+        setSelectedTenantIdState(selectedTenantId);
+        setIsVerifying2FA(true);
+        setLoading(false);
+        return;
       }
-      try {
-        window.dispatchEvent(new Event("auth_login"));
-        window.dispatchEvent(new Event("tenant_switched"));
-      } catch (e) {}
 
-      // Extrai o primeiro nome real do usuário autenticado (ex: "Felipe")
-      try {
-        sessionStorage.removeItem("versus_boot_completed");
-      } catch (e) {}
-
-      // ETAPA 1: O card desaparece com fade-out suave (700ms)
-      setCardState("evaporating");
-      setLoading(false);
-
-      // ETAPA 2: Abre espaço imediato para o preloader
-      setTimeout(() => {
-        setCardState("booting");
-      }, 700);
+      completeLogin(data);
     } catch (err: any) {
       setError(err.response?.data?.message || "Erro ao conectar com o servidor.");
       setLoading(false);
     }
+  };
+
+  const handleVerify2FA = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!twoFactorCode || twoFactorCode.trim().length < 6) {
+      setError("Digite o código de autorização de 6 dígitos.");
+      return;
+    }
+
+    setError("");
+    setLoading(true);
+
+    try {
+      const { default: api } = await import("@/lib/api");
+      const { data } = await api.post("/auth/verify-2fa", {
+        tempToken: twoFactorTempToken,
+        code: twoFactorCode.trim(),
+        rememberDevice,
+      });
+
+      if (data.trustedDeviceToken) {
+        try {
+          localStorage.setItem("versus_trusted_device", data.trustedDeviceToken);
+        } catch (e) {}
+      }
+
+      completeLogin(data);
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Código incorreto ou expirado. Tente novamente.");
+      setLoading(false);
+    }
+  };
+
+  const completeLogin = (data: any) => {
+    localStorage.setItem("versus_auth_token", data.access_token);
+    localStorage.setItem("versus_user", JSON.stringify(data.user));
+    setAuthCookie(data.access_token, data.user?.role);
+    if (data.user?.tenantId) {
+      localStorage.setItem("tenantId", data.user.tenantId);
+    }
+    try {
+      window.dispatchEvent(new Event("auth_login"));
+      window.dispatchEvent(new Event("tenant_switched"));
+    } catch (e) {}
+
+    try {
+      sessionStorage.removeItem("versus_boot_completed");
+    } catch (e) {}
+
+    // ETAPA 1: O card desaparece com fade-out suave (700ms)
+    setCardState("evaporating");
+    setLoading(false);
+
+    // ETAPA 2: Abre espaço imediato para o preloader
+    setTimeout(() => {
+      setCardState("booting");
+    }, 700);
   };
 
   // Transição automática para o Dashboard ao concluir o Preloader
@@ -311,7 +368,116 @@ export default function LoginPage() {
               </p>
             </div>
 
-            {isSelectingTenant ? (
+            {isVerifying2FA ? (
+              <form onSubmit={handleVerify2FA} className="w-full flex flex-col gap-4 text-left relative z-10 animate-in fade-in zoom-in-95 duration-200">
+                <div className="flex flex-col items-center text-center gap-1 mb-1">
+                  <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 mb-1 shadow-[0_0_20px_rgba(59,130,246,0.2)]">
+                    <ShieldCheck size={26} strokeWidth={2} />
+                  </div>
+                  <h4 className="text-white font-bold text-base tracking-wide">
+                    Autorização de Acesso
+                  </h4>
+                  <p className="text-slate-400 text-xs max-w-xs leading-relaxed">
+                    Código de 6 dígitos enviado ao WhatsApp de Segurança Master:
+                  </p>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-900/90 border border-slate-700/80 rounded-full text-[11px] font-mono text-blue-400 font-semibold mt-1">
+                    <KeyRound size={12} />
+                    <span>{maskedPhone}</span>
+                  </div>
+                </div>
+
+                {error && (
+                  <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs text-center">
+                    {error}
+                  </div>
+                )}
+
+                {/* Campo do Código OTP de 6 dígitos */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-[0.7rem] font-semibold text-slate-300 uppercase tracking-widest text-center">
+                    DIGITE O CÓDIGO DE 6 DÍGITOS
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                    value={twoFactorCode}
+                    onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, ""))}
+                    placeholder="••••••"
+                    autoFocus
+                    className="w-full bg-slate-950/80 border border-slate-800 text-white rounded-xl px-4 py-3 text-2xl font-mono tracking-[0.5em] text-center outline-none transition-all focus:border-blue-500 focus:shadow-[0_0_20px_rgba(59,130,246,0.3)] login-input-field"
+                    required
+                  />
+                </div>
+
+                {/* Checkbox: Lembrar deste computador por 30 dias */}
+                <label
+                  onClick={() => setRememberDevice(!rememberDevice)}
+                  className="flex items-center gap-3 p-3 bg-slate-950/50 hover:bg-slate-900/60 border border-slate-800/80 rounded-xl cursor-pointer transition-all select-none group"
+                >
+                  <div
+                    className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${
+                      rememberDevice
+                        ? "bg-blue-600 border-blue-500 text-white"
+                        : "bg-slate-900 border-slate-700 text-transparent group-hover:border-slate-500"
+                    }`}
+                  >
+                    <Check size={14} strokeWidth={3} />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs text-slate-200 font-medium group-hover:text-white transition-colors">
+                      Lembrar deste computador por 30 dias
+                    </span>
+                    <span className="text-[10px] text-slate-500">
+                      Dispositivo confiável (dispensa código nesta máquina)
+                    </span>
+                  </div>
+                </label>
+
+                {/* Botão de Envio */}
+                <button
+                  type="submit"
+                  disabled={loading || twoFactorCode.length < 6}
+                  className="w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold py-[0.95rem] rounded-[10px] mt-1 text-[0.88rem] tracking-wider uppercase transition-all hover:shadow-[0_0_20px_rgba(37,99,235,0.4)] flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer login-submit-btn"
+                  style={{ backgroundColor: "#2563eb", color: "#ffffff" }}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" />
+                      Validando Código...
+                    </>
+                  ) : (
+                    <>
+                      AUTORIZAR E ENTRAR <ArrowRight size={16} />
+                    </>
+                  )}
+                </button>
+
+                <div className="flex items-center justify-between pt-1 text-xs text-slate-400">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsVerifying2FA(false);
+                      setTwoFactorCode("");
+                      setError("");
+                    }}
+                    className="hover:text-white transition-colors cursor-pointer"
+                  >
+                    ← Voltar
+                  </button>
+                  <button
+                    type="button"
+                    disabled={loading}
+                    onClick={() => handleLogin(undefined, selectedTenantIdState)}
+                    className="flex items-center gap-1.5 text-blue-400 hover:text-blue-300 transition-colors cursor-pointer"
+                  >
+                    <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
+                    Reenviar código
+                  </button>
+                </div>
+              </form>
+            ) : isSelectingTenant ? (
               <div className="w-full flex flex-col gap-4 text-left relative z-10">
                 <div className="text-center mb-1">
                   <h4 className="text-white font-bold text-base">Selecione a Empresa</h4>
