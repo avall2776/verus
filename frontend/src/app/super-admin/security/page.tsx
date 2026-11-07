@@ -303,7 +303,7 @@ export default function SecurityAuditPage() {
               {trustedDevicesCount}
             </span>
             <span className="text-[11px] font-semibold text-blue-600 dark:text-blue-400">
-              Token 30 dias
+              Autorizados
             </span>
           </div>
           <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
@@ -515,7 +515,7 @@ export default function SecurityAuditPage() {
                           {session.isTrustedDevice ? (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
                               <ShieldCheck size={11} />
-                              Confiável (30d)
+                              Confiável
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20">

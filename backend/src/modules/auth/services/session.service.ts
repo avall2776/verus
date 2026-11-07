@@ -197,7 +197,7 @@ export class SessionService {
   }
 
   /**
-   * Valida se um token de dispositivo confiável é válido (30 dias)
+   * Valida se um token de dispositivo confiável é válido
    */
   async isDeviceTrusted(userId: string, trustedDeviceToken?: string): Promise<boolean> {
     if (!trustedDeviceToken) return false;
@@ -211,20 +211,19 @@ export class SessionService {
       return false;
     }
 
-    const now = new Date();
     const match = (user.trustedDevices as any[]).find(
-      (d) => d.token === trustedDeviceToken && new Date(d.expiresAt) > now,
+      (d) => d.token === trustedDeviceToken,
     );
 
     return Boolean(match);
   }
 
   /**
-   * Gera um token de dispositivo confiável válido por 30 dias
+   * Registra o dispositivo como confiável permanentemente
    */
   async generateTrustedDeviceToken(userId: string, telemetry: ClientTelemetry): Promise<{ token: string; expiresAt: Date }> {
     const token = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 dias
+    const expiresAt = new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000); // Confiável permanentemente (10 anos)
 
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -232,8 +231,7 @@ export class SessionService {
     });
 
     const currentDevices = Array.isArray(user?.trustedDevices) ? (user.trustedDevices as any[]) : [];
-    // Mantém no máximo os 10 dispositivos mais recentes
-    const validExisting = currentDevices.filter((d) => new Date(d.expiresAt) > new Date()).slice(-9);
+    const validExisting = currentDevices.slice(-19); // Mantém os últimos 20 dispositivos confiáveis
 
     validExisting.push({
       token,

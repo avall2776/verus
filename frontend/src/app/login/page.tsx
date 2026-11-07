@@ -427,10 +427,10 @@ export default function LoginPage() {
                   </div>
                   <div className="flex flex-col min-w-0">
                     <span className="text-xs text-slate-200 font-medium group-hover:text-white transition-colors">
-                      Lembrar deste computador por 30 dias
+                      Lembrar e confiar neste dispositivo
                     </span>
                     <span className="text-[10px] text-slate-500">
-                      Dispositivo confiável (dispensa código nesta máquina)
+                      Dispositivo confiável (não solicitará código neste navegador)
                     </span>
                   </div>
                 </label>
