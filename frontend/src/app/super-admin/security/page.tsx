@@ -238,22 +238,18 @@ export default function SecurityAuditPage() {
     <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
       {/* ================= CABEÇALHO SOC VALLOR ================= */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
-        <div>
-          <div className="flex items-center gap-2.5 mb-1.5">
-            <div className="w-8 h-8 rounded-lg bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
-              <ShieldCheck size={20} strokeWidth={2} />
-            </div>
-            <h1 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+        <div className="flex items-start gap-3">
+          <div className="w-9 h-9 rounded-lg bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 mt-0.5">
+            <ShieldCheck size={20} strokeWidth={2} />
+          </div>
+          <div>
+            <h1 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-white leading-tight">
               Central de Segurança SOC & Sessões Ativas
             </h1>
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Monitoramento em Tempo Real
-            </span>
+            <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1">
+              Auditoria bancária multi-tenant, gestão de conexões ativas, telemetria por IP e derrubada remota.
+            </p>
           </div>
-          <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400">
-            Auditoria bancária multi-tenant, gestão de conexões ativas, telemetria por IP e derrubada remota.
-          </p>
         </div>
 
         {/* Controles: Filtro Multi-tenant, Derrubada Global e Botão Atualizar */}
