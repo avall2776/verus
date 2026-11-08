@@ -3723,6 +3723,7 @@ function CrmContent() {
 
 // Componente Isolado do Card no Kanban (Memoizado com comparação cirúrgica para 0ms de lag)
 const DealCard = React.memo(function DealCard({ deal, index, col, onOpenDeal }: any) {
+  const router = useRouter();
   const { isWhatsApp } = useTheme();
   const [isExpanded, setIsExpanded] = useState(false);
   const contactTags = deal.contact?.tags || [];
@@ -3872,8 +3873,6 @@ const DealCard = React.memo(function DealCard({ deal, index, col, onOpenDeal }: 
                     router.push(`/inbox?contactId=${contactId}`);
                   } else if (onOpenDeal) {
                     onOpenDeal(deal, 'chat');
-                  } else {
-                    setSelectedDeal(deal);
                   }
                 }} 
                 className="rounded p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-colors"
@@ -3888,8 +3887,6 @@ const DealCard = React.memo(function DealCard({ deal, index, col, onOpenDeal }: 
                   e.stopPropagation();
                   if (onOpenDeal) {
                     onOpenDeal(deal, 'event');
-                  } else {
-                    setSelectedDeal(deal);
                   }
                 }} 
                 className="rounded p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-colors"
@@ -3904,8 +3901,6 @@ const DealCard = React.memo(function DealCard({ deal, index, col, onOpenDeal }: 
                   e.stopPropagation();
                   if (onOpenDeal) {
                     onOpenDeal(deal, 'task');
-                  } else {
-                    setSelectedDeal(deal);
                   }
                 }} 
                 className="rounded p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-colors"

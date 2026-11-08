@@ -1757,10 +1757,11 @@ function InboxContent() {
   const queryTab = (activeFilterTab === 'unread' || activeFilterTab === 'all') ? 'all' : activeFilterTab;
 
   const { data: initialContacts, isLoading, error: fetchErrorQuery, refetch: refetchConversations } = useQuery({
-    queryKey: ['conversations', tenantKey, activeFilterTab, selectedDepartmentFilter],
+    queryKey: ['conversations', tenantKey, activeFilterTab, selectedDepartmentFilter, searchQuery.trim()],
     queryFn: async () => {
       const deptQuery = selectedDepartmentFilter && selectedDepartmentFilter !== 'all' ? `&departmentId=${selectedDepartmentFilter}` : '';
-      const { data } = await api.get(`/conversations?tab=${queryTab}${deptQuery}`);
+      const searchParam = searchQuery.trim() ? `&search=${encodeURIComponent(searchQuery.trim())}` : '';
+      const { data } = await api.get(`/conversations?tab=${queryTab}${deptQuery}${searchParam}`);
       return data.map((conv: any) => {
         const lastMessageObj = conv.messages && conv.messages.length > 0 ? conv.messages[0] : null;
         const lastMsg = lastMessageObj ? lastMessageObj.content : 'Nova conversa';
@@ -2623,8 +2624,19 @@ function InboxContent() {
     const isMaster = currentUserRole === 'ADMIN' || currentUserRole === 'SUPER_ADMIN';
 
     const filtered = contacts.filter(c => {
+      // Quando estiver pesquisando, ignora filtros de aba para exibir o resultado global encontrado
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const phoneDigits = searchQuery.replace(/\D/g, "");
+        return (
+          (c.name && c.name.toLowerCase().includes(q)) ||
+          (c.phone && (c.phone.toLowerCase().includes(q) || (phoneDigits.length >= 4 && c.phone.replace(/\D/g, "").includes(phoneDigits)))) ||
+          (c.lastMsg && c.lastMsg.toLowerCase().includes(q))
+        );
+      }
+
       // Oculta conversas arquivadas da listagem principal (a menos que esteja pesquisando)
-      if (archivedContactIds.includes(c.id) && !searchQuery.trim()) {
+      if (archivedContactIds.includes(c.id)) {
         return false;
       }
 
@@ -2644,13 +2656,7 @@ function InboxContent() {
         if (c.departmentId !== selectedDepartmentFilter) return false;
       }
 
-      if (!searchQuery.trim()) return true;
-      const q = searchQuery.toLowerCase();
-      return (
-        (c.name && c.name.toLowerCase().includes(q)) ||
-        (c.phone && c.phone.toLowerCase().includes(q)) ||
-        (c.lastMsg && c.lastMsg.toLowerCase().includes(q))
-      );
+      return true;
     });
 
     // Ordenação com conversas fixadas no topo (Padrão WhatsApp Web)
@@ -6162,7 +6168,6 @@ function InboxContent() {
                         <span className="text-xs text-slate-400 dark:text-slate-500">Nenhum setor definido</span>
                       );
                     })()}
-                    )}
                     <button
                       type="button"
                       onClick={() => loadDepartmentsAndShowTransfer()}

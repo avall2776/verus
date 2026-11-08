@@ -72,6 +72,13 @@ export class CrmService {
       orderBy: { updatedAt: 'desc' }
     });
 
+    deals.sort((a: any, b: any) => {
+      const pA = a.metadata?.position !== undefined && a.metadata?.position !== null ? Number(a.metadata.position) : 999999;
+      const pB = b.metadata?.position !== undefined && b.metadata?.position !== null ? Number(b.metadata.position) : 999999;
+      if (pA !== pB) return pA - pB;
+      return String(a.id).localeCompare(String(b.id));
+    });
+
     this.dealsCache.set(cacheKey, { data: deals, expiresAt: Date.now() + 15000 });
     return deals;
   }

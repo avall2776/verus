@@ -232,8 +232,11 @@ export class ChatService {
     tab: string = 'waiting',
     departmentId?: string,
     limit?: number,
+    search?: string,
   ) {
-    const cacheKey = `${tenantId}:${userId}:${tab}:${departmentId || 'all'}:${limit || 200}`;
+    const isSearch = Boolean(search && search.trim().length > 0);
+    const cleanSearch = isSearch ? search!.trim() : '';
+    const cacheKey = `${tenantId}:${userId}:${tab}:${departmentId || 'all'}:${limit || 500}:${cleanSearch}`;
     const cached = this.conversationsCache.get(cacheKey);
     if (cached && Date.now() < cached.expiresAt) {
       return cached.data;
@@ -259,7 +262,7 @@ export class ChatService {
         }
       } else {
         // Operador sem filtro específico: restringe estritamente às regiões/departamentos permitidos (nunca vaza outras regiões ou setor nulo)
-        if (tab !== 'mine') {
+        if (tab !== 'mine' && !isSearch) {
           whereClause.departmentId = { in: allowedDeptIds.length > 0 ? allowedDeptIds : ['__NONE__'] };
         }
       }
@@ -269,23 +272,53 @@ export class ChatService {
       }
     }
 
-    if (tab === 'all' || tab === 'unread') {
-      // Filtrado por departamento acima para operadores
-    } else if (tab === 'resolved') {
-      whereClause.status = { in: ['resolved', 'closed'] };
-    } else if (tab === 'mine') {
-      whereClause.status = { in: ['open', 'human_takeover', 'in_progress'] };
-      if (!isMaster) {
-        whereClause.assignedTo = userId;
-        // Na aba "Meus", a conversa atribuída ao operador sempre aparece para ele
-        if (!departmentId || departmentId === 'all') {
-          delete whereClause.departmentId;
-          delete whereClause.OR;
+    if (isSearch) {
+      // BUSCA GLOBAL NO BANCO DE DADOS: Consulta direta por nome, telefone e LID sem restrição de aba
+      const cleanDigits = cleanSearch.replace(/\D/g, '');
+      const orConditions: any[] = [
+        { contact: { name: { contains: cleanSearch, mode: 'insensitive' } } },
+        { contact: { phone: { contains: cleanDigits || cleanSearch } } },
+        { contact: { whatsappLid: { contains: cleanSearch } } },
+      ];
+      if (cleanDigits.length >= 4) {
+        orConditions.push({ contact: { phone: { contains: cleanDigits } } });
+        if (cleanDigits.startsWith('55') && cleanDigits.length > 6) {
+          orConditions.push({ contact: { phone: { contains: cleanDigits.slice(2) } } });
         }
       }
+      whereClause.OR = orConditions;
+
+      // Se for operador (AGENT), garante que a busca respeite o acesso aos seus setores ou contatos atribuídos
+      if (!isMaster) {
+        whereClause.AND = [
+          {
+            OR: [
+              { assignedTo: userId },
+              { departmentId: { in: allowedDeptIds.length > 0 ? allowedDeptIds : ['__NONE__'] } }
+            ]
+          }
+        ];
+      }
     } else {
-      // tab === 'waiting' (Fila de espera compartilhada da região do operador)
-      whereClause.status = { in: ['waiting', 'bot_active'] };
+      // Navegação padrão pelas abas
+      if (tab === 'all' || tab === 'unread') {
+        // Filtrado por departamento acima para operadores
+      } else if (tab === 'resolved') {
+        whereClause.status = { in: ['resolved', 'closed'] };
+      } else if (tab === 'mine') {
+        whereClause.status = { in: ['open', 'human_takeover', 'in_progress'] };
+        if (!isMaster) {
+          whereClause.assignedTo = userId;
+          // Na aba "Meus", a conversa atribuída ao operador sempre aparece para ele
+          if (!departmentId || departmentId === 'all') {
+            delete whereClause.departmentId;
+            delete whereClause.OR;
+          }
+        }
+      } else {
+        // tab === 'waiting' (Fila de espera compartilhada da região do operador)
+        whereClause.status = { in: ['waiting', 'bot_active'] };
+      }
     }
 
     const conversations = await this.prisma.conversation.findMany({
@@ -329,7 +362,7 @@ export class ChatService {
         }
       },
       orderBy: { updatedAt: 'desc' },
-      take: limit && limit > 0 ? limit : 200,
+      take: limit && limit > 0 ? limit : 500,
     });
 
     // Anexa dados do operador responsável (incluindo seus setores) em lote com alta performance
