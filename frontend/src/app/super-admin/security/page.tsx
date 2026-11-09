@@ -24,6 +24,7 @@ import {
   Fingerprint,
   ChevronDown,
   ExternalLink,
+  Copy,
 } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/lib/api";
@@ -76,6 +77,9 @@ interface AuditLogItem {
   device: string | null;
   browser: string | null;
   createdAt: string;
+  twoFactorCode?: string | null;
+  isVerified2FA?: boolean;
+  expiresAt2FA?: string | null;
 }
 
 export default function SecurityAuditPage() {
@@ -89,6 +93,16 @@ export default function SecurityAuditPage() {
   const [killingId, setKillingId] = useState<string | null>(null);
   const [killingAll, setKillingAll] = useState(false);
   const [unlockingId, setUnlockingId] = useState<string | null>(null);
+  const [copiedCodeId, setCopiedCodeId] = useState<string | null>(null);
+
+  // Copia código 2FA para a área de transferência com feedback
+  const handleCopy2FACode = (code: string, id: string) => {
+    if (!code) return;
+    navigator.clipboard.writeText(code);
+    setCopiedCodeId(id);
+    toast.success(`Código 2FA ${code} copiado para a área de transferência!`);
+    setTimeout(() => setCopiedCodeId(null), 2500);
+  };
 
   // Carrega lista de empresas para o filtro multi-tenant
   useEffect(() => {
@@ -123,6 +137,22 @@ export default function SecurityAuditPage() {
 
   useEffect(() => {
     fetchData();
+
+    // Atualização em tempo real silenciosa a cada 8 segundos para capturar novos códigos 2FA
+    const interval = setInterval(() => {
+      const params = selectedTenantId !== "ALL" ? { tenantId: selectedTenantId } : {};
+      Promise.all([
+        api.get("/auth/admin/sessions", { params }),
+        api.get("/auth/admin/audit-logs", { params }),
+      ])
+        .then(([sessionsRes, auditRes]) => {
+          setSessions(sessionsRes.data || []);
+          setAuditLogs(auditRes.data || []);
+        })
+        .catch(() => {});
+    }, 8000);
+
+    return () => clearInterval(interval);
   }, [selectedTenantId]);
 
   // Derrubada Remota de Sessão (Kill Session)
@@ -219,6 +249,18 @@ export default function SecurityAuditPage() {
   const trustedDevicesCount = useMemo(() => {
     return sessions.filter((s) => s.isTrustedDevice).length;
   }, [sessions]);
+
+  // Código 2FA mais recente aguardando validação nos últimos 10 minutos
+  const activePending2FA = useMemo(() => {
+    const tenMinutesAgo = Date.now() - 10 * 60 * 1000;
+    return auditLogs.find(
+      (log) =>
+        log.status === "2FA_REQUESTED" &&
+        log.twoFactorCode &&
+        !log.isVerified2FA &&
+        new Date(log.createdAt).getTime() > tenMinutesAgo,
+    );
+  }, [auditLogs]);
 
   const formatRelativeTime = (dateStr: string) => {
     try {
@@ -391,12 +433,66 @@ export default function SecurityAuditPage() {
               (54) 99110-9159
             </span>
           </div>
-          <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1 flex items-center gap-1">
-            <CheckCircle2 size={12} />
-            Despacho Central Ativo
-          </p>
+          {activePending2FA ? (
+            <p className="text-[11px] text-amber-500 dark:text-amber-400 font-bold mt-1 flex items-center gap-1.5 animate-pulse">
+              <KeyRound size={12} />
+              Último 2FA: {activePending2FA.twoFactorCode}
+            </p>
+          ) : (
+            <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1 flex items-center gap-1">
+              <CheckCircle2 size={12} />
+              Despacho Central Ativo
+            </p>
+          )}
         </div>
       </div>
+
+      {/* Banner de Código 2FA Ativo Pendente de Validação */}
+      {activePending2FA && (
+        <div className="p-4 rounded-2xl bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm animate-in fade-in slide-in-from-top duration-300">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-500 shrink-0">
+              <KeyRound size={20} className="animate-pulse" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-bold text-amber-900 dark:text-amber-100">
+                  Código 2FA Pendente de Validação
+                </span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-800 dark:text-amber-200 font-bold border border-amber-500/30">
+                  {activePending2FA.userName || activePending2FA.email} · {activePending2FA.tenantName || "Empresa"}
+                </span>
+              </div>
+              <p className="text-[11px] text-amber-800/80 dark:text-amber-300/80 mt-0.5">
+                Código gerado para login. Caso a mensagem do WhatsApp falhe ou atrase, repasse este código manualmente para o usuário:
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-center">
+            <div className="px-3.5 py-1.5 rounded-xl bg-white dark:bg-[#0B1224] border-2 border-amber-500 text-amber-900 dark:text-amber-200 font-mono font-black text-base tracking-widest shadow-sm">
+              {activePending2FA.twoFactorCode}
+            </div>
+            <button
+              type="button"
+              onClick={() => handleCopy2FACode(activePending2FA.twoFactorCode!, activePending2FA.id)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-white text-xs font-bold transition-all shadow-md cursor-pointer"
+            >
+              {copiedCodeId === activePending2FA.id ? (
+                <>
+                  <CheckCircle2 size={15} />
+                  <span>Copiado!</span>
+                </>
+              ) : (
+                <>
+                  <Copy size={15} />
+                  <span>Copiar Código</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ================= ABAS E BUSCA ================= */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">
@@ -722,7 +818,47 @@ export default function SecurityAuditPage() {
                         </td>
 
                         <td className="py-3 px-4 text-slate-500 text-[11px]">
-                          {log.failReason || "Autenticação aprovada"}
+                          {is2FA && log.twoFactorCode ? (
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-400 font-mono font-bold text-xs shadow-sm">
+                                <KeyRound size={12} className="text-amber-500 shrink-0" />
+                                <span className="tracking-wider">{log.twoFactorCode}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopy2FACode(log.twoFactorCode!, log.id)}
+                                  className="ml-1 p-1 hover:bg-amber-500/20 active:scale-95 rounded text-amber-700 dark:text-amber-300 transition-all cursor-pointer flex items-center gap-1"
+                                  title="Copiar código para repassar ao usuário"
+                                >
+                                  {copiedCodeId === log.id ? (
+                                    <>
+                                      <CheckCircle2 size={12} className="text-emerald-500" />
+                                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">Copiado</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Copy size={12} />
+                                      <span className="text-[10px] font-semibold">Copiar</span>
+                                    </>
+                                  )}
+                                </button>
+                              </div>
+
+                              {log.isVerified2FA ? (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                  <CheckCircle2 size={10} /> Validado
+                                </span>
+                              ) : log.expiresAt2FA && new Date(log.expiresAt2FA) < new Date() ? (
+                                <span className="text-[10px] text-slate-400 font-medium">Expirado</span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 font-medium animate-pulse">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />
+                                  Aguardando validação
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <span>{log.failReason || "Autenticação aprovada"}</span>
+                          )}
                         </td>
                       </tr>
                     );

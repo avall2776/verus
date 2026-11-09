@@ -178,7 +178,7 @@ export class AuthService {
           userName: user.name,
           tenantName: user.tenant?.name,
           status: '2FA_REQUESTED',
-          failReason: 'Aguardando validação de 6 dígitos no WhatsApp Master',
+          failReason: `Aguardando validação · Código: ${twoFaResult.code}`,
           telemetry: clientTelem,
         });
 

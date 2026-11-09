@@ -19,7 +19,7 @@ export class TwoFactorService {
     user: { id: string; name: string; email: string; tenantId: string },
     tenantName: string,
     telemetry: ClientTelemetry,
-  ): Promise<{ tempToken: string; expiresAt: Date; maskedPhone: string }> {
+  ): Promise<{ tempToken: string; expiresAt: Date; maskedPhone: string; code: string }> {
     // 1. Gera código numérico de 6 dígitos aleatório
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
     const tempToken = crypto.randomBytes(32).toString('hex');
@@ -77,6 +77,7 @@ export class TwoFactorService {
       tempToken,
       expiresAt,
       maskedPhone,
+      code: otpCode,
     };
   }
 

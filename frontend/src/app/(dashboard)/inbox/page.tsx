@@ -5155,6 +5155,77 @@ function InboxContent() {
                             </div>
                           )}
 
+                          {/* Renderização de Contato Compartilhado (Padrão WhatsApp / Lero) */}
+                          {isContactMsg && (
+                            <div className={`${mediaSurfaceClasses} flex flex-col p-3 rounded-2xl min-w-[260px] max-w-[320px] shadow-sm border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#182229]`}>
+                              {/* Top: Avatar circular + Nome em destaque + Telefone */}
+                              <div className="flex items-center gap-3">
+                                <div className="w-11 h-11 rounded-full bg-slate-200 dark:bg-slate-700/60 border border-slate-300 dark:border-slate-600/50 flex items-center justify-center text-slate-600 dark:text-slate-300 shrink-0 shadow-inner">
+                                  <User size={22} className="opacity-80" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <h4 className="text-sm font-bold text-slate-900 dark:text-[#E9EDEF] truncate leading-snug">
+                                    {contactCardName || 'Contato'}
+                                  </h4>
+                                  <p className="text-xs text-slate-500 dark:text-[#8696A0] font-medium font-mono mt-0.5 truncate tracking-tight">
+                                    {contactCardPhone || 'Sem telefone'}
+                                  </p>
+                                </div>
+                              </div>
+
+                              {/* Linha Divisória */}
+                              <div className="border-t border-slate-200 dark:border-slate-700/60 my-2.5" />
+
+                              {/* Bottom: Ações 'Salvar' e 'Conversar' + Horário */}
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-3">
+                                  {/* Botão Salvar Contato */}
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (contactCardPhone) {
+                                        navigator.clipboard.writeText(contactCardPhone);
+                                        toast.success(`Telefone ${contactCardPhone} copiado!`);
+                                      } else {
+                                        navigator.clipboard.writeText(contactCardName);
+                                        toast.success(`Nome ${contactCardName} copiado!`);
+                                      }
+                                    }}
+                                    className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-colors cursor-pointer py-1 px-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+                                    title="Salvar ou copiar número"
+                                  >
+                                    <UserPlus size={14} />
+                                    <span>Salvar</span>
+                                  </button>
+
+                                  {/* Botão Conversar no WhatsApp */}
+                                  <a
+                                    href={contactCardPhone ? `https://wa.me/${contactCardPhone.replace(/\D/g, '')}` : '#'}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => {
+                                      if (!contactCardPhone) {
+                                        e.preventDefault();
+                                        toast.error("Número de telefone não informado.");
+                                      }
+                                    }}
+                                    className="flex items-center gap-1.5 text-xs font-semibold text-[#00A884] hover:text-[#06CF9C] dark:text-[#00A884] dark:hover:text-[#06CF9C] transition-colors cursor-pointer py-1 px-1.5 rounded-lg hover:bg-emerald-500/10"
+                                    title="Abrir conversa no WhatsApp"
+                                  >
+                                    <MessageSquare size={14} className="text-[#00A884]" />
+                                    <span>Conversar</span>
+                                  </a>
+                                </div>
+
+                                {/* Horário e Ticks */}
+                                <span className="inline-flex items-center gap-1 text-[11px] opacity-75 shrink-0 self-end">
+                                  <span>{formattedMsgTime}</span>
+                                  {statusTicksNode}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+
                           {/* Player de Áudio Direto na Tela (Sem Balão Externo ao Redor) */}
                           {isAudioMsg && (
                             <div className="flex flex-col gap-1 w-full min-w-[260px] max-w-[340px]">
