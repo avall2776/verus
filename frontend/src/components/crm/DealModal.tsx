@@ -1285,11 +1285,11 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                 type="button"
                 onClick={() => {
                   onClose();
-                  const targetContactId = deal.contactId || deal.contact?.id;
-                  if (targetContactId) {
-                    router.push(`/inbox?contactId=${targetContactId}`);
+                  const targetContact = deal.contactId || deal.contact?.id || deal.contact?.phone || deal.metadata?.phone;
+                  if (targetContact) {
+                    router.push(`/inbox?contactId=${targetContact}`);
                   } else {
-                    toast.error("Este negócio não possui contato vinculado.");
+                    toast.error("Este negócio não possui contato ou telefone vinculado.");
                   }
                 }} 
                 className="group flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-medium text-slate-700 dark:text-gray-200 bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-[#161f36] hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-gray-700 transition-colors shadow-xs cursor-pointer"

@@ -556,6 +556,7 @@ function CrmContent() {
     } catch (error) {
       toast.error("Erro ao atualizar");
       fetchDeals();
+      throw error;
     }
   };
 

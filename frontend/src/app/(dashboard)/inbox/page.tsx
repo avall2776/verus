@@ -97,6 +97,7 @@ function InboxContent() {
   const messagesCacheRef = useRef<{ [chatId: string]: any[] }>({});
 
   const [activeChat, setActiveChat] = useState<string | null>(null);
+  const [urlLoadedContact, setUrlLoadedContact] = useState<any | null>(null);
   const [contacts, setContacts] = useState<any[]>(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -1578,6 +1579,7 @@ function InboxContent() {
           return [formattedContact, ...prev];
         });
 
+        setUrlLoadedContact(formattedContact);
         setActiveChat(conv.id);
       } catch (err) {
         console.error("Erro ao carregar conversa a partir dos parâmetros de URL:", err);
@@ -1821,11 +1823,9 @@ function InboxContent() {
   useEffect(() => {
     if (initialContacts) {
       setContacts(prev => {
-        if (activeChat) {
-          const currentChat = prev.find(c => c.id === activeChat);
-          if (currentChat && !initialContacts.some((c: any) => c.id === activeChat)) {
-            return [currentChat, ...initialContacts];
-          }
+        const contactToKeep = (activeChat ? prev.find(c => c.id === activeChat) : null) || urlLoadedContact;
+        if (contactToKeep && !initialContacts.some((c: any) => c.id === contactToKeep.id)) {
+          return [contactToKeep, ...initialContacts];
         }
         return initialContacts;
       });
@@ -1843,7 +1843,7 @@ function InboxContent() {
         return exists ? prev : (conversationIdParam || contactIdParam ? prev : null);
       });
     }
-  }, [initialContacts, conversationIdParam, contactIdParam]);
+  }, [initialContacts, conversationIdParam, contactIdParam, activeChat, urlLoadedContact]);
 
 
   useEffect(() => {
@@ -2254,8 +2254,16 @@ function InboxContent() {
     }
   };
 
-  // Derivar contato ativo
-  const activeContactData = contacts.find(c => c.id === activeChat);
+  // Derivar contato ativo (com fallback robusto para contatos carregados via URL/CRM)
+  const activeContactData = useMemo(() => {
+    if (!activeChat) return null;
+    const found = contacts.find(c => c.id === activeChat || (c.contactId && urlLoadedContact?.contactId && c.contactId === urlLoadedContact.contactId));
+    if (found) return found;
+    if (urlLoadedContact && (urlLoadedContact.id === activeChat || urlLoadedContact.contactId === activeChat)) {
+      return urlLoadedContact;
+    }
+    return null;
+  }, [activeChat, contacts, urlLoadedContact]);
 
   // Busca o estágio atual e os dados do deal no CRM para o contato selecionado
   useEffect(() => {
@@ -2705,13 +2713,21 @@ function InboxContent() {
     });
   };
 
+  // Base de contatos garantindo que contato carregado via URL permaneça mesmo se não estiver no top 500
+  const baseContacts = useMemo(() => {
+    if (urlLoadedContact && !contacts.some(c => c.id === urlLoadedContact.id || (c.contactId && c.contactId === urlLoadedContact.contactId))) {
+      return [urlLoadedContact, ...contacts];
+    }
+    return contacts;
+  }, [contacts, urlLoadedContact]);
+
   // Filtro de busca e abas sobre os contatos da lista (Padrão WhatsApp Web - Otimizado com useMemo)
   const filteredContacts = useMemo(() => {
     const isMaster = currentUserRole === 'ADMIN' || currentUserRole === 'SUPER_ADMIN';
 
-    const filtered = contacts.filter(c => {
+    const filtered = baseContacts.filter(c => {
       // Regra de Ouro: se esta conversa é a atualmente aberta (activeChat), NUNCA oculta da lista
-      if (activeChat && c.id === activeChat) return true;
+      if (activeChat && (c.id === activeChat || (urlLoadedContact && c.id === urlLoadedContact.id))) return true;
 
       // Quando estiver pesquisando, ignora filtros de aba para exibir o resultado global encontrado
       if (searchQuery.trim()) {
@@ -2756,7 +2772,7 @@ function InboxContent() {
       if (!aPinned && bPinned) return 1;
       return 0;
     });
-  }, [contacts, activeFilterTab, onlyUnread, selectedDepartmentFilter, searchQuery, currentUserId, currentUserRole, archivedContactIds, pinnedContactIds]);
+  }, [baseContacts, activeChat, urlLoadedContact, activeFilterTab, onlyUnread, selectedDepartmentFilter, searchQuery, currentUserId, currentUserRole, archivedContactIds, pinnedContactIds]);
 
   // Paginação progressiva virtualizada da lista (limite inicial de 40 para garantir 60 FPS)
   const [displayLimit, setDisplayLimit] = useState(40);

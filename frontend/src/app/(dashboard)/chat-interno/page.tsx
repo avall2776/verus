@@ -105,7 +105,7 @@ function formatRelativeTime(dateString?: string): string {
 }
 
 export default function ChatInternoPage() {
-  const { socket } = useSocket();
+  const { socket, playNotificationSound } = useSocket();
 
   // Abas Principais (Colaboradores vs Equipes)
   const [activeTab, setActiveTab] = useState<'users' | 'channels'>('users');
@@ -495,6 +495,10 @@ export default function ChatInternoPage() {
         scrollToBottom();
       }
 
+      if (msg.senderId !== currentUserId) {
+        playNotificationSound(false, 'system');
+      }
+
       // Atualiza o preview do card na barra lateral
       if (msg.channelId) {
         setChannels(prev => prev.map(c => {
@@ -576,6 +580,37 @@ export default function ChatInternoPage() {
       socket.off('userPresenceChanged', onUserPresenceChanged);
     };
   }, [socket, activeChatId, chatType, currentUserId]);
+
+  // Polling de redundância resiliente (3.5s) para garantir sincronização contínua mesmo com instabilidade de WebSocket
+  useEffect(() => {
+    if (!activeChatId) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const queryParam = chatType === 'channel' ? `channelId=${activeChatId}` : `receiverId=${activeChatId}`;
+        const res = await api.get(`/team-chat/messages?${queryParam}`);
+        const serverMsgs: TeamMessage[] = res.data || [];
+        
+        if (activeChatIdRef.current === activeChatId) {
+          setMessages(prev => {
+            if (prev.length === serverMsgs.length && prev[prev.length - 1]?.id === serverMsgs[serverMsgs.length - 1]?.id) {
+              return prev;
+            }
+            const newIncoming = serverMsgs.filter(sm => sm.senderId !== currentUserId && !prev.some(pm => pm.id === sm.id));
+            if (newIncoming.length > 0) {
+              playNotificationSound(false, 'system');
+              scrollToBottom();
+            }
+            return serverMsgs;
+          });
+        }
+      } catch (e) {
+        // Fallback silencioso
+      }
+    }, 3500);
+
+    return () => clearInterval(interval);
+  }, [activeChatId, chatType, currentUserId, playNotificationSound]);
 
   const scrollToBottom = () => {
     setTimeout(() => {

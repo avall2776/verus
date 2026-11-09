@@ -542,6 +542,71 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       }
     });
 
+    // Escuta global para mensagens da Equipe / Chat Interno
+    socketInstance.on('newTeamMessage', (msg: any) => {
+      if (isUnauthenticatedOrPublic()) return;
+
+      const currentUser = getStoredUserSync();
+      const currentUserId = currentUser?.id || '';
+
+      // Não notifica mensagens enviadas pelo próprio usuário
+      if (msg.senderId && currentUserId && msg.senderId === currentUserId) return;
+
+      // Se for mensagem direta, só notifica se for direcionada ao usuário logado
+      if (msg.receiverId && currentUserId && msg.receiverId !== currentUserId) return;
+
+      const senderName = msg.sender?.name || 'Membro da Equipe';
+      const body = msg.content || (msg.mediaUrl ? '📎 Arquivo compartilhado' : 'Nova mensagem interna');
+      const isChatInternoOpen = typeof window !== 'undefined' && 
+        window.location.pathname.startsWith('/chat-interno') && 
+        (window.location.search.includes(msg.senderId) || (msg.channelId && window.location.search.includes(msg.channelId)));
+
+      // Som e vibração
+      playNotificationSound(false, 'system');
+      triggerVibration();
+      triggerTabBlink(`💬 Mensagem de ${senderName}`);
+
+      // Notificação nativa desktop
+      dispatchDesktopNotification(`💬 Chat Interno: ${senderName}`, {
+        body,
+        tag: `team_msg_${msg.id}`,
+        url: msg.channelId ? `/chat-interno?channelId=${msg.channelId}` : `/chat-interno?userId=${msg.senderId}`,
+        channel: 'system'
+      });
+
+      // Se o atendente não estiver com a conversa específica aberta, mostra Toast na tela
+      if (!isChatInternoOpen) {
+        toast((t) => (
+          <div 
+            onClick={() => {
+              toast.dismiss(t.id);
+              router.push(msg.channelId ? `/chat-interno?channelId=${msg.channelId}` : `/chat-interno?userId=${msg.senderId}`);
+            }}
+            className="flex items-center gap-3 cursor-pointer py-1"
+          >
+            <div className="w-9 h-9 rounded-full bg-cyan-500/20 text-cyan-400 font-bold flex items-center justify-center shrink-0 border border-cyan-500/40">
+              {senderName.charAt(0).toUpperCase()}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-white flex items-center gap-1.5">
+                <span>{senderName}</span>
+                <span className="text-[10px] text-cyan-400 bg-cyan-950/60 px-1.5 py-0.5 rounded border border-cyan-800">Equipe</span>
+              </p>
+              <p className="text-xs text-slate-300 truncate">{body}</p>
+            </div>
+          </div>
+        ), {
+          duration: 6000,
+          style: {
+            background: '#0B1224',
+            border: '1px solid rgba(6, 182, 212, 0.4)',
+            color: '#fff',
+            borderRadius: '12px'
+          }
+        });
+      }
+    });
+
     // Escuta global de Encerramento Remoto de Sessão (SOC Security)
     socketInstance.on('session_terminated', (data: { sessionId?: string; userId?: string; all?: boolean; exceptUserId?: string; exceptToken?: string; reason?: string }) => {
       const currentToken = getStoredToken();
