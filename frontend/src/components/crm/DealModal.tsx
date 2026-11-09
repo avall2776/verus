@@ -1284,10 +1284,9 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
               <button 
                 type="button"
                 onClick={() => {
-                  onClose();
                   const targetContact = deal.contactId || deal.contact?.id || deal.contact?.phone || deal.metadata?.phone;
                   if (targetContact) {
-                    router.push(`/inbox?contactId=${targetContact}`);
+                    router.push(`/inbox?contactId=${encodeURIComponent(targetContact)}`);
                   } else {
                     toast.error("Este negócio não possui contato ou telefone vinculado.");
                   }

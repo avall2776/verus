@@ -474,12 +474,13 @@ function CrmContent() {
     if (typeof window !== 'undefined') {
       setTimeout(() => {
         try {
-          const url = new URL(window.location.href);
-          if (url.searchParams.has('dealId') || url.searchParams.has('id') || url.searchParams.has('contactId')) {
-            url.searchParams.delete('dealId');
-            url.searchParams.delete('id');
-            url.searchParams.delete('contactId');
-            window.history.replaceState(null, '', url.toString());
+          if (window.location.pathname.startsWith('/crm')) {
+            const url = new URL(window.location.href);
+            if (url.searchParams.has('dealId') || url.searchParams.has('id')) {
+              url.searchParams.delete('dealId');
+              url.searchParams.delete('id');
+              window.history.replaceState(null, '', url.toString());
+            }
           }
         } catch {}
       }, 60);
