@@ -495,9 +495,16 @@ export class ChatService {
     return null;
   }
 
-  async getConversationByContact(tenantId: string, contactId: string) {
+  async getConversationByContact(tenantId: string, contactIdOrPhone: string) {
+    const cleanDigits = (contactIdOrPhone || '').replace(/\D/g, '');
     let conversation = await this.prisma.conversation.findFirst({
-      where: { tenantId, contactId },
+      where: {
+        tenantId,
+        OR: [
+          { contactId: contactIdOrPhone },
+          ...(cleanDigits.length >= 8 ? [{ contact: { phone: { contains: cleanDigits } } }] : [])
+        ]
+      },
       orderBy: { updatedAt: 'desc' },
       include: {
         messages: {
@@ -511,9 +518,15 @@ export class ChatService {
     });
 
     if (!conversation) {
-      // Tentar encontrar o contato pelo ID fornecido
+      // Tentar encontrar o contato pelo ID ou telefone fornecido
       const contact = await this.prisma.contact.findFirst({
-        where: { tenantId, id: contactId }
+        where: {
+          tenantId,
+          OR: [
+            { id: contactIdOrPhone },
+            ...(cleanDigits.length >= 8 ? [{ phone: { contains: cleanDigits } }] : [])
+          ]
+        }
       });
 
       if (!contact) {
@@ -1289,6 +1302,13 @@ export class ChatService {
                 : 'imagem.jpg'),
             instanceId: payload.instanceId,
             quoted: quotedEvolutionPayload,
+          });
+        } else if (type === 'audio' && mediaUrl) {
+          sendRes = await this.messagingService.sendAudio({
+            tenantId,
+            phone: conversation.contact.phone,
+            audioUrl: mediaUrl,
+            instanceId: payload.instanceId,
           });
         } else {
           sendRes = await this.messagingService.sendText({

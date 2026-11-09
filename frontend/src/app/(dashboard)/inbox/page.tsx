@@ -12,7 +12,7 @@ import {
   Volume2, Check, CheckCheck, Copy, ExternalLink, Headphones, Download, ZoomIn, Maximize2,
   BellOff, History, UserPlus, FileDown, MessageSquarePlus, PanelRight, Info, Pin,
   Clock, AlertCircle, Workflow, Pencil, ShoppingBag, MapPin, Video, ArrowLeft, Reply, Users, Star, Menu,
-  Archive, PinOff, Heart, Bell, LogOut
+  Archive, PinOff, Heart, Bell, LogOut, Forward
 } from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
 import { useWhatsApp } from "@/components/ui/WhatsAppProvider";
@@ -231,6 +231,10 @@ function InboxContent() {
   const [replyingToMessage, setReplyingToMessage] = useState<any | null>(null);
   const [activeReactionPickerMessageId, setActiveReactionPickerMessageId] = useState<string | null>(null);
   const [selectedMessageForAction, setSelectedMessageForAction] = useState<string | null>(null);
+  const [forwardingMessage, setForwardingMessage] = useState<any | null>(null);
+  const [forwardSearchQuery, setForwardSearchQuery] = useState('');
+  const [isForwardingMessage, setIsForwardingMessage] = useState(false);
+  const [forwardingTargetId, setForwardingTargetId] = useState<string | null>(null);
 
   const scrollToMessage = (msgId?: string) => {
     if (!msgId) return;
@@ -2553,6 +2557,70 @@ function InboxContent() {
     }
   };
 
+  const handleForwardMessageToContact = async (targetContact: any) => {
+    if (!forwardingMessage || isForwardingMessage) return;
+    setIsForwardingMessage(true);
+    setForwardingTargetId(targetContact.id);
+    const toastId = toast.loading("Encaminhando mensagem...");
+
+    try {
+      const isVoiceOrAudio = forwardingMessage.type === 'audio' || forwardingMessage.type === 'voice';
+      const payload: any = {
+        content: forwardingMessage.content || (isVoiceOrAudio ? '🎤 Mensagem de voz' : ''),
+        type: isVoiceOrAudio ? 'audio' : (forwardingMessage.type || 'text'),
+        ...(forwardingMessage.mediaUrl ? { mediaUrl: forwardingMessage.mediaUrl } : {}),
+        isInternal: false,
+        ...(activeInstance?.id ? { instanceId: activeInstance.id } : {})
+      };
+
+      let targetConvId = targetContact.conversationId || targetContact.id;
+      let sentData: any = null;
+
+      // Se o targetContact não é uma conversa direta e é um contato de agenda:
+      if (!targetContact.isConversation && !targetContact.contactId && targetContact.phone) {
+        try {
+          const { data } = await api.post(`/conversations/contact/${targetContact.id}/messages`, payload);
+          sentData = data;
+        } catch (contactErr) {
+          // Se falhou por contactId, tenta resolver a conversa
+          const { data: conv } = await api.get(`/conversations/contact/${targetContact.id}`);
+          if (conv?.id) {
+            targetConvId = conv.id;
+            const { data } = await api.post(`/conversations/${targetConvId}/messages`, payload);
+            sentData = data;
+          } else {
+            throw contactErr;
+          }
+        }
+      } else {
+        const { data } = await api.post(`/conversations/${targetConvId}/messages`, payload);
+        sentData = data;
+      }
+
+      toast.success(
+        isVoiceOrAudio 
+          ? `Áudio encaminhado para ${formatContactDisplayName(targetContact.name, targetContact.phone)}!`
+          : `Mensagem encaminhada para ${formatContactDisplayName(targetContact.name, targetContact.phone)}!`,
+        { id: toastId }
+      );
+
+      // Se encaminhou para a conversa que está aberta agora, insere no chat local
+      if (sentData && (targetConvId === activeChat || targetContact.id === activeChat)) {
+        setMessages((prev) => [...prev, sentData]);
+      }
+
+      setForwardingMessage(null);
+      setForwardSearchQuery('');
+      refetchConversations();
+    } catch (err: any) {
+      console.error("Erro ao encaminhar:", err);
+      toast.error(`Erro ao encaminhar: ${err.response?.data?.message || err.message || 'Erro de conexão'}`, { id: toastId });
+    } finally {
+      setIsForwardingMessage(false);
+      setForwardingTargetId(null);
+    }
+  };
+
   const handleRetryFailedMessage = async (failedMsg: any) => {
     if (!activeChat || !failedMsg) return;
     try {
@@ -4633,6 +4701,20 @@ function InboxContent() {
                                 <Reply size={13} />
                               </button>
 
+                              {/* Botão de Encaminhar Mensagem / Áudio */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedMessageForAction(null);
+                                  setForwardingMessage(msg);
+                                }}
+                                title={isAudioMsg ? "Encaminhar áudio" : "Encaminhar mensagem"}
+                                className="p-1 rounded-full text-slate-700 hover:text-blue-600 dark:text-slate-300 dark:hover:text-cyan-400 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors cursor-pointer"
+                              >
+                                <Forward size={13} />
+                              </button>
+
                               {/* Botão de Excluir Mensagem */}
                               <button
                                 type="button"
@@ -4936,6 +5018,7 @@ function InboxContent() {
                                   isOutbound={isMe}
                                   timestamp={formattedMsgTime}
                                   statusNode={statusTicksNode}
+                                  onForward={() => setForwardingMessage(msg)}
                                 />
                               ) : msg.mediaUrl?.includes('mmg.whatsapp.net') ? (
                                 <div className={`${mediaSurfaceClasses} flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-2xl text-xs shadow-sm`}>
@@ -6526,6 +6609,226 @@ function InboxContent() {
                       Conversar
                     </span>
                   </div>
+                  );
+                });
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL ENCAMINHAR MENSAGEM / ÁUDIO */}
+      {forwardingMessage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700/80 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
+            {/* Modal Header */}
+            <div className="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#162038]/50 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-blue-600/10 dark:bg-cyan-500/10 text-blue-600 dark:text-cyan-400 flex items-center justify-center">
+                  <Forward size={18} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
+                    {forwardingMessage.type === 'audio' ? 'Encaminhar Áudio' : 'Encaminhar Mensagem'}
+                  </h3>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Selecione o contato ou conversa de destino
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setForwardingMessage(null);
+                  setForwardSearchQuery('');
+                }}
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Preview da Mensagem / Áudio sendo encaminhado */}
+            <div className="px-4 py-2.5 bg-slate-100/70 dark:bg-[#131d33] border-b border-slate-200 dark:border-slate-800 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                {forwardingMessage.type === 'audio' ? (
+                  <Volume2 size={16} />
+                ) : forwardingMessage.type === 'image' ? (
+                  <ImageIcon size={16} />
+                ) : forwardingMessage.type === 'document' ? (
+                  <FileText size={16} />
+                ) : (
+                  <MessageSquare size={16} />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className="text-[11px] font-bold text-blue-600 dark:text-cyan-400 uppercase tracking-wider block">
+                  {forwardingMessage.type === 'audio' ? 'Mensagem de voz' : (forwardingMessage.type || 'Texto')}
+                </span>
+                <p className="text-xs text-slate-700 dark:text-slate-200 truncate font-medium">
+                  {forwardingMessage.content || (forwardingMessage.type === 'audio' ? 'Áudio selecionado' : 'Mídia anexada')}
+                </p>
+                {forwardingMessage.audioTranscription && (
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate italic">
+                    "{forwardingMessage.audioTranscription}"
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Input de Busca */}
+            <div className="p-3 border-b border-slate-200 dark:border-slate-800">
+              <div className="relative">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+                <input
+                  type="text"
+                  placeholder="Pesquisar por nome, telefone ou setor..."
+                  className="w-full bg-slate-50 dark:bg-[#1E293B] border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-colors"
+                  value={forwardSearchQuery}
+                  onChange={(e) => setForwardSearchQuery(e.target.value)}
+                  autoFocus
+                />
+              </div>
+            </div>
+
+            {/* Lista de Destinatários */}
+            <div className="p-3 overflow-y-auto flex-1 space-y-1.5 min-h-[220px] max-h-[360px]">
+              {(() => {
+                const seenKeys = new Set<string>();
+                const combinedList: any[] = [];
+
+                contacts.forEach((c: any) => {
+                  const key = c.phone || c.id;
+                  if (!seenKeys.has(key)) {
+                    seenKeys.add(key);
+                    combinedList.push({ ...c, isConversation: true });
+                  }
+                });
+
+                if (directoryContacts && Array.isArray(directoryContacts)) {
+                  directoryContacts.forEach((dc: any) => {
+                    const key = dc.phone || dc.id;
+                    if (!seenKeys.has(key)) {
+                      seenKeys.add(key);
+                      combinedList.push({ ...dc, isConversation: false });
+                    }
+                  });
+                }
+
+                const filtered = combinedList.filter((c: any) => {
+                  if (!forwardSearchQuery.trim()) return true;
+                  const q = forwardSearchQuery.toLowerCase();
+                  const dept = resolveContactDepartment(c);
+                  return (
+                    (c.name && c.name.toLowerCase().includes(q)) ||
+                    (c.phone && c.phone.toLowerCase().includes(q)) ||
+                    (c.email && c.email.toLowerCase().includes(q)) ||
+                    (dept?.name && dept.name.toLowerCase().includes(q))
+                  );
+                });
+
+                if (filtered.length === 0) {
+                  return (
+                    <div className="text-center py-8 text-xs text-slate-400 dark:text-slate-500">
+                      Nenhum contato ou conversa encontrado para "{forwardSearchQuery}".
+                    </div>
+                  );
+                }
+
+                return filtered.map((c: any) => {
+                  const modalDept = resolveContactDepartment(c);
+                  const isThisTarget = forwardingTargetId === c.id;
+
+                  return (
+                    <div
+                      key={c.id}
+                      onClick={() => !isForwardingMessage && handleForwardMessageToContact(c)}
+                      className={`p-2.5 rounded-xl border flex items-center justify-between gap-3 transition-all cursor-pointer group select-none ${
+                        isThisTarget
+                          ? 'bg-blue-500/10 border-blue-500'
+                          : 'bg-slate-50 dark:bg-[#1E293B]/60 hover:bg-slate-100 dark:hover:bg-[#1E293B] border-slate-200 dark:border-slate-800 hover:border-blue-500/50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        {/* Anel de Região Inteligente ao redor do Avatar */}
+                        <div
+                          className="p-[2px] rounded-full shrink-0 transition-all"
+                          style={
+                            modalDept?.color
+                              ? {
+                                  backgroundColor: modalDept.color,
+                                  boxShadow: `0 0 0 1px ${modalDept.color}40, 0 2px 6px ${modalDept.color}30`,
+                                }
+                              : undefined
+                          }
+                          title={modalDept?.name ? `Setor / Região: ${modalDept.name}` : undefined}
+                        >
+                          <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-gradient-to-tr dark:from-slate-700 dark:to-slate-800 flex items-center justify-center text-xs font-bold text-slate-800 dark:text-white relative overflow-hidden shrink-0">
+                            {isAvatarUrlValid(c.avatarUrl) ? (
+                              <img
+                                src={c.avatarUrl!}
+                                alt={c.name}
+                                referrerPolicy="no-referrer"
+                                className="w-full h-full object-cover rounded-full"
+                                onError={(e) => {
+                                  (e.currentTarget as HTMLElement).style.display = 'none';
+                                  const fallback = e.currentTarget.parentElement?.querySelector('.avatar-initials') as HTMLElement;
+                                  if (fallback) fallback.classList.remove('hidden');
+                                }}
+                              />
+                            ) : null}
+                            <span className={`avatar-initials ${c.avatarUrl ? 'hidden' : ''}`}>
+                              {getContactInitials(c.name, c.phone)}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Detalhes do Contato */}
+                        <div className="min-w-0">
+                          <h4 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
+                            {formatContactDisplayName(c.name, c.phone)}
+                          </h4>
+                          <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                            <span>{c.phone || 'Sem telefone'}</span>
+                            {modalDept?.name && (
+                              <>
+                                <span>•</span>
+                                <span className="font-semibold truncate" style={{ color: modalDept.color }}>
+                                  {modalDept.name}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Botão de Ação / Encaminhar */}
+                      <button
+                        type="button"
+                        disabled={isForwardingMessage}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleForwardMessageToContact(c);
+                        }}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shrink-0 cursor-pointer shadow-sm ${
+                          isThisTarget
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600'
+                        }`}
+                      >
+                        {isThisTarget ? (
+                          <>
+                            <RefreshCw size={12} className="animate-spin" />
+                            <span>Enviando...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Forward size={12} />
+                            <span>Encaminhar</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
                   );
                 });
               })()}

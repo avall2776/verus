@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
+import * as fs from 'fs';
+import * as path from 'path';
 import { PrismaService } from '../../shared/database/prisma.service';
 import {
   isGoogleDriveUrl,
@@ -709,6 +711,28 @@ export class MessagingService {
     if (fullAudioUrl && (fullAudioUrl.startsWith('/api-backend') || fullAudioUrl.startsWith('/'))) {
       const serverHost = process.env.PUBLIC_BACKEND_URL || 'http://187.127.10.166:3001';
       fullAudioUrl = `${serverHost}${fullAudioUrl.replace('/api-backend', '')}`;
+    }
+
+    // Se não há buffer fornecido mas temos URL local, lê diretamente do disco para base64 imediato
+    if (!payload.audioBuffer && payload.audioUrl) {
+      try {
+        const cleanUrl = payload.audioUrl.split('?')[0];
+        const basename = path.basename(cleanUrl);
+        const candidatePaths = [
+          path.join(process.cwd(), 'uploads', 'audio', basename),
+          path.join(process.cwd(), 'uploads', 'media', basename),
+          path.join(process.cwd(), 'uploads', basename),
+        ];
+
+        for (const p of candidatePaths) {
+          if (fs.existsSync(p)) {
+            payload.audioBuffer = await fs.promises.readFile(p);
+            break;
+          }
+        }
+      } catch (readErr: any) {
+        this.logger.warn(`Não foi possível carregar buffer local do áudio: ${readErr.message}`);
+      }
     }
 
     if (conn.preferredProvider === 'evolution') {

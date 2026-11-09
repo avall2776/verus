@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Play, Pause, Volume2, Download, FastForward, RotateCcw } from 'lucide-react';
+import { Play, Pause, Volume2, Download, FastForward, RotateCcw, Forward } from 'lucide-react';
 
 interface VersusAudioPlayerProps {
   src: string;
@@ -10,6 +10,7 @@ interface VersusAudioPlayerProps {
   isOutbound?: boolean;
   timestamp?: string;
   statusNode?: React.ReactNode;
+  onForward?: () => void;
 }
 
 export const VersusAudioPlayer: React.FC<VersusAudioPlayerProps> = ({
@@ -19,6 +20,7 @@ export const VersusAudioPlayer: React.FC<VersusAudioPlayerProps> = ({
   isOutbound = false,
   timestamp,
   statusNode,
+  onForward,
 }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const progressBarRef = useRef<HTMLDivElement | null>(null);
@@ -225,6 +227,18 @@ export const VersusAudioPlayer: React.FC<VersusAudioPlayerProps> = ({
         >
           {playbackRate}x
         </button>
+
+        {/* Botão de Encaminhar Áudio */}
+        {onForward && (
+          <button
+            type="button"
+            onClick={onForward}
+            className="p-1.5 rounded-full transition-all cursor-pointer shrink-0 bg-black/10 dark:bg-black/25 hover:bg-black/20 dark:hover:bg-black/40 opacity-80 hover:opacity-100 hover:text-blue-500 dark:hover:text-cyan-400"
+            title="Encaminhar áudio"
+          >
+            <Forward size={13} />
+          </button>
+        )}
 
         {/* Botão de Download */}
         <a
