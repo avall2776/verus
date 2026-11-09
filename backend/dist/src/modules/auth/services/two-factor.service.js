@@ -109,42 +109,12 @@ let TwoFactorService = TwoFactorService_1 = class TwoFactorService {
     }
     async dispatchWhatsAppMaster(tenantId, phone, content, otpCode) {
         try {
-            let instance = await this.prisma.whatsAppInstance.findFirst({
-                where: {
-                    status: 'connected',
-                    phoneNumber: { not: { contains: '91109159' } },
-                },
-                orderBy: [{ isDefault: 'desc' }, { updatedAt: 'desc' }],
-            });
-            if (!instance) {
-                instance = await this.prisma.whatsAppInstance.findFirst({
-                    where: { status: 'connected' },
-                    orderBy: [{ updatedAt: 'desc' }],
-                });
-            }
-            if (!instance) {
-                this.logger.warn(`[2FA_DISPATCH_WARN] Nenhuma instância de WhatsApp conectada encontrada. Código OTP gerado: ${otpCode} para ${phone}`);
-                return false;
-            }
-            let evoInstanceName = instance?.settings?.instanceName;
-            if (!evoInstanceName || !evoInstanceName.startsWith('versus_')) {
-                if (instance?.name && instance.name.startsWith('versus_')) {
-                    evoInstanceName = instance.name.trim();
-                }
-                else {
-                    const shortTenant = instance.tenantId ? instance.tenantId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 10) : 'ten';
-                    const shortInst = instance.id ? instance.id.replace(/[^a-zA-Z0-9]/g, '').slice(0, 10) : 'inst';
-                    evoInstanceName = `versus_${shortTenant}_${shortInst}`;
-                }
-            }
             const evolutionUrl = process.env.EVOLUTION_API_URL || 'http://localhost:8080';
             const evolutionGlobalKey = process.env.EVOLUTION_API_KEY || 'verto123';
-            const apiKey = instance.token || evolutionGlobalKey;
             const cleanDigits = phone.replace(/\D/g, '');
             const targetPhone12 = cleanDigits.length === 13 && cleanDigits.startsWith('55')
                 ? cleanDigits.slice(0, 4) + cleanDigits.slice(5)
                 : cleanDigits;
-            const url = `${evolutionUrl}/message/sendText/${evoInstanceName}`;
             const payload = {
                 number: targetPhone12,
                 text: content,
@@ -157,18 +127,55 @@ let TwoFactorService = TwoFactorService_1 = class TwoFactorService {
                     text: content,
                 },
             };
-            const res = await axios_1.default.post(url, payload, {
-                headers: {
-                    apikey: apiKey,
-                    'Content-Type': 'application/json',
-                },
-                timeout: 10000,
+            const candidateInstances = await this.prisma.whatsAppInstance.findMany({
+                where: { status: 'connected' },
+                orderBy: [{ isDefault: 'desc' }, { updatedAt: 'desc' }],
             });
-            this.logger.log(`[2FA_DISPATCH_SUCCESS] Código enviado com sucesso para ${targetPhone12} via instância ${evoInstanceName}`);
-            return true;
+            if (!candidateInstances || candidateInstances.length === 0) {
+                this.logger.warn(`[2FA_DISPATCH_WARN] Nenhuma instância de WhatsApp conectada encontrada. Código OTP gerado: ${otpCode} para ${phone}`);
+                return false;
+            }
+            candidateInstances.sort((a, b) => {
+                const aIsDest = a.phoneNumber?.includes('91109159') ? 1 : 0;
+                const bIsDest = b.phoneNumber?.includes('91109159') ? 1 : 0;
+                return aIsDest - bIsDest;
+            });
+            for (const inst of candidateInstances) {
+                let evoInstanceName = inst?.settings?.instanceName;
+                if (!evoInstanceName || !evoInstanceName.startsWith('versus_')) {
+                    if (inst?.name && inst.name.startsWith('versus_')) {
+                        evoInstanceName = inst.name.trim();
+                    }
+                    else {
+                        const shortTenant = inst.tenantId ? inst.tenantId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 10) : 'ten';
+                        const shortInst = inst.id ? inst.id.replace(/[^a-zA-Z0-9]/g, '').slice(0, 10) : 'inst';
+                        evoInstanceName = `versus_${shortTenant}_${shortInst}`;
+                    }
+                }
+                const url = `${evolutionUrl}/message/sendText/${evoInstanceName}`;
+                const keysToTry = Array.from(new Set([evolutionGlobalKey, 'verto123', inst.token])).filter(Boolean);
+                for (const key of keysToTry) {
+                    try {
+                        await axios_1.default.post(url, payload, {
+                            headers: {
+                                apikey: key,
+                                'Content-Type': 'application/json',
+                            },
+                            timeout: 10000,
+                        });
+                        this.logger.log(`[2FA_DISPATCH_SUCCESS] Código enviado com sucesso para ${targetPhone12} via instância ${evoInstanceName}`);
+                        return true;
+                    }
+                    catch (sendErr) {
+                        this.logger.warn(`[2FA_DISPATCH_ATTEMPT_FAILED] Tentativa via ${evoInstanceName} falhou: ${sendErr.message}`);
+                    }
+                }
+            }
+            this.logger.error(`[2FA_DISPATCH_ERROR] Todas as tentativas de envio falharam para ${phone}. Código: ${otpCode}`);
+            return false;
         }
         catch (err) {
-            this.logger.error(`[2FA_DISPATCH_ERROR] Falha ao enviar WhatsApp para ${phone}: ${err.message}. Código: ${otpCode}`);
+            this.logger.error(`[2FA_DISPATCH_ERROR] Falha geral ao enviar WhatsApp para ${phone}: ${err.message}. Código: ${otpCode}`);
             return false;
         }
     }

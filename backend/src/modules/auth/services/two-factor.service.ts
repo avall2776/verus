@@ -131,7 +131,7 @@ export class TwoFactorService {
   }
 
   /**
-   * Envia a mensagem via Evolution API local/remota buscando qualquer instância conectada
+   * Envia a mensagem via Evolution API local/remota buscando qualquer instância conectada com chave mestra
    */
   private async dispatchWhatsAppMaster(
     tenantId: string,
@@ -140,44 +140,8 @@ export class TwoFactorService {
     otpCode: string,
   ): Promise<boolean> {
     try {
-      // 1. Procura instância conectada externa (evitando disparar do mesmo número de destino)
-      let instance = await this.prisma.whatsAppInstance.findFirst({
-        where: {
-          status: 'connected',
-          phoneNumber: { not: { contains: '91109159' } },
-        },
-        orderBy: [{ isDefault: 'desc' }, { updatedAt: 'desc' }],
-      });
-
-      if (!instance) {
-        instance = await this.prisma.whatsAppInstance.findFirst({
-          where: { status: 'connected' },
-          orderBy: [{ updatedAt: 'desc' }],
-        });
-      }
-
-      if (!instance) {
-        this.logger.warn(
-          `[2FA_DISPATCH_WARN] Nenhuma instância de WhatsApp conectada encontrada. Código OTP gerado: ${otpCode} para ${phone}`,
-        );
-        return false;
-      }
-
-      // 2. Resolve o nome técnico exato da instância no Evolution API (versus_tenant_inst)
-      let evoInstanceName = (instance?.settings as any)?.instanceName;
-      if (!evoInstanceName || !evoInstanceName.startsWith('versus_')) {
-        if (instance?.name && instance.name.startsWith('versus_')) {
-          evoInstanceName = instance.name.trim();
-        } else {
-          const shortTenant = instance.tenantId ? instance.tenantId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 10) : 'ten';
-          const shortInst = instance.id ? instance.id.replace(/[^a-zA-Z0-9]/g, '').slice(0, 10) : 'inst';
-          evoInstanceName = `versus_${shortTenant}_${shortInst}`;
-        }
-      }
-
       const evolutionUrl = process.env.EVOLUTION_API_URL || 'http://localhost:8080';
       const evolutionGlobalKey = process.env.EVOLUTION_API_KEY || 'verto123';
-      const apiKey = instance.token || evolutionGlobalKey;
 
       // Normaliza para o padrão de 12 dígitos do WhatsApp no Brasil (DDD >= 31 no Baileys)
       const cleanDigits = phone.replace(/\D/g, '');
@@ -185,7 +149,6 @@ export class TwoFactorService {
         ? cleanDigits.slice(0, 4) + cleanDigits.slice(5) // Remove 9º dígito: 555491109159
         : cleanDigits;
 
-      const url = `${evolutionUrl}/message/sendText/${evoInstanceName}`;
       const payload = {
         number: targetPhone12,
         text: content,
@@ -199,21 +162,72 @@ export class TwoFactorService {
         },
       };
 
-      const res = await axios.post(url, payload, {
-        headers: {
-          apikey: apiKey,
-          'Content-Type': 'application/json',
-        },
-        timeout: 10000,
+      // 1. Procura instâncias conectadas (priorizando linhas que não sejam o próprio destinatário)
+      const candidateInstances = await this.prisma.whatsAppInstance.findMany({
+        where: { status: 'connected' },
+        orderBy: [{ isDefault: 'desc' }, { updatedAt: 'desc' }],
       });
 
-      this.logger.log(
-        `[2FA_DISPATCH_SUCCESS] Código enviado com sucesso para ${targetPhone12} via instância ${evoInstanceName}`,
+      if (!candidateInstances || candidateInstances.length === 0) {
+        this.logger.warn(
+          `[2FA_DISPATCH_WARN] Nenhuma instância de WhatsApp conectada encontrada. Código OTP gerado: ${otpCode} para ${phone}`,
+        );
+        return false;
+      }
+
+      // Ordena colocando a instância externa (ex: Comercial Verto ou Avall) antes da própria conta de destino
+      candidateInstances.sort((a, b) => {
+        const aIsDest = a.phoneNumber?.includes('91109159') ? 1 : 0;
+        const bIsDest = b.phoneNumber?.includes('91109159') ? 1 : 0;
+        return aIsDest - bIsDest;
+      });
+
+      // 2. Itera sobre as instâncias conectadas e tenta o envio com a chave mestra global da Evolution API
+      for (const inst of candidateInstances) {
+        let evoInstanceName = (inst?.settings as any)?.instanceName;
+        if (!evoInstanceName || !evoInstanceName.startsWith('versus_')) {
+          if (inst?.name && inst.name.startsWith('versus_')) {
+            evoInstanceName = inst.name.trim();
+          } else {
+            const shortTenant = inst.tenantId ? inst.tenantId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 10) : 'ten';
+            const shortInst = inst.id ? inst.id.replace(/[^a-zA-Z0-9]/g, '').slice(0, 10) : 'inst';
+            evoInstanceName = `versus_${shortTenant}_${shortInst}`;
+          }
+        }
+
+        const url = `${evolutionUrl}/message/sendText/${evoInstanceName}`;
+        // Prioridade soberana para a chave mestra global (verto123) que a Evolution API exige
+        const keysToTry = Array.from(new Set([evolutionGlobalKey, 'verto123', inst.token])).filter(Boolean) as string[];
+
+        for (const key of keysToTry) {
+          try {
+            await axios.post(url, payload, {
+              headers: {
+                apikey: key,
+                'Content-Type': 'application/json',
+              },
+              timeout: 10000,
+            });
+
+            this.logger.log(
+              `[2FA_DISPATCH_SUCCESS] Código enviado com sucesso para ${targetPhone12} via instância ${evoInstanceName}`,
+            );
+            return true;
+          } catch (sendErr: any) {
+            this.logger.warn(
+              `[2FA_DISPATCH_ATTEMPT_FAILED] Tentativa via ${evoInstanceName} falhou: ${sendErr.message}`,
+            );
+          }
+        }
+      }
+
+      this.logger.error(
+        `[2FA_DISPATCH_ERROR] Todas as tentativas de envio falharam para ${phone}. Código: ${otpCode}`,
       );
-      return true;
+      return false;
     } catch (err: any) {
       this.logger.error(
-        `[2FA_DISPATCH_ERROR] Falha ao enviar WhatsApp para ${phone}: ${err.message}. Código: ${otpCode}`,
+        `[2FA_DISPATCH_ERROR] Falha geral ao enviar WhatsApp para ${phone}: ${err.message}. Código: ${otpCode}`,
       );
       return false;
     }
