@@ -480,6 +480,14 @@ export default function ChatInternoPage() {
 
     // 1. Mensagem Nova
     const onNewTeamMessage = (msg: TeamMessage) => {
+      // Mensagens diretas privadas (sem channelId) pertencem exclusivamente aos dois participantes
+      if (!msg.channelId) {
+        const isParticipant = msg.senderId === currentUserId || msg.receiverId === currentUserId;
+        if (!isParticipant) {
+          // Não sou remetente nem destinatário: ignora totalmente para não poluir preview nem histórico
+          return;
+        }
+      }
       const isCurrentChannel = chatType === 'channel' && msg.channelId === activeChatId;
       const isCurrentUserChat = chatType === 'user' && (
         (msg.senderId === activeChatId && msg.receiverId === currentUserId) ||
@@ -611,6 +619,28 @@ export default function ChatInternoPage() {
 
     return () => clearInterval(interval);
   }, [activeChatId, chatType, currentUserId, playNotificationSound]);
+
+  // Atualização periódica leve da listagem de usuários para manter a sidebar sempre sincronizada
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const { data: latestUsers } = await api.get('/team-chat/users');
+        if (Array.isArray(latestUsers)) {
+          setUsers(prev => {
+            return latestUsers.map(lu => {
+              const existing = prev.find(p => p.id === lu.id);
+              return {
+                ...lu,
+                unreadCount: existing?.unreadCount || lu.unreadCount || 0
+              };
+            });
+          });
+        }
+      } catch (e) {}
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const scrollToBottom = () => {
     setTimeout(() => {

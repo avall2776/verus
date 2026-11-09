@@ -12,7 +12,8 @@ export class TeamChatService {
   async getUsers(tenantId: string, currentUserId?: string) {
     const onlineUserIds = this.chatGateway.getOnlineUserIds(tenantId);
 
-    const users = await this.prisma.user.findMany({
+    // 1. Usuários do tenant
+    const tenantUsers = await this.prisma.user.findMany({
       where: { tenantId },
       select: { 
         id: true, 
@@ -20,6 +21,7 @@ export class TeamChatService {
         email: true,
         role: true, 
         isOnline: true,
+        avatarUrl: true,
         departments: {
           include: {
             department: {
@@ -30,6 +32,58 @@ export class TeamChatService {
       },
       orderBy: { name: 'asc' }
     });
+
+    // 2. Localiza usuários externos (ex: Super Admin em auditoria/modo suporte) que trocaram mensagens neste tenant
+    const externalMsgs = await this.prisma.teamMessage.findMany({
+      where: {
+        tenantId,
+        channelId: null,
+        OR: [
+          { sender: { tenantId: { not: tenantId } } },
+          { receiver: { tenantId: { not: tenantId } } }
+        ]
+      },
+      select: {
+        senderId: true,
+        receiverId: true
+      },
+      take: 100
+    });
+
+    const externalUserIds = new Set<string>();
+    externalMsgs.forEach(m => {
+      if (m.senderId) externalUserIds.add(m.senderId);
+      if (m.receiverId) externalUserIds.add(m.receiverId);
+    });
+    // Se o currentUserId atual também for de outro tenant (ex: Super Admin em Modo Suporte), garante inclusão
+    if (currentUserId) {
+      externalUserIds.add(currentUserId);
+    }
+    tenantUsers.forEach(u => externalUserIds.delete(u.id));
+
+    let externalUsers: any[] = [];
+    if (externalUserIds.size > 0) {
+      externalUsers = await this.prisma.user.findMany({
+        where: { id: { in: Array.from(externalUserIds) } },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          isOnline: true,
+          avatarUrl: true,
+          departments: {
+            include: {
+              department: {
+                select: { id: true, name: true, color: true }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    const users = [...tenantUsers, ...externalUsers];
 
     const userIds = users.map(u => u.id);
     const lastMessages = await Promise.all(
