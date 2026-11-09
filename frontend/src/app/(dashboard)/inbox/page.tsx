@@ -279,6 +279,22 @@ function InboxContent() {
     }
   }, [messages.length, activeChat]);
 
+  // Controla classe no body para esconder BottomNav e otimizar tela quando o chat estiver ativo no mobile
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      if (activeChat) {
+        document.body.classList.add('mobile-chat-open');
+      } else {
+        document.body.classList.remove('mobile-chat-open');
+      }
+    }
+    return () => {
+      if (typeof document !== 'undefined') {
+        document.body.classList.remove('mobile-chat-open');
+      }
+    };
+  }, [activeChat]);
+
   // Estados de Gravação de Áudio via MediaRecorder
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -3352,7 +3368,7 @@ function InboxContent() {
 
         {/* Lista de Contatos WhatsApp */}
         <div 
-          className="flex-1 overflow-y-auto overflow-x-hidden relative scrollbar-thin"
+          className="flex-1 overflow-y-auto overflow-x-hidden relative scrollbar-thin pb-24 md:pb-2"
           onScroll={(e) => {
             const el = e.currentTarget;
             if (el.scrollHeight - el.scrollTop - el.clientHeight < 400) {
@@ -3745,7 +3761,7 @@ function InboxContent() {
       </div>
 
       {/* 2. PAINEL CENTRAL: Janela de Chat (3ª Camada de Cor Profunda sem Borda Divisória) */}
-      <div className={`vallor-chat-main-col ${!activeChat ? 'hidden md:flex' : 'flex'} flex-1 w-full ${isWhatsApp ? 'bg-[#0B141A]' : 'bg-[#E2E8F0] dark:bg-[#050814]'} flex-col overflow-hidden relative`}>
+      <div className={`vallor-chat-main-col ${!activeChat ? 'hidden md:flex' : 'flex'} flex-1 w-full h-full max-h-full ${isWhatsApp ? 'bg-[#0B141A]' : 'bg-[#E2E8F0] dark:bg-[#050814]'} flex-col overflow-hidden relative`}>
         
         {/* Textura/Papel de Parede Sutil Autêntico WhatsApp adaptado ao Dark Mode Corporativo */}
         <div 
@@ -5248,7 +5264,7 @@ function InboxContent() {
             </div>
 
             {/* Chat Input Area (Estrutura e Formato Idênticos ao WhatsApp) */}
-            <div className="border-t border-slate-200 dark:border-slate-800/90 bg-white dark:bg-[#0B1224] z-30 flex flex-col shrink-0">
+            <div className={`border-t ${isWhatsApp ? 'border-[#222D34] bg-[#202C33]' : 'border-slate-200 dark:border-slate-800/90 bg-white dark:bg-[#0B1224]'} z-30 flex flex-col shrink-0 pb-[max(0.5rem,env(safe-area-inset-bottom))] md:pb-0`}>
               {/* Barra de Resposta / Citação Ativa (WhatsApp Quote Bar) */}
               {replyingToMessage && (
                 <div className="mx-2 sm:mx-3 mt-2 p-2.5 px-3 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-300 dark:border-slate-700/90 shadow-md flex items-center justify-between gap-2.5 animate-in slide-in-from-bottom-2">

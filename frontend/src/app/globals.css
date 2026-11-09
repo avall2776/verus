@@ -68,6 +68,12 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+/* Oculta navegação mobile quando dentro de uma conversa ativa para priorizar o campo de digitação */
+body.mobile-chat-open #bottom-nav,
+body.mobile-chat-open .bottom-nav-mobile {
+  display: none !important;
+}
+
 /* Scrollbar Global Estilizada para todo o Sistema */
 * {
   scrollbar-width: thin;

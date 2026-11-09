@@ -29,7 +29,7 @@ export default function DashboardLayout({
 
   return (
     <AuthGuard>
-      <div className="h-screen flex w-full overflow-hidden bg-background print:h-auto print:overflow-visible print:bg-white print:block print:w-full">
+      <div className="h-screen h-[100dvh] min-h-[100dvh] max-h-[100dvh] flex w-full overflow-hidden bg-background print:h-auto print:overflow-visible print:bg-white print:block print:w-full">
         {/* Sidebar Lateral (Navegação Principal: desktop fixo, mobile drawer) */}
         <Suspense fallback={<aside className="w-16 md:w-64 h-full bg-[#050814] shrink-0" />}>
           <Sidebar />

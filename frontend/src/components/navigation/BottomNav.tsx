@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MessageSquare, Kanban, LayoutDashboard, Activity, Menu } from "lucide-react";
@@ -13,9 +13,27 @@ export default function BottomNav() {
   const { openMenu } = useMobileMenu();
   const { hasGlobalUnread } = useSocket();
   const { isWhatsApp } = useTheme();
+  const [isMobileChatOpen, setIsMobileChatOpen] = useState(false);
 
-  // Se estiver na tela de login, pública ou relatório compartilhado, não exibe
+  // Monitora se o usuário está com uma conversa aberta no mobile
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+
+    const updateChatState = () => {
+      setIsMobileChatOpen(document.body.classList.contains("mobile-chat-open"));
+    };
+
+    updateChatState();
+
+    const observer = new MutationObserver(updateChatState);
+    observer.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Se estiver com chat aberto no mobile, tela de login, pública ou relatório compartilhado, não exibe
   if (
+    isMobileChatOpen ||
     pathname.includes("/login") ||
     pathname.includes("/blocked") ||
     pathname.startsWith("/p/") ||
@@ -49,7 +67,7 @@ export default function BottomNav() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#070D1B]/95 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800/80 md:hidden flex items-center justify-around px-2 py-1.5 safe-area-pb shadow-[0_-10px_25px_rgba(0,0,0,0.06)] dark:shadow-[0_-10px_25px_rgba(0,0,0,0.6)] transition-colors duration-200">
+    <nav id="bottom-nav" className="bottom-nav-mobile [body.mobile-chat-open_&]:!hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#070D1B]/95 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800/80 md:hidden flex items-center justify-around px-2 py-1.5 safe-area-pb shadow-[0_-10px_25px_rgba(0,0,0,0.06)] dark:shadow-[0_-10px_25px_rgba(0,0,0,0.6)] transition-colors duration-200">
       {navItems.map((item) => {
         const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
         const Icon = item.icon;
