@@ -1452,58 +1452,6 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
                     avatarUrl: match.avatarUrl || profilePictureUrl || null,
                 };
             }
-            if (pushName && !pushName.includes('@lid') && pushName !== 'Cliente WhatsApp' && !/^\d+$/.test(pushName)) {
-                const inNormName = this.normalizeContactName(pushName);
-                let match = nameToContactMap.get(inNormName);
-                if (!match && inNormName.split(' ').length >= 2 && inNormName.length >= 6) {
-                    for (const [candNorm, candData] of nameToContactMap.entries()) {
-                        if (candNorm.startsWith(inNormName + ' ') || inNormName.startsWith(candNorm + ' ')) {
-                            match = candData;
-                            this.logger.log(`[LID Mapeado por Prefixo da Agenda] Remetente [${remoteJid}] (${pushName}) -> Telefone Real: ${match.realPhone} (${match.name})`);
-                            break;
-                        }
-                    }
-                }
-                if (!match && inNormName.split(' ').length >= 2 && inNormName.length >= 6) {
-                    try {
-                        const crmCandidates = await this.prisma.contact.findMany({
-                            where: {
-                                tenantId,
-                                phone: { not: null },
-                                NOT: { phone: { contains: 'lid' } },
-                            },
-                            select: { id: true, name: true, phone: true, avatarUrl: true },
-                            orderBy: { updatedAt: 'desc' },
-                            take: 500,
-                        });
-                        for (const rc of crmCandidates) {
-                            const rcNorm = this.normalizeContactName(rc.name);
-                            if (rcNorm === inNormName || rcNorm.startsWith(inNormName + ' ') || inNormName.startsWith(rcNorm + ' ')) {
-                                const cleanRcPhone = (rc.phone || '').replace(/\D/g, '');
-                                if (cleanRcPhone.length >= 10 && cleanRcPhone.length <= 13) {
-                                    match = {
-                                        realPhone: cleanRcPhone,
-                                        name: rc.name,
-                                        avatarUrl: rc.avatarUrl,
-                                    };
-                                    this.logger.log(`[LID Mapeado por Base CRM] Remetente [${remoteJid}] (${pushName}) -> Telefone Real: ${match.realPhone} (${match.name})`);
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                    catch (crmErr) {
-                        this.logger.warn(`[LID CRM Fallback] Erro na consulta ao CRM: ${crmErr.message}`);
-                    }
-                }
-                if (match) {
-                    return {
-                        realPhone: match.realPhone,
-                        realName: pushName || match.name || null,
-                        avatarUrl: match.avatarUrl || profilePictureUrl || null,
-                    };
-                }
-            }
             return { realPhone: null, realName: pushName || null, avatarUrl: profilePictureUrl || null };
         }
         catch (err) {

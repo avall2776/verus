@@ -44,6 +44,7 @@ export declare class ChatGateway implements OnGatewayConnection, OnGatewayDiscon
         providerMessageId?: string;
         status: string;
         conversationId?: string;
+        errorReason?: string;
     }): void;
     emitContactUpdated(tenantId: string, contactData: any): void;
     emitStoryViewed(tenantId: string, payload: any): void;

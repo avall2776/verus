@@ -35,8 +35,8 @@ export declare class AgencyMarketingController {
         title: string;
         value: import("@prisma/client/runtime/library").Decimal | null;
         metadata: import("@prisma/client/runtime/library").JsonValue | null;
-        attachments: import("@prisma/client/runtime/library").JsonValue | null;
         description: string | null;
+        attachments: import("@prisma/client/runtime/library").JsonValue | null;
         priority: string;
         checklist: import("@prisma/client/runtime/library").JsonValue | null;
         format: string;
@@ -68,8 +68,8 @@ export declare class AgencyMarketingController {
         title: string;
         value: import("@prisma/client/runtime/library").Decimal | null;
         metadata: import("@prisma/client/runtime/library").JsonValue | null;
-        attachments: import("@prisma/client/runtime/library").JsonValue | null;
         description: string | null;
+        attachments: import("@prisma/client/runtime/library").JsonValue | null;
         priority: string;
         checklist: import("@prisma/client/runtime/library").JsonValue | null;
         format: string;
@@ -111,8 +111,8 @@ export declare class AgencyMarketingController {
         title: string;
         value: import("@prisma/client/runtime/library").Decimal | null;
         metadata: import("@prisma/client/runtime/library").JsonValue | null;
-        attachments: import("@prisma/client/runtime/library").JsonValue | null;
         description: string | null;
+        attachments: import("@prisma/client/runtime/library").JsonValue | null;
         priority: string;
         checklist: import("@prisma/client/runtime/library").JsonValue | null;
         format: string;
@@ -208,8 +208,8 @@ export declare class AgencyMarketingController {
             title: string;
             value: import("@prisma/client/runtime/library").Decimal | null;
             metadata: import("@prisma/client/runtime/library").JsonValue | null;
-            attachments: import("@prisma/client/runtime/library").JsonValue | null;
             description: string | null;
+            attachments: import("@prisma/client/runtime/library").JsonValue | null;
             priority: string;
             checklist: import("@prisma/client/runtime/library").JsonValue | null;
             format: string;
@@ -252,8 +252,8 @@ export declare class AgencyMarketingController {
             title: string;
             value: import("@prisma/client/runtime/library").Decimal | null;
             metadata: import("@prisma/client/runtime/library").JsonValue | null;
-            attachments: import("@prisma/client/runtime/library").JsonValue | null;
             description: string | null;
+            attachments: import("@prisma/client/runtime/library").JsonValue | null;
             priority: string;
             checklist: import("@prisma/client/runtime/library").JsonValue | null;
             format: string;
@@ -403,8 +403,8 @@ export declare class AgencyMarketingController {
         title: string;
         value: import("@prisma/client/runtime/library").Decimal | null;
         metadata: import("@prisma/client/runtime/library").JsonValue | null;
-        attachments: import("@prisma/client/runtime/library").JsonValue | null;
         description: string | null;
+        attachments: import("@prisma/client/runtime/library").JsonValue | null;
         priority: string;
         checklist: import("@prisma/client/runtime/library").JsonValue | null;
         format: string;
@@ -457,11 +457,11 @@ export declare class AgencyMarketingController {
         type: string;
         notes: string | null;
         userId: string;
+        ipAddress: string | null;
+        userAgent: string | null;
         timestamp: Date;
         durationMinutes: number | null;
         sessionHash: string;
-        ipAddress: string | null;
-        userAgent: string | null;
     })[]>;
     getTeamMembers(tenantId: string): Promise<{
         id: string;

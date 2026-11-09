@@ -1528,7 +1528,12 @@ function InboxContent() {
           targetTab = 'waiting';
         }
 
+        // Garante que o filtro de abas e setores não oculte o contato vindo do CRM
+        setActiveFilterTab('all');
         setActiveTab(targetTab);
+        setSelectedDepartmentFilter('all');
+        setOnlyUnread(false);
+        setSearchQuery('');
 
         const lastMessageObj = conv.messages && conv.messages.length > 0 ? conv.messages[0] : null;
         const lastMsg = lastMessageObj ? lastMessageObj.content : 'Nova conversa';
@@ -1560,8 +1565,12 @@ function InboxContent() {
         };
 
         setContacts(prev => {
-          const exists = prev.some(c => c.id === conv.id);
-          if (exists) return prev;
+          const existingIndex = prev.findIndex(c => c.id === conv.id || (conv.contact?.id && c.contactId === conv.contact.id));
+          if (existingIndex >= 0) {
+            const copy = [...prev];
+            copy[existingIndex] = { ...copy[existingIndex], ...formattedContact };
+            return copy;
+          }
           return [formattedContact, ...prev];
         });
 
@@ -2633,6 +2642,9 @@ function InboxContent() {
     const isMaster = currentUserRole === 'ADMIN' || currentUserRole === 'SUPER_ADMIN';
 
     const filtered = contacts.filter(c => {
+      // Regra de Ouro: se esta conversa é a atualmente aberta (activeChat), NUNCA oculta da lista
+      if (activeChat && c.id === activeChat) return true;
+
       // Quando estiver pesquisando, ignora filtros de aba para exibir o resultado global encontrado
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
@@ -2686,8 +2698,13 @@ function InboxContent() {
   }, [activeFilterTab, selectedDepartmentFilter, searchQuery]);
 
   const visibleContacts = useMemo(() => {
-    return filteredContacts.slice(0, displayLimit);
-  }, [filteredContacts, displayLimit]);
+    const list = filteredContacts.slice(0, displayLimit);
+    if (activeChat && !list.some(c => c.id === activeChat)) {
+      const activeItem = filteredContacts.find(c => c.id === activeChat);
+      if (activeItem) return [activeItem, ...list];
+    }
+    return list;
+  }, [filteredContacts, displayLimit, activeChat]);
 
   // Calcular total de contatos com mensagens não lidas e contadores de abas
   const unreadCount = contacts.filter(c => (c.unread || 0) > 0 || c.hasNewMessage).length;

@@ -233,13 +233,36 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
                 resolvedCustomerName = resolved.realName;
             }
         }
+        const phoneCandidates = new Set();
+        const addPhoneVariants = (p) => {
+            if (!p || p.includes('@lid'))
+                return;
+            const clean = p.replace(/\D/g, '');
+            if (clean.length >= 8) {
+                phoneCandidates.add(clean);
+                phoneCandidates.add(`+${clean}`);
+                if (clean.startsWith('55') && clean.length === 13) {
+                    const without9 = clean.slice(0, 4) + clean.slice(5);
+                    phoneCandidates.add(without9);
+                    phoneCandidates.add(`+${without9}`);
+                }
+                else if (clean.startsWith('55') && clean.length === 12) {
+                    const with9 = clean.slice(0, 4) + '9' + clean.slice(4);
+                    phoneCandidates.add(with9);
+                    phoneCandidates.add(`+${with9}`);
+                }
+            }
+        };
+        addPhoneVariants(remoteJid);
+        addPhoneVariants(realPhone);
+        const phoneOrFilters = Array.from(phoneCandidates).map(p => ({ phone: p }));
         let existingContact = await this.prisma.contact.findFirst({
             where: {
                 tenantId,
                 OR: [
                     ...(lidId ? [{ whatsappLid: lidId }, { phone: lidId }] : []),
-                    { phone: remoteJid },
-                    ...(realPhone ? [{ phone: realPhone }, { whatsappLid: realPhone }] : []),
+                    ...phoneOrFilters,
+                    ...(realPhone ? [{ whatsappLid: realPhone }] : []),
                 ],
             },
         });
@@ -247,10 +270,26 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
         const effectiveCustomerPushName = isFromMe
             ? resolvedCustomerName
             : (resolvedCustomerName || rawPushName);
-        const isGenericPushName = !effectiveCustomerPushName ||
-            effectiveCustomerPushName === 'Cliente WhatsApp' ||
-            effectiveCustomerPushName.includes('@lid') ||
-            effectiveCustomerPushName.startsWith('WhatsApp');
+        const isBlacklistedName = (n) => {
+            if (!n)
+                return true;
+            const lower = n.toLowerCase().trim();
+            return (lower === '.' ||
+                lower === '-' ||
+                lower.includes('@lid') ||
+                lower.startsWith('whatsapp') ||
+                lower === 'cliente' ||
+                lower === 'sem nome' ||
+                lower === 'lead' ||
+                lower === 'cliente whatsapp' ||
+                lower === 'cliente verto' ||
+                lower === 'verto' ||
+                lower.includes('vertoagricola') ||
+                lower.includes('verto agrícola') ||
+                lower.includes('comercial verto') ||
+                lower.includes('vallor'));
+        };
+        const isGenericPushName = isBlacklistedName(effectiveCustomerPushName);
         if (!existingContact && evolutionMetadata?.profilePictureUrl) {
             const photoId = this.whatsappService.extractPhotoId(evolutionMetadata.profilePictureUrl);
             if (photoId) {
@@ -315,14 +354,7 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
                 }
             }
             const isCurrentNameGeneric = !existingContact.name ||
-                existingContact.name === '.' ||
-                existingContact.name === '-' ||
-                existingContact.name === 'Cliente WhatsApp' ||
-                existingContact.name === 'Cliente Verto' ||
-                existingContact.name.toLowerCase() === 'cliente' ||
-                existingContact.name.toLowerCase() === 'sem nome' ||
-                existingContact.name.includes('@lid') ||
-                existingContact.name.startsWith('WhatsApp') ||
+                isBlacklistedName(existingContact.name) ||
                 (/^\d+$/.test(existingContact.name.trim()) && existingContact.name.trim().length >= 8);
             if (!isGenericPushName && isCurrentNameGeneric) {
                 dataToUpdate.name = effectiveCustomerPushName;
@@ -349,7 +381,7 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
                 }
                 else if (targetPhone.includes('@lid')) {
                     const cross = await this.whatsappService.resolveLidFromAllTenants(lidId || remoteJid);
-                    cleanName = cross.realName || 'WhatsApp (Contato Direto)';
+                    cleanName = (!cross.realName || isBlacklistedName(cross.realName)) ? 'WhatsApp (Contato Direto)' : cross.realName;
                 }
                 else {
                     cleanName = `WhatsApp (${targetPhone})`;
@@ -423,12 +455,22 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             },
             update: {
                 ...(targetDeptId ? { departmentId: targetDeptId } : {})
+            },
+            include: {
+                department: {
+                    select: { id: true, name: true, color: true }
+                }
             }
         });
         if (!conversation.departmentId && targetDeptId) {
             conversation = await this.prisma.conversation.update({
                 where: { id: conversation.id },
-                data: { departmentId: targetDeptId }
+                data: { departmentId: targetDeptId },
+                include: {
+                    department: {
+                        select: { id: true, name: true, color: true }
+                    }
+                }
             });
         }
         if (fromMe) {
@@ -437,6 +479,11 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
                 data: {
                     status: 'human_takeover',
                     updatedAt: new Date()
+                },
+                include: {
+                    department: {
+                        select: { id: true, name: true, color: true }
+                    }
                 }
             });
             try {
@@ -456,7 +503,12 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
         else if (conversation.status === 'resolved' || conversation.status === 'closed') {
             conversation = await this.prisma.conversation.update({
                 where: { id: conversation.id },
-                data: { status: initialStatus, assignedTo: null }
+                data: { status: initialStatus, assignedTo: null },
+                include: {
+                    department: {
+                        select: { id: true, name: true, color: true }
+                    }
+                }
             });
             this.logger.log(`Conversa [${conversation.id}] reaberta (status -> ${initialStatus}, assignedTo -> null).`);
             this.chatGateway.emitConversationUpdated(tenantId, conversation);
@@ -532,6 +584,7 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             ...savedMessage,
             conversationId: conversation.id,
             departmentId: conversation.departmentId,
+            department: conversation.department || null,
             assignedTo: conversation.assignedTo,
             contact: {
                 id: contact.id,
@@ -554,7 +607,12 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
                 this.logger.log(`[Auto-Timeout 24h] Conversa [${conversation.id}] sob atendimento humano inativa há ${hoursSinceLastActivity.toFixed(1)}h. Reativando IA para novo atendimento.`);
                 conversation = await this.prisma.conversation.update({
                     where: { id: conversation.id },
-                    data: { status: 'bot_active', assignedTo: null, updatedAt: new Date() }
+                    data: { status: 'bot_active', assignedTo: null, updatedAt: new Date() },
+                    include: {
+                        department: {
+                            select: { id: true, name: true, color: true }
+                        }
+                    }
                 });
                 this.chatGateway.emitConversationUpdated(tenantId, conversation);
             }
@@ -568,7 +626,12 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             if (conversation.status === 'bot_active') {
                 conversation = await this.prisma.conversation.update({
                     where: { id: conversation.id },
-                    data: { status: 'waiting', updatedAt: new Date() }
+                    data: { status: 'waiting', updatedAt: new Date() },
+                    include: {
+                        department: {
+                            select: { id: true, name: true, color: true }
+                        }
+                    }
                 });
                 this.chatGateway.emitConversationUpdated(tenantId, conversation);
             }
@@ -578,7 +641,12 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             if (conversation.status !== 'bot_active') {
                 conversation = await this.prisma.conversation.update({
                     where: { id: conversation.id },
-                    data: { status: 'bot_active', updatedAt: new Date() }
+                    data: { status: 'bot_active', updatedAt: new Date() },
+                    include: {
+                        department: {
+                            select: { id: true, name: true, color: true }
+                        }
+                    }
                 });
                 this.chatGateway.emitConversationUpdated(tenantId, conversation);
             }
@@ -684,6 +752,9 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             }
             if (!targetRegionNum && state) {
                 const uf = state.trim().toUpperCase();
+                const byToken = departments.find(d => new RegExp(`(^|[^A-ZÀ-Ú])${uf}([^A-ZÀ-Ú]|$)`).test(d.name.toUpperCase()));
+                if (byToken)
+                    return byToken.id;
                 if (ufToRegion[uf])
                     targetRegionNum = ufToRegion[uf];
             }

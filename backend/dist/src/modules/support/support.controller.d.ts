@@ -105,9 +105,9 @@ export declare class SupportController {
         updatedAt: Date;
         contactId: string | null;
         status: string;
-        subject: string;
         userId: string | null;
         description: string;
+        subject: string;
         priority: string;
         ticketNumber: number;
         category: string;
@@ -147,9 +147,9 @@ export declare class SupportController {
         updatedAt: Date;
         contactId: string | null;
         status: string;
-        subject: string;
         userId: string | null;
         description: string;
+        subject: string;
         priority: string;
         ticketNumber: number;
         category: string;
@@ -202,9 +202,9 @@ export declare class SupportController {
         updatedAt: Date;
         contactId: string | null;
         status: string;
-        subject: string;
         userId: string | null;
         description: string;
+        subject: string;
         priority: string;
         ticketNumber: number;
         category: string;
@@ -231,9 +231,9 @@ export declare class SupportController {
         updatedAt: Date;
         contactId: string | null;
         status: string;
-        subject: string;
         userId: string | null;
         description: string;
+        subject: string;
         priority: string;
         ticketNumber: number;
         category: string;
@@ -321,6 +321,12 @@ export declare class SupportController {
                 canAccessMarketing: boolean;
                 permissions: import("@prisma/client/runtime/library").JsonValue | null;
                 isOnline: boolean;
+                twoFactorEnabled: boolean;
+                twoFactorMethod: string;
+                twoFactorPhone: string | null;
+                failedLoginAttempts: number;
+                lockedUntil: Date | null;
+                trustedDevices: import("@prisma/client/runtime/library").JsonValue | null;
             };
         } & {
             id: string;
@@ -349,6 +355,12 @@ export declare class SupportController {
             canAccessMarketing: boolean;
             permissions: import("@prisma/client/runtime/library").JsonValue | null;
             isOnline: boolean;
+            twoFactorEnabled: boolean;
+            twoFactorMethod: string;
+            twoFactorPhone: string | null;
+            failedLoginAttempts: number;
+            lockedUntil: Date | null;
+            trustedDevices: import("@prisma/client/runtime/library").JsonValue | null;
         };
         user: {
             id: string;
@@ -366,6 +378,12 @@ export declare class SupportController {
             canAccessMarketing: boolean;
             permissions: import("@prisma/client/runtime/library").JsonValue | null;
             isOnline: boolean;
+            twoFactorEnabled: boolean;
+            twoFactorMethod: string;
+            twoFactorPhone: string | null;
+            failedLoginAttempts: number;
+            lockedUntil: Date | null;
+            trustedDevices: import("@prisma/client/runtime/library").JsonValue | null;
         };
     } & {
         id: string;
@@ -374,9 +392,9 @@ export declare class SupportController {
         updatedAt: Date;
         contactId: string | null;
         status: string;
-        subject: string;
         userId: string | null;
         description: string;
+        subject: string;
         priority: string;
         ticketNumber: number;
         category: string;
@@ -439,6 +457,12 @@ export declare class SupportController {
                     canAccessMarketing: boolean;
                     permissions: import("@prisma/client/runtime/library").JsonValue | null;
                     isOnline: boolean;
+                    twoFactorEnabled: boolean;
+                    twoFactorMethod: string;
+                    twoFactorPhone: string | null;
+                    failedLoginAttempts: number;
+                    lockedUntil: Date | null;
+                    trustedDevices: import("@prisma/client/runtime/library").JsonValue | null;
                 };
             } & {
                 id: string;
@@ -467,6 +491,12 @@ export declare class SupportController {
                 canAccessMarketing: boolean;
                 permissions: import("@prisma/client/runtime/library").JsonValue | null;
                 isOnline: boolean;
+                twoFactorEnabled: boolean;
+                twoFactorMethod: string;
+                twoFactorPhone: string | null;
+                failedLoginAttempts: number;
+                lockedUntil: Date | null;
+                trustedDevices: import("@prisma/client/runtime/library").JsonValue | null;
             };
             user: {
                 id: string;
@@ -484,6 +514,12 @@ export declare class SupportController {
                 canAccessMarketing: boolean;
                 permissions: import("@prisma/client/runtime/library").JsonValue | null;
                 isOnline: boolean;
+                twoFactorEnabled: boolean;
+                twoFactorMethod: string;
+                twoFactorPhone: string | null;
+                failedLoginAttempts: number;
+                lockedUntil: Date | null;
+                trustedDevices: import("@prisma/client/runtime/library").JsonValue | null;
             };
         } & {
             id: string;
@@ -492,9 +528,9 @@ export declare class SupportController {
             updatedAt: Date;
             contactId: string | null;
             status: string;
-            subject: string;
             userId: string | null;
             description: string;
+            subject: string;
             priority: string;
             ticketNumber: number;
             category: string;

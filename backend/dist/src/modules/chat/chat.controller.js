@@ -24,9 +24,9 @@ let ChatController = class ChatController {
     constructor(chatService) {
         this.chatService = chatService;
     }
-    async listConversations(tenantId, req, tab, status, departmentId) {
+    async listConversations(tenantId, req, tab, status, departmentId, limit, search) {
         const selectedTab = tab || status || 'waiting';
-        return this.chatService.findAllConversations(tenantId, req.user.id, req.user.role, selectedTab, departmentId);
+        return this.chatService.findAllConversations(tenantId, req.user.id, req.user.role, selectedTab, departmentId, limit ? parseInt(limit, 10) : undefined, search);
     }
     async syncOfflineMessages(tenantId, force) {
         return this.chatService.syncOfflineMessages(tenantId, force === 'true' || force === '1');
@@ -162,8 +162,10 @@ __decorate([
     __param(2, (0, common_1.Query)('tab')),
     __param(3, (0, common_1.Query)('status')),
     __param(4, (0, common_1.Query)('departmentId')),
+    __param(5, (0, common_1.Query)('limit')),
+    __param(6, (0, common_1.Query)('search')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object, String, String, String]),
+    __metadata("design:paramtypes", [String, Object, String, String, String, String, String]),
     __metadata("design:returntype", Promise)
 ], ChatController.prototype, "listConversations", null);
 __decorate([

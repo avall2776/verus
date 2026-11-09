@@ -224,24 +224,47 @@ let AiProcessor = AiProcessor_1 = class AiProcessor extends bullmq_1.WorkerHost 
                 contact: { phone: conversation.contact.phone, name: conversation.contact.name }
             });
         }
+        let resolvedDeptId = conversation.departmentId || null;
         try {
             const contactUpdateData = {};
             if (aiResponse.email_cliente && !conversation.contact.email) {
                 contactUpdateData.email = aiResponse.email_cliente;
             }
-            if (aiResponse.nome_cliente &&
-                aiResponse.nome_cliente !== 'Não informado' &&
-                (!conversation.contact.name ||
-                    conversation.contact.name === 'Cliente WhatsApp' ||
-                    conversation.contact.name.includes('@lid') ||
-                    conversation.contact.name.startsWith('WhatsApp'))) {
-                contactUpdateData.name = aiResponse.nome_cliente;
+            let extractedState = conversation.contact.state || null;
+            if (aiResponse.cidade_uf && aiResponse.cidade_uf !== 'Não informado') {
+                const ufMatch = String(aiResponse.cidade_uf).toUpperCase().match(/\b(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/);
+                if (ufMatch) {
+                    extractedState = ufMatch[1];
+                    contactUpdateData.state = extractedState;
+                }
+                const cityPart = String(aiResponse.cidade_uf).split(/[-/,]/)[0]?.trim();
+                if (cityPart && cityPart.length >= 2) {
+                    contactUpdateData.city = cityPart;
+                }
             }
             if (Object.keys(contactUpdateData).length > 0) {
                 await this.prisma.contact.update({
                     where: { id: contactId },
                     data: contactUpdateData,
                 }).catch(() => { });
+            }
+            const candidatePhone = aiResponse.telefone_cliente || conversation.contact.phone;
+            const autoDeptId = await this.resolveDepartmentSmart(tenantId, candidatePhone, extractedState);
+            if (autoDeptId) {
+                resolvedDeptId = autoDeptId;
+                if (conversation.departmentId !== autoDeptId) {
+                    const convWithDept = await this.prisma.conversation.update({
+                        where: { id: conversationId },
+                        data: { departmentId: autoDeptId },
+                        include: {
+                            contact: true,
+                            department: { select: { id: true, name: true, color: true } },
+                        },
+                    }).catch(() => null);
+                    if (convWithDept) {
+                        this.chatGateway.emitConversationUpdated(tenantId, convWithDept);
+                    }
+                }
             }
             const existingDeal = await this.prisma.deal.findFirst({
                 where: { tenantId, contactId },
@@ -310,8 +333,15 @@ let AiProcessor = AiProcessor_1 = class AiProcessor extends bullmq_1.WorkerHost 
             }
             const updatedConv = await this.prisma.conversation.update({
                 where: { id: conversationId },
-                data: { status: 'open', assignedTo },
-                include: { contact: true }
+                data: {
+                    status: 'open',
+                    assignedTo,
+                    ...(resolvedDeptId ? { departmentId: resolvedDeptId } : {}),
+                },
+                include: {
+                    contact: true,
+                    department: { select: { id: true, name: true, color: true } },
+                }
             });
             this.chatGateway.emitConversationUpdated(tenantId, updatedConv);
             this.chatGateway.server.to(tenantId).emit('aiHandoffAlert', {
@@ -470,6 +500,71 @@ let AiProcessor = AiProcessor_1 = class AiProcessor extends bullmq_1.WorkerHost 
             return { formatted: `+55 (${ddd}) ${p1}-${p2}`, isRealPhone: true, cleanDigits: `55${digits}` };
         }
         return { formatted: `+${digits}`, isRealPhone: true, cleanDigits: digits };
+    }
+    async resolveDepartmentSmart(tenantId, phone, state) {
+        if (!phone && !state)
+            return null;
+        try {
+            const departments = await this.prisma.department.findMany({
+                where: { tenantId },
+                select: { id: true, name: true },
+            });
+            if (!departments || departments.length === 0)
+                return null;
+            const dddToUf = {
+                '51': 'RS', '53': 'RS', '54': 'RS', '55': 'RS',
+                '47': 'SC', '48': 'SC', '49': 'SC',
+                '41': 'PR', '42': 'PR', '43': 'PR', '44': 'PR', '45': 'PR', '46': 'PR',
+                '67': 'MS', '65': 'MT', '66': 'MT',
+                '91': 'PA', '93': 'PA', '94': 'PA', '69': 'RO', '95': 'RR', '68': 'AC', '92': 'AM', '97': 'AM', '96': 'AP',
+                '62': 'GO', '64': 'GO', '61': 'DF',
+                '31': 'MG', '32': 'MG', '33': 'MG', '34': 'MG', '35': 'MG', '37': 'MG', '38': 'MG',
+                '11': 'SP', '12': 'SP', '13': 'SP', '14': 'SP', '15': 'SP', '16': 'SP', '17': 'SP', '18': 'SP', '19': 'SP',
+                '21': 'RJ', '22': 'RJ', '24': 'RJ', '27': 'ES', '28': 'ES',
+                '63': 'TO', '71': 'BA', '73': 'BA', '74': 'BA', '75': 'BA', '77': 'BA',
+                '98': 'MA', '99': 'MA', '86': 'PI', '89': 'PI',
+                '85': 'CE', '88': 'CE', '84': 'RN', '83': 'PB', '79': 'SE', '81': 'PE', '87': 'PE', '82': 'AL'
+            };
+            const ufToRegion = {
+                'RS': 1, 'SC': 1, 'PR': 1,
+                'MS': 2, 'MT': 2, 'PA': 2, 'RO': 2, 'RR': 2, 'AC': 2, 'AM': 2, 'AP': 2,
+                'GO': 3, 'MG': 3, 'SP': 3, 'DF': 3, 'RJ': 3, 'ES': 3,
+                'TO': 4, 'BA': 4,
+                'MA': 5, 'PI': 5,
+                'CE': 6, 'RN': 6, 'PB': 6, 'SE': 6, 'PE': 6, 'AL': 6
+            };
+            let uf = state ? state.trim().toUpperCase() : '';
+            if (!uf && phone && !phone.includes('@lid')) {
+                const clean = phone.replace(/\D/g, '');
+                let ddd = '';
+                if (clean.startsWith('55') && clean.length >= 12)
+                    ddd = clean.substring(2, 4);
+                else if (clean.length === 10 || clean.length === 11)
+                    ddd = clean.substring(0, 2);
+                if (ddd && dddToUf[ddd])
+                    uf = dddToUf[ddd];
+                else if (clean.startsWith('595'))
+                    uf = 'RS';
+            }
+            if (!uf)
+                return null;
+            const byToken = departments.find(d => new RegExp(`(^|[^A-ZÀ-Ú])${uf}([^A-ZÀ-Ú]|$)`).test(d.name.toUpperCase()));
+            if (byToken)
+                return byToken.id;
+            const targetRegionNum = ufToRegion[uf];
+            if (targetRegionNum) {
+                const matched = departments.find(d => {
+                    const upper = d.name.toUpperCase();
+                    return upper.includes(`REGIÃO ${targetRegionNum}`) || upper.includes(`REGIAO ${targetRegionNum}`);
+                });
+                if (matched)
+                    return matched.id;
+            }
+        }
+        catch (e) {
+            this.logger.warn(`Erro ao resolver departamento pela IA: ${e.message}`);
+        }
+        return null;
     }
 };
 exports.AiProcessor = AiProcessor;

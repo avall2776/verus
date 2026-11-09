@@ -13,4 +13,5 @@ export declare class AiProcessor extends WorkerHost {
     constructor(prisma: PrismaService, aiService: AiService, messagingService: MessagingService, chatGateway: ChatGateway);
     process(job: Job<any, any, string>): Promise<any>;
     private formatCleanPhone;
+    private resolveDepartmentSmart;
 }

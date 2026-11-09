@@ -25,7 +25,7 @@ export declare class ChatService {
     getOperatorProductivity(tenantId: string, userId: string): Promise<any>;
     private readonly conversationsCache;
     clearConversationsCache(tenantId?: string): void;
-    findAllConversations(tenantId: string, userId: string, userRole: string, tab?: string, departmentId?: string): Promise<any>;
+    findAllConversations(tenantId: string, userId: string, userRole: string, tab?: string, departmentId?: string, limit?: number, search?: string): Promise<any>;
     getConversationMessages(tenantId: string, conversationId: string): Promise<{
         id: string;
         tenantId: string;
@@ -95,6 +95,11 @@ export declare class ChatService {
             scheduledAt: Date | null;
             conversationId: string;
         }[];
+        department: {
+            id: string;
+            name: string;
+            color: string;
+        };
     } & {
         id: string;
         tenantId: string;

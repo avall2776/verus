@@ -12,8 +12,8 @@ export declare class WorkspacesService {
             createdAt: Date;
             updatedAt: Date;
             logoUrl: string | null;
-            description: string | null;
             isDefault: boolean;
+            description: string | null;
             themeColor: string | null;
         }[];
         metrics: {
@@ -33,8 +33,8 @@ export declare class WorkspacesService {
             createdAt: Date;
             updatedAt: Date;
             logoUrl: string | null;
-            description: string | null;
             isDefault: boolean;
+            description: string | null;
             themeColor: string | null;
         };
     }>;
@@ -47,8 +47,8 @@ export declare class WorkspacesService {
             createdAt: Date;
             updatedAt: Date;
             logoUrl: string | null;
-            description: string | null;
             isDefault: boolean;
+            description: string | null;
             themeColor: string | null;
         };
     }>;

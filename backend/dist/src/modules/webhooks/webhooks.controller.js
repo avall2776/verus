@@ -745,30 +745,61 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
             for (const c of contactsList) {
                 const id = c?.id || c?.remoteJid || '';
                 const phone = id.replace('@s.whatsapp.net', '').replace('@c.us', '').replace(/\D/g, '');
-                const pushName = c?.pushName || c?.verifiedName || c?.name;
+                const rawPushName = c?.pushName || c?.verifiedName || c?.name;
                 const profilePictureUrl = c?.profilePictureUrl || null;
-                if (phone && phone.length >= 10 && phone.length <= 13 && pushName && !pushName.includes('@lid')) {
+                const isBlacklisted = (n) => {
+                    if (!n)
+                        return true;
+                    const lower = n.toLowerCase().trim();
+                    return (lower === '.' ||
+                        lower === '-' ||
+                        lower.includes('@lid') ||
+                        lower.startsWith('whatsapp') ||
+                        lower === 'cliente' ||
+                        lower === 'sem nome' ||
+                        lower === 'lead' ||
+                        lower === 'cliente whatsapp' ||
+                        lower === 'cliente verto' ||
+                        lower === 'verto' ||
+                        lower.includes('vertoagricola') ||
+                        lower.includes('verto agrícola') ||
+                        lower.includes('comercial verto') ||
+                        lower.includes('vallor'));
+                };
+                if (phone && phone.length >= 10 && phone.length <= 13) {
                     try {
-                        const updateRes = await this.prisma.contact.updateMany({
-                            where: { tenantId, phone },
-                            data: {
-                                name: pushName,
-                                ...(profilePictureUrl ? { avatarUrl: profilePictureUrl } : {}),
-                            },
+                        const existing = await this.prisma.contact.findFirst({
+                            where: { tenantId, phone }
                         });
-                        if (updateRes.count === 0) {
-                            await this.prisma.contact.create({
+                        if (existing) {
+                            const isGeneric = isBlacklisted(existing.name);
+                            const dataToUpdate = {};
+                            if (isGeneric && !isBlacklisted(rawPushName)) {
+                                dataToUpdate.name = rawPushName;
+                            }
+                            if (profilePictureUrl && !existing.avatarUrl) {
+                                dataToUpdate.avatarUrl = profilePictureUrl;
+                            }
+                            if (Object.keys(dataToUpdate).length > 0) {
+                                const updated = await this.prisma.contact.update({
+                                    where: { id: existing.id },
+                                    data: dataToUpdate
+                                });
+                                this.chatGateway.emitContactUpdated(tenantId, updated);
+                            }
+                        }
+                        else if (!isBlacklisted(rawPushName)) {
+                            const created = await this.prisma.contact.create({
                                 data: {
                                     tenantId,
                                     phone: String(phone),
-                                    name: String(pushName),
+                                    name: String(rawPushName),
                                     avatarUrl: profilePictureUrl ? String(profilePictureUrl) : null,
                                 }
-                            }).catch(() => { });
-                        }
-                        const updated = await this.prisma.contact.findFirst({ where: { tenantId, phone } });
-                        if (updated) {
-                            this.chatGateway.emitContactUpdated(tenantId, updated);
+                            }).catch(() => null);
+                            if (created) {
+                                this.chatGateway.emitContactUpdated(tenantId, created);
+                            }
                         }
                     }
                     catch (e) { }

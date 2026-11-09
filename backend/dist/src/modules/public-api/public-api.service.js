@@ -261,8 +261,18 @@ let PublicApiService = PublicApiService_1 = class PublicApiService {
                 data: updateData,
             });
         }
-        const initialContent = `📥 [Lead Tráfego Pago] Ingressou via ${source}${campaign ? ` - Campanha: "${campaign}"` : ''}${dto.ad_name ? ` (Anúncio: "${dto.ad_name}")` : ''}.`;
-        await this.prisma.message.create({
+        const formRaw = (dto.notes || dto.description || '').trim();
+        let initialContent = `📋 [LEAD TRÁFEGO PAGO] Ingressou via ${source}\n`;
+        if (campaign)
+            initialContent += `📢 Campanha: ${campaign}\n`;
+        if (dto.ad_name)
+            initialContent += `🎯 Anúncio: ${dto.ad_name}\n`;
+        if (dto.email)
+            initialContent += `📧 E-mail: ${dto.email}\n`;
+        if (formRaw) {
+            initialContent += `\n📝 Respostas do Formulário:\n${formRaw}`;
+        }
+        const createdMsg = await this.prisma.message.create({
             data: {
                 tenantId,
                 conversationId: conversation.id,
@@ -275,7 +285,16 @@ let PublicApiService = PublicApiService_1 = class PublicApiService {
                 senderType: 'system',
                 status: 'delivered',
             },
-        }).catch(err => this.logger.warn(`Erro ao registrar mensagem inicial de lead: ${err.message}`));
+        }).catch(err => {
+            this.logger.warn(`Erro ao registrar mensagem inicial de lead: ${err.message}`);
+            return null;
+        });
+        if (createdMsg && this.chatGateway) {
+            this.chatGateway.emitNewMessage(tenantId, {
+                ...createdMsg,
+                contact: { phone: contact.phone, name: contact.name, avatarUrl: contact.avatarUrl }
+            });
+        }
         try {
             if (this.chatGateway?.server) {
                 this.chatGateway.server.to(tenantId).emit('dealCreated', {

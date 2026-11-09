@@ -4,7 +4,7 @@ import { ScheduleMessageDto } from './dto/schedule-message.dto';
 export declare class ChatController {
     private readonly chatService;
     constructor(chatService: ChatService);
-    listConversations(tenantId: string, req: any, tab?: string, status?: string, departmentId?: string): Promise<any>;
+    listConversations(tenantId: string, req: any, tab?: string, status?: string, departmentId?: string, limit?: string, search?: string): Promise<any>;
     syncOfflineMessages(tenantId: string, force?: string): Promise<{
         syncedCount: number;
         updatedCount: number;
@@ -126,6 +126,11 @@ export declare class ChatController {
             scheduledAt: Date | null;
             conversationId: string;
         }[];
+        department: {
+            id: string;
+            name: string;
+            color: string;
+        };
     } & {
         id: string;
         tenantId: string;

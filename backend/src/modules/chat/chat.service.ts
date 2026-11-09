@@ -316,8 +316,11 @@ export class ChatService {
           }
         }
       } else {
-        // tab === 'waiting' (Fila de espera compartilhada da região do operador)
-        whereClause.status = { in: ['waiting', 'bot_active'] };
+        // tab === 'waiting' (Fila de espera compartilhada da região do operador ou leads sem atendente atribuído)
+        whereClause.OR = [
+          { status: { in: ['waiting', 'bot_active'] } },
+          { assignedTo: null, status: { notIn: ['resolved', 'closed'] } }
+        ];
       }
     }
 

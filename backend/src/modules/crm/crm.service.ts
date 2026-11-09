@@ -226,20 +226,42 @@ export class CrmService {
     this.clearDealsCache(tenantId);
     const deal = await this.prisma.deal.findUnique({
       where: { id },
-      select: { id: true, tenantId: true, contactId: true, status: true }
+      select: { id: true, tenantId: true, contactId: true, status: true, metadata: true }
     });
     if (!deal || deal.tenantId !== tenantId) throw new NotFoundException('Deal não encontrado');
 
+    // Extrair e sanitizar campos que não existem como coluna direta no modelo Deal do Prisma
+    const { lossReason, lossComment, contact, assignee, proposals, emails, automationLogs, ...rest } = data;
+
+    // Mesclar lossReason e lossComment no metadata de forma transparente e segura
+    const existingMeta = (deal.metadata as Record<string, any>) || {};
+    const mergedMetadata = {
+      ...existingMeta,
+      ...(rest.metadata || {}),
+      ...(lossReason ? { lossReason } : {}),
+      ...(lossComment ? { lossComment } : {}),
+    };
+
+    // Montar payload estritamente compatível com o Prisma Deal
+    const safeData: any = {};
+    if (rest.title !== undefined) safeData.title = rest.title;
+    if (rest.value !== undefined) safeData.value = Number(rest.value);
+    if (rest.status !== undefined) safeData.status = rest.status;
+    if (rest.notes !== undefined) safeData.notes = rest.notes;
+    if (rest.assignedTo !== undefined) safeData.assignedTo = rest.assignedTo;
+    if (rest.contactId !== undefined) safeData.contactId = rest.contactId;
+    safeData.metadata = mergedMetadata;
+
     const updated = await this.prisma.deal.update({
       where: { id },
-      data
+      data: safeData
     });
 
-    if (data.status && data.status !== deal.status) {
+    if (safeData.status && safeData.status !== deal.status) {
       // Executa automações em background assíncrono para retorno instantâneo (<50ms) ao usuário
       this.automationsService.evaluateEvent(tenantId, 'STAGE_CHANGED', {
         contactId: deal.contactId,
-        stage: data.status,
+        stage: safeData.status,
         dealId: deal.id,
       }).catch(err => {
         this.logger.error(`Erro ao disparar automação STAGE_CHANGED para deal ${id}: ${err?.message || err}`);

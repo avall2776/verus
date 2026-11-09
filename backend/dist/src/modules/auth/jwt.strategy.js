@@ -10,11 +10,15 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.JwtStrategy = void 0;
+exports.clearUserSessionCache = clearUserSessionCache;
 const common_1 = require("@nestjs/common");
 const passport_1 = require("@nestjs/passport");
 const passport_jwt_1 = require("passport-jwt");
 const prisma_service_1 = require("../../shared/database/prisma.service");
 const userCache = new Map();
+function clearUserSessionCache() {
+    userCache.clear();
+}
 setInterval(() => {
     const now = Date.now();
     for (const [key, val] of userCache.entries()) {
@@ -31,10 +35,11 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
             ]),
             ignoreExpiration: false,
             secretOrKey: process.env.JWT_SECRET || 'super-secret-key-change-me',
+            passReqToCallback: true,
         });
         this.prisma = prisma;
     }
-    async validate(payload) {
+    async validate(req, payload) {
         const userId = payload?.sub || payload?.id || payload?.userId;
         if (!userId) {
             throw new common_1.UnauthorizedException({
@@ -42,7 +47,22 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
                 message: 'Token inválido: identificador de usuário ausente.',
             });
         }
-        const cached = userCache.get(userId);
+        const rawToken = passport_jwt_1.ExtractJwt.fromAuthHeaderAsBearerToken()(req) ||
+            (typeof req.query?.token === 'string' ? req.query.token : null);
+        if (rawToken) {
+            const activeSession = await this.prisma.activeSession.findUnique({
+                where: { sessionToken: rawToken },
+                select: { id: true, isRevoked: true },
+            });
+            if (!activeSession || activeSession.isRevoked) {
+                throw new common_1.UnauthorizedException({
+                    code: 'SESSION_REVOKED',
+                    message: 'Sua sessão foi encerrada pela central de segurança. Realize login com 2FA.',
+                });
+            }
+        }
+        const cacheKey = `${userId}:${rawToken || 'no-token'}`;
+        const cached = userCache.get(cacheKey);
         if (cached && Date.now() < cached.expiresAt) {
             return cached.result;
         }
@@ -134,7 +154,7 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
             tenant: user.tenant,
             plan: user.tenant?.plan || null,
         };
-        userCache.set(userId, { result, expiresAt: Date.now() + 30000 });
+        userCache.set(cacheKey, { result, expiresAt: Date.now() + 15000 });
         return result;
     }
 };

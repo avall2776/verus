@@ -40,9 +40,9 @@ export declare class OperatorsService {
                 updatedAt: Date;
                 contactId: string | null;
                 status: string;
-                subject: string;
                 userId: string | null;
                 description: string;
+                subject: string;
                 priority: string;
                 ticketNumber: number;
                 category: string;
@@ -124,9 +124,9 @@ export declare class OperatorsService {
             updatedAt: Date;
             contactId: string | null;
             status: string;
-            subject: string;
             userId: string | null;
             description: string;
+            subject: string;
             priority: string;
             ticketNumber: number;
             category: string;

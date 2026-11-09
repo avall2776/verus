@@ -28,6 +28,12 @@ export declare class DepartmentsService {
                 canAccessMarketing: boolean;
                 permissions: import("@prisma/client/runtime/library").JsonValue | null;
                 isOnline: boolean;
+                twoFactorEnabled: boolean;
+                twoFactorMethod: string;
+                twoFactorPhone: string | null;
+                failedLoginAttempts: number;
+                lockedUntil: Date | null;
+                trustedDevices: import("@prisma/client/runtime/library").JsonValue | null;
             };
         } & {
             departmentId: string;

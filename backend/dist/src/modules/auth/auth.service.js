@@ -14,13 +14,26 @@ const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../shared/database/prisma.service");
 const jwt_1 = require("@nestjs/jwt");
 const bcrypt = require("bcrypt");
+const two_factor_service_1 = require("./services/two-factor.service");
+const session_service_1 = require("./services/session.service");
 let AuthService = class AuthService {
-    constructor(prisma, jwtService) {
+    constructor(prisma, jwtService, twoFactorService, sessionService) {
         this.prisma = prisma;
         this.jwtService = jwtService;
+        this.twoFactorService = twoFactorService;
+        this.sessionService = sessionService;
     }
-    async login(email, pass, targetTenantId) {
+    async login(email, pass, targetTenantId, telemetry, trustedDeviceToken) {
         const cleanEmail = email?.trim().toLowerCase();
+        const clientTelem = telemetry || {
+            ip: '127.0.0.1',
+            city: 'Ambiente Local',
+            state: 'Dev',
+            country: 'BR',
+            device: 'Computador',
+            browser: 'Navegador Web',
+            userAgent: '',
+        };
         const users = await this.prisma.user.findMany({
             where: { email: { equals: cleanEmail, mode: 'insensitive' } },
             include: {
@@ -30,7 +43,28 @@ let AuthService = class AuthService {
             },
         });
         if (!users || users.length === 0) {
+            await this.sessionService.recordLoginAudit({
+                email: cleanEmail,
+                status: 'FAILED_PASSWORD',
+                failReason: 'Conta inexistente',
+                telemetry: clientTelem,
+            });
             throw new common_1.UnauthorizedException('E-mail ou senha incorretos.');
+        }
+        const primaryUser = users[0];
+        if (primaryUser.lockedUntil && new Date() < primaryUser.lockedUntil) {
+            const waitMin = Math.ceil((new Date(primaryUser.lockedUntil).getTime() - Date.now()) / (60 * 1000));
+            await this.sessionService.recordLoginAudit({
+                userId: primaryUser.id,
+                tenantId: primaryUser.tenantId,
+                email: cleanEmail,
+                userName: primaryUser.name,
+                tenantName: primaryUser.tenant?.name,
+                status: 'ACCOUNT_LOCKED',
+                failReason: `Conta bloqueada. Restam ${waitMin} minutos.`,
+                telemetry: clientTelem,
+            });
+            throw new common_1.UnauthorizedException(`Conta bloqueada por excesso de tentativas de senha. Contate o SuperAdmin Master para desbloqueio ou aguarde ${waitMin} minutos.`);
         }
         const validUsers = [];
         for (const u of users) {
@@ -40,8 +74,35 @@ let AuthService = class AuthService {
             }
         }
         if (validUsers.length === 0) {
+            const newAttempts = (primaryUser.failedLoginAttempts || 0) + 1;
+            const willLock = newAttempts >= 5;
+            const lockedUntil = willLock ? new Date(Date.now() + 15 * 60 * 1000) : null;
+            await this.prisma.user.updateMany({
+                where: { email: { equals: cleanEmail, mode: 'insensitive' } },
+                data: {
+                    failedLoginAttempts: newAttempts,
+                    ...(willLock ? { lockedUntil } : {}),
+                },
+            });
+            await this.sessionService.recordLoginAudit({
+                userId: primaryUser.id,
+                tenantId: primaryUser.tenantId,
+                email: cleanEmail,
+                userName: primaryUser.name,
+                tenantName: primaryUser.tenant?.name,
+                status: willLock ? 'ACCOUNT_LOCKED' : 'FAILED_PASSWORD',
+                failReason: willLock ? 'Bloqueio preventivo após 5 falhas' : `Senha incorreta (tentativa ${newAttempts})`,
+                telemetry: clientTelem,
+            });
+            if (willLock) {
+                throw new common_1.UnauthorizedException('Conta bloqueada preventivamente após 5 tentativas incorretas. Contate o SuperAdmin Master para liberar o acesso.');
+            }
             throw new common_1.UnauthorizedException('E-mail ou senha incorretos.');
         }
+        await this.prisma.user.updateMany({
+            where: { email: { equals: cleanEmail, mode: 'insensitive' } },
+            data: { failedLoginAttempts: 0, lockedUntil: null },
+        });
         if (validUsers.length > 1 && !targetTenantId) {
             return {
                 requiresTenantSelection: true,
@@ -65,14 +126,110 @@ let AuthService = class AuthService {
         if (!isSuperAdmin && user.tenant && !user.tenant.isActive) {
             throw new common_1.UnauthorizedException('O acesso desta empresa está suspenso temporariamente pela administração.');
         }
+        const requires2FA = isSuperAdmin || Boolean(user.twoFactorEnabled);
+        if (requires2FA) {
+            const isTrusted = await this.sessionService.isDeviceTrusted(user.id, trustedDeviceToken);
+            if (!isTrusted) {
+                const twoFaResult = await this.twoFactorService.generateAndSend2FA({
+                    id: user.id,
+                    name: user.name,
+                    email: user.email,
+                    tenantId: user.tenantId,
+                }, user.tenant?.name || 'Vallor Plataforma', clientTelem);
+                await this.sessionService.recordLoginAudit({
+                    userId: user.id,
+                    tenantId: user.tenantId,
+                    email: user.email,
+                    userName: user.name,
+                    tenantName: user.tenant?.name,
+                    status: '2FA_REQUESTED',
+                    failReason: 'Aguardando validação de 6 dígitos no WhatsApp Master',
+                    telemetry: clientTelem,
+                });
+                return {
+                    requires2FA: true,
+                    tempToken: twoFaResult.tempToken,
+                    maskedPhone: twoFaResult.maskedPhone,
+                    user: {
+                        id: user.id,
+                        email: user.email,
+                        name: user.name,
+                        tenantId: user.tenantId,
+                        tenantName: user.tenant?.name,
+                    },
+                };
+            }
+        }
+        return this.finalizeSuccessfulLogin(user, users, clientTelem, false);
+    }
+    async verify2FALogin(tempToken, code, rememberDevice, telemetry) {
+        const clientTelem = telemetry || {
+            ip: '127.0.0.1',
+            city: 'Ambiente Local',
+            state: 'Dev',
+            country: 'BR',
+            device: 'Computador',
+            browser: 'Navegador Web',
+            userAgent: '',
+        };
+        const verified = await this.twoFactorService.verify2FACode(tempToken, code);
+        const user = await this.prisma.user.findUnique({
+            where: { id: verified.userId },
+            include: {
+                tenant: {
+                    select: { id: true, name: true, isActive: true, logoUrl: true },
+                },
+            },
+        });
+        if (!user) {
+            throw new common_1.UnauthorizedException('Usuário não localizado após validação.');
+        }
+        const allUsers = await this.prisma.user.findMany({
+            where: { email: { equals: user.email, mode: 'insensitive' } },
+            include: {
+                tenant: {
+                    select: { id: true, name: true, logoUrl: true },
+                },
+            },
+        });
+        let trustedTokenResult = null;
+        if (rememberDevice) {
+            trustedTokenResult = await this.sessionService.generateTrustedDeviceToken(user.id, clientTelem);
+        }
+        const loginData = await this.finalizeSuccessfulLogin(user, allUsers, clientTelem, Boolean(rememberDevice), trustedTokenResult?.expiresAt);
+        return {
+            ...loginData,
+            trustedDeviceToken: trustedTokenResult?.token,
+        };
+    }
+    async finalizeSuccessfulLogin(user, allUsersForEmail, telemetry, isTrustedDevice, trustedUntil) {
+        const isSuperAdmin = Boolean(user.isSuperAdmin || user.role === 'SUPER_ADMIN');
         const payload = {
             sub: user.id,
             tenantId: user.tenantId,
             role: user.role,
             isSuperAdmin,
         };
+        const token = this.jwtService.sign(payload);
+        await this.sessionService.createSession({
+            userId: user.id,
+            tenantId: user.tenantId,
+            sessionToken: token,
+            telemetry,
+            isTrustedDevice,
+            trustedUntil,
+        });
+        await this.sessionService.recordLoginAudit({
+            userId: user.id,
+            tenantId: user.tenantId,
+            email: user.email,
+            userName: user.name,
+            tenantName: user.tenant?.name,
+            status: 'SUCCESS',
+            telemetry,
+        });
         return {
-            access_token: this.jwtService.sign(payload),
+            access_token: token,
             user: {
                 id: user.id,
                 name: user.name,
@@ -83,8 +240,8 @@ let AuthService = class AuthService {
                 avatarUrl: user.avatarUrl,
                 tenantId: user.tenantId,
                 tenantName: user.tenant?.name,
-                availableTenants: users.length > 1
-                    ? users.map((u) => ({
+                availableTenants: allUsersForEmail.length > 1
+                    ? allUsersForEmail.map((u) => ({
                         tenantId: u.tenantId,
                         tenantName: u.tenant?.name || 'Empresa',
                         tenantLogo: u.tenant?.logoUrl || null,
@@ -94,7 +251,7 @@ let AuthService = class AuthService {
             },
         };
     }
-    async switchTenant(userId, targetTenantId) {
+    async switchTenant(userId, targetTenantId, telemetry) {
         const currentUser = await this.prisma.user.findUnique({
             where: { id: userId },
         });
@@ -133,8 +290,17 @@ let AuthService = class AuthService {
             role: targetUser.role,
             isSuperAdmin,
         };
+        const token = this.jwtService.sign(payload);
+        if (telemetry) {
+            await this.sessionService.createSession({
+                userId: targetUser.id,
+                tenantId: targetUser.tenantId,
+                sessionToken: token,
+                telemetry,
+            });
+        }
         return {
-            access_token: this.jwtService.sign(payload),
+            access_token: token,
             user: {
                 id: targetUser.id,
                 name: targetUser.name,
@@ -159,6 +325,8 @@ exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        jwt_1.JwtService])
+        jwt_1.JwtService,
+        two_factor_service_1.TwoFactorService,
+        session_service_1.SessionService])
 ], AuthService);
 //# sourceMappingURL=auth.service.js.map

@@ -478,6 +478,8 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
       const reasonText = lossReason === 'outro' ? (lossComment || 'Outro') : (lossReason || 'Perda confirmada');
       const updatedMetadata = {
         ...(deal.metadata || {}),
+        lossReason: reasonText,
+        lossComment: lossComment || null,
         closedAt: deal.metadata?.closedAt || new Date().toISOString()
       };
       await onUpdate(deal.id, {
@@ -1283,13 +1285,14 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                 type="button"
                 onClick={() => {
                   onClose();
-                  if (deal.contactId) {
-                    router.push(`/inbox?contactId=${deal.contactId}`);
+                  const targetContactId = deal.contactId || deal.contact?.id;
+                  if (targetContactId) {
+                    router.push(`/inbox?contactId=${targetContactId}`);
                   } else {
-                    router.push(`/inbox`);
+                    toast.error("Este negócio não possui contato vinculado.");
                   }
                 }} 
-                className="group flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-medium text-slate-700 dark:text-gray-200 bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-[#161f36] hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-gray-700 transition-colors shadow-xs"
+                className="group flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-medium text-slate-700 dark:text-gray-200 bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-[#161f36] hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-gray-700 transition-colors shadow-xs cursor-pointer"
               >
                 <MessageSquare size={14} className="text-slate-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
                 <span>Ver Conversa no WhatsApp</span>
