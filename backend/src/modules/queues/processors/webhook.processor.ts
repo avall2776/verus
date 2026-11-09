@@ -121,7 +121,12 @@ export class WebhookProcessor extends WorkerHost {
       evolutionMetadata?.mediaType === 'document';
 
     let content = message.text?.body || '';
-    let msgType = isAudio ? 'audio' : isImage ? 'image' : isVideo ? 'video' : isLocation ? 'location' : isDocument ? 'document' : (message.type || 'text');
+    const isContact =
+      evolutionMetadata?.mediaType === 'contact' ||
+      message.type === 'contact' ||
+      content.includes('👤 Contato') ||
+      content.includes('BEGIN:VCARD');
+    let msgType = isAudio ? 'audio' : isImage ? 'image' : isVideo ? 'video' : isLocation ? 'location' : isDocument ? 'document' : isContact ? 'contact' : (message.type || 'text');
     let mediaUrl: string | null = null;
     let audioTranscription: string | null = null;
 
@@ -211,6 +216,9 @@ export class WebhookProcessor extends WorkerHost {
       } else {
         content = caption || filename || '📄 Documento';
       }
+    } else if (isContact) {
+      msgType = 'contact';
+      content = content || evolutionMetadata?.mediaCaption || message.text?.body || '👤 Contato compartilhado';
     } else if (!content) {
       content = '[Mídia Recebida]';
     }

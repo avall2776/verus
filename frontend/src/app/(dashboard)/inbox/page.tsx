@@ -4614,6 +4614,44 @@ function InboxContent() {
                       msg.type !== 'image' &&
                       msg.type !== 'location')
                   );
+                  const isContactMsg = Boolean(
+                    msg.type === 'contact' ||
+                    (msg.content && (msg.content.includes('👤 Contato') || msg.content.includes('BEGIN:VCARD') || msg.content.includes('vCard')))
+                  );
+
+                  let contactCardName = '';
+                  let contactCardPhone = '';
+                  if (isContactMsg && msg.content) {
+                    if (msg.content.includes('BEGIN:VCARD')) {
+                      const fn = msg.content.match(/FN:([^\n\r]+)/i);
+                      if (fn) contactCardName = fn[1].trim();
+                      const wa = msg.content.match(/waid=(\d+)/i);
+                      if (wa) contactCardPhone = wa[1];
+                      else {
+                        const tel = msg.content.match(/TEL[^:]*:([^\n\r]+)/i);
+                        if (tel) contactCardPhone = tel[1].trim();
+                      }
+                    }
+
+                    if (!contactCardName) {
+                      const nameMatch = msg.content.match(/(?:👤\s*Contato(?::|\s*compartilhado:)?\s*|Nome:\s*)([^\n\r]+)/i);
+                      if (nameMatch) {
+                        contactCardName = nameMatch[1].trim();
+                      } else {
+                        const firstLine = msg.content.split('\n')[0]?.trim();
+                        if (firstLine && !/^\+?\d+$/.test(firstLine)) {
+                          contactCardName = firstLine.replace(/^[👤\s]+/, '');
+                        }
+                      }
+                    }
+
+                    if (!contactCardPhone) {
+                      const phoneMatch = msg.content.match(/(?:📞|Tel(?:efone)?:\s*|\b)(\+?\d[\d\s\-()]{7,}\d)/i);
+                      if (phoneMatch) {
+                        contactCardPhone = phoneMatch[1].trim();
+                      }
+                    }
+                  }
 
                   let cleanedTextContent = msg.content || '';
                   if (isImageMsg) {
@@ -4628,10 +4666,11 @@ function InboxContent() {
                     !isAudioMsg &&
                     !isDocMsg &&
                     !isLocationMsg &&
+                    !isContactMsg &&
                     !cleanedTextContent.startsWith('📍')
                   );
                   const isBorderlessMedia = Boolean(
-                    !msg.isInternal && (isAudioMsg || isDocMsg || isVideoMsg || isImageMsg || isLocationMsg)
+                    !msg.isInternal && (isAudioMsg || isDocMsg || isVideoMsg || isImageMsg || isLocationMsg || isContactMsg)
                   );
 
                   const formattedMsgTime = new Date(msg.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -5042,6 +5081,77 @@ function InboxContent() {
                                   <ExternalLink size={12} className="ml-1 opacity-70" />
                                 </a>
                               )}
+                            </div>
+                          )}
+
+                          {/* Renderização de Contato Compartilhado (Padrão WhatsApp / Lero) */}
+                          {isContactMsg && (
+                            <div className={`${mediaSurfaceClasses} flex flex-col p-3 rounded-2xl min-w-[260px] max-w-[320px] shadow-sm border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#182229]`}>
+                              {/* Top: Avatar circular + Nome em destaque + Telefone */}
+                              <div className="flex items-center gap-3">
+                                <div className="w-11 h-11 rounded-full bg-slate-200 dark:bg-slate-700/60 border border-slate-300 dark:border-slate-600/50 flex items-center justify-center text-slate-600 dark:text-slate-300 shrink-0 shadow-inner">
+                                  <User size={22} className="opacity-80" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <h4 className="text-sm font-bold text-slate-900 dark:text-[#E9EDEF] truncate leading-snug">
+                                    {contactCardName || 'Contato'}
+                                  </h4>
+                                  <p className="text-xs text-slate-500 dark:text-[#8696A0] font-medium font-mono mt-0.5 truncate tracking-tight">
+                                    {contactCardPhone || 'Sem telefone'}
+                                  </p>
+                                </div>
+                              </div>
+
+                              {/* Linha Divisória */}
+                              <div className="border-t border-slate-200 dark:border-slate-700/60 my-2.5" />
+
+                              {/* Bottom: Ações 'Salvar' e 'Conversar' + Horário */}
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-3">
+                                  {/* Botão Salvar Contato */}
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (contactCardPhone) {
+                                        navigator.clipboard.writeText(contactCardPhone);
+                                        toast.success(`Telefone ${contactCardPhone} copiado!`);
+                                      } else {
+                                        navigator.clipboard.writeText(contactCardName);
+                                        toast.success(`Nome ${contactCardName} copiado!`);
+                                      }
+                                    }}
+                                    className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-colors cursor-pointer py-1 px-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+                                    title="Salvar ou copiar número"
+                                  >
+                                    <UserPlus size={14} />
+                                    <span>Salvar</span>
+                                  </button>
+
+                                  {/* Botão Conversar no WhatsApp */}
+                                  <a
+                                    href={contactCardPhone ? `https://wa.me/${contactCardPhone.replace(/\D/g, '')}` : '#'}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => {
+                                      if (!contactCardPhone) {
+                                        e.preventDefault();
+                                        toast.error("Número de telefone não informado.");
+                                      }
+                                    }}
+                                    className="flex items-center gap-1.5 text-xs font-semibold text-[#00A884] hover:text-[#06CF9C] dark:text-[#00A884] dark:hover:text-[#06CF9C] transition-colors cursor-pointer py-1 px-1.5 rounded-lg hover:bg-emerald-500/10"
+                                    title="Abrir conversa no WhatsApp"
+                                  >
+                                    <MessageSquare size={14} className="text-[#00A884]" />
+                                    <span>Conversar</span>
+                                  </a>
+                                </div>
+
+                                {/* Horário e Ticks */}
+                                <span className="inline-flex items-center gap-1 text-[11px] opacity-75 shrink-0 self-end">
+                                  <span>{formattedMsgTime}</span>
+                                  {statusTicksNode}
+                                </span>
+                              </div>
                             </div>
                           )}
 
