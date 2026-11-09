@@ -175,8 +175,12 @@ export class TwoFactorService {
         return false;
       }
 
-      // Ordena colocando a instância externa (ex: Comercial Verto ou Avall) antes da própria conta de destino
+      // Ordena priorizando a linha oficial da Avall Marketing e Vendas como remetente número 1
       candidateInstances.sort((a, b) => {
+        const aIsAvall = a.phoneNumber?.includes('96283090') || a.name?.toLowerCase().includes('avall') ? 1 : 0;
+        const bIsAvall = b.phoneNumber?.includes('96283090') || b.name?.toLowerCase().includes('avall') ? 1 : 0;
+        if (aIsAvall !== bIsAvall) return bIsAvall - aIsAvall; // Avall primeiro
+
         const aIsDest = a.phoneNumber?.includes('91109159') ? 1 : 0;
         const bIsDest = b.phoneNumber?.includes('91109159') ? 1 : 0;
         return aIsDest - bIsDest;

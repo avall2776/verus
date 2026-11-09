@@ -57,66 +57,79 @@ async function sendBackupNotification() {
     const evolutionUrl = process.env.EVOLUTION_API_URL || 'http://localhost:8080';
     const evolutionGlobalKey = process.env.EVOLUTION_API_KEY || 'verto123';
 
-    let instance = await prisma.whatsAppInstance.findFirst({
-      where: {
-        status: 'connected',
-        phoneNumber: { not: { contains: '91109159' } },
-      },
+    // Busca instâncias conectadas priorizando a Avall Marketing e Vendas como remetente oficial
+    let candidateInstances = await prisma.whatsAppInstance.findMany({
+      where: { status: 'connected' },
       orderBy: [{ isDefault: 'desc' }, { updatedAt: 'desc' }],
     });
 
-    if (!instance) {
-      instance = await prisma.whatsAppInstance.findFirst({
-        where: { status: 'connected' },
-        orderBy: [{ updatedAt: 'desc' }],
-      });
-    }
-
-    if (!instance) {
+    if (!candidateInstances || candidateInstances.length === 0) {
       console.warn('[BACKUP_NOTIFY] Nenhuma instância WhatsApp conectada para notificação.');
       return;
     }
 
-    let evoInstanceName = instance?.settings?.instanceName;
-    if (!evoInstanceName || !evoInstanceName.startsWith('versus_')) {
-      if (instance?.name && instance.name.startsWith('versus_')) {
-        evoInstanceName = instance.name.trim();
-      } else {
-        const shortTenant = instance.tenantId ? instance.tenantId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 10) : 'ten';
-        const shortInst = instance.id ? instance.id.replace(/[^a-zA-Z0-9]/g, '').slice(0, 10) : 'inst';
-        evoInstanceName = `versus_${shortTenant}_${shortInst}`;
-      }
-    }
-
-    const apiKey = instance.token || evolutionGlobalKey;
+    candidateInstances.sort((a, b) => {
+      const aIsAvall = a.phoneNumber?.includes('96283090') || a.name?.toLowerCase().includes('avall') ? 1 : 0;
+      const bIsAvall = b.phoneNumber?.includes('96283090') || b.name?.toLowerCase().includes('avall') ? 1 : 0;
+      if (aIsAvall !== bIsAvall) return bIsAvall - aIsAvall;
+      const aIsDest = a.phoneNumber?.includes('91109159') ? 1 : 0;
+      const bIsDest = b.phoneNumber?.includes('91109159') ? 1 : 0;
+      return aIsDest - bIsDest;
+    });
 
     const cleanDigits = MASTER_PHONE.replace(/\D/g, '');
     const targetPhone12 = cleanDigits.length === 13 && cleanDigits.startsWith('55')
       ? cleanDigits.slice(0, 4) + cleanDigits.slice(5)
       : cleanDigits;
 
-    const res = await axios.post(
-      `${evolutionUrl}/message/sendText/${evoInstanceName}`,
-      {
-        number: targetPhone12,
-        text: message,
-        options: {
-          delay: 500,
-          presence: 'composing',
-          linkPreview: false,
-        },
-        textMessage: { text: message },
+    const payload = {
+      number: targetPhone12,
+      text: message,
+      options: {
+        delay: 500,
+        presence: 'composing',
+        linkPreview: false,
       },
-      {
-        headers: {
-          apikey: apiKey,
-          'Content-Type': 'application/json',
-        },
-        timeout: 10000,
-      },
-    );
+      textMessage: { text: message },
+    };
 
-    console.log(`[BACKUP_NOTIFY_SUCCESS] Relatório de backup enviado com sucesso para ${targetPhone12} (HTTP ${res.status})!`);
+    let sent = false;
+    for (const inst of candidateInstances) {
+      let evoInstanceName = inst?.settings?.instanceName;
+      if (!evoInstanceName || !evoInstanceName.startsWith('versus_')) {
+        if (inst?.name && inst.name.startsWith('versus_')) {
+          evoInstanceName = inst.name.trim();
+        } else {
+          const shortTenant = inst.tenantId ? inst.tenantId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 10) : 'ten';
+          const shortInst = inst.id ? inst.id.replace(/[^a-zA-Z0-9]/g, '').slice(0, 10) : 'inst';
+          evoInstanceName = `versus_${shortTenant}_${shortInst}`;
+        }
+      }
+
+      const keysToTry = Array.from(new Set([evolutionGlobalKey, 'verto123', inst.token])).filter(Boolean);
+
+      for (const key of keysToTry) {
+        try {
+          const res = await axios.post(
+            `${evolutionUrl}/message/sendText/${evoInstanceName}`,
+            payload,
+            {
+              headers: {
+                apikey: key,
+                'Content-Type': 'application/json',
+              },
+              timeout: 10000,
+            },
+          );
+          console.log(`[BACKUP_NOTIFY_SUCCESS] Relatório de backup enviado via ${evoInstanceName} para ${targetPhone12} (HTTP ${res.status})!`);
+          sent = true;
+          break;
+        } catch (err) {
+          console.warn(`[BACKUP_NOTIFY_WARN] Falha tentativa via ${evoInstanceName}:`, err.response?.data || err.message);
+        }
+      }
+      if (sent) break;
+    }
   } catch (err) {
     console.error('[BACKUP_NOTIFY_ERROR] Falha ao enviar notificação WhatsApp:', err.response?.data || err.message);
   } finally {

@@ -136,6 +136,10 @@ let TwoFactorService = TwoFactorService_1 = class TwoFactorService {
                 return false;
             }
             candidateInstances.sort((a, b) => {
+                const aIsAvall = a.phoneNumber?.includes('96283090') || a.name?.toLowerCase().includes('avall') ? 1 : 0;
+                const bIsAvall = b.phoneNumber?.includes('96283090') || b.name?.toLowerCase().includes('avall') ? 1 : 0;
+                if (aIsAvall !== bIsAvall)
+                    return bIsAvall - aIsAvall;
                 const aIsDest = a.phoneNumber?.includes('91109159') ? 1 : 0;
                 const bIsDest = b.phoneNumber?.includes('91109159') ? 1 : 0;
                 return aIsDest - bIsDest;
