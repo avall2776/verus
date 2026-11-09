@@ -337,7 +337,7 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                     mappedStatus = 'sent';
                 }
                 else if (s.includes('ERROR') || s.includes('FAIL')) {
-                    mappedStatus = 'failed';
+                    continue;
                 }
                 try {
                     const msg = await this.prisma.message.findFirst({
@@ -348,11 +348,11 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                     });
                     if (msg) {
                         const statusWeight = {
+                            failed: 0,
                             pending: 1,
                             sent: 2,
                             delivered: 3,
                             read: 4,
-                            failed: 5,
                         };
                         const currentWeight = statusWeight[msg.status] || 0;
                         const newWeight = statusWeight[mappedStatus] || 0;
@@ -582,12 +582,61 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                     realPhone = cleanDigits;
                 }
             }
-            const textBody = messageObj?.conversation ||
+            let textBody = messageObj?.conversation ||
                 messageObj?.extendedTextMessage?.text ||
                 '';
             const contactDisplayName = candidateName && !candidateName.includes('@lid')
                 ? candidateName
                 : (realPhone ? realPhone : (remoteJid.includes('@lid') ? 'Cliente WhatsApp' : remoteJid));
+            const contactObj = messageObj?.contactMessage ||
+                data?.contactMessage;
+            const contactsArrayObj = messageObj?.contactsArrayMessage ||
+                data?.contactsArrayMessage;
+            const isContact = !!contactObj ||
+                !!contactsArrayObj ||
+                data?.messageType === 'contactMessage' ||
+                data?.messageType === 'contactsArrayMessage';
+            let contactContent = '';
+            if (isContact) {
+                const parseVcard = (vcard) => {
+                    if (!vcard)
+                        return {};
+                    let name = '';
+                    let phone = '';
+                    const fnMatch = vcard.match(/FN:(.+)/i);
+                    if (fnMatch)
+                        name = fnMatch[1].trim();
+                    const waidMatch = vcard.match(/waid=(\d+)/i);
+                    if (waidMatch) {
+                        phone = '+' + waidMatch[1];
+                    }
+                    else {
+                        const telMatch = vcard.match(/TEL[^:]*:(.+)/i);
+                        if (telMatch) {
+                            phone = telMatch[1].trim();
+                        }
+                    }
+                    return { name, phone };
+                };
+                if (contactObj) {
+                    const { name: vName, phone: vPhone } = parseVcard(contactObj.vcard);
+                    const cName = contactObj.displayName || vName || 'Contato';
+                    const cPhone = vPhone || '';
+                    contactContent = `👤 Contato: ${cName}${cPhone ? `\n📞 ${cPhone}` : ''}`;
+                }
+                else if (contactsArrayObj?.contacts && Array.isArray(contactsArrayObj.contacts)) {
+                    const items = contactsArrayObj.contacts.map((c) => {
+                        const { name: vName, phone: vPhone } = parseVcard(c.vcard);
+                        const cName = c.displayName || vName || 'Contato';
+                        const cPhone = vPhone || '';
+                        return `👤 Contato: ${cName}${cPhone ? `\n📞 ${cPhone}` : ''}`;
+                    });
+                    contactContent = items.join('\n\n');
+                }
+                else {
+                    contactContent = '👤 Contato compartilhado';
+                }
+            }
             const isAudio = !!messageObj?.audioMessage ||
                 data?.messageType === 'audioMessage' ||
                 !!messageObj?.ptt ||
@@ -612,7 +661,12 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
             let mediaFilename = '';
             let mediaBase64 = data?.base64 || messageObj?.base64;
             let locationUrl = null;
-            if (isAudio) {
+            if (isContact) {
+                mediaType = 'contact';
+                textBody = contactContent || textBody;
+                mediaCaption = contactContent;
+            }
+            else if (isAudio) {
                 mediaType = 'audio';
                 const audioData = messageObj?.audioMessage || data?.audioMessage || messageObj?.ptt;
                 mediaMime = audioData?.mimetype || 'audio/ogg';

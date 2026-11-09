@@ -2070,7 +2070,8 @@ export class ChatService {
           const key = rawMsg.key || {};
           const msgId = key.id;
           const remoteJid = key.remoteJid || '';
-          const msgTimestamp = rawMsg.messageTimestamp || 0;
+          const rawTs = rawMsg.messageTimestamp;
+          const msgTimestamp = typeof rawTs === 'object' && rawTs !== null ? Number(rawTs.low || 0) : Number(rawTs || 0);
 
           if (!msgId || !remoteJid || remoteJid.includes('status@broadcast') || msgTimestamp < cutoffTimestamp) {
             continue;

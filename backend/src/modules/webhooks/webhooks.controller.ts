@@ -424,7 +424,9 @@ export class WebhooksController {
         } else if (s.includes('SERVER') || s.includes('SENT') || s.includes('RECEIPT')) {
           mappedStatus = 'sent';
         } else if (s.includes('ERROR') || s.includes('FAIL')) {
-          mappedStatus = 'failed';
+          // No Baileys, receipts do tipo "retry" (re-negociação de chave com WhatsApp Web secundário)
+          // emitem status=ERROR (0) antes do reenvio automático. Ignoramos para não marcar falso erro.
+          continue;
         }
 
         try {
@@ -437,11 +439,11 @@ export class WebhooksController {
 
           if (msg) {
             const statusWeight: Record<string, number> = {
+              failed: 0,
               pending: 1,
               sent: 2,
               delivered: 3,
               read: 4,
-              failed: 5,
             };
 
             const currentWeight = statusWeight[msg.status] || 0;
