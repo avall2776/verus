@@ -1314,16 +1314,55 @@ export class ChatService {
           });
         } else {
           this.logger.error(`Falha no envio da mensagem ${msg.id} para ${conversation.contact.phone}: ${sendRes?.error}`);
+
+          const rawErrorStr = String(sendRes?.error || '');
+          const isNoWhatsApp =
+            rawErrorStr.includes('"exists":false') ||
+            rawErrorStr.includes('"exists": false') ||
+            rawErrorStr.includes('exists:false') ||
+            rawErrorStr.includes('not-authorized') ||
+            rawErrorStr.includes('is not on WhatsApp') ||
+            rawErrorStr.includes('not registered on whatsapp');
+
+          const failStatus = isNoWhatsApp ? 'no_whatsapp' : 'failed';
+
           msg = await this.prisma.message.update({
             where: { id: msg.id },
-            data: { status: 'failed' },
+            data: { status: failStatus },
           });
           this.chatGateway.emitMessageStatusUpdated(tenantId, {
             messageId: msg.id,
             providerMessageId: msg.providerMessageId,
-            status: 'failed',
+            status: failStatus,
+            errorReason: isNoWhatsApp ? 'Contato sem WhatsApp ou número inválido' : 'Falha no envio',
             conversationId,
           });
+
+          // Se for comprovadamente um número sem WhatsApp, gera uma nota interna automática para alertar o atendente imediatamente
+          if (isNoWhatsApp) {
+            const phoneDisplay = conversation.contact?.phone || 'informado';
+            const alertNote = await this.prisma.message.create({
+              data: {
+                tenantId,
+                conversationId,
+                contactId: conversation.contactId,
+                content: `⚠️ [Aviso do Sistema]: O envio falhou porque o número deste contato (${phoneDisplay}) não possui conta de WhatsApp ativa ou foi digitado incorretamente pelo cliente. Verifique o número ou tente contato via e-mail ou ligação telefônica.`,
+                type: 'text',
+                isInternal: true,
+                fromMe: false,
+                direction: 'INBOUND',
+                senderType: 'system',
+                status: 'delivered',
+              },
+            }).catch((e) => {
+              this.logger.warn(`Erro ao criar nota de aviso de número sem WhatsApp: ${e.message}`);
+              return null;
+            });
+
+            if (alertNote) {
+              this.chatGateway.emitNewMessage(tenantId, alertNote);
+            }
+          }
         }
       } catch (err: any) {
         this.logger.error(`Exceção ao disparar mensagem WhatsApp: ${err.message}`);
@@ -1590,16 +1629,54 @@ export class ChatService {
           });
         } else {
           this.logger.error(`Falha no envio de áudio ${msg.id} para ${conversation.contact.phone}: ${sendRes?.error}`);
+
+          const rawErrorStr = String(sendRes?.error || '');
+          const isNoWhatsApp =
+            rawErrorStr.includes('"exists":false') ||
+            rawErrorStr.includes('"exists": false') ||
+            rawErrorStr.includes('exists:false') ||
+            rawErrorStr.includes('not-authorized') ||
+            rawErrorStr.includes('is not on WhatsApp') ||
+            rawErrorStr.includes('not registered on whatsapp');
+
+          const failStatus = isNoWhatsApp ? 'no_whatsapp' : 'failed';
+
           msg = await this.prisma.message.update({
             where: { id: msg.id },
-            data: { status: 'failed' },
+            data: { status: failStatus },
           });
           this.chatGateway.emitMessageStatusUpdated(tenantId, {
             messageId: msg.id,
             providerMessageId: msg.providerMessageId,
-            status: 'failed',
+            status: failStatus,
+            errorReason: isNoWhatsApp ? 'Contato sem WhatsApp ou número inválido' : 'Falha no envio',
             conversationId,
           });
+
+          if (isNoWhatsApp) {
+            const phoneDisplay = conversation.contact?.phone || 'informado';
+            const alertNote = await this.prisma.message.create({
+              data: {
+                tenantId,
+                conversationId,
+                contactId: conversation.contactId,
+                content: `⚠️ [Aviso do Sistema]: O envio do áudio falhou porque o número deste contato (${phoneDisplay}) não possui conta de WhatsApp ativa ou foi digitado incorretamente pelo cliente. Verifique o número ou tente contato via e-mail ou ligação telefônica.`,
+                type: 'text',
+                isInternal: true,
+                fromMe: false,
+                direction: 'INBOUND',
+                senderType: 'system',
+                status: 'delivered',
+              },
+            }).catch((e) => {
+              this.logger.warn(`Erro ao criar nota de aviso de áudio sem WhatsApp: ${e.message}`);
+              return null;
+            });
+
+            if (alertNote) {
+              this.chatGateway.emitNewMessage(tenantId, alertNote);
+            }
+          }
         }
       } catch (err: any) {
         this.logger.error(`Exceção ao disparar áudio WhatsApp: ${err.message}`);

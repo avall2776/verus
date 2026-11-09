@@ -298,10 +298,28 @@ export class WebhookProcessor extends WorkerHost {
       ? resolvedCustomerName
       : (resolvedCustomerName || rawPushName);
 
-    const isGenericPushName = !effectiveCustomerPushName ||
-      effectiveCustomerPushName === 'Cliente WhatsApp' ||
-      effectiveCustomerPushName.includes('@lid') ||
-      effectiveCustomerPushName.startsWith('WhatsApp');
+    const isBlacklistedName = (n: string | null | undefined): boolean => {
+      if (!n) return true;
+      const lower = n.toLowerCase().trim();
+      return (
+        lower === '.' ||
+        lower === '-' ||
+        lower.includes('@lid') ||
+        lower.startsWith('whatsapp') ||
+        lower === 'cliente' ||
+        lower === 'sem nome' ||
+        lower === 'lead' ||
+        lower === 'cliente whatsapp' ||
+        lower === 'cliente verto' ||
+        lower === 'verto' ||
+        lower.includes('vertoagricola') ||
+        lower.includes('verto agrícola') ||
+        lower.includes('comercial verto') ||
+        lower.includes('vallor')
+      );
+    };
+
+    const isGenericPushName = isBlacklistedName(effectiveCustomerPushName);
 
     // Fallback 1: Cruzamento biunívoco por Foto de Perfil (Hash CDN da foto do WhatsApp)
     if (!existingContact && evolutionMetadata?.profilePictureUrl) {
@@ -380,14 +398,7 @@ export class WebhookProcessor extends WorkerHost {
       }
       const isCurrentNameGeneric = 
         !existingContact.name ||
-        existingContact.name === '.' ||
-        existingContact.name === '-' ||
-        existingContact.name === 'Cliente WhatsApp' ||
-        existingContact.name === 'Cliente Verto' ||
-        existingContact.name.toLowerCase() === 'cliente' ||
-        existingContact.name.toLowerCase() === 'sem nome' ||
-        existingContact.name.includes('@lid') ||
-        existingContact.name.startsWith('WhatsApp') ||
+        isBlacklistedName(existingContact.name) ||
         (/^\d+$/.test(existingContact.name.trim()) && existingContact.name.trim().length >= 8);
 
       if (!isGenericPushName && isCurrentNameGeneric) {
@@ -414,7 +425,7 @@ export class WebhookProcessor extends WorkerHost {
           cleanName = `WhatsApp (${realPhone})`;
         } else if (targetPhone.includes('@lid')) {
           const cross = await this.whatsappService.resolveLidFromAllTenants(lidId || remoteJid);
-          cleanName = cross.realName || 'WhatsApp (Contato Direto)';
+          cleanName = (!cross.realName || isBlacklistedName(cross.realName)) ? 'WhatsApp (Contato Direto)' : cross.realName;
         } else {
           cleanName = `WhatsApp (${targetPhone})`;
         }

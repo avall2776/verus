@@ -275,10 +275,18 @@ export class PublicApiService {
       });
     }
 
-    // 6. Mensagem de Sistema / Registro de Entrada no Chat
-    const initialContent = `📥 [Lead Tráfego Pago] Ingressou via ${source}${campaign ? ` - Campanha: "${campaign}"` : ''}${dto.ad_name ? ` (Anúncio: "${dto.ad_name}")` : ''}.`;
-    
-    await this.prisma.message.create({
+    // 6. Mensagem de Sistema / Registro de Entrada no Chat com dados completos do formulário
+    const formRaw = (dto.notes || dto.description || '').trim();
+    let initialContent = `📋 [LEAD TRÁFEGO PAGO] Ingressou via ${source}\n`;
+    if (campaign) initialContent += `📢 Campanha: ${campaign}\n`;
+    if (dto.ad_name) initialContent += `🎯 Anúncio: ${dto.ad_name}\n`;
+    if (dto.email) initialContent += `📧 E-mail: ${dto.email}\n`;
+
+    if (formRaw) {
+      initialContent += `\n📝 Respostas do Formulário:\n${formRaw}`;
+    }
+
+    const createdMsg = await this.prisma.message.create({
       data: {
         tenantId,
         conversationId: conversation.id,
@@ -291,7 +299,17 @@ export class PublicApiService {
         senderType: 'system',
         status: 'delivered',
       },
-    }).catch(err => this.logger.warn(`Erro ao registrar mensagem inicial de lead: ${err.message}`));
+    }).catch(err => {
+      this.logger.warn(`Erro ao registrar mensagem inicial de lead: ${err.message}`);
+      return null;
+    });
+
+    if (createdMsg && this.chatGateway) {
+      this.chatGateway.emitNewMessage(tenantId, {
+        ...createdMsg,
+        contact: { phone: contact.phone, name: contact.name, avatarUrl: contact.avatarUrl }
+      });
+    }
 
     // 7. Notificação em Tempo Real via WebSocket (Socket.io)
     try {

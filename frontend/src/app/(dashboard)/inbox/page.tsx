@@ -2100,6 +2100,9 @@ function InboxContent() {
     };
 
     const handleMessageStatusUpdated = (data: { messageId?: string; providerMessageId?: string; status: string; conversationId?: string }) => {
+      if (data.status === 'no_whatsapp') {
+        toast.error('⚠️ Contato sem WhatsApp ativo ou número inválido!');
+      }
       setMessages((prev) =>
         prev.map((m) => {
           if (
@@ -2518,6 +2521,9 @@ function InboxContent() {
       
       const { data } = await api.post(`/conversations/${activeChat}/messages`, payload);
       setMessages(prev => [...prev, data]);
+      if (data?.status === 'no_whatsapp') {
+        toast.error('⚠️ Contato sem WhatsApp ativo ou número inválido!');
+      }
       
       // Auto-assume a conversa se era robô, já que um humano mandou a mensagem
       if (!isInternalMode) {
@@ -2552,6 +2558,9 @@ function InboxContent() {
       await api.delete(`/conversations/${activeChat}/messages/${failedMsg.id}`).catch(() => {});
       const { data } = await api.post(`/conversations/${activeChat}/messages`, payload);
       setMessages(prev => [...prev, data]);
+      if (data?.status === 'no_whatsapp') {
+        toast.error('⚠️ Contato sem WhatsApp ativo ou número inválido!');
+      }
       toast.success("Mensagem reenviada!");
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Falha ao reenviar mensagem.");
@@ -4510,6 +4519,7 @@ function InboxContent() {
                         msg.status === 'read' ? 'Lida' :
                         msg.status === 'delivered' ? 'Entregue' :
                         msg.status === 'sent' ? 'Enviada' :
+                        msg.status === 'no_whatsapp' ? 'Número sem WhatsApp ou inválido.' :
                         msg.status === 'failed' || msg.status === 'error' ? 'Falha no envio da mensagem.' :
                         'Enviando...'
                       } 
@@ -4519,7 +4529,7 @@ function InboxContent() {
                           handleRetryFailedMessage(msg);
                         }
                       }}
-                      className={`inline-flex items-center ${msg.status === 'failed' || msg.status === 'error' ? 'cursor-pointer hover:scale-110 transition-transform' : ''}`}
+                      className={`inline-flex items-center ${msg.status === 'failed' || msg.status === 'error' || msg.status === 'no_whatsapp' ? 'cursor-pointer hover:scale-110 transition-transform' : ''}`}
                     >
                       {msg.status === 'read' ? (
                         <CheckCheck size={14} className="text-blue-600 dark:text-[#53bdeb] shrink-0" />
@@ -4527,6 +4537,8 @@ function InboxContent() {
                         <CheckCheck size={14} className="text-slate-500 dark:text-slate-300 shrink-0" />
                       ) : msg.status === 'sent' ? (
                         <Check size={14} className="text-slate-500 dark:text-slate-300 shrink-0" />
+                      ) : msg.status === 'no_whatsapp' ? (
+                        <AlertCircle size={13} className="text-amber-500 dark:text-amber-400 shrink-0" />
                       ) : msg.status === 'failed' || msg.status === 'error' ? (
                         <AlertCircle size={13} className="text-rose-500 dark:text-rose-400 shrink-0" />
                       ) : (
@@ -5045,37 +5057,47 @@ function InboxContent() {
                             </div>
                           )}
 
-                          {/* Alerta de Falha de Envio */}
-                          {isMe && !msg.isInternal && (msg.status === 'failed' || msg.status === 'error') && (
-                            <div className="mt-1 pt-1 border-t border-rose-500/20 flex items-center justify-between gap-2 text-[10px] text-rose-300">
-                              <span className="flex items-center gap-1 font-medium">
-                                <AlertCircle size={11} className="text-rose-400 shrink-0" />
-                                Falha no envio
+                          {/* Alerta de Falha de Envio / Sem WhatsApp */}
+                          {isMe && !msg.isInternal && (msg.status === 'failed' || msg.status === 'error' || msg.status === 'no_whatsapp') && (
+                            <div className={`mt-1 pt-1 border-t flex items-center justify-between gap-2 text-[10px] ${
+                              msg.status === 'no_whatsapp' 
+                                ? 'border-amber-500/30 text-amber-300' 
+                                : 'border-rose-500/20 text-rose-300'
+                            }`}>
+                              <span className="flex items-center gap-1 font-semibold">
+                                <AlertCircle size={11} className={msg.status === 'no_whatsapp' ? 'text-amber-400 shrink-0' : 'text-rose-400 shrink-0'} />
+                                {msg.status === 'no_whatsapp' ? 'Contato sem WhatsApp ou número inválido' : 'Falha no envio'}
                               </span>
-                              <div className="flex items-center gap-2">
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleRetryFailedMessage(msg);
-                                  }}
-                                  className="text-white bg-rose-600/80 hover:bg-rose-600 px-2 py-0.5 rounded font-bold cursor-pointer transition-colors"
-                                  title="Tentar reenviar esta mensagem agora"
-                                >
-                                  Reenviar
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setShowTemplateModal(true);
-                                  }}
-                                  className="text-cyan-400 hover:text-cyan-300 font-semibold underline cursor-pointer"
-                                  title="Modelos HSM para Meta Cloud API Oficial"
-                                >
-                                  Modelo HSM
-                                </button>
-                              </div>
+                              {msg.status !== 'no_whatsapp' ? (
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleRetryFailedMessage(msg);
+                                    }}
+                                    className="text-white bg-rose-600/80 hover:bg-rose-600 px-2 py-0.5 rounded font-bold cursor-pointer transition-colors"
+                                    title="Tentar reenviar esta mensagem agora"
+                                  >
+                                    Reenviar
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setShowTemplateModal(true);
+                                    }}
+                                    className="text-cyan-400 hover:text-cyan-300 font-semibold underline cursor-pointer"
+                                    title="Modelos HSM para Meta Cloud API Oficial"
+                                  >
+                                    Modelo HSM
+                                  </button>
+                                </div>
+                              ) : (
+                                <span className="text-[10px] text-amber-400/90 font-medium">
+                                  Verifique o telefone ou contate por e-mail
+                                </span>
+                              )}
                             </div>
                           )}
 

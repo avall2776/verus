@@ -280,16 +280,9 @@ export class AiProcessor extends WorkerHost {
       if (aiResponse.email_cliente && !conversation.contact.email) {
         contactUpdateData.email = aiResponse.email_cliente;
       }
-      if (
-        aiResponse.nome_cliente &&
-        aiResponse.nome_cliente !== 'Não informado' &&
-        (!conversation.contact.name ||
-          conversation.contact.name === 'Cliente WhatsApp' ||
-          conversation.contact.name.includes('@lid') ||
-          conversation.contact.name.startsWith('WhatsApp'))
-      ) {
-        contactUpdateData.name = aiResponse.nome_cliente;
-      }
+      // REGRA DE SEGURANÇA MÁXIMA: A IA NUNCA deve sobrescrever o nome do contato (contact.name).
+      // Contatos devem manter seu nome oficial do WhatsApp (pushName) ou telefone limpo,
+      // sem renomeação por achismo ou menções a anúncios/empresa (ex: 'Verto Agrícola').
 
       let extractedState: string | null = (conversation.contact as any).state || null;
       if (aiResponse.cidade_uf && aiResponse.cidade_uf !== 'Não informado') {

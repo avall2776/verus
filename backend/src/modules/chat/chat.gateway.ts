@@ -216,7 +216,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  public emitMessageStatusUpdated(tenantId: string, statusData: { messageId?: string; providerMessageId?: string; status: string; conversationId?: string }) {
+  public emitMessageStatusUpdated(tenantId: string, statusData: { messageId?: string; providerMessageId?: string; status: string; conversationId?: string; errorReason?: string }) {
     if (this.server) {
       this.server.to(tenantId).emit('messageStatusUpdated', statusData);
     } else {
