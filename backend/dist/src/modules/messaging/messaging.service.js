@@ -13,6 +13,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MessagingService = void 0;
 const common_1 = require("@nestjs/common");
 const axios_1 = require("axios");
+const fs = require("fs");
+const path = require("path");
 const prisma_service_1 = require("../../shared/database/prisma.service");
 const google_drive_helper_1 = require("../../shared/helpers/google-drive.helper");
 let MessagingService = MessagingService_1 = class MessagingService {
@@ -506,6 +508,26 @@ let MessagingService = MessagingService_1 = class MessagingService {
         if (fullAudioUrl && (fullAudioUrl.startsWith('/api-backend') || fullAudioUrl.startsWith('/'))) {
             const serverHost = process.env.PUBLIC_BACKEND_URL || 'http://187.127.10.166:3001';
             fullAudioUrl = `${serverHost}${fullAudioUrl.replace('/api-backend', '')}`;
+        }
+        if (!payload.audioBuffer && payload.audioUrl) {
+            try {
+                const cleanUrl = payload.audioUrl.split('?')[0];
+                const basename = path.basename(cleanUrl);
+                const candidatePaths = [
+                    path.join(process.cwd(), 'uploads', 'audio', basename),
+                    path.join(process.cwd(), 'uploads', 'media', basename),
+                    path.join(process.cwd(), 'uploads', basename),
+                ];
+                for (const p of candidatePaths) {
+                    if (fs.existsSync(p)) {
+                        payload.audioBuffer = await fs.promises.readFile(p);
+                        break;
+                    }
+                }
+            }
+            catch (readErr) {
+                this.logger.warn(`Não foi possível carregar buffer local do áudio: ${readErr.message}`);
+            }
         }
         if (conn.preferredProvider === 'evolution') {
             const evoRes = await this.sendEvolutionAudio(conn.evolution, cleanPhone, payload, fullAudioUrl);

@@ -2749,9 +2749,14 @@ function InboxContent() {
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const phoneDigits = searchQuery.replace(/\D/g, "");
+        const last8 = phoneDigits.length >= 8 ? phoneDigits.slice(-8) : "";
         return (
           (c.name && c.name.toLowerCase().includes(q)) ||
-          (c.phone && (c.phone.toLowerCase().includes(q) || (phoneDigits.length >= 4 && c.phone.replace(/\D/g, "").includes(phoneDigits)))) ||
+          (c.phone && (
+            c.phone.toLowerCase().includes(q) ||
+            (phoneDigits.length >= 4 && c.phone.replace(/\D/g, "").includes(phoneDigits)) ||
+            (last8 && c.phone.replace(/\D/g, "").includes(last8))
+          )) ||
           (c.lastMsg && c.lastMsg.toLowerCase().includes(q))
         );
       }

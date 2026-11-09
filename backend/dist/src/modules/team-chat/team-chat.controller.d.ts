@@ -2,31 +2,7 @@ import { TeamChatService } from './team-chat.service';
 export declare class TeamChatController {
     private readonly teamChatService;
     constructor(teamChatService: TeamChatService);
-    getUsers(tenantId: string, req: any): Promise<{
-        isOnline: boolean;
-        department: string;
-        departmentColor: string;
-        lastMessage: {
-            id: string;
-            createdAt: Date;
-            content: string;
-            senderId: string;
-        };
-        id: string;
-        name: string;
-        email: string;
-        departments: ({
-            department: {
-                id: string;
-                name: string;
-                color: string;
-            };
-        } & {
-            departmentId: string;
-            userId: string;
-        })[];
-        role: string;
-    }[]>;
+    getUsers(tenantId: string, req: any): Promise<any[]>;
     getDepartments(tenantId: string): Promise<{
         id: string;
         name: string;

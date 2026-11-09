@@ -286,6 +286,29 @@ export class ChatService {
           orConditions.push({ contact: { phone: { contains: cleanDigits.slice(2) } } });
         }
       }
+      if (cleanDigits.length >= 8) {
+        // Cruzamento soberano Brasil: busca pelos últimos 8 dígitos (independente de ter ou não o 9)
+        const last8 = cleanDigits.slice(-8);
+        orConditions.push({ contact: { phone: { contains: last8 } } });
+
+        // Se digitou número sem o 9 (10 ou 12 dígitos), busca variante com 9
+        if (cleanDigits.length === 10) {
+          const with9 = cleanDigits.slice(0, 2) + '9' + cleanDigits.slice(2);
+          orConditions.push({ contact: { phone: { contains: with9 } } });
+          orConditions.push({ contact: { phone: { contains: '55' + with9 } } });
+        } else if (cleanDigits.length === 12 && cleanDigits.startsWith('55')) {
+          const with9 = cleanDigits.slice(0, 4) + '9' + cleanDigits.slice(4);
+          orConditions.push({ contact: { phone: { contains: with9 } } });
+        } else if (cleanDigits.length === 11 && cleanDigits[2] === '9') {
+          // Se digitou com o 9 (11 ou 13 dígitos), busca variante sem o 9
+          const without9 = cleanDigits.slice(0, 2) + cleanDigits.slice(3);
+          orConditions.push({ contact: { phone: { contains: without9 } } });
+          orConditions.push({ contact: { phone: { contains: '55' + without9 } } });
+        } else if (cleanDigits.length === 13 && cleanDigits.startsWith('55') && cleanDigits[4] === '9') {
+          const without9 = cleanDigits.slice(0, 4) + cleanDigits.slice(5);
+          orConditions.push({ contact: { phone: { contains: without9 } } });
+        }
+      }
       whereClause.OR = orConditions;
 
       // Se for operador (AGENT), garante que a busca respeite o acesso aos seus setores ou contatos atribuídos

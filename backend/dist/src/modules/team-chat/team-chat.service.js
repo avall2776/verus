@@ -20,7 +20,7 @@ let TeamChatService = class TeamChatService {
     }
     async getUsers(tenantId, currentUserId) {
         const onlineUserIds = this.chatGateway.getOnlineUserIds(tenantId);
-        const users = await this.prisma.user.findMany({
+        const tenantUsers = await this.prisma.user.findMany({
             where: { tenantId },
             select: {
                 id: true,
@@ -28,6 +28,7 @@ let TeamChatService = class TeamChatService {
                 email: true,
                 role: true,
                 isOnline: true,
+                avatarUrl: true,
                 departments: {
                     include: {
                         department: {
@@ -38,6 +39,54 @@ let TeamChatService = class TeamChatService {
             },
             orderBy: { name: 'asc' }
         });
+        const externalMsgs = await this.prisma.teamMessage.findMany({
+            where: {
+                tenantId,
+                channelId: null,
+                OR: [
+                    { sender: { tenantId: { not: tenantId } } },
+                    { receiver: { tenantId: { not: tenantId } } }
+                ]
+            },
+            select: {
+                senderId: true,
+                receiverId: true
+            },
+            take: 100
+        });
+        const externalUserIds = new Set();
+        externalMsgs.forEach(m => {
+            if (m.senderId)
+                externalUserIds.add(m.senderId);
+            if (m.receiverId)
+                externalUserIds.add(m.receiverId);
+        });
+        if (currentUserId) {
+            externalUserIds.add(currentUserId);
+        }
+        tenantUsers.forEach(u => externalUserIds.delete(u.id));
+        let externalUsers = [];
+        if (externalUserIds.size > 0) {
+            externalUsers = await this.prisma.user.findMany({
+                where: { id: { in: Array.from(externalUserIds) } },
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    role: true,
+                    isOnline: true,
+                    avatarUrl: true,
+                    departments: {
+                        include: {
+                            department: {
+                                select: { id: true, name: true, color: true }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        const users = [...tenantUsers, ...externalUsers];
         const userIds = users.map(u => u.id);
         const lastMessages = await Promise.all(userIds.map(async (uid) => {
             if (!currentUserId || uid === currentUserId) {

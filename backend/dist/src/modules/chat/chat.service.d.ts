@@ -47,7 +47,7 @@ export declare class ChatService {
         conversationId: string;
     }[]>;
     resolveDepartmentByPhone(tenantId: string, phone?: string | null, state?: string | null): Promise<string | null>;
-    getConversationByContact(tenantId: string, contactId: string): Promise<{
+    getConversationByContact(tenantId: string, contactIdOrPhone: string): Promise<{
         contact: {
             number: string | null;
             id: string;

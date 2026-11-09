@@ -257,6 +257,28 @@ let ChatService = ChatService_1 = class ChatService {
                     orConditions.push({ contact: { phone: { contains: cleanDigits.slice(2) } } });
                 }
             }
+            if (cleanDigits.length >= 8) {
+                const last8 = cleanDigits.slice(-8);
+                orConditions.push({ contact: { phone: { contains: last8 } } });
+                if (cleanDigits.length === 10) {
+                    const with9 = cleanDigits.slice(0, 2) + '9' + cleanDigits.slice(2);
+                    orConditions.push({ contact: { phone: { contains: with9 } } });
+                    orConditions.push({ contact: { phone: { contains: '55' + with9 } } });
+                }
+                else if (cleanDigits.length === 12 && cleanDigits.startsWith('55')) {
+                    const with9 = cleanDigits.slice(0, 4) + '9' + cleanDigits.slice(4);
+                    orConditions.push({ contact: { phone: { contains: with9 } } });
+                }
+                else if (cleanDigits.length === 11 && cleanDigits[2] === '9') {
+                    const without9 = cleanDigits.slice(0, 2) + cleanDigits.slice(3);
+                    orConditions.push({ contact: { phone: { contains: without9 } } });
+                    orConditions.push({ contact: { phone: { contains: '55' + without9 } } });
+                }
+                else if (cleanDigits.length === 13 && cleanDigits.startsWith('55') && cleanDigits[4] === '9') {
+                    const without9 = cleanDigits.slice(0, 4) + cleanDigits.slice(5);
+                    orConditions.push({ contact: { phone: { contains: without9 } } });
+                }
+            }
             whereClause.OR = orConditions;
             if (!isMaster) {
                 whereClause.AND = [
@@ -451,9 +473,16 @@ let ChatService = ChatService_1 = class ChatService {
         }
         return null;
     }
-    async getConversationByContact(tenantId, contactId) {
+    async getConversationByContact(tenantId, contactIdOrPhone) {
+        const cleanDigits = (contactIdOrPhone || '').replace(/\D/g, '');
         let conversation = await this.prisma.conversation.findFirst({
-            where: { tenantId, contactId },
+            where: {
+                tenantId,
+                OR: [
+                    { contactId: contactIdOrPhone },
+                    ...(cleanDigits.length >= 8 ? [{ contact: { phone: { contains: cleanDigits } } }] : [])
+                ]
+            },
             orderBy: { updatedAt: 'desc' },
             include: {
                 messages: {
@@ -467,7 +496,13 @@ let ChatService = ChatService_1 = class ChatService {
         });
         if (!conversation) {
             const contact = await this.prisma.contact.findFirst({
-                where: { tenantId, id: contactId }
+                where: {
+                    tenantId,
+                    OR: [
+                        { id: contactIdOrPhone },
+                        ...(cleanDigits.length >= 8 ? [{ phone: { contains: cleanDigits } }] : [])
+                    ]
+                }
             });
             if (!contact) {
                 throw new common_1.NotFoundException('Contato não encontrado.');
@@ -1089,6 +1124,14 @@ let ChatService = ChatService_1 = class ChatService {
                                         : 'imagem.jpg'),
                         instanceId: payload.instanceId,
                         quoted: quotedEvolutionPayload,
+                    });
+                }
+                else if (type === 'audio' && mediaUrl) {
+                    sendRes = await this.messagingService.sendAudio({
+                        tenantId,
+                        phone: conversation.contact.phone,
+                        audioUrl: mediaUrl,
+                        instanceId: payload.instanceId,
                     });
                 }
                 else {
