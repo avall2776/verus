@@ -68,6 +68,7 @@ let TwoFactorService = TwoFactorService_1 = class TwoFactorService {
             tempToken,
             expiresAt,
             maskedPhone,
+            code: otpCode,
         };
     }
     async verify2FACode(tempToken, code) {

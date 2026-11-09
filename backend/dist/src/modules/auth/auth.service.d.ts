@@ -21,6 +21,7 @@ export declare class AuthService {
             avatarUrl: any;
             tenantId: any;
             tenantName: any;
+            departments: any;
             availableTenants: {
                 tenantId: any;
                 tenantName: any;
@@ -74,6 +75,7 @@ export declare class AuthService {
             avatarUrl: any;
             tenantId: any;
             tenantName: any;
+            departments: any;
             availableTenants: {
                 tenantId: any;
                 tenantName: any;
@@ -83,6 +85,42 @@ export declare class AuthService {
         };
     }>;
     private finalizeSuccessfulLogin;
+    getProfile(userId: string): Promise<{
+        id: string;
+        name: string;
+        email: string;
+        role: string;
+        isSuperAdmin: boolean;
+        permissions: import("@prisma/client/runtime/library").JsonValue;
+        avatarUrl: string;
+        tenantId: string;
+        tenantName: string;
+        tenant: {
+            id: string;
+            name: string;
+            plan: {
+                id: string;
+                name: string;
+                price: import("@prisma/client/runtime/library").Decimal;
+                hasCRM: boolean;
+                hasWhatsApp: boolean;
+                hasInstagram: boolean;
+                hasAIAgent: boolean;
+                maxUsers: number;
+                maxAIMsgs: number;
+                maxWorkspaces: number;
+                modules: import("@prisma/client/runtime/library").JsonValue | null;
+            };
+            logoUrl: string;
+            isActive: boolean;
+        };
+        departments: {
+            id: any;
+            departmentId: any;
+            name: any;
+            color: any;
+        }[];
+    }>;
     switchTenant(userId: string, targetTenantId: string, telemetry?: ClientTelemetry): Promise<{
         access_token: string;
         user: {
@@ -95,6 +133,7 @@ export declare class AuthService {
             avatarUrl: string;
             tenantId: string;
             tenantName: string;
+            departments: any;
             availableTenants: {
                 tenantId: string;
                 tenantName: string;

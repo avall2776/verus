@@ -34,6 +34,10 @@ let AuthController = class AuthController {
         const telemetry = await (0, client_telemetry_util_1.extractFullTelemetry)(req);
         return this.authService.verify2FALogin(body.tempToken, body.code, Boolean(body.rememberDevice), telemetry);
     }
+    async getMe(req) {
+        const userId = req.user?.id || req.user?.sub || req.user?.userId;
+        return this.authService.getProfile(userId);
+    }
     async switchTenant(req, tenantId) {
         const userId = req.user?.id || req.user?.sub;
         const telemetry = await (0, client_telemetry_util_1.extractFullTelemetry)(req);
@@ -95,6 +99,14 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "verify2FA", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Get)('me'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "getMe", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Post)('switch-tenant'),

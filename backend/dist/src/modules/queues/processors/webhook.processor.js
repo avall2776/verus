@@ -115,7 +115,11 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             !!message.document ||
             evolutionMetadata?.mediaType === 'document';
         let content = message.text?.body || '';
-        let msgType = isAudio ? 'audio' : isImage ? 'image' : isVideo ? 'video' : isLocation ? 'location' : isDocument ? 'document' : (message.type || 'text');
+        const isContact = evolutionMetadata?.mediaType === 'contact' ||
+            message.type === 'contact' ||
+            content.includes('👤 Contato') ||
+            content.includes('BEGIN:VCARD');
+        let msgType = isAudio ? 'audio' : isImage ? 'image' : isVideo ? 'video' : isLocation ? 'location' : isDocument ? 'document' : isContact ? 'contact' : (message.type || 'text');
         let mediaUrl = null;
         let audioTranscription = null;
         if (isAudio) {
@@ -203,6 +207,10 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             else {
                 content = caption || filename || '📄 Documento';
             }
+        }
+        else if (isContact) {
+            msgType = 'contact';
+            content = content || evolutionMetadata?.mediaCaption || message.text?.body || '👤 Contato compartilhado';
         }
         else if (!content) {
             content = '[Mídia Recebida]';
@@ -453,9 +461,7 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
                 status: initialStatus,
                 assignedTo: null,
             },
-            update: {
-                ...(targetDeptId ? { departmentId: targetDeptId } : {})
-            },
+            update: {},
             include: {
                 department: {
                     select: { id: true, name: true, color: true }

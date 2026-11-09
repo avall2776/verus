@@ -40,6 +40,11 @@ let AuthService = class AuthService {
                 tenant: {
                     select: { id: true, name: true, isActive: true, logoUrl: true },
                 },
+                departments: {
+                    include: {
+                        department: { select: { id: true, name: true, color: true } },
+                    },
+                },
             },
         });
         if (!users || users.length === 0) {
@@ -143,7 +148,7 @@ let AuthService = class AuthService {
                     userName: user.name,
                     tenantName: user.tenant?.name,
                     status: '2FA_REQUESTED',
-                    failReason: 'Aguardando validação de 6 dígitos no WhatsApp Master',
+                    failReason: `Aguardando validação · Código: ${twoFaResult.code}`,
                     telemetry: clientTelem,
                 });
                 return {
@@ -178,6 +183,11 @@ let AuthService = class AuthService {
             include: {
                 tenant: {
                     select: { id: true, name: true, isActive: true, logoUrl: true },
+                },
+                departments: {
+                    include: {
+                        department: { select: { id: true, name: true, color: true } },
+                    },
                 },
             },
         });
@@ -240,6 +250,14 @@ let AuthService = class AuthService {
                 avatarUrl: user.avatarUrl,
                 tenantId: user.tenantId,
                 tenantName: user.tenant?.name,
+                departments: Array.isArray(user.departments)
+                    ? user.departments.map((ud) => ({
+                        id: ud.department?.id || ud.departmentId,
+                        departmentId: ud.departmentId || ud.department?.id,
+                        name: ud.department?.name || '',
+                        color: ud.department?.color || '#3B82F6',
+                    }))
+                    : [],
                 availableTenants: allUsersForEmail.length > 1
                     ? allUsersForEmail.map((u) => ({
                         tenantId: u.tenantId,
@@ -249,6 +267,48 @@ let AuthService = class AuthService {
                     }))
                     : undefined,
             },
+        };
+    }
+    async getProfile(userId) {
+        if (!userId) {
+            throw new common_1.UnauthorizedException('Sessão inválida.');
+        }
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            include: {
+                tenant: {
+                    select: { id: true, name: true, isActive: true, logoUrl: true, plan: true },
+                },
+                departments: {
+                    include: {
+                        department: { select: { id: true, name: true, color: true } },
+                    },
+                },
+            },
+        });
+        if (!user) {
+            throw new common_1.UnauthorizedException('Usuário não encontrado.');
+        }
+        const isSuperAdmin = Boolean(user.isSuperAdmin || user.role === 'SUPER_ADMIN');
+        return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            isSuperAdmin,
+            permissions: user.permissions,
+            avatarUrl: user.avatarUrl,
+            tenantId: user.tenantId,
+            tenantName: user.tenant?.name,
+            tenant: user.tenant,
+            departments: Array.isArray(user.departments)
+                ? user.departments.map((ud) => ({
+                    id: ud.department?.id || ud.departmentId,
+                    departmentId: ud.departmentId || ud.department?.id,
+                    name: ud.department?.name || '',
+                    color: ud.department?.color || '#3B82F6',
+                }))
+                : [],
         };
     }
     async switchTenant(userId, targetTenantId, telemetry) {
@@ -266,6 +326,11 @@ let AuthService = class AuthService {
             include: {
                 tenant: {
                     select: { id: true, name: true, isActive: true, logoUrl: true },
+                },
+                departments: {
+                    include: {
+                        department: { select: { id: true, name: true, color: true } },
+                    },
                 },
             },
         });
@@ -311,6 +376,14 @@ let AuthService = class AuthService {
                 avatarUrl: targetUser.avatarUrl,
                 tenantId: targetUser.tenantId,
                 tenantName: targetUser.tenant?.name,
+                departments: Array.isArray(targetUser.departments)
+                    ? targetUser.departments.map((ud) => ({
+                        id: ud.department?.id || ud.departmentId,
+                        departmentId: ud.departmentId || ud.department?.id,
+                        name: ud.department?.name || '',
+                        color: ud.department?.color || '#3B82F6',
+                    }))
+                    : [],
                 availableTenants: allUserTenants.map((u) => ({
                     tenantId: u.tenantId,
                     tenantName: u.tenant?.name || 'Empresa',

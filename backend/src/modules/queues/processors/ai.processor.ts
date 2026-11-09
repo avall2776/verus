@@ -304,9 +304,18 @@ export class AiProcessor extends WorkerHost {
         }).catch(() => {});
       }
 
-      // Classificação Inteligente e Automática da Região/Setor assim que a IA identifica UF ou Telefone
+      // Classificação Inteligente e Automática da Região/Setor (Prioriza Setor Especializado se identificado pela IA)
+      const targetSector = aiResponse.setor_destino || 'COMERCIAL';
       const candidatePhone = aiResponse.telefone_cliente || conversation.contact.phone;
-      const autoDeptId = await this.resolveDepartmentSmart(tenantId, candidatePhone, extractedState);
+      let autoDeptId: string | null = null;
+
+      if (targetSector !== 'COMERCIAL') {
+        autoDeptId = await this.resolveSpecializedDepartment(tenantId, targetSector);
+      }
+      if (!autoDeptId) {
+        autoDeptId = await this.resolveDepartmentSmart(tenantId, candidatePhone, extractedState);
+      }
+
       if (autoDeptId) {
         resolvedDeptId = autoDeptId;
         if (conversation.departmentId !== autoDeptId) {
@@ -363,14 +372,14 @@ export class AiProcessor extends WorkerHost {
               ? { title: aiResponse.produto_interesse }
               : {}),
             ...(aiResponse.resumo_atendimento ? { notes: aiResponse.resumo_atendimento } : {}),
-            metadata: updatedMeta,
+            metadata: {
+              ...updatedMeta,
+              ...(resolvedDeptId ? { departmentId: resolvedDeptId } : {}),
+              ...(aiResponse.setor_destino ? { sector: aiResponse.setor_destino } : {}),
+            },
           },
           include: { contact: true, assignee: true },
         }).catch(() => null);
-
-        if (updatedDeal) {
-          this.chatGateway.emitHandoff(tenantId, updatedDeal);
-        }
       }
     } catch (enrichErr: any) {
       this.logger.warn(`Falha não-bloqueante no auto-enriquecimento do Lead pela IA: ${enrichErr.message}`);
@@ -378,18 +387,40 @@ export class AiProcessor extends WorkerHost {
 
     // 5. Analisar Handoff (Transferência)
     if (aiResponse.transferir_vendedor) {
-      this.logger.log(`Lead solicitou atendimento humano. Executando protocolo de Transbordo...`);
+      this.logger.log(`Lead solicitou atendimento humano (Setor: ${aiResponse.setor_destino || 'COMERCIAL'}). Executando protocolo de Transbordo...`);
 
-      // 5.1 Round-Robin: Buscar atendente online com menor carga
-      let assignedTo = null;
-      
-      const onlineAgents = await this.prisma.user.findMany({
-        where: { tenantId, isOnline: true }
-      });
+      // 5.1 Seleção Inteligente de Atendente por Setor/Região (respeitando rigorosamente o departamento da conversa)
+      let assignedTo: string | null = null;
 
-      if (onlineAgents.length > 0) {
+      let candidateAgents: { id: string; isOnline: boolean }[] = [];
+      if (resolvedDeptId) {
+        // Busca primeiro os operadores vinculados especificamente a esta Região / Setor
+        const deptAgents = await this.prisma.user.findMany({
+          where: {
+            tenantId,
+            isActive: true,
+            departments: {
+              some: { departmentId: resolvedDeptId },
+            },
+          },
+          select: { id: true, isOnline: true, role: true },
+        });
+
+        // Prioriza operadores do setor que estejam online; se nenhum estiver online no momento, atribui ao titular do setor mesmo offline
+        const onlineInDept = deptAgents.filter(a => a.isOnline);
+        candidateAgents = onlineInDept.length > 0 ? onlineInDept : deptAgents;
+      }
+
+      if (candidateAgents.length === 0 && !resolvedDeptId) {
+        candidateAgents = await this.prisma.user.findMany({
+          where: { tenantId, isActive: true, isOnline: true },
+          select: { id: true, isOnline: true },
+        });
+      }
+
+      if (candidateAgents.length > 0) {
         let minLoad = Infinity;
-        for (const agent of onlineAgents) {
+        for (const agent of candidateAgents) {
           const activeCount = await this.prisma.conversation.count({
             where: { assignedTo: agent.id, status: { in: ['open', 'human_takeover'] } }
           });
@@ -417,11 +448,15 @@ export class AiProcessor extends WorkerHost {
       // Emissão em tempo real para o Inbox transferindo para atendimento humano
       this.chatGateway.emitConversationUpdated(tenantId, updatedConv);
 
-      // Emissão do alerta rico de Handoff para o Front-end (Toast executivo de transbordo)
+      // Emissão do alerta rico de Handoff para o Front-end (isolado por setor e responsável)
       this.chatGateway.server.to(tenantId).emit('aiHandoffAlert', {
         conversationId,
         contactId,
+        departmentId: updatedConv.departmentId || resolvedDeptId || null,
+        department: updatedConv.department || null,
+        assignedTo: updatedConv.assignedTo || assignedTo || null,
         contactName: conversation.contact.name || aiResponse.nome_cliente || 'Lead WhatsApp',
+        contactPhone: conversation.contact.phone,
         phone: conversation.contact.phone,
         product: aiResponse.produto_interesse,
         reason: aiResponse.motivo_transferencia,
@@ -437,6 +472,8 @@ export class AiProcessor extends WorkerHost {
       const currentMetaHandoff = (existingDealForHandoff?.metadata as Record<string, any>) || {};
       const fullMeta = {
         ...currentMetaHandoff,
+        ...(resolvedDeptId ? { departmentId: resolvedDeptId } : {}),
+        ...(aiResponse.setor_destino ? { sector: aiResponse.setor_destino } : {}),
         ...(aiResponse.produto_interesse &&
         aiResponse.produto_interesse !== 'Não informado' &&
         aiResponse.produto_interesse !== 'Atendimento Geral'
@@ -463,6 +500,7 @@ export class AiProcessor extends WorkerHost {
                 ? aiResponse.produto_interesse
                 : existingDealForHandoff.title,
             notes: aiResponse.resumo_atendimento || existingDealForHandoff.notes,
+            ...(assignedTo ? { assignedTo } : {}),
             metadata: fullMeta,
           },
           include: { contact: true, assignee: true },
@@ -472,6 +510,7 @@ export class AiProcessor extends WorkerHost {
           data: {
             tenantId,
             contactId,
+            assignedTo: assignedTo || null,
             title:
               aiResponse.produto_interesse &&
               aiResponse.produto_interesse !== 'Não informado' &&
@@ -487,8 +526,12 @@ export class AiProcessor extends WorkerHost {
         });
       }
 
-      // Emitir para o front-end (Kanban)
-      this.chatGateway.emitHandoff(tenantId, updatedDeal);
+      // Emitir para o front-end (Kanban) com metadados de setor para filtragem de notificações
+      this.chatGateway.emitHandoff(tenantId, {
+        ...updatedDeal,
+        departmentId: resolvedDeptId,
+        assignedTo: updatedDeal.assignedTo || assignedTo || null,
+      });
 
       // 5.3 Resolução do telefone real e formatação limpa (eliminando @lid)
       let rawCandidatePhone = aiResponse.telefone_cliente || conversation.contact.phone;
@@ -613,6 +656,51 @@ export class AiProcessor extends WorkerHost {
     }
 
     return { formatted: `+${digits}`, isRealPhone: true, cleanDigits: digits };
+  }
+
+  /**
+   * Resolve departamentos especializados (Pós-Venda, Financeiro, Recrutamento, Compras) quando classificados pela IA
+   */
+  private async resolveSpecializedDepartment(tenantId: string, sector: string): Promise<string | null> {
+    try {
+      const departments = await this.prisma.department.findMany({
+        where: { tenantId },
+        select: { id: true, name: true },
+      });
+      if (!departments || departments.length === 0) return null;
+
+      const normalize = (str: string) =>
+        str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
+
+      if (sector === 'POS_VENDA') {
+        const match = departments.find(d => {
+          const n = normalize(d.name);
+          return n.includes('POS-VENDA') || n.includes('POS VENDA') || n.includes('ASSISTENCIA') || n.includes('SUPORTE');
+        });
+        if (match) return match.id;
+      } else if (sector === 'FINANCEIRO') {
+        const match = departments.find(d => {
+          const n = normalize(d.name);
+          return n.includes('FINANCEIRO') || n.includes('FATURAMENTO') || n.includes('COBRANCA');
+        });
+        if (match) return match.id;
+      } else if (sector === 'RECRUTAMENTO') {
+        const match = departments.find(d => {
+          const n = normalize(d.name);
+          return n.includes('RECRUTAMENTO') || n.includes('RH') || n.includes('RECURSOS HUMANOS');
+        });
+        if (match) return match.id;
+      } else if (sector === 'COMPRAS') {
+        const match = departments.find(d => {
+          const n = normalize(d.name);
+          return n.includes('COMPRAS') || n.includes('SUPRIMENTOS');
+        });
+        if (match) return match.id;
+      }
+    } catch (e: any) {
+      this.logger.warn(`Erro ao resolver setor especializado [${sector}]: ${e.message}`);
+    }
+    return null;
   }
 
   /**

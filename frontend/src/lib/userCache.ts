@@ -57,13 +57,13 @@ export async function getCachedUser(forceRefresh = false): Promise<any> {
 
   // 4. Se não há dados locais ou forçou refresh, espera a rede
   if (!immediateUser || forceRefresh) {
-    inFlightPromise = api.get("/users/me")
+    inFlightPromise = api.get("/auth/me")
       .then((res) => {
         if (res.data) {
-          cachedUser = res.data;
+          cachedUser = { ...(immediateUser || {}), ...res.data };
           lastFetchTime = Date.now();
           if (typeof window !== "undefined") {
-            localStorage.setItem("versus_user", JSON.stringify(res.data));
+            localStorage.setItem("versus_user", JSON.stringify(cachedUser));
           }
         }
         return cachedUser;
@@ -80,14 +80,14 @@ export async function getCachedUser(forceRefresh = false): Promise<any> {
   }
 
   // 5. STALE-WHILE-REVALIDATE: Temos dados imediatos! Dispara revalidação silenciosa em background
-  inFlightPromise = api.get("/users/me")
+  inFlightPromise = api.get("/auth/me")
     .then((res) => {
       if (res.data) {
-        cachedUser = res.data;
+        cachedUser = { ...(immediateUser || {}), ...res.data };
         lastFetchTime = Date.now();
         if (typeof window !== "undefined") {
-          localStorage.setItem("versus_user", JSON.stringify(res.data));
-          window.dispatchEvent(new CustomEvent("user_updated", { detail: res.data }));
+          localStorage.setItem("versus_user", JSON.stringify(cachedUser));
+          window.dispatchEvent(new CustomEvent("user_updated", { detail: cachedUser }));
         }
       }
       return cachedUser;

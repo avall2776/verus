@@ -26,7 +26,13 @@ export class NotificationsService {
     try {
       const now = new Date();
 
-      // Busca dados do usuário, chat, chamados e metas EM PARALELO (1 único round-trip ao Postgres)
+      const currentUserRole = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { role: true, isSuperAdmin: true }
+      });
+      const isMaster = Boolean(currentUserRole?.isSuperAdmin || currentUserRole?.role === 'ADMIN' || currentUserRole?.role === 'SUPER_ADMIN');
+
+      // Busca dados do usuário, chat, chamados e metas EM PARALELO
       const [user, teamMessages, supportTickets, goals] = await Promise.all([
         this.prisma.user.findUnique({
           where: { id: userId },
@@ -62,6 +68,7 @@ export class NotificationsService {
         this.prisma.supportTicket.findMany({
           where: {
             tenantId,
+            ...(!isMaster ? { OR: [{ userId }, { assignedToId: userId }] } : {}),
           },
           take: 10,
           orderBy: { updatedAt: 'desc' },
@@ -77,7 +84,8 @@ export class NotificationsService {
         this.prisma.goal.findMany({
           where: {
             tenantId,
-            periodEnd: { gte: now }
+            periodEnd: { gte: now },
+            ...(!isMaster ? { OR: [{ userId }, { userId: null }] } : {}),
           },
           take: 5,
           orderBy: { updatedAt: 'desc' }

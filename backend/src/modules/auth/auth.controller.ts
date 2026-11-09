@@ -38,6 +38,13 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('me')
+  async getMe(@Req() req: any) {
+    const userId = req.user?.id || req.user?.sub || req.user?.userId;
+    return this.authService.getProfile(userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Post('switch-tenant')
   async switchTenant(@Req() req: any, @Body('tenantId') tenantId: string) {
     const userId = req.user?.id || req.user?.sub;

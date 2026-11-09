@@ -14,6 +14,7 @@ export declare class TwoFactorService {
         tempToken: string;
         expiresAt: Date;
         maskedPhone: string;
+        code: string;
     }>;
     verify2FACode(tempToken: string, code: string): Promise<{
         userId: string;

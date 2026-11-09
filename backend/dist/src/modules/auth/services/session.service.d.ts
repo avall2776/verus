@@ -95,6 +95,9 @@ export declare class SessionService {
         lastActiveAt: Date;
     })[]>;
     listAuditLogs(tenantId?: string): Promise<{
+        twoFactorCode: any;
+        isVerified2FA: any;
+        expiresAt2FA: any;
         id: string;
         email: string;
         city: string | null;

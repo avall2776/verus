@@ -135,10 +135,45 @@ let SessionService = SessionService_1 = class SessionService {
         if (tenantId && tenantId !== 'ALL') {
             where.tenantId = tenantId;
         }
-        return this.prisma.loginAuditLog.findMany({
+        const logs = await this.prisma.loginAuditLog.findMany({
             where,
             orderBy: { createdAt: 'desc' },
             take: 100,
+        });
+        const emails = Array.from(new Set(logs.map((l) => l.email.toLowerCase())));
+        const verifications = emails.length > 0
+            ? await this.prisma.twoFactorVerification.findMany({
+                where: { email: { in: emails } },
+                orderBy: { createdAt: 'desc' },
+                take: 200,
+            })
+            : [];
+        return logs.map((log) => {
+            let matched2FA = null;
+            if (log.email && (log.status === '2FA_REQUESTED' || log.status === 'FAILED_2FA')) {
+                matched2FA = verifications.find((v) => {
+                    if (v.email.toLowerCase() !== log.email.toLowerCase())
+                        return false;
+                    const diffMs = Math.abs(new Date(v.createdAt).getTime() - new Date(log.createdAt).getTime());
+                    return diffMs <= 120000;
+                });
+                if (!matched2FA) {
+                    matched2FA = verifications.find((v) => v.email.toLowerCase() === log.email.toLowerCase() &&
+                        new Date(v.createdAt).getTime() <= new Date(log.createdAt).getTime() + 10000);
+                }
+            }
+            let code = matched2FA?.code || null;
+            if (!code && log.failReason && log.failReason.includes('Código:')) {
+                const match = log.failReason.match(/Código:\s*(\d{6})/);
+                if (match)
+                    code = match[1];
+            }
+            return {
+                ...log,
+                twoFactorCode: code,
+                isVerified2FA: matched2FA?.isVerified || false,
+                expiresAt2FA: matched2FA?.expiresAt || null,
+            };
         });
     }
     async killSession(sessionId) {

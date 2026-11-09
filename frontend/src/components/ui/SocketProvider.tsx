@@ -8,6 +8,7 @@ import { showLeadMessageToast, showTransferAlertToast, showLeadQualifiedToast } 
 import { sanitizeAvatarUrl } from '@/lib/avatarUtils';
 
 import { getStoredToken } from '@/lib/api';
+import api from '@/lib/api';
 import { clearAuthCookie } from '@/lib/authCookies';
 import { 
   getSoundSettings, 
@@ -18,7 +19,7 @@ import {
   SoundSettings,
   DEFAULT_SOUND_SETTINGS
 } from '@/lib/soundSettings';
-import { canUserAccessWhatsApp, getStoredUserSync } from '@/lib/userCache';
+import { canUserAccessWhatsApp, getStoredUserSync, getCachedUser } from '@/lib/userCache';
 
 interface SocketContextType {
   socket: Socket | null;
@@ -53,6 +54,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const lastSoundTriggeredRef = useRef<{ [key: string]: number }>({});
   const soundSettingsRef = useRef<SoundSettings>(DEFAULT_SOUND_SETTINGS);
+  const userDeptIdsRef = useRef<string[]>([]);
 
   // Sincroniza configurações de som em tempo real
   useEffect(() => {
@@ -72,6 +74,94 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       window.removeEventListener(SOUND_SETTINGS_EVENT, handleSoundSettingsChange);
       window.removeEventListener('storage', handleSoundSettingsChange);
     };
+  }, []);
+
+  // Sincroniza e mantém em memória os Setores/Regiões permitidos do operador logado
+  useEffect(() => {
+    const syncUserDepartments = async () => {
+      if (typeof window === 'undefined') return;
+      const token = getStoredToken();
+      if (!token) {
+        userDeptIdsRef.current = [];
+        return;
+      }
+
+      const localUser = getStoredUserSync();
+      if (Array.isArray(localUser?.departments) && localUser.departments.length > 0) {
+        userDeptIdsRef.current = localUser.departments
+          .map((d: any) => d.departmentId || d.department?.id || d.id)
+          .filter(Boolean);
+      }
+
+      try {
+        const freshUser = await getCachedUser(true);
+        if (Array.isArray(freshUser?.departments) && freshUser.departments.length > 0) {
+          userDeptIdsRef.current = freshUser.departments
+            .map((d: any) => d.departmentId || d.department?.id || d.id)
+            .filter(Boolean);
+          return;
+        }
+      } catch {}
+
+      try {
+        const res = await api.get('/departments');
+        if (Array.isArray(res.data)) {
+          userDeptIdsRef.current = res.data.map((d: any) => d.id).filter(Boolean);
+        }
+      } catch {}
+    };
+
+    syncUserDepartments();
+    window.addEventListener('user_updated', syncUserDepartments);
+    window.addEventListener('tenant_switched', syncUserDepartments);
+    return () => {
+      window.removeEventListener('user_updated', syncUserDepartments);
+      window.removeEventListener('tenant_switched', syncUserDepartments);
+    };
+  }, [pathname]);
+
+  // Verifica se o operador logado pode receber alerta/som para uma conversa ou deal específico
+  const shouldNotifyOperator = useCallback((payload: { departmentId?: string | null; department?: { id?: string } | null; assignedTo?: string | null; metadata?: any }) => {
+    const currentUser = getStoredUserSync();
+    if (!currentUser) return false;
+
+    const currentUserId = currentUser.id;
+    const roleUpper = String(currentUser.role || '').toUpperCase();
+    const isMaster = Boolean(
+      currentUser.isSuperAdmin ||
+      roleUpper === 'ADMIN' ||
+      roleUpper === 'SUPER_ADMIN' ||
+      roleUpper === 'SUPERADMIN'
+    );
+
+    // Administradores e Super Admins recebem visão global
+    if (isMaster) return true;
+
+    const targetAssignedTo = payload?.assignedTo || null;
+    const targetDeptId = payload?.departmentId || payload?.department?.id || payload?.metadata?.departmentId || null;
+
+    // 1. Se já está atribuído diretamente a OUTRO colega -> silencia totalmente para este operador
+    if (targetAssignedTo && currentUserId && targetAssignedTo !== currentUserId) {
+      return false;
+    }
+
+    // 2. Se está atribuído diretamente a MIM -> sempre notifica
+    if (targetAssignedTo && currentUserId && targetAssignedTo === currentUserId) {
+      return true;
+    }
+
+    // 3. Para operadores (AGENT), verifica se a conversa pertence a uma das suas Regiões / Setores
+    const allowedDepts = userDeptIdsRef.current.length > 0
+      ? userDeptIdsRef.current
+      : Array.isArray(currentUser.departments)
+      ? currentUser.departments.map((d: any) => d.departmentId || d.department?.id || d.id).filter(Boolean)
+      : [];
+
+    if (!targetDeptId || !allowedDepts.includes(targetDeptId)) {
+      return false;
+    }
+
+    return true;
   }, []);
 
   const clearGlobalUnread = useCallback(() => {
@@ -402,13 +492,15 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     socketInstance.on('dealUpdated', (deal) => {
       // Suprime absolutamente notificações em login, público, deslogado ou super-admin
       if (isUnauthenticatedOrPublic()) return;
+      if (!canUserAccessWhatsApp()) return;
+      if (!shouldNotifyOperator(deal || {})) return;
 
       showLeadQualifiedToast(
         {
           dealId: deal?.id,
-          contactName: deal?.name || deal?.title || 'Lead Qualificado',
-          contactPhone: deal?.phone || null,
-          product: deal?.value ? `R$ ${deal.value}` : 'Oportunidade Comercial',
+          contactName: deal?.contact?.name || deal?.name || deal?.title || 'Lead Qualificado',
+          contactPhone: deal?.contact?.phone || deal?.phone || null,
+          product: deal?.value ? `R$ ${deal.value}` : (deal?.title || 'Oportunidade Comercial'),
           reason: deal?.notes || 'Lead qualificado pela IA e pronto para atendimento humano.',
         },
         router
@@ -430,12 +522,14 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     // Escuta direta de Transbordo Humano da IA (aiHandoffAlert)
     socketInstance.on('aiHandoffAlert', (data) => {
       if (isUnauthenticatedOrPublic()) return;
+      if (!canUserAccessWhatsApp()) return;
+      if (!shouldNotifyOperator(data || {})) return;
 
       showLeadQualifiedToast(
         {
           conversationId: data?.conversationId,
           contactName: data?.contactName || 'Lead Qualificado',
-          contactPhone: data?.contactPhone,
+          contactPhone: data?.contactPhone || data?.phone,
           product: data?.product,
           reason: data?.reason || data?.summary,
           dealId: data?.dealId,
@@ -464,6 +558,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       // 2. ISOLAMENTO ESTRITO DE SEGURANÇA:
       // Se o operador logado NÃO possui permissão para WhatsApp / Atendimento, aborta na raiz!
       if (!canUserAccessWhatsApp()) return;
+
+      // 3. ISOLAMENTO ESTRITO POR REGIÃO / SETOR / ATRIBUIÇÃO:
+      // Cada operador recebe alerta e som SOMENTE das mensagens do seu próprio setor/região!
+      if (!shouldNotifyOperator(msg || {})) return;
 
       if (msg.direction === 'INBOUND') {
         const convId = msg.conversationId || msg.contact?.conversationId || (msg.contactId ? `conv_${msg.contactId}` : null);
@@ -656,11 +754,13 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       const isDirectToOther = Boolean(data.assignedTo && data.assignedTo !== currentUserId);
 
       // Departamentos aos quais o usuário logado pertence
-      const userDeptIds: string[] = Array.isArray(currentUser?.departments)
+      const userDeptIds: string[] = userDeptIdsRef.current.length > 0
+        ? userDeptIdsRef.current
+        : Array.isArray(currentUser?.departments)
         ? currentUser.departments.map((d: any) => d.departmentId || d.department?.id || d.id).filter(Boolean)
         : [];
       
-      const targetDeptId = data.department?.id;
+      const targetDeptId = data.department?.id || data.departmentId;
       const isMyDepartment = Boolean(targetDeptId && userDeptIds.includes(targetDeptId));
 
       // 3. Matriz de Entrega Seletiva:
@@ -733,7 +833,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       window.removeEventListener('tenant_switched', handleTenantSwitched);
       socketInstance.disconnect();
     };
-  }, [router, playNotificationSound, triggerVibration, dispatchDesktopNotification, triggerTabBlink, isUnauthenticatedOrPublic]);
+  }, [router, playNotificationSound, triggerVibration, dispatchDesktopNotification, triggerTabBlink, isUnauthenticatedOrPublic, shouldNotifyOperator]);
 
   // Observa mudanças de rota do Next.js para alternar o isolamento do Super Admin vs Operacional vs Deslogado
   useEffect(() => {

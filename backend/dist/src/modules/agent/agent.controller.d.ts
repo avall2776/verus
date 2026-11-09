@@ -201,6 +201,7 @@ export declare class AgentController {
         transferir_vendedor?: boolean;
         motivo_transferencia?: string;
         resumo_atendimento?: string;
+        setor_destino?: "COMERCIAL" | "POS_VENDA" | "FINANCEIRO" | "RECRUTAMENTO" | "COMPRAS";
         sentimento_cliente?: "ENTUSIASMADO" | "POSITIVO_CORDIAL" | "NEUTRO" | "DUVIDA_CRITICA" | "FRUSTRADO_IRRITADO" | "HOSTIL_RECLAMACAO";
         reclamou_de_bot?: boolean;
         analise_emocional?: string;

@@ -40,6 +40,11 @@ export class AuthService {
         tenant: {
           select: { id: true, name: true, isActive: true, logoUrl: true },
         },
+        departments: {
+          include: {
+            department: { select: { id: true, name: true, color: true } },
+          },
+        },
       },
     });
 
@@ -228,6 +233,11 @@ export class AuthService {
         tenant: {
           select: { id: true, name: true, isActive: true, logoUrl: true },
         },
+        departments: {
+          include: {
+            department: { select: { id: true, name: true, color: true } },
+          },
+        },
       },
     });
 
@@ -317,6 +327,14 @@ export class AuthService {
         avatarUrl: user.avatarUrl,
         tenantId: user.tenantId,
         tenantName: user.tenant?.name,
+        departments: Array.isArray(user.departments)
+          ? user.departments.map((ud: any) => ({
+              id: ud.department?.id || ud.departmentId,
+              departmentId: ud.departmentId || ud.department?.id,
+              name: ud.department?.name || '',
+              color: ud.department?.color || '#3B82F6',
+            }))
+          : [],
         availableTenants:
           allUsersForEmail.length > 1
             ? allUsersForEmail.map((u) => ({
@@ -327,6 +345,56 @@ export class AuthService {
               }))
             : undefined,
       },
+    };
+  }
+
+  /**
+   * Retorna o perfil completo e atualizado do usuário logado com departamentos e permissões
+   */
+  async getProfile(userId: string) {
+    if (!userId) {
+      throw new UnauthorizedException('Sessão inválida.');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        tenant: {
+          select: { id: true, name: true, isActive: true, logoUrl: true, plan: true },
+        },
+        departments: {
+          include: {
+            department: { select: { id: true, name: true, color: true } },
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Usuário não encontrado.');
+    }
+
+    const isSuperAdmin = Boolean(user.isSuperAdmin || user.role === 'SUPER_ADMIN');
+
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      isSuperAdmin,
+      permissions: user.permissions,
+      avatarUrl: user.avatarUrl,
+      tenantId: user.tenantId,
+      tenantName: user.tenant?.name,
+      tenant: user.tenant,
+      departments: Array.isArray(user.departments)
+        ? user.departments.map((ud: any) => ({
+            id: ud.department?.id || ud.departmentId,
+            departmentId: ud.departmentId || ud.department?.id,
+            name: ud.department?.name || '',
+            color: ud.department?.color || '#3B82F6',
+          }))
+        : [],
     };
   }
 
@@ -351,6 +419,11 @@ export class AuthService {
       include: {
         tenant: {
           select: { id: true, name: true, isActive: true, logoUrl: true },
+        },
+        departments: {
+          include: {
+            department: { select: { id: true, name: true, color: true } },
+          },
         },
       },
     });
@@ -405,6 +478,14 @@ export class AuthService {
         avatarUrl: targetUser.avatarUrl,
         tenantId: targetUser.tenantId,
         tenantName: targetUser.tenant?.name,
+        departments: Array.isArray((targetUser as any).departments)
+          ? (targetUser as any).departments.map((ud: any) => ({
+              id: ud.department?.id || ud.departmentId,
+              departmentId: ud.departmentId || ud.department?.id,
+              name: ud.department?.name || '',
+              color: ud.department?.color || '#3B82F6',
+            }))
+          : [],
         availableTenants: allUserTenants.map((u) => ({
           tenantId: u.tenantId,
           tenantName: u.tenant?.name || 'Empresa',

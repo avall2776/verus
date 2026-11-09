@@ -4,6 +4,7 @@ export declare const AiResponseSchema: z.ZodObject<{
     transferir_vendedor: z.ZodBoolean;
     motivo_transferencia: z.ZodString;
     resumo_atendimento: z.ZodString;
+    setor_destino: z.ZodEnum<["COMERCIAL", "POS_VENDA", "FINANCEIRO", "RECRUTAMENTO", "COMPRAS"]>;
     sentimento_cliente: z.ZodEnum<["ENTUSIASMADO", "POSITIVO_CORDIAL", "NEUTRO", "DUVIDA_CRITICA", "FRUSTRADO_IRRITADO", "HOSTIL_RECLAMACAO"]>;
     reclamou_de_bot: z.ZodBoolean;
     analise_emocional: z.ZodString;
@@ -20,6 +21,7 @@ export declare const AiResponseSchema: z.ZodObject<{
     transferir_vendedor?: boolean;
     motivo_transferencia?: string;
     resumo_atendimento?: string;
+    setor_destino?: "COMERCIAL" | "POS_VENDA" | "FINANCEIRO" | "RECRUTAMENTO" | "COMPRAS";
     sentimento_cliente?: "ENTUSIASMADO" | "POSITIVO_CORDIAL" | "NEUTRO" | "DUVIDA_CRITICA" | "FRUSTRADO_IRRITADO" | "HOSTIL_RECLAMACAO";
     reclamou_de_bot?: boolean;
     analise_emocional?: string;
@@ -36,6 +38,7 @@ export declare const AiResponseSchema: z.ZodObject<{
     transferir_vendedor?: boolean;
     motivo_transferencia?: string;
     resumo_atendimento?: string;
+    setor_destino?: "COMERCIAL" | "POS_VENDA" | "FINANCEIRO" | "RECRUTAMENTO" | "COMPRAS";
     sentimento_cliente?: "ENTUSIASMADO" | "POSITIVO_CORDIAL" | "NEUTRO" | "DUVIDA_CRITICA" | "FRUSTRADO_IRRITADO" | "HOSTIL_RECLAMACAO";
     reclamou_de_bot?: boolean;
     analise_emocional?: string;

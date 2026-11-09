@@ -333,6 +333,20 @@ ${companyName ? `- Você representa oficialmente a empresa: "${companyName}".\n`
 3. ENTUSIASMO E CONEXÃO (CLIENTE ALEGRE / ENTUSIASMADO):
    - Espelhe o entusiasmo do cliente com cordialidade comercial, agilidade e condução consultiva.`;
 
+      // Diretriz de Triagem Inteligente por Setor (Pós-Venda, Financeiro, Recrutamento, Compras e Comercial)
+      const sectorRoutingDirective = `\n\n=== TRIAGEM INTELIGENTE DE SETORES (setor_destino) ===
+Classifique sempre o campo 'setor_destino' com base no assunto do contato (texto, áudio transcrito, foto/comprovante ou PDF):
+1. 'POS_VENDA': Cliente que já possui máquina/equipamento e precisa de suporte técnico, garantia, assistência técnica, peças de reposição, regulagem, entrega técnica ou manual.
+   - Conduta: Acolha com atenção, pergunte qual é o equipamento/modelo e o que houve (caso ele ainda não tenha dito) e transfira imediatamente ('transferir_vendedor: true') avisando que está passando para o setor de Pós-Venda.
+2. 'FINANCEIRO': Assuntos de boleto, 2ª via, nota fiscal (NF-e), faturamento, cobrança ou envio de comprovante de pagamento.
+   - Conduta: Acolha cordialmente e transfira imediatamente ('transferir_vendedor: true') avisando que está encaminhando para o setor Financeiro / Faturamento.
+3. 'RECRUTAMENTO': Candidatos enviando currículo (PDF/foto/texto), perguntando sobre vagas de emprego ou querendo trabalhar na empresa.
+   - Conduta: Agradeça o interesse em fazer parte da equipe, confirme o recebimento e transfira imediatamente ('transferir_vendedor: true') para o setor de Recrutamento / RH.
+4. 'COMPRAS': Fornecedores oferecendo matéria-prima, aço, peças, insumos, serviços ou cotação de frete para vender para a nossa empresa.
+   - Conduta: Agradeça o contato comercial e transfira imediatamente ('transferir_vendedor: true') para o setor de Compras.
+5. 'COMERCIAL' (Padrão): Clientes interessados em comprar máquinas, implementos ou produtos, pedindo orçamento, preço ou informações comerciais.
+   - Conduta: Siga o fluxo normal de qualificação comercial da empresa.`;
+
       let knowledgeBase = tenantConfig?.aiKnowledgeBase ? `\n\n=== BASE DE CONHECIMENTO MANUAL ===\nUse os dados abaixo para responder o cliente:\n${tenantConfig.aiKnowledgeBase}` : '';
       
       // Busca Semântica via RAG
@@ -347,7 +361,7 @@ ${companyName ? `- Você representa oficialmente a empresa: "${companyName}".\n`
         }
       }
 
-      const systemMessage = identityDirective + '\n\n' + basePrompt + emotionalIntelligenceDirective + multimodalDirective + (dynamicContext || '') + knowledgeBase;
+      const systemMessage = identityDirective + '\n\n' + basePrompt + emotionalIntelligenceDirective + sectorRoutingDirective + multimodalDirective + (dynamicContext || '') + knowledgeBase;
 
       const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
         { role: 'system', content: systemMessage },

@@ -21,6 +21,11 @@ let NotificationsService = NotificationsService_1 = class NotificationsService {
     async getNotifications(tenantId, userId) {
         try {
             const now = new Date();
+            const currentUserRole = await this.prisma.user.findUnique({
+                where: { id: userId },
+                select: { role: true, isSuperAdmin: true }
+            });
+            const isMaster = Boolean(currentUserRole?.isSuperAdmin || currentUserRole?.role === 'ADMIN' || currentUserRole?.role === 'SUPER_ADMIN');
             const [user, teamMessages, supportTickets, goals] = await Promise.all([
                 this.prisma.user.findUnique({
                     where: { id: userId },
@@ -56,6 +61,7 @@ let NotificationsService = NotificationsService_1 = class NotificationsService {
                 this.prisma.supportTicket.findMany({
                     where: {
                         tenantId,
+                        ...(!isMaster ? { OR: [{ userId }, { assignedToId: userId }] } : {}),
                     },
                     take: 10,
                     orderBy: { updatedAt: 'desc' },
@@ -71,7 +77,8 @@ let NotificationsService = NotificationsService_1 = class NotificationsService {
                 this.prisma.goal.findMany({
                     where: {
                         tenantId,
-                        periodEnd: { gte: now }
+                        periodEnd: { gte: now },
+                        ...(!isMaster ? { OR: [{ userId }, { userId: null }] } : {}),
                     },
                     take: 5,
                     orderBy: { updatedAt: 'desc' }

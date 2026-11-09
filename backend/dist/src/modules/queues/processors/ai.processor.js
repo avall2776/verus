@@ -248,8 +248,15 @@ let AiProcessor = AiProcessor_1 = class AiProcessor extends bullmq_1.WorkerHost 
                     data: contactUpdateData,
                 }).catch(() => { });
             }
+            const targetSector = aiResponse.setor_destino || 'COMERCIAL';
             const candidatePhone = aiResponse.telefone_cliente || conversation.contact.phone;
-            const autoDeptId = await this.resolveDepartmentSmart(tenantId, candidatePhone, extractedState);
+            let autoDeptId = null;
+            if (targetSector !== 'COMERCIAL') {
+                autoDeptId = await this.resolveSpecializedDepartment(tenantId, targetSector);
+            }
+            if (!autoDeptId) {
+                autoDeptId = await this.resolveDepartmentSmart(tenantId, candidatePhone, extractedState);
+            }
             if (autoDeptId) {
                 resolvedDeptId = autoDeptId;
                 if (conversation.departmentId !== autoDeptId) {
@@ -301,27 +308,46 @@ let AiProcessor = AiProcessor_1 = class AiProcessor extends bullmq_1.WorkerHost 
                             ? { title: aiResponse.produto_interesse }
                             : {}),
                         ...(aiResponse.resumo_atendimento ? { notes: aiResponse.resumo_atendimento } : {}),
-                        metadata: updatedMeta,
+                        metadata: {
+                            ...updatedMeta,
+                            ...(resolvedDeptId ? { departmentId: resolvedDeptId } : {}),
+                            ...(aiResponse.setor_destino ? { sector: aiResponse.setor_destino } : {}),
+                        },
                     },
                     include: { contact: true, assignee: true },
                 }).catch(() => null);
-                if (updatedDeal) {
-                    this.chatGateway.emitHandoff(tenantId, updatedDeal);
-                }
             }
         }
         catch (enrichErr) {
             this.logger.warn(`Falha não-bloqueante no auto-enriquecimento do Lead pela IA: ${enrichErr.message}`);
         }
         if (aiResponse.transferir_vendedor) {
-            this.logger.log(`Lead solicitou atendimento humano. Executando protocolo de Transbordo...`);
+            this.logger.log(`Lead solicitou atendimento humano (Setor: ${aiResponse.setor_destino || 'COMERCIAL'}). Executando protocolo de Transbordo...`);
             let assignedTo = null;
-            const onlineAgents = await this.prisma.user.findMany({
-                where: { tenantId, isOnline: true }
-            });
-            if (onlineAgents.length > 0) {
+            let candidateAgents = [];
+            if (resolvedDeptId) {
+                const deptAgents = await this.prisma.user.findMany({
+                    where: {
+                        tenantId,
+                        isActive: true,
+                        departments: {
+                            some: { departmentId: resolvedDeptId },
+                        },
+                    },
+                    select: { id: true, isOnline: true, role: true },
+                });
+                const onlineInDept = deptAgents.filter(a => a.isOnline);
+                candidateAgents = onlineInDept.length > 0 ? onlineInDept : deptAgents;
+            }
+            if (candidateAgents.length === 0 && !resolvedDeptId) {
+                candidateAgents = await this.prisma.user.findMany({
+                    where: { tenantId, isActive: true, isOnline: true },
+                    select: { id: true, isOnline: true },
+                });
+            }
+            if (candidateAgents.length > 0) {
                 let minLoad = Infinity;
-                for (const agent of onlineAgents) {
+                for (const agent of candidateAgents) {
                     const activeCount = await this.prisma.conversation.count({
                         where: { assignedTo: agent.id, status: { in: ['open', 'human_takeover'] } }
                     });
@@ -347,7 +373,11 @@ let AiProcessor = AiProcessor_1 = class AiProcessor extends bullmq_1.WorkerHost 
             this.chatGateway.server.to(tenantId).emit('aiHandoffAlert', {
                 conversationId,
                 contactId,
+                departmentId: updatedConv.departmentId || resolvedDeptId || null,
+                department: updatedConv.department || null,
+                assignedTo: updatedConv.assignedTo || assignedTo || null,
                 contactName: conversation.contact.name || aiResponse.nome_cliente || 'Lead WhatsApp',
+                contactPhone: conversation.contact.phone,
                 phone: conversation.contact.phone,
                 product: aiResponse.produto_interesse,
                 reason: aiResponse.motivo_transferencia,
@@ -360,6 +390,8 @@ let AiProcessor = AiProcessor_1 = class AiProcessor extends bullmq_1.WorkerHost 
             const currentMetaHandoff = existingDealForHandoff?.metadata || {};
             const fullMeta = {
                 ...currentMetaHandoff,
+                ...(resolvedDeptId ? { departmentId: resolvedDeptId } : {}),
+                ...(aiResponse.setor_destino ? { sector: aiResponse.setor_destino } : {}),
                 ...(aiResponse.produto_interesse &&
                     aiResponse.produto_interesse !== 'Não informado' &&
                     aiResponse.produto_interesse !== 'Atendimento Geral'
@@ -384,6 +416,7 @@ let AiProcessor = AiProcessor_1 = class AiProcessor extends bullmq_1.WorkerHost 
                             ? aiResponse.produto_interesse
                             : existingDealForHandoff.title,
                         notes: aiResponse.resumo_atendimento || existingDealForHandoff.notes,
+                        ...(assignedTo ? { assignedTo } : {}),
                         metadata: fullMeta,
                     },
                     include: { contact: true, assignee: true },
@@ -394,6 +427,7 @@ let AiProcessor = AiProcessor_1 = class AiProcessor extends bullmq_1.WorkerHost 
                     data: {
                         tenantId,
                         contactId,
+                        assignedTo: assignedTo || null,
                         title: aiResponse.produto_interesse &&
                             aiResponse.produto_interesse !== 'Não informado' &&
                             aiResponse.produto_interesse !== 'Atendimento Geral'
@@ -407,7 +441,11 @@ let AiProcessor = AiProcessor_1 = class AiProcessor extends bullmq_1.WorkerHost 
                     include: { contact: true, assignee: true },
                 });
             }
-            this.chatGateway.emitHandoff(tenantId, updatedDeal);
+            this.chatGateway.emitHandoff(tenantId, {
+                ...updatedDeal,
+                departmentId: resolvedDeptId,
+                assignedTo: updatedDeal.assignedTo || assignedTo || null,
+            });
             let rawCandidatePhone = aiResponse.telefone_cliente || conversation.contact.phone;
             if (rawCandidatePhone && rawCandidatePhone.includes('@lid')) {
                 const siblingContact = await this.prisma.contact.findFirst({
@@ -500,6 +538,53 @@ let AiProcessor = AiProcessor_1 = class AiProcessor extends bullmq_1.WorkerHost 
             return { formatted: `+55 (${ddd}) ${p1}-${p2}`, isRealPhone: true, cleanDigits: `55${digits}` };
         }
         return { formatted: `+${digits}`, isRealPhone: true, cleanDigits: digits };
+    }
+    async resolveSpecializedDepartment(tenantId, sector) {
+        try {
+            const departments = await this.prisma.department.findMany({
+                where: { tenantId },
+                select: { id: true, name: true },
+            });
+            if (!departments || departments.length === 0)
+                return null;
+            const normalize = (str) => str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
+            if (sector === 'POS_VENDA') {
+                const match = departments.find(d => {
+                    const n = normalize(d.name);
+                    return n.includes('POS-VENDA') || n.includes('POS VENDA') || n.includes('ASSISTENCIA') || n.includes('SUPORTE');
+                });
+                if (match)
+                    return match.id;
+            }
+            else if (sector === 'FINANCEIRO') {
+                const match = departments.find(d => {
+                    const n = normalize(d.name);
+                    return n.includes('FINANCEIRO') || n.includes('FATURAMENTO') || n.includes('COBRANCA');
+                });
+                if (match)
+                    return match.id;
+            }
+            else if (sector === 'RECRUTAMENTO') {
+                const match = departments.find(d => {
+                    const n = normalize(d.name);
+                    return n.includes('RECRUTAMENTO') || n.includes('RH') || n.includes('RECURSOS HUMANOS');
+                });
+                if (match)
+                    return match.id;
+            }
+            else if (sector === 'COMPRAS') {
+                const match = departments.find(d => {
+                    const n = normalize(d.name);
+                    return n.includes('COMPRAS') || n.includes('SUPRIMENTOS');
+                });
+                if (match)
+                    return match.id;
+            }
+        }
+        catch (e) {
+            this.logger.warn(`Erro ao resolver setor especializado [${sector}]: ${e.message}`);
+        }
+        return null;
     }
     async resolveDepartmentSmart(tenantId, phone, state) {
         if (!phone && !state)

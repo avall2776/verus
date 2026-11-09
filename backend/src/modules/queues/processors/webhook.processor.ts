@@ -518,9 +518,7 @@ export class WebhookProcessor extends WorkerHost {
         status: initialStatus,
         assignedTo: null,
       },
-      update: {
-        ...(targetDeptId ? { departmentId: targetDeptId } : {})
-      },
+      update: {},
       include: {
         department: {
           select: { id: true, name: true, color: true }
@@ -528,7 +526,7 @@ export class WebhookProcessor extends WorkerHost {
       }
     });
 
-    // Se a conversa já existia mas não tinha departamento vinculado, vincula agora
+    // Se a conversa já existia mas não tinha departamento vinculado, vincula agora por DDD/Estado
     if (!conversation.departmentId && targetDeptId) {
       conversation = await this.prisma.conversation.update({
         where: { id: conversation.id },

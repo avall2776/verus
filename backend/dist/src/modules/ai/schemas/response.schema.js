@@ -7,6 +7,18 @@ exports.AiResponseSchema = zod_1.z.object({
     transferir_vendedor: zod_1.z.boolean().describe("Se verdadeiro, o robô encerra o atendimento e repassa para um vendedor humano. Marque verdadeiro caso o cliente peça para falar com humano, expresse frustração/irritação, tenha dúvidas complexas, queira fechar negócio ou precise de intervenção técnica."),
     motivo_transferencia: zod_1.z.string().describe("Breve explicação interna do porquê o atendimento foi transferido. Ex: 'Dúvida complexa', 'Solicitou vendedor', 'Cliente irritado com bot', 'Reclamou de atendimento'."),
     resumo_atendimento: zod_1.z.string().describe("Um parágrafo resumindo as dores, necessidades e o contexto da conversa até agora para o vendedor."),
+    setor_destino: zod_1.z.enum([
+        'COMERCIAL',
+        'POS_VENDA',
+        'FINANCEIRO',
+        'RECRUTAMENTO',
+        'COMPRAS'
+    ]).describe("Qual setor deve atender este contato com base no assunto principal: " +
+        "'POS_VENDA' (garantia, suporte técnico, peças de reposição, regulagem de máquina, entrega técnica, assistência ou manual), " +
+        "'FINANCEIRO' (boleto, 2ª via, nota fiscal/NF-e, faturamento, pagamento ou comprovante financeiro), " +
+        "'RECRUTAMENTO' (envio de currículo, vagas de emprego, RH ou trabalhar na empresa), " +
+        "'COMPRAS' (fornecedor oferecendo matéria-prima, insumos, peças, serviços ou cotação de frete para vender para a empresa), " +
+        "ou 'COMERCIAL' (cliente querendo comprar máquinas, equipamentos, implementos, saber preços, orçamento ou dúvidas comerciais gerais)."),
     sentimento_cliente: zod_1.z.enum([
         'ENTUSIASMADO',
         'POSITIVO_CORDIAL',

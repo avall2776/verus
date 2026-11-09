@@ -18,6 +18,7 @@ export declare class AuthController {
             avatarUrl: any;
             tenantId: any;
             tenantName: any;
+            departments: any;
             availableTenants: {
                 tenantId: any;
                 tenantName: any;
@@ -71,6 +72,7 @@ export declare class AuthController {
             avatarUrl: any;
             tenantId: any;
             tenantName: any;
+            departments: any;
             availableTenants: {
                 tenantId: any;
                 tenantName: any;
@@ -78,6 +80,42 @@ export declare class AuthController {
                 role: any;
             }[];
         };
+    }>;
+    getMe(req: any): Promise<{
+        id: string;
+        name: string;
+        email: string;
+        role: string;
+        isSuperAdmin: boolean;
+        permissions: import("@prisma/client/runtime/library").JsonValue;
+        avatarUrl: string;
+        tenantId: string;
+        tenantName: string;
+        tenant: {
+            id: string;
+            name: string;
+            plan: {
+                id: string;
+                name: string;
+                price: import("@prisma/client/runtime/library").Decimal;
+                hasCRM: boolean;
+                hasWhatsApp: boolean;
+                hasInstagram: boolean;
+                hasAIAgent: boolean;
+                maxUsers: number;
+                maxAIMsgs: number;
+                maxWorkspaces: number;
+                modules: import("@prisma/client/runtime/library").JsonValue | null;
+            };
+            logoUrl: string;
+            isActive: boolean;
+        };
+        departments: {
+            id: any;
+            departmentId: any;
+            name: any;
+            color: any;
+        }[];
     }>;
     switchTenant(req: any, tenantId: string): Promise<{
         access_token: string;
@@ -91,6 +129,7 @@ export declare class AuthController {
             avatarUrl: string;
             tenantId: string;
             tenantName: string;
+            departments: any;
             availableTenants: {
                 tenantId: string;
                 tenantName: string;
@@ -136,6 +175,9 @@ export declare class AuthController {
         lastActiveAt: Date;
     })[]>;
     getAuditLogs(tenantId?: string): Promise<{
+        twoFactorCode: any;
+        isVerified2FA: any;
+        expiresAt2FA: any;
         id: string;
         email: string;
         city: string | null;
