@@ -1597,8 +1597,13 @@ function InboxContent() {
 
         setUrlLoadedContact(formattedContact);
         setActiveChat(conv.id);
-      } catch (err) {
-        console.error("Erro ao carregar conversa a partir dos parâmetros de URL:", err);
+      } catch (err: any) {
+        if (err?.response?.status === 404) {
+          // Conversa antiga foi mesclada ou removida; limpa a URL silenciosamente
+          router.replace('/inbox');
+        } else {
+          console.error("Erro ao carregar conversa a partir dos parâmetros de URL:", err);
+        }
       }
     };
 
