@@ -91,7 +91,79 @@ function CrmContent() {
   const [isEditingFunnel, setIsEditingFunnel] = useState<boolean>(false);
   const [tempFunnelName, setTempFunnelName] = useState<string>("Funil Principal (Padrão)");
 
-  const handleSaveFunnelName = () => {
+  const handleCreateStage = () => {
+    if (!newStageName.trim()) {
+      toast.error("Informe o nome da nova etapa.");
+      return;
+    }
+    const cleanTitle = newStageName.trim();
+    const stageId = cleanTitle
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "") || `stage-${Date.now()}`;
+
+    // Mapeamento de cores sólidas para classes de texto, borda e fundo
+    const colorMap: Record<string, { color: string; bgLight: string; borderLight: string; borderColor: string }> = {
+      'bg-blue-500': { color: "text-blue-500", bgLight: "bg-blue-500/10", borderLight: "border-blue-500/30", borderColor: "border-t-blue-500" },
+      'bg-purple-500': { color: "text-purple-500", bgLight: "bg-purple-500/10", borderLight: "border-purple-500/30", borderColor: "border-t-purple-500" },
+      'bg-yellow-500': { color: "text-yellow-500", bgLight: "bg-yellow-500/10", borderLight: "border-yellow-500/30", borderColor: "border-t-yellow-500" },
+      'bg-emerald-500': { color: "text-emerald-500", bgLight: "bg-emerald-500/10", borderLight: "border-emerald-500/30", borderColor: "border-t-emerald-500" },
+      'bg-orange-500': { color: "text-orange-500", bgLight: "bg-orange-500/10", borderLight: "border-orange-500/30", borderColor: "border-t-orange-500" },
+      'bg-rose-500': { color: "text-rose-500", bgLight: "bg-rose-500/10", borderLight: "border-rose-500/30", borderColor: "border-t-rose-500" },
+      'bg-cyan-500': { color: "text-cyan-400", bgLight: "bg-cyan-500/10", borderLight: "border-cyan-500/30", borderColor: "border-t-cyan-400" },
+      'bg-slate-500': { color: "text-slate-400", bgLight: "bg-slate-500/10", borderLight: "border-slate-500/30", borderColor: "border-t-slate-500" },
+    };
+
+    const chosen = colorMap[newStageColor] || colorMap['bg-blue-500'];
+
+    const newCol = {
+      id: stageId,
+      title: cleanTitle,
+      color: chosen.color,
+      bgLight: chosen.bgLight,
+      borderLight: chosen.borderLight,
+      borderColor: chosen.borderColor,
+    };
+
+    setColumns(prev => {
+      // Se tiver 'lost' e 'disqualified', insere antes deles para manter os fechamentos no final
+      const lostIdx = prev.findIndex(c => c.id === 'lost' || c.id === 'disqualified');
+      let updated: any[];
+      if (lostIdx >= 0) {
+        updated = [...prev.slice(0, lostIdx), newCol, ...prev.slice(lostIdx)];
+      } else {
+        updated = [...prev, newCol];
+      }
+      try {
+        localStorage.setItem('crm_columns', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+
+    setNewStageName("");
+    setShowStageModal(false);
+    toast.success(`Etapa "${cleanTitle}" adicionada com sucesso!`);
+  };
+
+  const handleDeleteStage = (stageId: string) => {
+    if (['new', 'won', 'lost', 'disqualified'].includes(stageId)) {
+      toast.error("Esta é uma etapa essencial do sistema e não pode ser removida.");
+      return;
+    }
+    if (!window.confirm("Deseja realmente remover esta etapa?")) return;
+
+    setColumns(prev => {
+      const updated = prev.filter(c => c.id !== stageId);
+      try {
+        localStorage.setItem('crm_columns', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+    toast.success("Etapa removida com sucesso!");
+  };
     if (!tempFunnelName.trim()) {
       toast.error("O nome do funil não pode ser vazio.");
       return;
@@ -315,6 +387,8 @@ function CrmContent() {
 
   const [showStageModal, setShowStageModal] = useState(false);
   const [showManageStagesModal, setShowManageStagesModal] = useState(false);
+  const [newStageName, setNewStageName] = useState("");
+  const [newStageColor, setNewStageColor] = useState("bg-blue-500");
   const [lossModalState, setLossModalState] = useState<{isOpen: boolean, dealId: string | null, destColId: string | null}>({isOpen: false, dealId: null, destColId: null});
   const [lossReason, setLossReason] = useState("");
   const [lossComment, setLossComment] = useState("");
@@ -645,7 +719,7 @@ function CrmContent() {
   };
 
   // Usuário atual para filtro "Minhas"
-  const currentUser = useMemo(() => {
+  const [currentUser, setCurrentUser] = useState<any>(() => {
     if (typeof window === 'undefined') return null;
     try {
       const stored = localStorage.getItem('versus_user');
@@ -653,6 +727,25 @@ function CrmContent() {
     } catch {
       return null;
     }
+  });
+
+  useEffect(() => {
+    const handleUserUpdated = (e: any) => {
+      if (e?.detail) {
+        setCurrentUser(e.detail);
+      } else {
+        try {
+          const stored = localStorage.getItem('versus_user');
+          if (stored) setCurrentUser(JSON.parse(stored));
+        } catch {}
+      }
+    };
+    window.addEventListener('user_updated', handleUserUpdated);
+    window.addEventListener('storage', handleUserUpdated);
+    return () => {
+      window.removeEventListener('user_updated', handleUserUpdated);
+      window.removeEventListener('storage', handleUserUpdated);
+    };
   }, []);
 
   // Filtragem reativa dos negócios
@@ -673,14 +766,28 @@ function CrmContent() {
       // 2. Filtro por Aba Superior
       if (activeTab === 'mine') {
         if (!currentUser) return true;
-        const isAssigned = (
-          deal.assignedTo === currentUser.id ||
-          deal.assignedToId === currentUser.id ||
-          deal.assignee?.id === currentUser.id ||
-          deal.assignedTo?.name?.toLowerCase() === currentUser.name?.toLowerCase() ||
-          deal.assignee?.name?.toLowerCase() === currentUser.name?.toLowerCase()
+        const currentUserId = currentUser.id || '';
+        const currentUserName = (currentUser.name || '').trim().toLowerCase();
+        const currentUserEmail = (currentUser.email || '').trim().toLowerCase();
+
+        const isAssigned = Boolean(
+          (currentUserId && (
+            deal.assignedTo === currentUserId ||
+            deal.assignedToId === currentUserId ||
+            deal.assignee?.id === currentUserId ||
+            deal.assignedTo?.id === currentUserId
+          )) ||
+          (currentUserName && (
+            (deal.assignedTo?.name && deal.assignedTo.name.trim().toLowerCase() === currentUserName) ||
+            (deal.assignee?.name && deal.assignee.name.trim().toLowerCase() === currentUserName) ||
+            (typeof deal.assignedTo === 'string' && deal.assignedTo.trim().toLowerCase() === currentUserName)
+          )) ||
+          (currentUserEmail && (
+            (deal.assignee?.email && deal.assignee.email.trim().toLowerCase() === currentUserEmail) ||
+            (deal.assignedTo?.email && deal.assignedTo.email.trim().toLowerCase() === currentUserEmail)
+          ))
         );
-        return isAssigned;
+        if (!isAssigned) return false;
       }
 
       if (activeTab === 'contact') {
@@ -3651,68 +3758,133 @@ function CrmContent() {
         );
       })()}
 
-      {/* MODAL NOVA ETAPA (Mock) */}
+      {/* MODAL NOVA ETAPA */}
       {showStageModal && (
         <ModalPortal>
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 w-full max-w-sm rounded-xl shadow-2xl flex flex-col p-6 animate-in zoom-in-95">
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Nova Etapa</h2>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Nova Etapa do Funil</h2>
             <div className="space-y-4">
               <div>
                 <label className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold mb-1 block">Nome da Etapa</label>
-                <input type="text" className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-white outline-none focus:border-blue-600" placeholder="Ex: Demonstração" />
+                <input 
+                  type="text" 
+                  value={newStageName}
+                  onChange={(e) => setNewStageName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleCreateStage();
+                    if (e.key === 'Escape') setShowStageModal(false);
+                  }}
+                  autoFocus
+                  className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-white outline-none focus:border-blue-600 text-sm" 
+                  placeholder="Ex: Demonstração, Visita Técnica" 
+                />
               </div>
               <div>
-                <label className="text-xs text-slate-400 uppercase font-bold mb-2 block">Cor</label>
+                <label className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold mb-2 block">Cor de Destaque</label>
                 <div className="flex gap-2 flex-wrap">
-                  {['bg-blue-500', 'bg-purple-500', 'bg-yellow-500', 'bg-emerald-500', 'bg-orange-500', 'bg-rose-500'].map(color => (
-                    <button key={color} className={`w-8 h-8 rounded-full ${color} cursor-pointer hover:scale-110 transition-transform ring-2 ring-transparent focus:ring-white`}></button>
+                  {[
+                    { id: 'bg-blue-500', label: 'Azul' },
+                    { id: 'bg-purple-500', label: 'Roxo' },
+                    { id: 'bg-yellow-500', label: 'Amarelo' },
+                    { id: 'bg-emerald-500', label: 'Verde' },
+                    { id: 'bg-orange-500', label: 'Laranja' },
+                    { id: 'bg-rose-500', label: 'Vermelho' },
+                    { id: 'bg-cyan-500', label: 'Ciano' },
+                    { id: 'bg-slate-500', label: 'Cinza' },
+                  ].map(c => (
+                    <button 
+                      key={c.id} 
+                      type="button"
+                      onClick={() => setNewStageColor(c.id)}
+                      className={`w-7 h-7 rounded-full ${c.id} cursor-pointer hover:scale-110 transition-transform ring-2 ${newStageColor === c.id ? 'ring-offset-2 ring-blue-500' : 'ring-transparent'}`}
+                      title={c.label}
+                    />
                   ))}
                 </div>
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-8">
-              <button onClick={() => setShowStageModal(false)} className="text-slate-400 text-sm font-bold">Cancelar</button>
-              <button onClick={() => { setShowStageModal(false); toast.success("Etapa Criada (Simulado)"); }} className="bg-primary hover:bg-primary/90 text-white text-sm font-bold px-4 py-2 rounded-lg">Salvar</button>
+              <button 
+                type="button" 
+                onClick={() => { setShowStageModal(false); setNewStageName(""); }} 
+                className="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white text-sm font-bold px-3 py-1.5 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button 
+                type="button" 
+                onClick={handleCreateStage} 
+                className="bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold px-4 py-2 rounded-lg shadow-sm transition-all"
+              >
+                Salvar Etapa
+              </button>
             </div>
           </div>
         </div>
         </ModalPortal>
       )}
 
-      {/* MODAL GERENCIAR ETAPAS (Mock) */}
+      {/* MODAL GERENCIAR ETAPAS */}
       {showManageStagesModal && (
         <ModalPortal>
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-slate-50 dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 w-full max-w-lg rounded-xl shadow-2xl flex flex-col p-6 animate-in zoom-in-95 max-h-[80vh] overflow-y-auto">
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-              <Settings size={18} className="text-primary" /> Gerenciar Etapas do Funil
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+              <Settings size={18} className="text-blue-600 dark:text-cyan-400" /> Gerenciar Etapas do Funil
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Arraste para reordenar, ou altere as propriedades abaixo.</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Etapas ativas no fluxo do CRM. Você pode remover etapas criadas ou redefinir para o padrão.</p>
             
             <div className="flex flex-col gap-2">
-              {columns.map((col, idx) => (
-                <div key={col.id} className="bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 rounded-lg p-3 flex items-center justify-between group cursor-move hover:border-slate-400 dark:hover:border-slate-600 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full ${col.color.replace('text-', 'bg-')}`}></div>
-                    <span className="text-sm font-bold text-slate-900 dark:text-white">{col.title}</span>
+              {columns.map((col) => {
+                const isCore = ['new', 'won', 'lost', 'disqualified'].includes(col.id);
+                return (
+                  <div key={col.id} className="bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 rounded-lg p-3 flex items-center justify-between group hover:border-slate-400 dark:hover:border-slate-600 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-3 h-3 rounded-full ${col.color ? col.color.replace('text-', 'bg-') : 'bg-blue-500'}`}></div>
+                      <span className="text-sm font-bold text-slate-900 dark:text-white">{col.title}</span>
+                      {isCore && (
+                        <span className="text-[10px] text-slate-400 uppercase font-semibold bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">Padrão</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {!isCore && (
+                        <button 
+                          type="button"
+                          onClick={() => handleDeleteStage(col.id)}
+                          className="p-1.5 text-slate-400 hover:text-rose-500 transition-colors" 
+                          title="Remover etapa"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <button className="p-1.5 bg-slate-100 dark:bg-slate-800 rounded text-slate-400 hover:text-white" title="Alerta de estagnação">
-                      <Clock size={14} />
-                    </button>
-                    {idx === columns.length - 2 && (
-                       <button className="p-1.5 bg-green-500/10 rounded text-green-500" title="Marcar como Ganho">
-                         <Target size={14} />
-                       </button>
-                    )}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
-            <div className="flex justify-end gap-3 mt-8">
-              <button onClick={() => setShowManageStagesModal(false)} className="bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold px-4 py-2 rounded-lg">Concluído</button>
+            <div className="flex justify-between items-center gap-3 mt-8">
+              <button 
+                type="button"
+                onClick={() => {
+                  if (window.confirm("Deseja redefinir todas as etapas para o padrão de fábrica?")) {
+                    setColumns(DEFAULT_COLUMNS);
+                    localStorage.setItem('crm_columns', JSON.stringify(DEFAULT_COLUMNS));
+                    toast.success("Etapas redefinidas para o padrão!");
+                  }
+                }}
+                className="text-xs text-rose-500 hover:underline font-semibold"
+              >
+                Restaurar Padrão
+              </button>
+              <button 
+                type="button" 
+                onClick={() => setShowManageStagesModal(false)} 
+                className="bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold px-4 py-2 rounded-lg transition-colors shadow-sm"
+              >
+                Concluído
+              </button>
             </div>
           </div>
         </div>
