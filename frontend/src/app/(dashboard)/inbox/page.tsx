@@ -4116,7 +4116,7 @@ function InboxContent() {
                       />
                       <div 
                         onClick={(e) => e.stopPropagation()}
-                        className={`absolute top-full right-0 mt-2 w-72 sm:w-80 border rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 text-xs backdrop-blur-xl ${
+                        className={`absolute top-full right-0 mt-2 w-72 sm:w-80 max-h-[85vh] overflow-y-auto border rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 text-xs backdrop-blur-xl ${
                           isWhatsApp
                             ? 'bg-[#233138] border-[#2A3942] text-[#E9EDEF]'
                             : 'bg-white dark:bg-[#0F172A] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200'
@@ -4319,7 +4319,7 @@ function InboxContent() {
 
                             {/* Submenu com lista de estágios do CRM */}
                             {showCrmSubmenu && (
-                              <div className="pl-4 pr-1 py-1 space-y-0.5 border-l-2 border-blue-500/30 ml-3.5 my-1 bg-slate-50/50 dark:bg-slate-900/40 rounded-r-xl">
+                              <div className="pl-3 pr-1 py-1 space-y-0.5 border-l-2 border-blue-500/30 ml-3.5 my-1 bg-slate-50/50 dark:bg-slate-900/40 rounded-r-xl max-h-56 overflow-y-auto">
                                 {crmStages.map((stage) => {
                                   const isCurrent = currentDealStage === stage.id;
                                   return (
