@@ -230,6 +230,14 @@ function InboxContent() {
   const [chatSearchQuery, setChatSearchQuery] = useState('');
   const [showContactInfo, setShowContactInfo] = useState(false);
   const [replyingToMessage, setReplyingToMessage] = useState<any | null>(null);
+  const [pendingMediaPackage, setPendingMediaPackage] = useState<{
+    item: any;
+    mediaList: any[];
+    count: number;
+    hasImage: boolean;
+    hasVideo: boolean;
+    hasDoc: boolean;
+  } | null>(null);
   const [activeReactionPickerMessageId, setActiveReactionPickerMessageId] = useState<string | null>(null);
   const [selectedMessageForAction, setSelectedMessageForAction] = useState<string | null>(null);
   const [forwardingMessage, setForwardingMessage] = useState<any | null>(null);
@@ -1290,6 +1298,7 @@ function InboxContent() {
 
   useEffect(() => {
     loadQuickReplies();
+    setPendingMediaPackage(null);
   }, [loadQuickReplies, activeChat]);
 
   // Lista unificada de Respostas Rápidas e Catálogo de Mídias via Google Drive disparados por "/"
@@ -1430,7 +1439,11 @@ function InboxContent() {
     );
   }, [slashItems, quickReplyFilter]);
 
-  const handleSendMediaSlashItem = async (item: typeof slashItems[0]) => {
+  const handleSendMediaSlashItem = async (
+    item: typeof slashItems[0],
+    mediaListOverride?: any[],
+    customCaption?: string
+  ) => {
     if (!activeChat) {
       toast.error('Selecione uma conversa para enviar o material.');
       return;
@@ -1439,9 +1452,11 @@ function InboxContent() {
     setInputText('');
     setShowQuickReplies(false);
 
-    const mediaList = (item.mediaFiles && item.mediaFiles.length > 0)
-      ? item.mediaFiles
-      : (item.mediaUrl ? [{ url: item.mediaUrl, type: item.type || 'document', fileName: item.fileName || 'arquivo' }] : []);
+    const mediaList = (mediaListOverride && mediaListOverride.length > 0)
+      ? mediaListOverride
+      : ((item.mediaFiles && item.mediaFiles.length > 0)
+        ? item.mediaFiles
+        : (item.mediaUrl ? [{ url: item.mediaUrl, type: item.type || 'document', fileName: item.fileName || 'arquivo' }] : []));
 
     if (mediaList.length === 0) return;
 
@@ -1454,8 +1469,8 @@ function InboxContent() {
         const mType = (m.type || item.type || 'image') as string;
         const isFirst = i === 0;
 
-        // Legenda no primeiro envio para acompanhar o pacote
-        const content = isFirst ? (item.content || item.title || item.shortcut || '') : '';
+        // Legenda no primeiro envio para acompanhar o pacote (usa customCaption se fornecido pelo atendente no preview)
+        const content = isFirst ? (customCaption !== undefined ? customCaption : (item.content || item.title || item.shortcut || '')) : '';
         const filename = m.fileName || (mType === 'document' ? 'catalogo.pdf' : mType === 'video' ? 'video.mp4' : 'imagem.jpg');
 
         const payload: any = {
@@ -1501,7 +1516,32 @@ function InboxContent() {
       setInputText('');
       item.action();
     } else if (item.isMedia) {
-      handleSendMediaSlashItem(item);
+      // Modo preview do Lero: arma os anexos na barra de preview e preenche o texto no input para edição antes de enviar
+      const mediaList = (item.mediaFiles && item.mediaFiles.length > 0)
+        ? item.mediaFiles
+        : (item.mediaUrl ? [{ url: item.mediaUrl, type: item.type || 'document', fileName: item.fileName || 'arquivo' }] : []);
+
+      if (mediaList.length > 0) {
+        setPendingMediaPackage({
+          item,
+          mediaList,
+          count: mediaList.length,
+          hasImage: mediaList.some(m => (m.type || item.type) === 'image'),
+          hasVideo: mediaList.some(m => (m.type || item.type) === 'video'),
+          hasDoc: mediaList.some(m => (m.type || item.type) === 'document')
+        });
+
+        const initialText = item.content || item.title || '';
+        setInputText(initialText);
+        setTimeout(() => {
+          if (textareaRef.current) {
+            textareaRef.current.focus();
+            textareaRef.current.setSelectionRange(initialText.length, initialText.length);
+          }
+        }, 50);
+      } else {
+        handleSendMediaSlashItem(item);
+      }
     } else if (item.content) {
       setInputText(item.content);
       setTimeout(() => {
@@ -2515,7 +2555,19 @@ function InboxContent() {
   };
 
   const handleSendMessage = async () => {
-    if (!activeChat || (!inputText.trim() && !selectedFile)) return;
+    if (!activeChat) return;
+
+    // Se houver pacote de mídias pré-selecionado (modo preview do Lero)
+    if (pendingMediaPackage) {
+      const pkg = pendingMediaPackage;
+      const customCaption = inputText.trim();
+      setPendingMediaPackage(null);
+      setInputText("");
+      await handleSendMediaSlashItem(pkg.item, pkg.mediaList, customCaption);
+      return;
+    }
+
+    if (!inputText.trim() && !selectedFile) return;
     
     const content = inputText;
     const fileToUpload = selectedFile;
@@ -5545,6 +5597,31 @@ function InboxContent() {
                   </div>
                 )}
 
+                {/* Banner de Preview de Anexos Prontos para Envio (Padrão Lero) */}
+                {pendingMediaPackage && (
+                  <div className="mx-2 sm:mx-3 mt-2 px-3 py-2 rounded-xl bg-slate-900/90 dark:bg-[#1E293B] border border-slate-700/80 shadow-md flex items-center justify-between gap-3 animate-in slide-in-from-bottom-2">
+                    <div className="flex items-center gap-2.5 text-xs sm:text-sm overflow-hidden">
+                      <Paperclip size={16} className="text-emerald-400 rotate-45 shrink-0" />
+                      <span className="font-semibold text-white truncate">
+                        {pendingMediaPackage.count} anexo(s) prontos para envio
+                      </span>
+                      <div className="flex items-center gap-1.5 ml-1 text-slate-300 shrink-0">
+                        {pendingMediaPackage.hasImage && <span title="Imagens incluídas"><ImageIcon size={15} className="text-slate-300" /></span>}
+                        {pendingMediaPackage.hasVideo && <span title="Vídeos incluídos"><Video size={15} className="text-slate-300" /></span>}
+                        {pendingMediaPackage.hasDoc && <span title="Documentos incluídos"><FileText size={15} className="text-slate-300" /></span>}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setPendingMediaPackage(null)}
+                      className="p-1 rounded-full text-slate-400 hover:text-white hover:bg-slate-700/60 transition-colors cursor-pointer shrink-0"
+                      title="Cancelar anexos"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                )}
+
                 {isPeeking ? (
                   <div className="p-4 bg-amber-50 dark:bg-[#0F172A] border-t border-amber-200 dark:border-amber-500/30 flex items-center justify-between shadow-lg">
                     <div className="flex items-center gap-2.5 text-xs text-amber-900 dark:text-amber-300">
@@ -5988,10 +6065,10 @@ function InboxContent() {
                             <button 
                               type="button"
                               onClick={handleSendMessage} 
-                              disabled={isUploadingMedia || (!inputText.trim() && !selectedFile)}
+                              disabled={isUploadingMedia || (!inputText.trim() && !selectedFile && !pendingMediaPackage)}
                               title={isUploadingMedia ? "Enviando..." : "Enviar mensagem"}
                               className={`p-2 sm:p-2.5 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-md disabled:opacity-40 disabled:cursor-not-allowed
-                                ${(inputText.trim() || selectedFile)
+                                ${(inputText.trim() || selectedFile || pendingMediaPackage)
                                   ? (isInternalMode 
                                       ? 'bg-amber-600 hover:bg-amber-500 text-white shadow-[0_0_12px_rgba(217,119,6,0.4)] active:scale-95' 
                                       : isWhatsApp
