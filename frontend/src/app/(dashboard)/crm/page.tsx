@@ -9,7 +9,7 @@ import {
   CheckSquare, ArrowRight, Clock, MessageSquare, ArrowUpRight, 
   Kanban as KanbanIcon, Table as TableIcon, CalendarDays, ChevronLeft, 
   ChevronRight, X, User as UserIcon, Phone, Mail, Check, CheckCircle2, Flag,
-  ArrowUpDown, ArrowUp, ArrowDown, Columns, SlidersHorizontal, Edit2
+  ArrowUpDown, ArrowUp, ArrowDown, Columns, SlidersHorizontal, Edit2, Trash2
 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import api from "@/lib/api";
@@ -164,6 +164,8 @@ function CrmContent() {
     });
     toast.success("Etapa removida com sucesso!");
   };
+
+  const handleSaveFunnelName = () => {
     if (!tempFunnelName.trim()) {
       toast.error("O nome do funil não pode ser vazio.");
       return;
