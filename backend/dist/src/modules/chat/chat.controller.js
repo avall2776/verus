@@ -67,6 +67,18 @@ let ChatController = class ChatController {
     async returnToBot(tenantId, conversationId) {
         return this.chatService.returnToBot(tenantId, conversationId);
     }
+    async updateStatus(tenantId, conversationId, status, req) {
+        if (status === 'resolved' || status === 'closed') {
+            return this.chatService.releaseConversation(tenantId, conversationId);
+        }
+        if (status === 'waiting') {
+            return this.chatService.reopenConversation(tenantId, conversationId);
+        }
+        if (status === 'bot_active') {
+            return this.chatService.returnToBot(tenantId, conversationId);
+        }
+        return this.chatService.takeoverConversation(tenantId, conversationId, req.user?.id);
+    }
     async resolve(tenantId, conversationId) {
         return this.chatService.releaseConversation(tenantId, conversationId);
     }
@@ -274,6 +286,16 @@ __decorate([
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], ChatController.prototype, "returnToBot", null);
+__decorate([
+    (0, common_1.Patch)(':id/status'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)('status')),
+    __param(3, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String, Object]),
+    __metadata("design:returntype", Promise)
+], ChatController.prototype, "updateStatus", null);
 __decorate([
     (0, common_1.Patch)(':id/resolve'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),

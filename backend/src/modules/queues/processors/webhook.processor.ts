@@ -343,6 +343,67 @@ export class WebhookProcessor extends WorkerHost {
       }
     }
 
+    // Fallback 1.1: Identificacao precisa por Mensagem Citada (quotedMessage)
+    if (!existingContact && evolutionMetadata?.quotedInfo?.providerMessageId) {
+      const quotedMsg = await this.prisma.message.findFirst({
+        where: {
+          tenantId,
+          providerMessageId: evolutionMetadata.quotedInfo.providerMessageId,
+        },
+        include: {
+          conversation: {
+            include: { contact: true }
+          }
+        },
+      });
+      if (quotedMsg?.conversation?.contact) {
+        existingContact = quotedMsg.conversation.contact;
+        this.logger.log(`🔗 [LID Quoted Match] Contato [${existingContact.id} - ${existingContact.name}] identificado via mensagem citada [${evolutionMetadata.quotedInfo.providerMessageId}]`);
+      }
+    }
+
+    // Fallback 1.2: Vinculacao inteligente de resposta a disparo recente (Meta Ads / Prospeccao)
+    // Se o cliente respondeu via WhatsApp LID (numero mascarado pela Meta) a um contato recente
+    // onde o operador disparou mensagem nos ultimos 30 minutos e o contato ainda esta sem LID
+    if (!existingContact && (isLid || (lidId && lidId.includes('@lid'))) && !isGenericPushName && effectiveCustomerPushName) {
+      try {
+        const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+        const recentOutboundMsgs = await this.prisma.message.findMany({
+          where: {
+            tenantId,
+            direction: 'OUTBOUND',
+            createdAt: { gte: thirtyMinutesAgo },
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 15,
+          include: {
+            conversation: {
+              include: { contact: true }
+            }
+          }
+        });
+
+        const pushNorm = effectiveCustomerPushName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+        const pushParts = pushNorm.split(/\s+/).filter(p => p.length >= 3);
+
+        for (const rMsg of recentOutboundMsgs) {
+          const candidate = rMsg.conversation?.contact;
+          if (candidate && !candidate.whatsappLid) {
+            const candidateNorm = (candidate.name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+            const matches = candidateNorm.includes(pushNorm) || pushNorm.includes(candidateNorm) ||
+              (pushParts.length >= 2 && pushParts.every(part => candidateNorm.includes(part)));
+            if (matches) {
+              existingContact = candidate;
+              this.logger.log(`🔗 [LID Lead Recente Match] Contato [${candidate.id} - ${candidate.name}] vinculado com seguranca ao LID [${lidId || remoteJid}] apos resposta a disparo recente.`);
+              break;
+            }
+          }
+        }
+      } catch (err: any) {
+        this.logger.warn(`Erro no fallback LID lead recente: ${err.message}`);
+      }
+    }
+
     // REGRA DE SEGURANÇA MÁXIMA: NUNCA cruzar contatos por aproximação ou semelhança de nome (ex: "Eduardo"),
     // pois isso misturava clientes e revendas homônimos na mesma conversa.
     // A identificação é estritamente soberana por Telefone / WhatsApp JID / LID.

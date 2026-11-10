@@ -369,6 +369,21 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                             });
                             this.logger.log(`Status Evolution atualizado: msg [${msg.id}] -> ${mappedStatus}`);
                         }
+                        const itemRemoteJid = item?.key?.remoteJid || item?.remoteJid;
+                        if (itemRemoteJid && typeof itemRemoteJid === 'string' && itemRemoteJid.includes('@lid') && msg.contactId) {
+                            const cleanLid = itemRemoteJid.trim();
+                            const contact = await this.prisma.contact.findUnique({
+                                where: { id: msg.contactId },
+                                select: { id: true, whatsappLid: true },
+                            });
+                            if (contact && !contact.whatsappLid) {
+                                await this.prisma.contact.update({
+                                    where: { id: contact.id },
+                                    data: { whatsappLid: cleanLid },
+                                });
+                                this.logger.log(`🔗 [LID Sync via Delivery Receipt] Contato [${contact.id}] vinculado ao WhatsApp LID [${cleanLid}] com base no recibo da msg [${keyId}]`);
+                            }
+                        }
                     }
                 }
                 catch (err) {
@@ -379,22 +394,38 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
         }
         if (event === 'send.message' || event === 'SEND_MESSAGE') {
             const keyId = payload.data?.key?.id;
+            const remoteJid = payload.data?.key?.remoteJid || payload.data?.remoteJid;
             if (keyId) {
                 try {
                     const msg = await this.prisma.message.findFirst({
                         where: { tenantId, providerMessageId: keyId },
                     });
-                    if (msg && msg.status === 'pending') {
-                        await this.prisma.message.update({
-                            where: { id: msg.id },
-                            data: { status: 'sent' },
-                        });
-                        this.chatGateway.emitMessageStatusUpdated(tenantId, {
-                            messageId: msg.id,
-                            providerMessageId: keyId,
-                            status: 'sent',
-                            conversationId: msg.conversationId,
-                        });
+                    if (msg) {
+                        if (msg.status === 'pending') {
+                            await this.prisma.message.update({
+                                where: { id: msg.id },
+                                data: { status: 'sent' },
+                            });
+                            this.chatGateway.emitMessageStatusUpdated(tenantId, {
+                                messageId: msg.id,
+                                providerMessageId: keyId,
+                                status: 'sent',
+                                conversationId: msg.conversationId,
+                            });
+                        }
+                        if (remoteJid && typeof remoteJid === 'string' && remoteJid.includes('@lid') && msg.contactId) {
+                            const contact = await this.prisma.contact.findUnique({
+                                where: { id: msg.contactId },
+                                select: { id: true, whatsappLid: true },
+                            });
+                            if (contact && !contact.whatsappLid) {
+                                await this.prisma.contact.update({
+                                    where: { id: contact.id },
+                                    data: { whatsappLid: remoteJid.trim() },
+                                });
+                                this.logger.log(`🔗 [LID Sync via Send Message] Contato [${contact.id}] vinculado ao WhatsApp LID [${remoteJid}]`);
+                            }
+                        }
                     }
                 }
                 catch (e) { }
