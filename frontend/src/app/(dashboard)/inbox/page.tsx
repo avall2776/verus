@@ -716,11 +716,12 @@ function InboxContent() {
   const handleResolveFromMenu = async (contactId: string) => {
     setChatContextMenu(null);
     try {
-      await api.patch(`/conversations/${contactId}/status`, { status: 'resolved' });
+      await api.patch(`/conversations/${contactId}/resolve`);
       if (activeChat === contactId) {
         setActiveChat(null);
       }
       refetchConversations();
+      refetchCounts();
       toast.success("Atendimento finalizado com sucesso!");
     } catch (err) {
       console.error("Erro ao finalizar atendimento:", err);
@@ -1798,6 +1799,9 @@ function InboxContent() {
       const deptQuery = selectedDepartmentFilter && selectedDepartmentFilter !== 'all' ? `&departmentId=${selectedDepartmentFilter}` : '';
       const searchParam = searchQuery.trim() ? `&search=${encodeURIComponent(searchQuery.trim())}` : '';
       const { data } = await api.get(`/conversations?tab=${queryTab}${deptQuery}${searchParam}`);
+      if (!Array.isArray(data)) {
+        return [];
+      }
       return data.map((conv: any) => {
         const lastMessageObj = conv.messages && conv.messages.length > 0 ? conv.messages[0] : null;
         const lastMsg = lastMessageObj ? lastMessageObj.content : 'Nova conversa';
@@ -1870,6 +1874,8 @@ function InboxContent() {
   useEffect(() => {
     if (fetchErrorQuery) {
       setFetchError((fetchErrorQuery as any).message || "Falha de rede");
+    } else {
+      setFetchError(null);
     }
   }, [fetchErrorQuery]);
 

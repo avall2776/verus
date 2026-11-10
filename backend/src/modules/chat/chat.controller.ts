@@ -139,6 +139,25 @@ export class ChatController {
     return this.chatService.returnToBot(tenantId, conversationId);
   }
 
+  @Patch(':id/status')
+  async updateStatus(
+    @CurrentTenant() tenantId: string,
+    @Param('id') conversationId: string,
+    @Body('status') status: string,
+    @Request() req: any,
+  ) {
+    if (status === 'resolved' || status === 'closed') {
+      return this.chatService.releaseConversation(tenantId, conversationId);
+    }
+    if (status === 'waiting') {
+      return this.chatService.reopenConversation(tenantId, conversationId);
+    }
+    if (status === 'bot_active') {
+      return this.chatService.returnToBot(tenantId, conversationId);
+    }
+    return this.chatService.takeoverConversation(tenantId, conversationId, req.user?.id);
+  }
+
   @Patch(':id/resolve')
   async resolve(
     @CurrentTenant() tenantId: string,

@@ -140,28 +140,27 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     const targetAssignedTo = payload?.assignedTo || null;
     const targetDeptId = payload?.departmentId || payload?.department?.id || payload?.metadata?.departmentId || null;
 
-    // 1. Se já está atribuído diretamente a OUTRO colega -> silencia totalmente para este operador
-    if (targetAssignedTo && currentUserId && targetAssignedTo !== currentUserId) {
-      return false;
-    }
-
-    // 2. Se está atribuído diretamente a MIM -> sempre notifica
+    // 1. Se está atribuído diretamente a MIM -> sempre notifica
     if (targetAssignedTo && currentUserId && targetAssignedTo === currentUserId) {
       return true;
     }
 
-    // 3. Para operadores (AGENT), verifica se a conversa pertence a uma das suas Regiões / Setores
+    // 2. Para operadores (AGENT), verifica se a conversa pertence a uma das suas Regiões / Setores permitidos
     const allowedDepts = userDeptIdsRef.current.length > 0
       ? userDeptIdsRef.current
       : Array.isArray(currentUser.departments)
       ? currentUser.departments.map((d: any) => d.departmentId || d.department?.id || d.id).filter(Boolean)
       : [];
 
-    if (!targetDeptId || !allowedDepts.includes(targetDeptId)) {
-      return false;
+    // Se o setor da mensagem está dentro dos setores permitidos deste atendente:
+    if (targetDeptId && allowedDepts.includes(targetDeptId)) {
+      // Se a mensagem está sem atendente (fila) OU atribuída a um usuário genérico/comercial,
+      // ou se o atendente faz parte deste setor -> ele deve ser notificado!
+      // Somente bloqueia se estiver atribuído explicitamente a OUTRO atendente físico individual que não seja 'Comercial' / 'Comercial Verto'
+      return true;
     }
 
-    return true;
+    return false;
   }, []);
 
   const clearGlobalUnread = useCallback(() => {
