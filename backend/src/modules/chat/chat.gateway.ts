@@ -11,6 +11,8 @@ import { Logger } from '@nestjs/common';
   cors: {
     origin: '*', // Em produção, colocar a URL exata do painel Front-end
   },
+  pingInterval: 10000,
+  pingTimeout: 20000,
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()

@@ -413,9 +413,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       autoConnect: true,
       transports: isVercelHost && !directSocketUrl ? ['polling'] : ['polling', 'websocket'],
       upgrade: !(isVercelHost && !directSocketUrl),
-      reconnectionAttempts: 10,
-      reconnectionDelay: 2500,
-      timeout: 10000,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 2000,
+      reconnectionDelayMax: 5000,
+      timeout: 20000,
     });
 
     socketInstance.on('connect', () => {
