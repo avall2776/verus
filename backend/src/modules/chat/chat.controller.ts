@@ -90,6 +90,16 @@ export class ChatController {
     return this.chatService.deleteMessage(tenantId, conversationId, messageId);
   }
 
+  @Patch(':id/messages/:messageId')
+  async editMessage(
+    @CurrentTenant() tenantId: string,
+    @Param('id') conversationId: string,
+    @Param('messageId') messageId: string,
+    @Body() body: { content: string },
+  ) {
+    return this.chatService.editMessage(tenantId, conversationId, messageId, body.content);
+  }
+
   @Get('contact/:contactId')
   async getConversationByContact(
     @CurrentTenant() tenantId: string,

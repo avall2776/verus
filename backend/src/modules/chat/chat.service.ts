@@ -1802,6 +1802,88 @@ export class ChatService {
   }
 
   /**
+   * Edita o texto de uma mensagem enviada pelo atendente e sincroniza com o WhatsApp via Evolution API
+   */
+  async editMessage(tenantId: string, conversationId: string, messageId: string, newContent: string) {
+    const cleanContent = (newContent || '').trim();
+    if (!cleanContent) {
+      throw new BadRequestException('O conteúdo da mensagem não pode ficar vazio.');
+    }
+
+    const message = await this.prisma.message.findFirst({
+      where: { id: messageId, conversationId, tenantId },
+      include: {
+        contact: true,
+      },
+    });
+
+    if (!message) {
+      throw new NotFoundException('Mensagem não encontrada.');
+    }
+
+    if (message.direction !== 'OUTBOUND') {
+      throw new BadRequestException('Apenas mensagens enviadas pelo atendente podem ser editadas.');
+    }
+
+    // Se for mensagem enviada para o WhatsApp (não interna) e tiver providerMessageId válido, propaga edição na Evolution API
+    if (
+      !message.isInternal &&
+      message.providerMessageId &&
+      !message.providerMessageId.startsWith('fallback_') &&
+      !message.providerMessageId.startsWith('manual_')
+    ) {
+      try {
+        const instances = await this.prisma.whatsAppInstance.findMany({
+          where: { tenantId },
+          orderBy: { isDefault: 'desc' },
+        });
+        const activeInst = instances.find(i => i.status === 'connected' || i.status === 'open') || instances[0];
+        if (activeInst && message.contact) {
+          const set = (activeInst.settings as any) || {};
+          const instanceName = set.instanceName || activeInst.name || this.whatsappService.getSanitizedInstanceName(tenantId, activeInst.id);
+          const targetJid = message.contact.phone || message.contact.whatsappLid || '';
+          if (targetJid) {
+            await this.whatsappService.editMessageForEveryone(
+              tenantId,
+              instanceName,
+              targetJid,
+              message.providerMessageId,
+              cleanContent
+            );
+          }
+        }
+      } catch (err: any) {
+        this.logger.warn(`Erro ao editar mensagem no WhatsApp Evolution: ${err.message}`);
+      }
+    }
+
+    const updated = await this.prisma.message.update({
+      where: { id: message.id },
+      data: {
+        content: cleanContent,
+      },
+    });
+
+    this.clearConversationsCache(tenantId);
+
+    this.chatGateway.emitMessageEdited(tenantId, {
+      conversationId,
+      messageId: updated.id,
+      content: cleanContent,
+      isEdited: true,
+    });
+
+    this.logger.log(`Mensagem [${message.id}] editada com sucesso na conversa [${conversationId}]`);
+    return {
+      success: true,
+      message: {
+        ...updated,
+        isEdited: true,
+      },
+    };
+  }
+
+  /**
    * Envia ou remove uma reação com emoji em uma mensagem e propaga via Evolution API + WebSocket
    */
   async sendReaction(

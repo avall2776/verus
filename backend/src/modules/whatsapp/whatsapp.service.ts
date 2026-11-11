@@ -1441,6 +1441,60 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  /**
+   * Edita uma mensagem enviada no WhatsApp via Evolution API (/chat/updateMessage)
+   */
+  async editMessageForEveryone(
+    tenantId: string,
+    instanceName: string,
+    remoteJid: string,
+    providerMessageId: string,
+    newText: string
+  ): Promise<boolean> {
+    try {
+      let cleanName = (instanceName || '').replace(' (WhatsApp Web)', '').trim();
+      if (!cleanName.includes('_')) {
+        cleanName = await this.getEvolutionInstanceName(tenantId, cleanName);
+      }
+      const { serverUrl, apiKey } = this.getEvolutionConfig();
+
+      const targetJid = remoteJid.includes('@') ? remoteJid : `${remoteJid.replace(/\D/g, '')}@s.whatsapp.net`;
+      const payload = {
+        number: targetJid,
+        text: newText,
+        key: {
+          remoteJid: targetJid,
+          fromMe: true,
+          id: providerMessageId,
+        },
+      };
+
+      await axios.put(
+        `${serverUrl}/chat/updateMessage/${cleanName}`,
+        payload,
+        {
+          headers: { apikey: apiKey, 'Content-Type': 'application/json' },
+          timeout: 8000,
+        }
+      ).catch(async () => {
+        return await axios.post(
+          `${serverUrl}/chat/updateMessage/${cleanName}`,
+          payload,
+          {
+            headers: { apikey: apiKey, 'Content-Type': 'application/json' },
+            timeout: 8000,
+          }
+        );
+      });
+
+      this.logger.log(`[WhatsApp Editar] Mensagem [${providerMessageId}] editada com sucesso na instância [${cleanName}]`);
+      return true;
+    } catch (err: any) {
+      this.logger.warn(`Não foi possível editar mensagem no WhatsApp: ${err.message}`);
+      return false;
+    }
+  }
+
   // Cache em memória de contatos da Evolution API (TTL 90 segundos por instância)
   private evoContactsCache = new Map<string, { timestamp: number; contacts: Array<{ id: string; pushName?: string; name?: string; profilePictureUrl?: string | null }> }>();
 

@@ -128,6 +128,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  public emitMessageEdited(tenantId: string, payload: { conversationId: string; messageId: string; content: string; isEdited?: boolean }) {
+    if (this.server) {
+      this.server.to(tenantId).emit('messageEdited', payload);
+    } else {
+      this.logger.warn('WebSocket server not initialized yet, skipping emitMessageEdited');
+    }
+  }
+
   public emitMessageTranscribed(tenantId: string, payload: { messageId: string; conversationId: string; audioTranscription: string }) {
     if (this.server) {
       this.server.to(tenantId).emit('messageTranscribed', payload);

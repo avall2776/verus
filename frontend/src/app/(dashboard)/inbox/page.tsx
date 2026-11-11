@@ -244,6 +244,9 @@ function InboxContent() {
   const [forwardSearchQuery, setForwardSearchQuery] = useState('');
   const [isForwardingMessage, setIsForwardingMessage] = useState(false);
   const [forwardingTargetId, setForwardingTargetId] = useState<string | null>(null);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editingMessageText, setEditingMessageText] = useState<string>('');
+  const [isSavingEditedMessage, setIsSavingEditedMessage] = useState<boolean>(false);
 
   const scrollToMessage = (msgId?: string) => {
     if (!msgId) return;
@@ -1264,6 +1267,29 @@ function InboxContent() {
     }
   };
 
+  const handleSaveEditMessage = async (messageId: string) => {
+    if (!activeChat || isSavingEditedMessage) return;
+    const trimmed = editingMessageText.trim();
+    if (!trimmed) {
+      toast.error("O texto da mensagem não pode ficar vazio.");
+      return;
+    }
+
+    setIsSavingEditedMessage(true);
+    try {
+      await api.patch(`/conversations/${activeChat}/messages/${messageId}`, { content: trimmed });
+      setMessages(prev => prev.map(m => m.id === messageId ? { ...m, content: trimmed, isEdited: true } : m));
+      setEditingMessageId(null);
+      setEditingMessageText('');
+      toast.success("Mensagem editada com sucesso!");
+    } catch (err: any) {
+      console.error("Erro ao editar mensagem:", err);
+      toast.error(err.response?.data?.message || "Erro ao editar mensagem.");
+    } finally {
+      setIsSavingEditedMessage(false);
+    }
+  };
+
   const handleDeleteConversation = async () => {
     if (!activeChat) return;
     try {
@@ -2248,6 +2274,21 @@ function InboxContent() {
       }
     };
 
+    const handleMessageEdited = (data: { conversationId: string; messageId: string; content: string; isEdited?: boolean }) => {
+      if (data.conversationId === activeChat) {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === data.messageId ? { ...m, content: data.content, isEdited: true } : m
+          )
+        );
+      }
+      if (data.conversationId && messagesCacheRef.current[data.conversationId]) {
+        messagesCacheRef.current[data.conversationId] = messagesCacheRef.current[data.conversationId].map((m) =>
+          m.id === data.messageId ? { ...m, content: data.content, isEdited: true } : m
+        );
+      }
+    };
+
     const handleConversationDeleted = (data: { conversationId: string }) => {
       console.log('Conversation Deleted via WebSocket:', data);
       setContacts((prev) => prev.filter((c) => c.id !== data.conversationId));
@@ -2290,6 +2331,7 @@ function InboxContent() {
     socket.on('contactUpdated', handleContactUpdated);
     socket.on('messageStatusUpdated', handleMessageStatusUpdated);
     socket.on('messageDeleted', handleMessageDeleted);
+    socket.on('messageEdited', handleMessageEdited);
     socket.on('conversationDeleted', handleConversationDeleted);
     socket.on('messageTranscribed', handleMessageTranscribed);
     socket.on('messageReactionUpdated', handleMessageReactionUpdated);
@@ -2301,6 +2343,7 @@ function InboxContent() {
       socket.off('contactUpdated', handleContactUpdated);
       socket.off('messageStatusUpdated', handleMessageStatusUpdated);
       socket.off('messageDeleted', handleMessageDeleted);
+      socket.off('messageEdited', handleMessageEdited);
       socket.off('conversationDeleted', handleConversationDeleted);
       socket.off('messageTranscribed', handleMessageTranscribed);
       socket.off('messageReactionUpdated', handleMessageReactionUpdated);
@@ -4888,6 +4931,23 @@ function InboxContent() {
                                 <Forward size={13} />
                               </button>
 
+                              {/* Botão de Editar Mensagem (Apenas OUTBOUND / Enviadas pelo Atendente) */}
+                              {isMe && !isAudioMsg && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedMessageForAction(null);
+                                    setEditingMessageId(msg.id);
+                                    setEditingMessageText(msg.content || '');
+                                  }}
+                                  title="Editar mensagem (WhatsApp)"
+                                  className="p-1 rounded-full text-slate-700 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors cursor-pointer"
+                                >
+                                  <Pencil size={13} />
+                                </button>
+                              )}
+
                               {/* Botão de Excluir Mensagem */}
                               <button
                                 type="button"
@@ -5457,18 +5517,63 @@ function InboxContent() {
                           {/* Conteúdo de Texto com Horário e Ticks Inline WhatsApp */}
                           {(!isBorderlessMedia || hasVisibleText) && (
                             <div className={`text-[0.92rem] leading-relaxed break-words relative ${isBorderlessMedia && hasVisibleText ? `${mediaSurfaceClasses} mt-1 px-3.5 py-2 rounded-2xl shadow-sm` : ''}`}>
-                              {hasVisibleText && (
-                                <span className="whitespace-pre-wrap select-text">{cleanedTextContent}</span>
+                              {editingMessageId === msg.id ? (
+                                <div className="flex flex-col gap-2 my-1" onClick={(e) => e.stopPropagation()}>
+                                  <textarea
+                                    value={editingMessageText}
+                                    onChange={(e) => setEditingMessageText(e.target.value)}
+                                    rows={3}
+                                    className="w-full text-sm p-2 rounded-lg border border-blue-400 dark:border-blue-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="Edite sua mensagem..."
+                                    autoFocus
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault();
+                                        handleSaveEditMessage(msg.id);
+                                      } else if (e.key === 'Escape') {
+                                        setEditingMessageId(null);
+                                      }
+                                    }}
+                                  />
+                                  <div className="flex items-center justify-end gap-1.5">
+                                    <button
+                                      type="button"
+                                      disabled={isSavingEditedMessage}
+                                      onClick={() => setEditingMessageId(null)}
+                                      className="px-2.5 py-1 text-xs rounded-md bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors cursor-pointer"
+                                    >
+                                      Cancelar
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={isSavingEditedMessage}
+                                      onClick={() => handleSaveEditMessage(msg.id)}
+                                      className="px-3 py-1 text-xs font-semibold rounded-md bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-colors cursor-pointer flex items-center gap-1 disabled:opacity-50"
+                                    >
+                                      <Check size={13} />
+                                      <span>{isSavingEditedMessage ? 'Salvando...' : 'Salvar'}</span>
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <>
+                                  {hasVisibleText && (
+                                    <span className="whitespace-pre-wrap select-text">{cleanedTextContent}</span>
+                                  )}
+                                  {/* Horário e Ticks WhatsApp (Float-Right Inline) */}
+                                  <span className={`inline-flex items-center gap-1 float-right ml-2.5 mt-1 select-none text-[11px] ${
+                                    msg.isInternal 
+                                      ? 'text-amber-700/80 dark:text-amber-400/80' 
+                                      : 'opacity-75'
+                                  }`}>
+                                    {msg.isEdited && (
+                                      <span className="text-[10px] italic opacity-85 mr-0.5">Editada</span>
+                                    )}
+                                    <span>{formattedMsgTime}</span>
+                                    {statusTicksNode}
+                                  </span>
+                                </>
                               )}
-                              {/* Horário e Ticks WhatsApp (Float-Right Inline) */}
-                              <span className={`inline-flex items-center gap-1 float-right ml-2.5 mt-1 select-none text-[11px] ${
-                                msg.isInternal 
-                                  ? 'text-amber-700/80 dark:text-amber-400/80' 
-                                  : 'opacity-75'
-                              }`}>
-                                <span>{formattedMsgTime}</span>
-                                {statusTicksNode}
-                              </span>
                             </div>
                           )}
 
