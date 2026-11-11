@@ -487,6 +487,40 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('📡 [WebSockets] Desconectado.');
     });
 
+    socketInstance.on('connect_error', (err: any) => {
+      setIsConnected(false);
+      const errMsg = String(err?.message || err?.description || '');
+      console.warn('⚠️ [WebSockets] Falha de conexão/sessão:', errMsg);
+
+      // Se a sessão expirou no backend (erro 400 'Session ID unknown') ou falha de transporte:
+      // Força renovação da conexão sem o session id antigo
+      if (errMsg.includes('400') || errMsg.includes('poll error') || errMsg.includes('Session ID') || (err as any)?.description === 400) {
+        setTimeout(() => {
+          if (socketInstance && !socketInstance.connected) {
+            console.log('🔄 [WebSockets] Renovando handshake limpo...');
+            try {
+              (socketInstance.io as any).engine?.close();
+            } catch (e) {}
+            socketInstance.connect();
+          }
+        }, 1200);
+      }
+    });
+
+    const handleForceReconnect = () => {
+      console.log('🔄 [WebSockets] Reconexão forçada acionada.');
+      if (socketInstance) {
+        try {
+          (socketInstance.io as any).engine?.close();
+        } catch (e) {}
+        socketInstance.disconnect();
+        setTimeout(() => {
+          socketInstance.connect();
+        }, 300);
+      }
+    };
+    window.addEventListener('reconnect_socket', handleForceReconnect);
+
     // Escuta global para Alerta de Handoff da IA (Lead Qualificado via Deal)
     socketInstance.on('dealUpdated', (deal) => {
       // Suprime absolutamente notificações em login, público, deslogado ou super-admin
@@ -830,6 +864,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     return () => {
       window.removeEventListener('tenant_switched', handleTenantSwitched);
+      window.removeEventListener('reconnect_socket', handleForceReconnect);
       socketInstance.disconnect();
     };
   }, [router, playNotificationSound, triggerVibration, dispatchDesktopNotification, triggerTabBlink, isUnauthenticatedOrPublic, shouldNotifyOperator]);

@@ -1940,27 +1940,61 @@ function InboxContent() {
     } catch {}
 
     setIsSyncingOffline(true);
+    // Dispara sinal para reconectar o WebSocket se estiver com sessão expirada
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('reconnect_socket'));
+    }
+
     try {
       const res = await api.post(`/chat/sync${force ? '?force=true' : ''}`);
       const { syncedCount = 0, updatedCount = 0 } = res.data || {};
-      if (syncedCount > 0 || updatedCount > 0) {
-        refetchConversations();
-        refetchCounts();
-        if (showToast) {
-          toast.success(`Sincronização concluída: ${syncedCount} novas mensagens e ${updatedCount} atualizadas.`);
+      
+      // Sempre recarrega a lista de conversas e contadores
+      refetchConversations();
+      refetchCounts();
+
+      // Se há um chat ativo aberto na tela, recarrega IMEDIATAMENTE as mensagens dele do backend
+      if (activeChat) {
+        try {
+          const { data: freshMsgs } = await api.get(`/conversations/${activeChat}/messages`);
+          if (Array.isArray(freshMsgs)) {
+            messagesCacheRef.current[activeChat] = freshMsgs;
+            setMessages(freshMsgs);
+            setTimeout(() => {
+              scrollToBottom('smooth');
+            }, 50);
+          }
+        } catch (chatErr) {
+          console.warn("Falha ao recarregar mensagens do chat ativo:", chatErr);
         }
-      } else if (showToast) {
-        toast.success("Mensagens e contatos já estão 100% atualizados!");
+      }
+
+      if (showToast) {
+        if (syncedCount > 0 || updatedCount > 0) {
+          toast.success(`Sincronização concluída: ${syncedCount} novas mensagens e ${updatedCount} atualizadas.`);
+        } else {
+          toast.success("Mensagens e contatos 100% atualizados!");
+        }
       }
     } catch (err) {
       console.warn("Falha silenciosa na sincronização retroativa:", err);
+      refetchConversations();
+      if (activeChat) {
+        try {
+          const { data: freshMsgs } = await api.get(`/conversations/${activeChat}/messages`);
+          if (Array.isArray(freshMsgs)) {
+            messagesCacheRef.current[activeChat] = freshMsgs;
+            setMessages(freshMsgs);
+          }
+        } catch (e) {}
+      }
       if (showToast) {
         toast.error("Falha ao sincronizar mensagens da Evolution API.");
       }
     } finally {
       setIsSyncingOffline(false);
     }
-  }, [refetchConversations, refetchCounts]);
+  }, [refetchConversations, refetchCounts, activeChat]);
 
   // Disparo obrigatório automático ao abrir o Inbox (hidratação offline 24h com cooldown)
   useEffect(() => {
