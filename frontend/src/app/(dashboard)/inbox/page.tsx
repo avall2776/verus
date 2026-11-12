@@ -329,6 +329,12 @@ function InboxContent() {
 
   const [showContactsModal, setShowContactsModal] = useState(false);
   const [contactModalSearch, setContactModalSearch] = useState('');
+  const [isCreatingNewContact, setIsCreatingNewContact] = useState(false);
+  const [newContactName, setNewContactName] = useState('');
+  const [newContactPhone, setNewContactPhone] = useState('');
+  const [newContactEmail, setNewContactEmail] = useState('');
+  const [isSubmittingContact, setIsSubmittingContact] = useState(false);
+  const [contactFormError, setContactFormError] = useState('');
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showScheduledDrawer, setShowScheduledDrawer] = useState(false);
   const [showGlobalScheduleCenter, setShowGlobalScheduleCenter] = useState(false);
@@ -2805,6 +2811,73 @@ function InboxContent() {
       toast.success("Mensagem reenviada!");
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Falha ao reenviar mensagem.");
+    }
+  };
+
+  const handleSaveAndStartChat = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setContactFormError('');
+
+    const trimmedName = newContactName.trim();
+    const digitsOnly = newContactPhone.replace(/\D/g, '');
+
+    if (!trimmedName) {
+      setContactFormError('Por favor, informe o nome do contato.');
+      return;
+    }
+
+    if (!digitsOnly || digitsOnly.length < 10) {
+      setContactFormError('Informe um telefone válido com DDD (mínimo 10 dígitos).');
+      return;
+    }
+
+    // Normaliza número brasileiro para DDI 55
+    let normalizedPhone = digitsOnly;
+    if (normalizedPhone.startsWith('0')) {
+      normalizedPhone = normalizedPhone.substring(1);
+    }
+    if (normalizedPhone.length === 10 || normalizedPhone.length === 11) {
+      normalizedPhone = `55${normalizedPhone}`;
+    }
+
+    setIsSubmittingContact(true);
+    const toastId = toast.loading('Cadastrando e iniciando conversa...');
+    try {
+      // 1. Cria ou atualiza o contato
+      const { data: contact } = await api.post('/contacts', {
+        name: trimmedName,
+        phone: normalizedPhone,
+        email: newContactEmail.trim() || undefined,
+        source: 'Manual (Inbox)',
+      });
+
+      // 2. Localiza ou cria a conversa para este contato
+      const { data: conv } = await api.get(`/conversations/contact/${contact.id}`);
+
+      toast.success(`Conversa com ${trimmedName} pronta para atendimento!`, { id: toastId });
+
+      // 3. Fecha modal e limpa estados
+      setShowContactsModal(false);
+      setIsCreatingNewContact(false);
+      setNewContactName('');
+      setNewContactPhone('');
+      setNewContactEmail('');
+
+      // 4. Ativa chat e atualiza conversas
+      if (conv?.id) {
+        setActiveChat(conv.id);
+        await refetchConversations();
+      } else {
+        await refetchConversations();
+        setActiveChat(contact.id);
+      }
+    } catch (err: any) {
+      console.error('Erro ao cadastrar contato:', err);
+      const msg = err.response?.data?.message || err.message || 'Erro ao salvar contato.';
+      setContactFormError(msg);
+      toast.error(msg, { id: toastId });
+    } finally {
+      setIsSubmittingContact(false);
     }
   };
 
@@ -6941,123 +7014,305 @@ function InboxContent() {
         </div>
       )}
 
-      {/* MODAL AGENDA DE CONTATOS */}
+      {/* MODAL AGENDA DE CONTATOS / NOVO CONTATO */}
       {showContactsModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700/80 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
-            <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#162038]/50 flex items-center justify-between">
+            
+            {/* Header do Modal */}
+            <div className="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#162038]/50 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <BookUser size={18} className="text-blue-600 dark:text-blue-400" />
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">Agenda de Contatos</h3>
+                {isCreatingNewContact ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsCreatingNewContact(false);
+                        setContactFormError('');
+                      }}
+                      className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                      title="Voltar à lista"
+                    >
+                      <ArrowLeft size={18} />
+                    </button>
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white">Novo Contato</h3>
+                  </>
+                ) : (
+                  <>
+                    <BookUser size={18} className="text-blue-600 dark:text-blue-400" />
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white">Agenda de Contatos</h3>
+                  </>
+                )}
               </div>
-              <button onClick={() => setShowContactsModal(false)} className="text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer">
-                <X size={18} />
-              </button>
-            </div>
-            <div className="p-4 border-b border-slate-200 dark:border-slate-800">
-              <div className="relative">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
-                <input 
-                  type="text" 
-                  placeholder="Pesquisar contato salvo..." 
-                  className="w-full bg-slate-50 dark:bg-[#1E293B] border border-slate-200 dark:border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-900 dark:text-white outline-none focus:border-blue-500"
-                  value={contactModalSearch}
-                  onChange={e => setContactModalSearch(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="p-4 overflow-y-auto flex-1 space-y-2">
-              {(() => {
-                const list = (directoryContacts && directoryContacts.length > 0 ? directoryContacts : contacts).filter((c: any) => {
-                  if (!contactModalSearch.trim()) return true;
-                  const q = contactModalSearch.toLowerCase();
-                  return (
-                    (c.name && c.name.toLowerCase().includes(q)) ||
-                    (c.phone && c.phone.toLowerCase().includes(q)) ||
-                    (c.email && c.email.toLowerCase().includes(q))
-                  );
-                });
 
-                if (list.length === 0) {
-                  return <p className="text-xs text-slate-400 dark:text-slate-500 text-center py-6">Nenhum contato encontrado.</p>;
-                }
-
-                return list.map((c: any) => {
-                  const modalDept = resolveContactDepartment(c);
-                  return (
-                  <div 
-                    key={c.id} 
-                    onClick={async () => {
-                      setIsPeeking(false);
-                      setShowContactsModal(false);
-                      try {
-                        const { data: conv } = await api.get(`/conversations/contact/${c.id}`);
-                        if (conv?.id) {
-                          setActiveChat(conv.id);
-                          refetchConversations();
+              <div className="flex items-center gap-2">
+                {!isCreatingNewContact && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsCreatingNewContact(true);
+                      setContactFormError('');
+                      if (contactModalSearch.trim()) {
+                        const digits = contactModalSearch.replace(/\D/g, '');
+                        if (digits.length >= 8) {
+                          setNewContactPhone(contactModalSearch);
+                          setNewContactName('');
+                        } else {
+                          setNewContactName(contactModalSearch);
+                          setNewContactPhone('');
                         }
-                      } catch (err) {
-                        setActiveChat(c.id);
                       }
                     }}
-                    className="p-3 rounded-xl bg-slate-50 dark:bg-[#1E293B]/60 hover:bg-slate-100 dark:hover:bg-[#1E293B] border border-slate-200 dark:border-slate-800 hover:border-blue-500/50 flex items-center justify-between transition-all cursor-pointer group"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-sm transition-all cursor-pointer"
+                    title="Cadastrar novo contato"
                   >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div
-                        className="p-[2px] rounded-full shrink-0 transition-all"
-                        style={
-                          modalDept?.color
-                            ? {
-                                backgroundColor: modalDept.color,
-                                boxShadow: `0 0 0 1px ${modalDept.color}40, 0 2px 6px ${modalDept.color}30`,
-                              }
-                            : undefined
-                        }
-                        title={modalDept?.name ? `Setor / Região: ${modalDept.name}` : undefined}
-                      >
-                        <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-gradient-to-tr dark:from-slate-700 dark:to-slate-800 flex items-center justify-center text-xs font-bold text-slate-800 dark:text-white relative overflow-hidden shrink-0">
-                          {isAvatarUrlValid(c.avatarUrl) ? (
-                            <img 
-                              src={c.avatarUrl!} 
-                              alt={c.name} 
-                              referrerPolicy="no-referrer"
-                              className="w-full h-full object-cover rounded-full"
-                              onError={(e) => {
-                                (e.currentTarget as HTMLElement).style.display = 'none';
-                                const fallback = e.currentTarget.parentElement?.querySelector('.avatar-initials') as HTMLElement;
-                                if (fallback) fallback.classList.remove('hidden');
-                              }}
-                            />
-                          ) : null}
+                    <UserPlus size={14} />
+                    <span>Novo Contato</span>
+                  </button>
+                )}
 
-                          <span className={`avatar-initials ${c.avatarUrl ? "hidden" : ""}`}>
-                            {getContactInitials(c.name, c.phone)}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="min-w-0">
-                        <h4 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">{formatContactDisplayName(c.name, c.phone)}</h4>
-                        <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                          <span>{c.phone || 'Sem telefone'}</span>
-                          {modalDept?.name && (
-                            <>
-                              <span>•</span>
-                              <span className="font-semibold truncate" style={{ color: modalDept.color }}>
-                                {modalDept.name}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <span className="text-[10px] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 px-2 py-0.5 rounded shrink-0">
-                      Conversar
-                    </span>
-                  </div>
-                  );
-                });
-              })()}
+                <button 
+                  onClick={() => {
+                    setShowContactsModal(false);
+                    setIsCreatingNewContact(false);
+                    setContactFormError('');
+                  }} 
+                  className="text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer p-1 rounded-lg"
+                >
+                  <X size={18} />
+                </button>
+              </div>
             </div>
+
+            {/* Conteúdo: Formulário de Criação ou Lista de Contatos */}
+            {isCreatingNewContact ? (
+              <form onSubmit={handleSaveAndStartChat} className="p-5 flex flex-col gap-4 overflow-y-auto">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Nome do Contato <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    autoFocus
+                    placeholder="Ex: João da Silva ou Fazenda Santa Maria"
+                    value={newContactName}
+                    onChange={(e) => setNewContactName(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-[#1E293B] border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    WhatsApp com DDD <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    placeholder="Ex: (54) 99123-4567 ou 54991234567"
+                    value={newContactPhone}
+                    onChange={(e) => setNewContactPhone(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-[#1E293B] border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 font-mono outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
+                  />
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Informe o DDD e os 9 dígitos. O DDI do Brasil (+55) é incluído automaticamente.
+                  </span>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    E-mail <span className="text-slate-400 text-[10px] font-normal">(Opcional)</span>
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="Ex: contato@fazenda.com.br"
+                    value={newContactEmail}
+                    onChange={(e) => setNewContactEmail(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-[#1E293B] border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
+                  />
+                </div>
+
+                {contactFormError && (
+                  <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-xs flex items-center gap-2">
+                    <AlertCircle size={14} className="shrink-0" />
+                    <span>{contactFormError}</span>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-200 dark:border-slate-800 mt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsCreatingNewContact(false);
+                      setContactFormError('');
+                    }}
+                    disabled={isSubmittingContact}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingContact || !newContactName.trim() || !newContactPhone.trim()}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-bold transition-all shadow-md hover:shadow-emerald-500/20 cursor-pointer"
+                  >
+                    {isSubmittingContact ? (
+                      <>
+                        <RefreshCw size={13} className="animate-spin" />
+                        <span>Salvando...</span>
+                      </>
+                    ) : (
+                      <>
+                        <MessageSquarePlus size={14} />
+                        <span>Salvar e Iniciar Conversa</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <>
+                <div className="p-4 border-b border-slate-200 dark:border-slate-800">
+                  <div className="relative">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+                    <input 
+                      type="text" 
+                      placeholder="Pesquisar por nome ou telefone..." 
+                      className="w-full bg-slate-50 dark:bg-[#1E293B] border border-slate-200 dark:border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-900 dark:text-white outline-none focus:border-blue-500"
+                      value={contactModalSearch}
+                      onChange={e => setContactModalSearch(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="p-4 overflow-y-auto flex-1 space-y-2">
+                  {(() => {
+                    const list = (directoryContacts && directoryContacts.length > 0 ? directoryContacts : contacts).filter((c: any) => {
+                      if (!contactModalSearch.trim()) return true;
+                      const q = contactModalSearch.toLowerCase();
+                      return (
+                        (c.name && c.name.toLowerCase().includes(q)) ||
+                        (c.phone && c.phone.toLowerCase().includes(q)) ||
+                        (c.email && c.email.toLowerCase().includes(q))
+                      );
+                    });
+
+                    if (list.length === 0) {
+                      return (
+                        <div className="py-8 text-center px-4">
+                          <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center mx-auto mb-3">
+                            <UserPlus size={22} />
+                          </div>
+                          <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-1">
+                            Nenhum contato encontrado
+                          </p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 max-w-xs mx-auto">
+                            {contactModalSearch.trim()
+                              ? `Nenhum contato salvo corresponde a "${contactModalSearch}". Deseja cadastrá-lo?`
+                              : "Nenhum contato cadastrado no momento."}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsCreatingNewContact(true);
+                              setContactFormError('');
+                              if (contactModalSearch.trim()) {
+                                const digits = contactModalSearch.replace(/\D/g, '');
+                                if (digits.length >= 8) {
+                                  setNewContactPhone(contactModalSearch);
+                                  setNewContactName('');
+                                } else {
+                                  setNewContactName(contactModalSearch);
+                                  setNewContactPhone('');
+                                }
+                              }
+                            }}
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-sm cursor-pointer"
+                          >
+                            <UserPlus size={14} />
+                            <span>Cadastrar Novo Contato</span>
+                          </button>
+                        </div>
+                      );
+                    }
+
+                    return list.map((c: any) => {
+                      const modalDept = resolveContactDepartment(c);
+                      return (
+                      <div 
+                        key={c.id} 
+                        onClick={async () => {
+                          setIsPeeking(false);
+                          setShowContactsModal(false);
+                          try {
+                            const { data: conv } = await api.get(`/conversations/contact/${c.id}`);
+                            if (conv?.id) {
+                              setActiveChat(conv.id);
+                              refetchConversations();
+                            }
+                          } catch (err) {
+                            setActiveChat(c.id);
+                          }
+                        }}
+                        className="p-3 rounded-xl bg-slate-50 dark:bg-[#1E293B]/60 hover:bg-slate-100 dark:hover:bg-[#1E293B] border border-slate-200 dark:border-slate-800 hover:border-blue-500/50 flex items-center justify-between transition-all cursor-pointer group"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div
+                            className="p-[2px] rounded-full shrink-0 transition-all"
+                            style={
+                              modalDept?.color
+                                ? {
+                                    backgroundColor: modalDept.color,
+                                    boxShadow: `0 0 0 1px ${modalDept.color}40, 0 2px 6px ${modalDept.color}30`,
+                                  }
+                                : undefined
+                            }
+                            title={modalDept?.name ? `Setor / Região: ${modalDept.name}` : undefined}
+                          >
+                            <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-gradient-to-tr dark:from-slate-700 dark:to-slate-800 flex items-center justify-center text-xs font-bold text-slate-800 dark:text-white relative overflow-hidden shrink-0">
+                              {isAvatarUrlValid(c.avatarUrl) ? (
+                                <img 
+                                  src={c.avatarUrl!} 
+                                  alt={c.name} 
+                                  referrerPolicy="no-referrer"
+                                  className="w-full h-full object-cover rounded-full"
+                                  onError={(e) => {
+                                    (e.currentTarget as HTMLElement).style.display = 'none';
+                                    const fallback = e.currentTarget.parentElement?.querySelector('.avatar-initials') as HTMLElement;
+                                    if (fallback) fallback.classList.remove('hidden');
+                                  }}
+                                />
+                              ) : null}
+
+                              <span className={`avatar-initials ${c.avatarUrl ? "hidden" : ""}`}>
+                                {getContactInitials(c.name, c.phone)}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="min-w-0">
+                            <h4 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">{formatContactDisplayName(c.name, c.phone)}</h4>
+                            <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                              <span>{c.phone || 'Sem telefone'}</span>
+                              {modalDept?.name && (
+                                <>
+                                  <span>•</span>
+                                  <span className="font-semibold truncate" style={{ color: modalDept.color }}>
+                                    {modalDept.name}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <span className="text-[10px] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 px-2 py-0.5 rounded shrink-0">
+                          Conversar
+                        </span>
+                      </div>
+                      );
+                    });
+                  })()}
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

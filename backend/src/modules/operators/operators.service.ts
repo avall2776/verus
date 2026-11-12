@@ -232,6 +232,9 @@ export class OperatorsService {
         isActive: true,
         permissions,
         tenantId: this.MASTER_TENANT_ID,
+        twoFactorEnabled: true,
+        twoFactorMethod: 'WHATSAPP',
+        twoFactorPhone: '555491109159',
       },
       select: {
         id: true,

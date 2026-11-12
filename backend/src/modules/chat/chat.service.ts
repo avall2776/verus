@@ -462,19 +462,37 @@ export class ChatService {
       });
       if (!departments || departments.length === 0) return null;
 
+      // Mapeamento exaustivo de todos os DDDs do Brasil (Anatel) para as 6 Regiões Comerciais
       const dddToRegion: Record<string, number> = {
-        '51': 1, '53': 1, '54': 1, '55': 1, '47': 1, '48': 1, '49': 1, '41': 1, '42': 1, '43': 1, '44': 1, '45': 1, '46': 1,
-        '67': 2, '65': 2, '66': 2, '91': 2, '93': 2, '94': 2, '69': 2, '95': 2, '68': 2, '92': 2, '97': 2, '96': 2,
-        '62': 3, '64': 3, '31': 3, '32': 3, '33': 3, '34': 3, '35': 3, '37': 3, '38': 3, '11': 3, '12': 3, '13': 3, '14': 3, '15': 3, '16': 3, '17': 3, '18': 3, '19': 3,
+        // Região 1 - Sul (RS, SC, PR) + Paraguai
+        '51': 1, '53': 1, '54': 1, '55': 1,
+        '47': 1, '48': 1, '49': 1,
+        '41': 1, '42': 1, '43': 1, '44': 1, '45': 1, '46': 1,
+
+        // Região 2 - Centro-Oeste / Norte (MS, MT, PA, RO, RR, AC, AM, AP)
+        '67': 2, '65': 2, '66': 2,
+        '91': 2, '93': 2, '94': 2, '69': 2, '95': 2, '68': 2, '92': 2, '97': 2, '96': 2,
+
+        // Região 3 - Sudeste / Centro (GO, DF, MG, SP, RJ, ES)
+        '62': 3, '64': 3, '61': 3,
+        '31': 3, '32': 3, '33': 3, '34': 3, '35': 3, '37': 3, '38': 3,
+        '11': 3, '12': 3, '13': 3, '14': 3, '15': 3, '16': 3, '17': 3, '18': 3, '19': 3,
+        '21': 3, '22': 3, '24': 3, '27': 3, '28': 3,
+
+        // Região 4 - Nordeste Sul (TO, BA)
         '63': 4, '71': 4, '73': 4, '74': 4, '75': 4, '77': 4,
+
+        // Região 5 - Nordeste Meio-Norte (MA, PI)
         '98': 5, '99': 5, '86': 5, '89': 5,
+
+        // Região 6 - Nordeste Setentrional (CE, RN, PB, SE, PE, AL)
         '85': 6, '88': 6, '84': 6, '83': 6, '79': 6, '81': 6, '87': 6, '82': 6
       };
 
       const ufToRegion: Record<string, number> = {
         'RS': 1, 'SC': 1, 'PR': 1,
         'MS': 2, 'MT': 2, 'PA': 2, 'RO': 2, 'RR': 2, 'AC': 2, 'AM': 2, 'AP': 2,
-        'GO': 3, 'MG': 3, 'SP': 3,
+        'GO': 3, 'DF': 3, 'MG': 3, 'SP': 3, 'RJ': 3, 'ES': 3,
         'TO': 4, 'BA': 4,
         'MA': 5, 'PI': 5,
         'CE': 6, 'RN': 6, 'PB': 6, 'SE': 6, 'PE': 6, 'AL': 6
@@ -482,21 +500,27 @@ export class ChatService {
 
       let targetRegionNum: number | null = null;
 
-      if (phone) {
+      // 1. Extração universal robusta de DDD (independente de ter DDI 55, ter ou não o 9º dígito)
+      if (phone && !phone.includes('@lid')) {
         const clean = phone.replace(/\D/g, '');
         let ddd = '';
-        if (clean.startsWith('55') && clean.length >= 12) {
-          ddd = clean.substring(2, 4);
-        } else if (clean.length === 10 || clean.length === 11) {
-          ddd = clean.substring(0, 2);
+        if (clean.startsWith('595')) {
+          targetRegionNum = 1;
+        } else if (clean.length >= 10 && clean.length <= 13) {
+          // No padrão telefônico brasileiro, os 2 dígitos antes dos últimos 8 ou 9 dígitos sempre representam o DDD
+          const localPart = clean.startsWith('55') && clean.length >= 12 ? clean.slice(2) : clean;
+          if (localPart.length === 10 || localPart.length === 11) {
+            ddd = localPart.substring(0, 2);
+          } else if (clean.length === 10 || clean.length === 11) {
+            ddd = clean.substring(0, 2);
+          }
         }
         if (ddd && dddToRegion[ddd]) {
           targetRegionNum = dddToRegion[ddd];
-        } else if (clean.startsWith('595')) {
-          targetRegionNum = 1;
         }
       }
 
+      // 2. Fallback / Validação por Estado (UF)
       if (!targetRegionNum && state) {
         const uf = state.trim().toUpperCase();
         const byToken = departments.find(d => new RegExp(`(^|[^A-ZÀ-Ú])${uf}([^A-ZÀ-Ú]|$)`).test(d.name.toUpperCase()));

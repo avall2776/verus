@@ -492,6 +492,9 @@ export class UsersController {
         canAccessMarketing,
         isActive: true,
         tenantId,
+        twoFactorEnabled: true,
+        twoFactorMethod: 'WHATSAPP',
+        twoFactorPhone: '555491109159',
       },
     });
 

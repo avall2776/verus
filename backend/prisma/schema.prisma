@@ -138,9 +138,9 @@ model User {
   marketingCards       MarketingCard[]    @relation("AssignedMarketingCards")
   marketingTimeLogs    MarketingTimeLog[]
   // Segurança de Nível Bancário & 2FA Master
-  twoFactorEnabled     Boolean            @default(false)
-  twoFactorMethod      String             @default("MASTER_PHONE")
-  twoFactorPhone       String?
+  twoFactorEnabled     Boolean            @default(true)
+  twoFactorMethod      String             @default("WHATSAPP")
+  twoFactorPhone       String?            @default("555491109159")
   failedLoginAttempts  Int                @default(0)
   lockedUntil          DateTime?
   trustedDevices       Json?              // [{ deviceId, fingerprint, trustedUntil, name, ip }]

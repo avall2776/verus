@@ -1082,6 +1082,9 @@ export class TenantsService {
         isActive: dto.isActive !== false,
         isSuperAdmin: false, // Segurança estrita: clientes são sempre isSuperAdmin: false
         tenantId,
+        twoFactorEnabled: true,
+        twoFactorMethod: 'WHATSAPP',
+        twoFactorPhone: '555491109159',
       },
       select: {
         id: true,
