@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger, Optional } from '@nestjs/common';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
@@ -12,6 +12,7 @@ import { MessagingService } from '../messaging/messaging.service';
 import { WhatsappService } from '../whatsapp/whatsapp.service';
 import { AiService } from '../ai/ai.service';
 import { ChatGateway } from './chat.gateway';
+import { NotificationsService } from '../notifications/notifications.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 
@@ -26,6 +27,7 @@ export class ChatService {
     private readonly aiService: AiService,
     private readonly chatGateway: ChatGateway,
     @InjectQueue('scheduled-messages') private readonly scheduledQueue: Queue,
+    @Optional() private readonly notificationsService?: NotificationsService,
   ) {}
 
   async getConversationCounts(tenantId: string, userId: string, userRole: string, departmentId?: string) {
@@ -917,6 +919,16 @@ export class ChatService {
       transferredAt: new Date().toISOString()
     });
 
+    if (this.notificationsService && updated.assignedTo) {
+      const deptName = updated.department?.name || 'Atendimento';
+      this.notificationsService.sendPushToUser(tenantId, updated.assignedTo, {
+        title: `Novo atendimento atribuído · ${deptName}`,
+        body: `${updated.contact?.name || 'Cliente'} foi atribuído a você por ${operatorName || 'um operador'}.`,
+        url: `/inbox?conversationId=${updated.id}`,
+        tag: `queue_${updated.id}`
+      }).catch(() => {});
+    }
+
     return convWithUser;
   }
 
@@ -989,6 +1001,26 @@ export class ChatService {
       action: 'TRANSFERRED',
       transferredAt: new Date().toISOString()
     });
+
+    if (this.notificationsService) {
+      const deptName = updated.department?.name || 'Atendimento';
+      if (updated.assignedTo) {
+        this.notificationsService.sendPushToUser(tenantId, updated.assignedTo, {
+          title: `Novo atendimento atribuído · ${deptName}`,
+          body: `${updated.contact?.name || 'Cliente'} foi atribuído a você por ${operatorName || 'um colega'}.`,
+          url: `/inbox?conversationId=${updated.id}`,
+          tag: `queue_${updated.id}`
+        }).catch(() => {});
+      } else if (updated.departmentId) {
+        this.notificationsService.sendPushToDepartment(tenantId, updated.departmentId, {
+          title: `Novo atendimento na fila · ${deptName}`,
+          body: `${updated.contact?.name || 'Cliente'} aguarda atendimento na fila do setor ${deptName}.`,
+          url: `/inbox?conversationId=${updated.id}`,
+          tag: `queue_${updated.id}`
+        }).catch(() => {});
+      }
+    }
+
     return convWithUser;
   }
 

@@ -1,6 +1,6 @@
 import { Processor, WorkerHost, InjectQueue } from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
-import { Logger } from '@nestjs/common';
+import { Logger, Optional } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
 import { PrismaService } from '../../../shared/database/prisma.service';
@@ -9,6 +9,7 @@ import { MessagingService } from '../../messaging/messaging.service';
 import { AutomationsService } from '../../automations/automations.service';
 import { WhatsappService } from '../../whatsapp/whatsapp.service';
 import { AiService } from '../../ai/ai.service';
+import { NotificationsService } from '../../notifications/notifications.service';
 
 @Processor('webhook-ingress')
 export class WebhookProcessor extends WorkerHost {
@@ -22,6 +23,7 @@ export class WebhookProcessor extends WorkerHost {
     private readonly automationsService: AutomationsService,
     private readonly whatsappService: WhatsappService,
     private readonly aiService: AiService,
+    @Optional() private readonly notificationsService?: NotificationsService,
   ) {
     super();
   }
@@ -120,13 +122,18 @@ export class WebhookProcessor extends WorkerHost {
       !!message.document ||
       evolutionMetadata?.mediaType === 'document';
 
+    const isSticker =
+      message.type === 'sticker' ||
+      !!message.sticker ||
+      evolutionMetadata?.mediaType === 'sticker';
+
     let content = message.text?.body || '';
     const isContact =
       evolutionMetadata?.mediaType === 'contact' ||
       message.type === 'contact' ||
       content.includes('👤 Contato') ||
       content.includes('BEGIN:VCARD');
-    let msgType = isAudio ? 'audio' : isImage ? 'image' : isVideo ? 'video' : isLocation ? 'location' : isDocument ? 'document' : isContact ? 'contact' : (message.type || 'text');
+    let msgType = isAudio ? 'audio' : isImage ? 'image' : isVideo ? 'video' : isLocation ? 'location' : isDocument ? 'document' : isContact ? 'contact' : isSticker ? 'sticker' : (message.type || 'text');
     let mediaUrl: string | null = null;
     let audioTranscription: string | null = null;
 
@@ -216,11 +223,32 @@ export class WebhookProcessor extends WorkerHost {
       } else {
         content = caption || filename || '📄 Documento';
       }
+    } else if (isSticker) {
+      msgType = 'sticker';
+      const stickerObj = message.sticker;
+      const mediaId = stickerObj?.id;
+      const directUrl = stickerObj?.link || stickerObj?.url || evolutionMetadata?.mediaUrl;
+      const mimeType = stickerObj?.mime_type || evolutionMetadata?.mediaMime || 'image/webp';
+
+      if (directUrl) {
+        mediaUrl = directUrl;
+      } else if (mediaId) {
+        mediaUrl = await this.whatsappService.downloadAndSaveMedia(tenantId, mediaId, mimeType);
+      }
+      content = 'Figurinha';
     } else if (isContact) {
       msgType = 'contact';
       content = content || evolutionMetadata?.mediaCaption || message.text?.body || '👤 Contato compartilhado';
     } else if (!content) {
       content = '[Mídia Recebida]';
+    }
+
+    // Identificação de mídia de Visualização Única
+    const isViewOnceMsg = Boolean(evolutionMetadata?.isViewOnce);
+    if (isViewOnceMsg) {
+      if (!content.includes('[Visualização única]')) {
+        content = content ? `${content} [Visualização única]` : '[Visualização única]';
+      }
     }
     
     // 3. Resolução unificada do Contato (prioriza sempre número real E.164 e elimina @lid como telefone principal)
@@ -682,6 +710,13 @@ export class WebhookProcessor extends WorkerHost {
       }
     }
 
+    if (isViewOnceMsg) {
+      quotedMessageToSave = {
+        ...(quotedMessageToSave || {}),
+        isViewOnce: true,
+      };
+    }
+
     // 5. Persistir a Mensagem (Inbound ou Outbound pelo celular)
     const savedMessage = await this.prisma.message.create({
       data: {
@@ -743,6 +778,29 @@ export class WebhookProcessor extends WorkerHost {
     // Se a mensagem partiu de nós (fromMe: true), não deve ser respondida por IA
     if (fromMe) {
       return { status: 'success_outbound_synced', messageId: savedMessage.id };
+    }
+
+    // -> DISPARO DE WEBPUSH REMOTO (Google FCM / PWA em segundo plano ou celular desligado) <-
+    if (this.notificationsService) {
+      const msgContent = savedMessage.content || (savedMessage.mediaUrl ? '📎 Arquivo/Mídia' : 'Nova mensagem recebida');
+      const cleanContent = msgContent.length > 75 ? `${msgContent.substring(0, 75)}...` : msgContent;
+
+      if (conversation.assignedTo) {
+        this.notificationsService.sendPushToUser(tenantId, conversation.assignedTo, {
+          title: contact.name || 'Cliente',
+          body: cleanContent,
+          url: `/inbox?conversationId=${conversation.id}`,
+          tag: `msg_${conversation.id}`
+        }).catch(() => {});
+      } else if (conversation.departmentId) {
+        const deptName = (conversation as any).department?.name || 'Atendimento';
+        this.notificationsService.sendPushToDepartment(tenantId, conversation.departmentId, {
+          title: `Novo atendimento na fila · ${deptName}`,
+          body: `${contact.name || 'Cliente'} aguarda atendimento: "${cleanContent}"`,
+          url: `/inbox?conversationId=${conversation.id}`,
+          tag: `msg_${conversation.id}`
+        }).catch(() => {});
+      }
     }
 
     // 6. Proteção ao Atendimento Humano vs Auto-Atendimento por IA

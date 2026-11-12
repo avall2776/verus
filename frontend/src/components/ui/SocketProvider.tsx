@@ -21,6 +21,64 @@ import {
 } from '@/lib/soundSettings';
 import { canUserAccessWhatsApp, getStoredUserSync, getCachedUser } from '@/lib/userCache';
 
+// Helper para converter a chave pública VAPID base64 em Uint8Array
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+// Registra e sincroniza a assinatura push com o Google FCM e o backend
+export async function registerWebPushSubscription() {
+  try {
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+      return null;
+    }
+    if (Notification.permission !== 'granted') {
+      return null;
+    }
+
+    const reg = await navigator.serviceWorker.ready;
+    let subscription = await reg.pushManager.getSubscription();
+
+    // Se ainda não tiver assinatura push no FCM, cria uma
+    if (!subscription) {
+      const res = await api.get('/notifications/vapid-public-key');
+      const publicKey = res.data?.publicKey;
+      if (!publicKey) return null;
+
+      subscription = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey)
+      });
+    }
+
+    if (subscription) {
+      const subJson = subscription.toJSON();
+      if (subJson.endpoint && subJson.keys?.p256dh && subJson.keys?.auth) {
+        await api.post('/notifications/push-subscription', {
+          endpoint: subJson.endpoint,
+          keys: {
+            p256dh: subJson.keys.p256dh,
+            auth: subJson.keys.auth
+          },
+          userAgent: navigator.userAgent
+        });
+        console.log('⚡ [WebPush FCM] Celular inscrito com sucesso para notificações em nuvem.');
+      }
+    }
+    return subscription;
+  } catch (err) {
+    console.warn('[WebPush FCM] Falha ao registrar assinatura push:', err);
+    return null;
+  }
+}
+
 interface SocketContextType {
   socket: Socket | null;
   isConnected: boolean;
@@ -167,10 +225,13 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     setHasGlobalUnread((prev) => (prev ? false : prev));
   }, []);
 
-  // Inicializa estado de permissão do navegador
+  // Inicializa estado de permissão do navegador e sincroniza com Google FCM
   useEffect(() => {
     if (typeof window !== 'undefined' && 'Notification' in window) {
       setNotificationPermission(Notification.permission);
+      if (Notification.permission === 'granted') {
+        registerWebPushSubscription();
+      }
     }
   }, []);
 
@@ -180,6 +241,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         const perm = await Notification.requestPermission();
         setNotificationPermission(perm);
+        if (perm === 'granted') {
+          registerWebPushSubscription();
+        }
         return perm;
       } catch (err) {
         console.warn('[Notifications] Erro ao solicitar permissão:', err);
@@ -193,7 +257,12 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     const handleFirstInteraction = () => {
       if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
         Notification.requestPermission()
-          .then((perm) => setNotificationPermission(perm))
+          .then((perm) => {
+            setNotificationPermission(perm);
+            if (perm === 'granted') {
+              registerWebPushSubscription();
+            }
+          })
           .catch(() => {});
       }
       window.removeEventListener('click', handleFirstInteraction);

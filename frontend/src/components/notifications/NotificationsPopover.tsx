@@ -8,7 +8,7 @@ import {
   ShieldCheck, AlertCircle, RefreshCw, X, Volume2, Smartphone
 } from "lucide-react";
 import api from "@/lib/api";
-import { useSocket } from "@/components/ui/SocketProvider";
+import { useSocket, registerWebPushSubscription } from "@/components/ui/SocketProvider";
 import toast from "react-hot-toast";
 
 export interface NotificationItem {
@@ -99,6 +99,13 @@ export default function NotificationsPopover() {
     }
 
     toast.success("Disparando notificação! Bloqueie a tela ou veja a barra de status do celular.");
+
+    // Sincroniza com Google FCM e dispara teste direto do servidor
+    try {
+      registerWebPushSubscription().then(() => {
+        api.post('/notifications/test-push').catch(() => {});
+      }).catch(() => {});
+    } catch (e) {}
 
     try {
       if ('vibrate' in navigator) {
