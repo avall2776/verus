@@ -112,11 +112,6 @@ export class WebhookProcessor extends WorkerHost {
       !!message.video ||
       evolutionMetadata?.mediaType === 'video';
 
-    const isLocation =
-      message.type === 'location' ||
-      !!message.location ||
-      evolutionMetadata?.mediaType === 'location';
-
     const isDocument =
       message.type === 'document' ||
       !!message.document ||
@@ -128,6 +123,20 @@ export class WebhookProcessor extends WorkerHost {
       evolutionMetadata?.mediaType === 'sticker';
 
     let content = message.text?.body || '';
+    const hasMapsUrl = Boolean(
+      content && (
+        content.includes('maps.app.goo.gl') ||
+        content.includes('goo.gl/maps') ||
+        content.includes('google.com/maps') ||
+        content.includes('maps.google.com')
+      )
+    );
+
+    const isLocation =
+      message.type === 'location' ||
+      !!message.location ||
+      evolutionMetadata?.mediaType === 'location' ||
+      hasMapsUrl;
     const isContact =
       evolutionMetadata?.mediaType === 'contact' ||
       message.type === 'contact' ||
@@ -191,8 +200,15 @@ export class WebhookProcessor extends WorkerHost {
       const lng = locObj?.longitude;
       const locName = locObj?.name || '';
       const locAddress = locObj?.address || '';
-      mediaUrl = (lat !== undefined && lng !== undefined) ? `https://maps.google.com/?q=${lat},${lng}` : evolutionMetadata?.mediaUrl || null;
-      content = locName ? `📍 ${locName}${locAddress ? ' - ' + locAddress : ''}` : (locAddress ? `📍 ${locAddress}` : (mediaUrl ? `📍 Localização no Mapa` : '📍 Localização compartilhada'));
+      if (lat !== undefined && lng !== undefined) {
+        mediaUrl = `https://maps.google.com/?q=${lat},${lng}`;
+      } else if (hasMapsUrl) {
+        const urlMatch = content.match(/https?:\/\/[^\s]+/i);
+        mediaUrl = urlMatch ? urlMatch[0] : null;
+      } else {
+        mediaUrl = evolutionMetadata?.mediaUrl || null;
+      }
+      content = locName ? `📍 ${locName}${locAddress ? ' - ' + locAddress : ''}` : (locAddress ? `📍 ${locAddress}` : (mediaUrl ? `📍 Localização no Google Maps` : '📍 Localização compartilhada'));
     } else if (isDocument) {
       msgType = 'document';
       const docObj = message.document;

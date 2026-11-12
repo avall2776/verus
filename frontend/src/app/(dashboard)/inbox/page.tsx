@@ -4890,21 +4890,38 @@ function InboxContent() {
                     (msg.type !== 'image' && msg.type !== 'document' && !isStickerMsg && !!msg.mediaUrl && /\.(mp4|mov|webm|mkv|avi)($|\?)/i.test(msg.mediaUrl))
                   );
                   const isImageMsg = Boolean(msg.mediaUrl && msg.type === 'image' && !isStickerMsg);
+                  const isGoogleMapsLink = Boolean(
+                    (msg.content && (
+                      msg.content.includes('maps.app.goo.gl') ||
+                      msg.content.includes('goo.gl/maps') ||
+                      msg.content.includes('google.com/maps') ||
+                      msg.content.includes('maps.google.com')
+                    )) ||
+                    (msg.mediaUrl && (
+                      msg.mediaUrl.includes('maps.app.goo.gl') ||
+                      msg.mediaUrl.includes('goo.gl/maps') ||
+                      msg.mediaUrl.includes('google.com/maps') ||
+                      msg.mediaUrl.includes('maps.google.com')
+                    ))
+                  );
                   const isLocationMsg = Boolean(
                     msg.type === 'location' ||
                     (!!msg.mediaUrl && msg.mediaUrl.includes('maps.google.com')) ||
-                    msg.content?.includes('📍')
+                    msg.content?.includes('📍') ||
+                    isGoogleMapsLink
                   );
                   const isDocMsg = Boolean(
-                    msg.type === 'document' ||
+                    !isLocationMsg &&
+                    (msg.type === 'document' ||
                     (!!msg.mediaUrl &&
                       !/\.(mp4|mov|webm|ogg|opus|mp3|m4a|wav|jpg|jpeg|png|webp|gif)($|\?)/i.test(msg.mediaUrl) &&
                       !msg.mediaUrl.includes('maps.google.com') &&
+                      !msg.mediaUrl.includes('maps.app.goo.gl') &&
                       msg.type !== 'audio' &&
                       msg.type !== 'video' &&
                       msg.type !== 'image' &&
                       msg.type !== 'location' &&
-                      !isStickerMsg)
+                      !isStickerMsg))
                   );
                   const isContactMsg = Boolean(
                     msg.type === 'contact' ||
@@ -5399,40 +5416,81 @@ function InboxContent() {
                             </div>
                           )}
 
-                          {/* Renderização de Localização (Sem balão externo ao redor) */}
-                          {isLocationMsg && (
-                            <div className={`${mediaSurfaceClasses} flex flex-col gap-2 p-3 rounded-2xl max-w-[320px] shadow-sm`}>
-                              <div className="flex items-center justify-between gap-2.5">
-                                <div className="flex items-center gap-2.5 min-w-0">
-                                  <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
-                                    <MapPin size={18} />
+                          {/* Renderização de Localização Estilo WhatsApp / Google Maps */}
+                          {isLocationMsg && (() => {
+                            const mapUrl = (msg.mediaUrl && (msg.mediaUrl.includes('maps') || msg.mediaUrl.includes('goo.gl')))
+                              ? msg.mediaUrl
+                              : ((msg.content?.match(/https?:\/\/[^\s]+/i)?.[0]) || msg.mediaUrl || '#');
+
+                            const coordsMatch = (mapUrl || '').match(/[?&@](?:q=)?(-?\d+\.\d+),\s*(-?\d+\.\d+)/i) ||
+                              (msg.content || '').match(/(-?\d+\.\d+),\s*(-?\d+\.\d+)/i);
+                            const coordsLabel = coordsMatch ? `${parseFloat(coordsMatch[1]).toFixed(4)}, ${parseFloat(coordsMatch[2]).toFixed(4)}` : null;
+
+                            const cleanTitle = (msg.content || '')
+                              .replace(/^📍\s*/, '')
+                              .replace(/https?:\/\/[^\s]+/gi, '')
+                              .trim();
+                            const displayTitle = cleanTitle || 'Localização no Google Maps';
+
+                            return (
+                              <a
+                                href={mapUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="group flex flex-col rounded-2xl overflow-hidden max-w-[320px] w-full border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-[#182229] shadow-sm hover:shadow-md hover:border-emerald-500/50 transition-all cursor-pointer text-left no-underline"
+                              >
+                                {/* Top: Visual Map Banner with Roads Pattern & Red Pin */}
+                                <div className="relative w-full h-32 overflow-hidden bg-gradient-to-br from-slate-200 via-emerald-50 to-slate-200 dark:from-slate-800 dark:via-[#1e2e38] dark:to-slate-800 border-b border-slate-200/80 dark:border-white/10 flex items-center justify-center">
+                                  <svg className="absolute inset-0 w-full h-full opacity-40 dark:opacity-25" xmlns="http://www.w3.org/2000/svg">
+                                    <defs>
+                                      <pattern id={`map-grid-${msg.id}`} width="28" height="28" patternUnits="userSpaceOnUse">
+                                        <path d="M 28 0 L 0 0 0 28" fill="none" stroke="currentColor" strokeWidth="1" className="text-slate-400 dark:text-slate-600" />
+                                      </pattern>
+                                    </defs>
+                                    <rect width="100%" height="100%" fill={`url(#map-grid-${msg.id})`} />
+                                    <path d="M-10 80 Q 80 40 180 90 T 360 40" fill="none" stroke="currentColor" strokeWidth="6" strokeLinecap="round" className="text-amber-200/80 dark:text-amber-500/30" />
+                                    <path d="M40 -10 Q 120 70 200 60 T 300 150" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" className="text-emerald-200/90 dark:text-emerald-500/30" />
+                                    <path d="M-20 30 L 350 110" fill="none" stroke="currentColor" strokeWidth="3" className="text-white/80 dark:text-slate-500/40" />
+                                  </svg>
+
+                                  <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border border-slate-200/80 dark:border-slate-700/80 shadow-xs">
+                                    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                                    <span className="text-[10px] font-bold tracking-wide text-slate-700 dark:text-slate-200 uppercase">Google Maps</span>
                                   </div>
-                                  <div className="min-w-0">
-                                    <h4 className="text-xs font-bold truncate">Localização compartilhada</h4>
-                                    <p className="text-[11px] opacity-80 truncate">
-                                      {msg.content?.replace(/^📍\s*/, '') || 'Coordenadas do WhatsApp'}
-                                    </p>
+
+                                  <div className="relative z-10 flex flex-col items-center drop-shadow-[0_4px_8px_rgba(0,0,0,0.3)] group-hover:scale-105 transition-transform">
+                                    <div className="w-10 h-10 rounded-full bg-red-600 text-white flex items-center justify-center shadow-lg border-2 border-white dark:border-slate-900">
+                                      <MapPin size={22} className="fill-white text-red-600" />
+                                    </div>
+                                    <div className="w-3 h-1 bg-black/40 rounded-full mx-auto blur-[1px] mt-0.5" />
                                   </div>
                                 </div>
-                                <span className="inline-flex items-center gap-1 text-[11px] opacity-75 shrink-0 self-end leading-none">
-                                  <span>{formattedMsgTime}</span>
-                                  {statusTicksNode}
-                                </span>
-                              </div>
-                              {(msg.mediaUrl || msg.content?.includes('http')) && (
-                                <a
-                                  href={msg.mediaUrl || (msg.content?.match(/https?:\/\/[^\s]+/)?.[0] || '#')}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-700 dark:text-emerald-300 text-xs font-semibold transition-colors"
-                                >
-                                  <MapPin size={13} />
-                                  <span>Abrir no Google Maps</span>
-                                  <ExternalLink size={12} className="ml-1 opacity-70" />
-                                </a>
-                              )}
-                            </div>
-                          )}
+
+                                {/* Body: Title, Coordinates, and Open Action */}
+                                <div className="p-3 flex flex-col gap-1.5">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <h4 className="text-xs font-bold text-slate-900 dark:text-[#E9EDEF] truncate">
+                                      {displayTitle}
+                                    </h4>
+                                    <span className="inline-flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400 shrink-0 leading-none">
+                                      <span>{formattedMsgTime}</span>
+                                      {statusTicksNode}
+                                    </span>
+                                  </div>
+
+                                  <p className="text-[11px] text-slate-500 dark:text-[#8696A0] truncate font-mono">
+                                    {coordsLabel ? `📍 ${coordsLabel}` : 'Toque para abrir a rota no mapa'}
+                                  </p>
+
+                                  <div className="mt-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-semibold text-xs transition-colors border border-emerald-500/20">
+                                    <MapPin size={13} />
+                                    <span>Abrir no Google Maps</span>
+                                    <ExternalLink size={12} className="opacity-70 group-hover:translate-x-0.5 transition-transform" />
+                                  </div>
+                                </div>
+                              </a>
+                            );
+                          })()}
 
                           {/* Renderização de Contato Compartilhado (Padrão WhatsApp / Lero) */}
                           {isContactMsg && (
