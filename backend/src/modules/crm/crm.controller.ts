@@ -27,6 +27,27 @@ export class CrmController {
     return this.crmService.findTenantUsers(tenantId);
   }
 
+  @Get('stages')
+  async getStages(@CurrentTenant() tenantId: string) {
+    return this.crmService.getStages(tenantId);
+  }
+
+  @Post('stages')
+  async updateStages(
+    @CurrentTenant() tenantId: string,
+    @Body() body: { stages: any[]; funnelName?: string }
+  ) {
+    return this.crmService.updateStages(tenantId, body.stages, body.funnelName);
+  }
+
+  @Patch('stages')
+  async patchStages(
+    @CurrentTenant() tenantId: string,
+    @Body() body: { stages: any[]; funnelName?: string }
+  ) {
+    return this.crmService.updateStages(tenantId, body.stages, body.funnelName);
+  }
+
   @Post()
   async createDeal(
     @CurrentTenant() tenantId: string,

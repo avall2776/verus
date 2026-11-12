@@ -25,9 +25,11 @@ const DEFAULT_COLUMNS = [
   { id: "new", title: "Novo Contato", color: "text-blue-500", bgLight: "bg-blue-500/10", borderLight: "border-blue-500/30", borderColor: "border-t-blue-500" },
   { id: "qualified", title: "Em Qualificação", color: "text-purple-500", bgLight: "bg-purple-500/10", borderLight: "border-purple-500/30", borderColor: "border-t-purple-500" },
   { id: "follow-up", title: "Follow-up", color: "text-yellow-500", bgLight: "bg-yellow-500/10", borderLight: "border-yellow-500/30", borderColor: "border-t-yellow-500" },
+  { id: "ligacao-ativa", title: "LEADS LIGAÇÃO ATIVA", color: "text-indigo-400", bgLight: "bg-indigo-500/10", borderLight: "border-indigo-500/30", borderColor: "border-t-indigo-400" },
   { id: "proposal", title: "Proposta", color: "text-emerald-500", bgLight: "bg-emerald-500/10", borderLight: "border-emerald-500/30", borderColor: "border-t-emerald-500" },
   { id: "negotiation", title: "Negociação", color: "text-orange-500", bgLight: "bg-orange-500/10", borderLight: "border-orange-500/30", borderColor: "border-t-orange-500" },
   { id: "won", title: "Fechado/Ganho", color: "text-green-500", bgLight: "bg-green-500/10", borderLight: "border-green-500/30", borderColor: "border-t-green-500" },
+  { id: "nao-atende", title: "NÃO ATENDE", color: "text-yellow-500", bgLight: "bg-yellow-500/10", borderLight: "border-yellow-500/30", borderColor: "border-t-yellow-500" },
   { id: "lost", title: "Fechado/Perdido", color: "text-rose-600", bgLight: "bg-rose-600/10", borderLight: "border-rose-600/30", borderColor: "border-t-rose-600" },
   { id: "disqualified", title: "Duplicados/Desqualificados", color: "text-slate-400", bgLight: "bg-slate-500/10", borderLight: "border-slate-500/30", borderColor: "border-t-slate-500" }
 ];
@@ -128,10 +130,10 @@ function CrmContent() {
       borderColor: chosen.borderColor,
     };
 
+    let updated: any[] = [];
     setColumns(prev => {
       // Se tiver 'lost' e 'disqualified', insere antes deles para manter os fechamentos no final
       const lostIdx = prev.findIndex(c => c.id === 'lost' || c.id === 'disqualified');
-      let updated: any[];
       if (lostIdx >= 0) {
         updated = [...prev.slice(0, lostIdx), newCol, ...prev.slice(lostIdx)];
       } else {
@@ -141,6 +143,11 @@ function CrmContent() {
         localStorage.setItem('crm_columns', JSON.stringify(updated));
       } catch (e) {}
       return updated;
+    });
+
+    // Salva no banco de dados para toda a equipe
+    api.post('/deals/stages', { stages: updated, funnelName }).catch((err) => {
+      console.error("Erro ao salvar nova etapa no banco:", err);
     });
 
     setNewStageName("");
@@ -155,14 +162,36 @@ function CrmContent() {
     }
     if (!window.confirm("Deseja realmente remover esta etapa?")) return;
 
+    let updated: any[] = [];
     setColumns(prev => {
-      const updated = prev.filter(c => c.id !== stageId);
+      updated = prev.filter(c => c.id !== stageId);
       try {
         localStorage.setItem('crm_columns', JSON.stringify(updated));
       } catch (e) {}
       return updated;
     });
+
+    // Salva remoção no banco de dados para toda a equipe
+    api.post('/deals/stages', { stages: updated, funnelName }).catch((err) => {
+      console.error("Erro ao salvar exclusão da etapa no banco:", err);
+    });
+
     toast.success("Etapa removida com sucesso!");
+  };
+
+  const handleMoveStage = (index: number, direction: 'up' | 'down') => {
+    const targetIdx = direction === 'up' ? index - 1 : index + 1;
+    if (targetIdx < 0 || targetIdx >= columns.length) return;
+    const updated = [...columns];
+    const [moved] = updated.splice(index, 1);
+    updated.splice(targetIdx, 0, moved);
+    setColumns(updated);
+    try {
+      localStorage.setItem('crm_columns', JSON.stringify(updated));
+    } catch (e) {}
+    api.post('/deals/stages', { stages: updated, funnelName }).catch((err) => {
+      console.error("Erro ao salvar ordem das etapas no banco:", err);
+    });
   };
 
   const handleSaveFunnelName = () => {
@@ -174,6 +203,12 @@ function CrmContent() {
     setFunnelName(newName);
     localStorage.setItem('crm_funnel_name', newName);
     setIsEditingFunnel(false);
+
+    // Salva no banco de dados para toda a equipe
+    api.post('/deals/stages', { stages: columns, funnelName: newName }).catch((err) => {
+      console.error("Erro ao salvar nome do funil no banco:", err);
+    });
+
     toast.success("Nome do funil atualizado com sucesso!");
   };
   
@@ -434,6 +469,32 @@ function CrmContent() {
     }
   }, []);
 
+  // Sincronização centralizada com o banco de dados (carrega as etapas oficiais compartilhadas por toda a equipe)
+  useEffect(() => {
+    let isMounted = true;
+    const fetchStagesFromDb = async () => {
+      try {
+        const { data } = await api.get('/deals/stages');
+        if (!isMounted) return;
+        if (data?.stages && Array.isArray(data.stages) && data.stages.length > 0) {
+          setColumns(data.stages);
+          localStorage.setItem('crm_columns', JSON.stringify(data.stages));
+          setCollapsedTableStages(data.stages.map((c: any) => c.id));
+          setCollapsedTimelineStages(data.stages.map((c: any) => c.id));
+        }
+        if (data?.funnelName) {
+          setFunnelName(data.funnelName);
+          setTempFunnelName(data.funnelName);
+          localStorage.setItem('crm_funnel_name', data.funnelName);
+        }
+      } catch (err) {
+        console.error("Erro ao sincronizar etapas com o banco:", err);
+      }
+    };
+    fetchStagesFromDb();
+    return () => { isMounted = false; };
+  }, []);
+
   useEffect(() => {
     localStorage.setItem('crm_columns_widths', JSON.stringify(columnWidths));
   }, [columnWidths]);
@@ -498,9 +559,25 @@ function CrmContent() {
       });
     };
 
+    const handleCrmStagesUpdated = (payload: any) => {
+      if (payload?.stages && Array.isArray(payload.stages) && payload.stages.length > 0) {
+        setColumns(payload.stages);
+        localStorage.setItem('crm_columns', JSON.stringify(payload.stages));
+        setCollapsedTableStages(payload.stages.map((c: any) => c.id));
+        setCollapsedTimelineStages(payload.stages.map((c: any) => c.id));
+      }
+      if (payload?.funnelName) {
+        setFunnelName(payload.funnelName);
+        setTempFunnelName(payload.funnelName);
+        localStorage.setItem('crm_funnel_name', payload.funnelName);
+      }
+    };
+
     socket.on('dealUpdated', handleDealUpdated);
+    socket.on('crmStagesUpdated', handleCrmStagesUpdated);
     return () => {
       socket.off('dealUpdated', handleDealUpdated);
+      socket.off('crmStagesUpdated', handleCrmStagesUpdated);
     };
   }, [socket]);
 
@@ -3838,7 +3915,7 @@ function CrmContent() {
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Etapas ativas no fluxo do CRM. Você pode remover etapas criadas ou redefinir para o padrão.</p>
             
             <div className="flex flex-col gap-2">
-              {columns.map((col) => {
+              {columns.map((col, idx) => {
                 const isCore = ['new', 'won', 'lost', 'disqualified'].includes(col.id);
                 return (
                   <div key={col.id} className="bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 rounded-lg p-3 flex items-center justify-between group hover:border-slate-400 dark:hover:border-slate-600 transition-colors">
@@ -3849,12 +3926,30 @@ function CrmContent() {
                         <span className="text-[10px] text-slate-400 uppercase font-semibold bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">Padrão</span>
                       )}
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        disabled={idx === 0}
+                        onClick={() => handleMoveStage(idx, 'up')}
+                        className={`p-1.5 rounded transition-colors ${idx === 0 ? 'text-slate-300 dark:text-slate-700 cursor-not-allowed opacity-40' : 'text-slate-400 hover:text-blue-500 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                        title="Mover para esquerda/cima no funil"
+                      >
+                        <ArrowUp size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        disabled={idx === columns.length - 1}
+                        onClick={() => handleMoveStage(idx, 'down')}
+                        className={`p-1.5 rounded transition-colors ${idx === columns.length - 1 ? 'text-slate-300 dark:text-slate-700 cursor-not-allowed opacity-40' : 'text-slate-400 hover:text-blue-500 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                        title="Mover para direita/baixo no funil"
+                      >
+                        <ArrowDown size={14} />
+                      </button>
                       {!isCore && (
                         <button 
                           type="button"
                           onClick={() => handleDeleteStage(col.id)}
-                          className="p-1.5 text-slate-400 hover:text-rose-500 transition-colors" 
+                          className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 rounded transition-colors" 
                           title="Remover etapa"
                         >
                           <Trash2 size={14} />
@@ -3873,6 +3968,7 @@ function CrmContent() {
                   if (window.confirm("Deseja redefinir todas as etapas para o padrão de fábrica?")) {
                     setColumns(DEFAULT_COLUMNS);
                     localStorage.setItem('crm_columns', JSON.stringify(DEFAULT_COLUMNS));
+                    api.post('/deals/stages', { stages: DEFAULT_COLUMNS, funnelName }).catch(() => {});
                     toast.success("Etapas redefinidas para o padrão!");
                   }
                 }}

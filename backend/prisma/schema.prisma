@@ -106,6 +106,8 @@ model Tenant {
   metaPhoneNumberId String?
   whatsappSettings  Json? // { antiBanEnabled: boolean, typingDelayMs: number, messageDelayMs: number }
   emailSettings     Json? // { provider: string, smtpHost?: string, smtpPort?: number, smtpSecure?: boolean, smtpUser?: string, smtpPass?: string, fromName?: string, fromEmail?: string, resendApiKey?: string, isActive?: boolean }
+  crmStages         Json? // Array com a ordem e configuração de colunas do funil CRM
+  crmFunnelName     String? // Nome do funil CRM da empresa
 }
 
 // ------------------------------------------------------

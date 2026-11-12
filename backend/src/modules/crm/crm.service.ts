@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger, Optional } from '@nestjs/common';
 import { PrismaService } from '../../shared/database/prisma.service';
 import { AutomationsService } from '../automations/automations.service';
+import { ChatGateway } from '../chat/chat.gateway';
 
 @Injectable()
 export class CrmService {
@@ -21,8 +22,49 @@ export class CrmService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly automationsService: AutomationsService
+    private readonly automationsService: AutomationsService,
+    @Optional() private readonly chatGateway?: ChatGateway
   ) {}
+
+  async getStages(tenantId: string) {
+    const tenant = await (this.prisma as any).tenant.findUnique({
+      where: { id: tenantId },
+      select: { crmStages: true, crmFunnelName: true },
+    });
+    return {
+      stages: tenant?.crmStages || null,
+      funnelName: tenant?.crmFunnelName || null,
+    };
+  }
+
+  async updateStages(tenantId: string, stages: any[], funnelName?: string) {
+    const dataToUpdate: any = { crmStages: stages };
+    if (funnelName !== undefined && funnelName !== null) {
+      dataToUpdate.crmFunnelName = funnelName;
+    }
+    const updated = await (this.prisma as any).tenant.update({
+      where: { id: tenantId },
+      data: dataToUpdate,
+      select: { crmStages: true, crmFunnelName: true },
+    });
+
+    try {
+      if (this.chatGateway?.server) {
+        this.chatGateway.server.emit('crmStagesUpdated', {
+          tenantId,
+          stages: updated.crmStages,
+          funnelName: updated.crmFunnelName,
+        });
+      }
+    } catch (err: any) {
+      this.logger.warn(`Erro ao emitir crmStagesUpdated via socket: ${err?.message}`);
+    }
+
+    return {
+      stages: updated.crmStages,
+      funnelName: updated.crmFunnelName,
+    };
+  }
 
   async findAllDeals(tenantId: string, filters?: { startDate?: string; endDate?: string; dateType?: 'created' | 'closed'; status?: string }) {
     const cacheKey = `${tenantId}:${filters?.status || 'all'}:${filters?.startDate || ''}:${filters?.endDate || ''}`;
