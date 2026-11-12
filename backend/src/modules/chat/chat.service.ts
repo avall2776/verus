@@ -264,6 +264,9 @@ export class ChatService {
         } else {
           whereClause.departmentId = { in: allowedDeptIds.length > 0 ? allowedDeptIds : ['__NONE__'] };
         }
+      } else {
+        // Se nenhum setor específico foi filtrado, restringe estritamente aos setores autorizados do operador
+        whereClause.departmentId = { in: allowedDeptIds.length > 0 ? allowedDeptIds : ['__NONE__'] };
       }
     } else {
       if (departmentId && departmentId !== 'all') {
@@ -342,11 +345,6 @@ export class ChatService {
         whereClause.status = { in: ['open', 'human_takeover', 'in_progress'] };
         if (!isMaster) {
           whereClause.assignedTo = userId;
-          // Se não houver filtro de setor específico, mostra todas as conversas atribuídas a ele
-          if (!departmentId || departmentId === 'all') {
-            delete whereClause.departmentId;
-            delete whereClause.OR;
-          }
         }
       } else {
         // tab === 'waiting' (Fila de espera compartilhada da região do operador - leads sem atendente atribuído)

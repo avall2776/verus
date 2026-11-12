@@ -237,6 +237,9 @@ let ChatService = ChatService_1 = class ChatService {
                     whereClause.departmentId = { in: allowedDeptIds.length > 0 ? allowedDeptIds : ['__NONE__'] };
                 }
             }
+            else {
+                whereClause.departmentId = { in: allowedDeptIds.length > 0 ? allowedDeptIds : ['__NONE__'] };
+            }
         }
         else {
             if (departmentId && departmentId !== 'all') {
@@ -309,10 +312,6 @@ let ChatService = ChatService_1 = class ChatService {
                 whereClause.status = { in: ['open', 'human_takeover', 'in_progress'] };
                 if (!isMaster) {
                     whereClause.assignedTo = userId;
-                    if (!departmentId || departmentId === 'all') {
-                        delete whereClause.departmentId;
-                        delete whereClause.OR;
-                    }
                 }
             }
             else {
