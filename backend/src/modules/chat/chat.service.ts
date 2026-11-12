@@ -1389,6 +1389,14 @@ export class ChatService {
             audioUrl: mediaUrl,
             instanceId: payload.instanceId,
           });
+        } else if (type === 'sticker' && mediaUrl) {
+          sendRes = await this.messagingService.sendSticker({
+            tenantId,
+            phone: conversation.contact.phone,
+            stickerUrl: mediaUrl,
+            instanceId: payload.instanceId,
+            quoted: quotedEvolutionPayload,
+          });
         } else {
           sendRes = await this.messagingService.sendText({
             tenantId,

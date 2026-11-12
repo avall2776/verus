@@ -78,6 +78,32 @@ export declare class ChatController {
         success: boolean;
         messageId: string;
     }>;
+    editMessage(tenantId: string, conversationId: string, messageId: string, body: {
+        content: string;
+    }): Promise<{
+        success: boolean;
+        message: {
+            isEdited: boolean;
+            id: string;
+            tenantId: string;
+            createdAt: Date;
+            contactId: string;
+            status: string;
+            providerMessageId: string | null;
+            content: string;
+            type: string;
+            mediaUrl: string | null;
+            audioTranscription: string | null;
+            quotedMessage: import("@prisma/client/runtime/library").JsonValue | null;
+            reactions: import("@prisma/client/runtime/library").JsonValue | null;
+            isInternal: boolean;
+            fromMe: boolean;
+            direction: string;
+            senderType: string;
+            scheduledAt: Date | null;
+            conversationId: string;
+        };
+    }>;
     getConversationByContact(tenantId: string, contactId: string): Promise<{
         contact: {
             number: string | null;

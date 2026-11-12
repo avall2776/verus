@@ -213,6 +213,7 @@ export declare class WhatsappService implements OnModuleInit, OnModuleDestroy {
     } | null>;
     saveBase64Audio(tenantId: string, base64Data: string, messageId: string, mimeType?: string): Promise<string | null>;
     deleteMessageForEveryone(tenantId: string, instanceName: string, remoteJid: string, providerMessageId: string): Promise<boolean>;
+    editMessageForEveryone(tenantId: string, instanceName: string, remoteJid: string, providerMessageId: string, newText: string): Promise<boolean>;
     private evoContactsCache;
     getEvolutionInstanceName(tenantId?: string, fallbackInstanceName?: string): Promise<string>;
     fetchProfileFromEvolution(instanceName: string, number: string, tenantId?: string): Promise<{

@@ -15,6 +15,7 @@ let NotificationsModule = class NotificationsModule {
 };
 exports.NotificationsModule = NotificationsModule;
 exports.NotificationsModule = NotificationsModule = __decorate([
+    (0, common_1.Global)(),
     (0, common_1.Module)({
         imports: [database_module_1.DatabaseModule],
         controllers: [notifications_controller_1.NotificationsController],

@@ -26,4 +26,36 @@ export declare class NotificationsService {
         success: boolean;
         notificationId: string;
     }>;
+    getVapidPublicKey(): {
+        publicKey: string;
+    };
+    savePushSubscription(tenantId: string, userId: string, sub: {
+        endpoint: string;
+        keys: {
+            p256dh: string;
+            auth: string;
+        };
+        userAgent?: string;
+    }): Promise<{
+        success: boolean;
+        message: string;
+    } | {
+        success: boolean;
+        message?: undefined;
+    }>;
+    removePushSubscription(endpoint: string): Promise<{
+        success: boolean;
+    }>;
+    sendPushToUser(tenantId: string, userId: string, payload: {
+        title: string;
+        body: string;
+        url?: string;
+        tag?: string;
+    }): Promise<void>;
+    sendPushToDepartment(tenantId: string, departmentId: string, payload: {
+        title: string;
+        body: string;
+        url?: string;
+        tag?: string;
+    }): Promise<void>;
 }

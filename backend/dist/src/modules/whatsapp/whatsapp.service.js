@@ -1177,6 +1177,40 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
             return false;
         }
     }
+    async editMessageForEveryone(tenantId, instanceName, remoteJid, providerMessageId, newText) {
+        try {
+            let cleanName = (instanceName || '').replace(' (WhatsApp Web)', '').trim();
+            if (!cleanName.includes('_')) {
+                cleanName = await this.getEvolutionInstanceName(tenantId, cleanName);
+            }
+            const { serverUrl, apiKey } = this.getEvolutionConfig();
+            const targetJid = remoteJid.includes('@') ? remoteJid : `${remoteJid.replace(/\D/g, '')}@s.whatsapp.net`;
+            const payload = {
+                number: targetJid,
+                text: newText,
+                key: {
+                    remoteJid: targetJid,
+                    fromMe: true,
+                    id: providerMessageId,
+                },
+            };
+            await axios_1.default.put(`${serverUrl}/chat/updateMessage/${cleanName}`, payload, {
+                headers: { apikey: apiKey, 'Content-Type': 'application/json' },
+                timeout: 8000,
+            }).catch(async () => {
+                return await axios_1.default.post(`${serverUrl}/chat/updateMessage/${cleanName}`, payload, {
+                    headers: { apikey: apiKey, 'Content-Type': 'application/json' },
+                    timeout: 8000,
+                });
+            });
+            this.logger.log(`[WhatsApp Editar] Mensagem [${providerMessageId}] editada com sucesso na instância [${cleanName}]`);
+            return true;
+        }
+        catch (err) {
+            this.logger.warn(`Não foi possível editar mensagem no WhatsApp: ${err.message}`);
+            return false;
+        }
+    }
     async getEvolutionInstanceName(tenantId, fallbackInstanceName) {
         if (fallbackInstanceName && !fallbackInstanceName.includes(' (WhatsApp Web)') && fallbackInstanceName.includes('_')) {
             return fallbackInstanceName;

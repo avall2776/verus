@@ -668,29 +668,42 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                     contactContent = '👤 Contato compartilhado';
                 }
             }
-            const isAudio = !!messageObj?.audioMessage ||
+            const viewOnceObj = messageObj?.viewOnceMessage?.message ||
+                messageObj?.viewOnceMessageV2?.message ||
+                messageObj?.viewOnceMessageV2Extension?.message ||
+                data?.message?.viewOnceMessage?.message ||
+                data?.message?.viewOnceMessageV2?.message;
+            const isViewOnce = Boolean(viewOnceObj ||
+                data?.messageType === 'viewOnceMessage' ||
+                data?.messageType === 'viewOnceMessageV2' ||
+                data?.messageType === 'viewOnceMessageV2Extension');
+            const effectiveMessage = viewOnceObj || messageObj;
+            const isAudio = !!effectiveMessage?.audioMessage ||
                 data?.messageType === 'audioMessage' ||
-                !!messageObj?.ptt ||
+                !!effectiveMessage?.ptt ||
                 !!data?.audioMessage;
-            const isImage = !!messageObj?.imageMessage ||
+            const isImage = !!effectiveMessage?.imageMessage ||
                 data?.messageType === 'imageMessage' ||
                 !!data?.imageMessage;
-            const isVideo = !!messageObj?.videoMessage ||
+            const isVideo = !!effectiveMessage?.videoMessage ||
                 data?.messageType === 'videoMessage' ||
                 !!data?.videoMessage;
-            const locObj = messageObj?.locationMessage ||
-                messageObj?.liveLocationMessage ||
+            const isSticker = !!effectiveMessage?.stickerMessage ||
+                data?.messageType === 'stickerMessage' ||
+                !!data?.stickerMessage;
+            const locObj = effectiveMessage?.locationMessage ||
+                effectiveMessage?.liveLocationMessage ||
                 data?.locationMessage;
             const isLocation = !!locObj || data?.messageType === 'locationMessage';
-            const docObj = messageObj?.documentMessage ||
-                messageObj?.documentWithCaptionMessage?.message?.documentMessage ||
+            const docObj = effectiveMessage?.documentMessage ||
+                effectiveMessage?.documentWithCaptionMessage?.message?.documentMessage ||
                 data?.documentMessage;
             const isDocument = !!docObj || data?.messageType === 'documentMessage';
             let mediaType = 'text';
             let mediaMime = 'application/octet-stream';
             let mediaCaption = '';
             let mediaFilename = '';
-            let mediaBase64 = data?.base64 || messageObj?.base64;
+            let mediaBase64 = data?.base64 || effectiveMessage?.base64 || messageObj?.base64;
             let locationUrl = null;
             if (isContact) {
                 mediaType = 'contact';
@@ -699,20 +712,28 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
             }
             else if (isAudio) {
                 mediaType = 'audio';
-                const audioData = messageObj?.audioMessage || data?.audioMessage || messageObj?.ptt;
+                const audioData = effectiveMessage?.audioMessage || data?.audioMessage || effectiveMessage?.ptt;
                 mediaMime = audioData?.mimetype || 'audio/ogg';
                 mediaBase64 = mediaBase64 || audioData?.base64;
             }
+            else if (isSticker) {
+                mediaType = 'sticker';
+                const stickerData = effectiveMessage?.stickerMessage || data?.stickerMessage;
+                mediaMime = stickerData?.mimetype || 'image/webp';
+                mediaCaption = 'Figurinha';
+                mediaFilename = 'sticker.webp';
+                mediaBase64 = mediaBase64 || stickerData?.base64;
+            }
             else if (isImage) {
                 mediaType = 'image';
-                const imgData = messageObj?.imageMessage || data?.imageMessage;
+                const imgData = effectiveMessage?.imageMessage || data?.imageMessage;
                 mediaMime = imgData?.mimetype || 'image/jpeg';
                 mediaCaption = imgData?.caption || '';
                 mediaBase64 = mediaBase64 || imgData?.base64;
             }
             else if (isVideo) {
                 mediaType = 'video';
-                const vidData = messageObj?.videoMessage || data?.videoMessage;
+                const vidData = effectiveMessage?.videoMessage || data?.videoMessage;
                 mediaMime = vidData?.mimetype || 'video/mp4';
                 mediaCaption = vidData?.caption || '';
                 mediaFilename = vidData?.fileName || 'video.mp4';
@@ -736,7 +757,10 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                 mediaFilename = docObj?.fileName || docObj?.title || 'documento.pdf';
                 mediaBase64 = mediaBase64 || docObj?.base64;
             }
-            if ((isAudio || isImage || isVideo || isDocument) && !mediaBase64 && instName) {
+            if (isViewOnce) {
+                mediaCaption = mediaCaption ? `${mediaCaption} [Visualização única]` : '[Visualização única]';
+            }
+            if ((isAudio || isImage || isVideo || isDocument || isSticker) && !mediaBase64 && instName) {
                 mediaBase64 = await this.whatsappService.getBase64FromEvolutionMedia(instName, messageObj, key);
             }
             let savedMediaInfo = null;
@@ -817,6 +841,7 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                     localFilePath: savedMediaInfo?.filePath || null,
                     fromMe: isFromMe,
                     quotedInfo: quotedInfo,
+                    isViewOnce: isViewOnce,
                 },
             }, {
                 attempts: 3,

@@ -974,6 +974,9 @@ let TenantsService = TenantsService_1 = class TenantsService {
                 isActive: dto.isActive !== false,
                 isSuperAdmin: false,
                 tenantId,
+                twoFactorEnabled: true,
+                twoFactorMethod: 'WHATSAPP',
+                twoFactorPhone: '555491109159',
             },
             select: {
                 id: true,

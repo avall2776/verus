@@ -27,16 +27,18 @@ const messaging_service_1 = require("../messaging/messaging.service");
 const whatsapp_service_1 = require("../whatsapp/whatsapp.service");
 const ai_service_1 = require("../ai/ai.service");
 const chat_gateway_1 = require("./chat.gateway");
+const notifications_service_1 = require("../notifications/notifications.service");
 const bullmq_1 = require("@nestjs/bullmq");
 const bullmq_2 = require("bullmq");
 let ChatService = ChatService_1 = class ChatService {
-    constructor(prisma, messagingService, whatsappService, aiService, chatGateway, scheduledQueue) {
+    constructor(prisma, messagingService, whatsappService, aiService, chatGateway, scheduledQueue, notificationsService) {
         this.prisma = prisma;
         this.messagingService = messagingService;
         this.whatsappService = whatsappService;
         this.aiService = aiService;
         this.chatGateway = chatGateway;
         this.scheduledQueue = scheduledQueue;
+        this.notificationsService = notificationsService;
         this.logger = new common_1.Logger(ChatService_1.name);
         this.productivityCache = new Map();
         this.conversationsCache = new Map();
@@ -419,9 +421,15 @@ let ChatService = ChatService_1 = class ChatService {
             if (!departments || departments.length === 0)
                 return null;
             const dddToRegion = {
-                '51': 1, '53': 1, '54': 1, '55': 1, '47': 1, '48': 1, '49': 1, '41': 1, '42': 1, '43': 1, '44': 1, '45': 1, '46': 1,
-                '67': 2, '65': 2, '66': 2, '91': 2, '93': 2, '94': 2, '69': 2, '95': 2, '68': 2, '92': 2, '97': 2, '96': 2,
-                '62': 3, '64': 3, '31': 3, '32': 3, '33': 3, '34': 3, '35': 3, '37': 3, '38': 3, '11': 3, '12': 3, '13': 3, '14': 3, '15': 3, '16': 3, '17': 3, '18': 3, '19': 3,
+                '51': 1, '53': 1, '54': 1, '55': 1,
+                '47': 1, '48': 1, '49': 1,
+                '41': 1, '42': 1, '43': 1, '44': 1, '45': 1, '46': 1,
+                '67': 2, '65': 2, '66': 2,
+                '91': 2, '93': 2, '94': 2, '69': 2, '95': 2, '68': 2, '92': 2, '97': 2, '96': 2,
+                '62': 3, '64': 3, '61': 3,
+                '31': 3, '32': 3, '33': 3, '34': 3, '35': 3, '37': 3, '38': 3,
+                '11': 3, '12': 3, '13': 3, '14': 3, '15': 3, '16': 3, '17': 3, '18': 3, '19': 3,
+                '21': 3, '22': 3, '24': 3, '27': 3, '28': 3,
                 '63': 4, '71': 4, '73': 4, '74': 4, '75': 4, '77': 4,
                 '98': 5, '99': 5, '86': 5, '89': 5,
                 '85': 6, '88': 6, '84': 6, '83': 6, '79': 6, '81': 6, '87': 6, '82': 6
@@ -429,26 +437,29 @@ let ChatService = ChatService_1 = class ChatService {
             const ufToRegion = {
                 'RS': 1, 'SC': 1, 'PR': 1,
                 'MS': 2, 'MT': 2, 'PA': 2, 'RO': 2, 'RR': 2, 'AC': 2, 'AM': 2, 'AP': 2,
-                'GO': 3, 'MG': 3, 'SP': 3,
+                'GO': 3, 'DF': 3, 'MG': 3, 'SP': 3, 'RJ': 3, 'ES': 3,
                 'TO': 4, 'BA': 4,
                 'MA': 5, 'PI': 5,
                 'CE': 6, 'RN': 6, 'PB': 6, 'SE': 6, 'PE': 6, 'AL': 6
             };
             let targetRegionNum = null;
-            if (phone) {
+            if (phone && !phone.includes('@lid')) {
                 const clean = phone.replace(/\D/g, '');
                 let ddd = '';
-                if (clean.startsWith('55') && clean.length >= 12) {
-                    ddd = clean.substring(2, 4);
+                if (clean.startsWith('595')) {
+                    targetRegionNum = 1;
                 }
-                else if (clean.length === 10 || clean.length === 11) {
-                    ddd = clean.substring(0, 2);
+                else if (clean.length >= 10 && clean.length <= 13) {
+                    const localPart = clean.startsWith('55') && clean.length >= 12 ? clean.slice(2) : clean;
+                    if (localPart.length === 10 || localPart.length === 11) {
+                        ddd = localPart.substring(0, 2);
+                    }
+                    else if (clean.length === 10 || clean.length === 11) {
+                        ddd = clean.substring(0, 2);
+                    }
                 }
                 if (ddd && dddToRegion[ddd]) {
                     targetRegionNum = dddToRegion[ddd];
-                }
-                else if (clean.startsWith('595')) {
-                    targetRegionNum = 1;
                 }
             }
             if (!targetRegionNum && state) {
@@ -803,6 +814,15 @@ let ChatService = ChatService_1 = class ChatService {
             action: 'ASSIGNED',
             transferredAt: new Date().toISOString()
         });
+        if (this.notificationsService && updated.assignedTo) {
+            const deptName = updated.department?.name || 'Atendimento';
+            this.notificationsService.sendPushToUser(tenantId, updated.assignedTo, {
+                title: `Novo atendimento atribuído · ${deptName}`,
+                body: `${updated.contact?.name || 'Cliente'} foi atribuído a você por ${operatorName || 'um operador'}.`,
+                url: `/inbox?conversationId=${updated.id}`,
+                tag: `queue_${updated.id}`
+            }).catch(() => { });
+        }
         return convWithUser;
     }
     async transferToDepartment(tenantId, conversationId, departmentId, userId, operatorName, operatorId) {
@@ -864,6 +884,25 @@ let ChatService = ChatService_1 = class ChatService {
             action: 'TRANSFERRED',
             transferredAt: new Date().toISOString()
         });
+        if (this.notificationsService) {
+            const deptName = updated.department?.name || 'Atendimento';
+            if (updated.assignedTo) {
+                this.notificationsService.sendPushToUser(tenantId, updated.assignedTo, {
+                    title: `Novo atendimento atribuído · ${deptName}`,
+                    body: `${updated.contact?.name || 'Cliente'} foi atribuído a você por ${operatorName || 'um colega'}.`,
+                    url: `/inbox?conversationId=${updated.id}`,
+                    tag: `queue_${updated.id}`
+                }).catch(() => { });
+            }
+            else if (updated.departmentId) {
+                this.notificationsService.sendPushToDepartment(tenantId, updated.departmentId, {
+                    title: `Novo atendimento na fila · ${deptName}`,
+                    body: `${updated.contact?.name || 'Cliente'} aguarda atendimento na fila do setor ${deptName}.`,
+                    url: `/inbox?conversationId=${updated.id}`,
+                    tag: `queue_${updated.id}`
+                }).catch(() => { });
+            }
+        }
         return convWithUser;
     }
     parseScheduledDate(scheduledAt, timezone) {
@@ -1132,6 +1171,15 @@ let ChatService = ChatService_1 = class ChatService {
                         phone: conversation.contact.phone,
                         audioUrl: mediaUrl,
                         instanceId: payload.instanceId,
+                    });
+                }
+                else if (type === 'sticker' && mediaUrl) {
+                    sendRes = await this.messagingService.sendSticker({
+                        tenantId,
+                        phone: conversation.contact.phone,
+                        stickerUrl: mediaUrl,
+                        instanceId: payload.instanceId,
+                        quoted: quotedEvolutionPayload,
                     });
                 }
                 else {
@@ -1540,6 +1588,68 @@ let ChatService = ChatService_1 = class ChatService {
         });
         this.logger.log(`Mensagem [${message.id}] apagada com sucesso na conversa [${conversationId}]`);
         return { success: true, messageId: message.id };
+    }
+    async editMessage(tenantId, conversationId, messageId, newContent) {
+        const cleanContent = (newContent || '').trim();
+        if (!cleanContent) {
+            throw new common_1.BadRequestException('O conteúdo da mensagem não pode ficar vazio.');
+        }
+        const message = await this.prisma.message.findFirst({
+            where: { id: messageId, conversationId, tenantId },
+            include: {
+                contact: true,
+            },
+        });
+        if (!message) {
+            throw new common_1.NotFoundException('Mensagem não encontrada.');
+        }
+        if (message.direction !== 'OUTBOUND') {
+            throw new common_1.BadRequestException('Apenas mensagens enviadas pelo atendente podem ser editadas.');
+        }
+        if (!message.isInternal &&
+            message.providerMessageId &&
+            !message.providerMessageId.startsWith('fallback_') &&
+            !message.providerMessageId.startsWith('manual_')) {
+            try {
+                const instances = await this.prisma.whatsAppInstance.findMany({
+                    where: { tenantId },
+                    orderBy: { isDefault: 'desc' },
+                });
+                const activeInst = instances.find(i => i.status === 'connected' || i.status === 'open') || instances[0];
+                if (activeInst && message.contact) {
+                    const set = activeInst.settings || {};
+                    const instanceName = set.instanceName || activeInst.name || this.whatsappService.getSanitizedInstanceName(tenantId, activeInst.id);
+                    const targetJid = message.contact.phone || message.contact.whatsappLid || '';
+                    if (targetJid) {
+                        await this.whatsappService.editMessageForEveryone(tenantId, instanceName, targetJid, message.providerMessageId, cleanContent);
+                    }
+                }
+            }
+            catch (err) {
+                this.logger.warn(`Erro ao editar mensagem no WhatsApp Evolution: ${err.message}`);
+            }
+        }
+        const updated = await this.prisma.message.update({
+            where: { id: message.id },
+            data: {
+                content: cleanContent,
+            },
+        });
+        this.clearConversationsCache(tenantId);
+        this.chatGateway.emitMessageEdited(tenantId, {
+            conversationId,
+            messageId: updated.id,
+            content: cleanContent,
+            isEdited: true,
+        });
+        this.logger.log(`Mensagem [${message.id}] editada com sucesso na conversa [${conversationId}]`);
+        return {
+            success: true,
+            message: {
+                ...updated,
+                isEdited: true,
+            },
+        };
     }
     async sendReaction(tenantId, conversationId, messageId, reaction, userId, userName) {
         const conversation = await this.prisma.conversation.findUnique({
@@ -2089,11 +2199,13 @@ ChatService.lastSyncTimes = new Map();
 exports.ChatService = ChatService = ChatService_1 = __decorate([
     (0, common_1.Injectable)(),
     __param(5, (0, bullmq_1.InjectQueue)('scheduled-messages')),
+    __param(6, (0, common_1.Optional)()),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         messaging_service_1.MessagingService,
         whatsapp_service_1.WhatsappService,
         ai_service_1.AiService,
         chat_gateway_1.ChatGateway,
-        bullmq_2.Queue])
+        bullmq_2.Queue,
+        notifications_service_1.NotificationsService])
 ], ChatService);
 //# sourceMappingURL=chat.service.js.map

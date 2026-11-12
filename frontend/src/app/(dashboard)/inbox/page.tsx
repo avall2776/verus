@@ -12,7 +12,7 @@ import {
   Volume2, Check, CheckCheck, Copy, ExternalLink, Headphones, Download, ZoomIn, Maximize2,
   BellOff, History, UserPlus, FileDown, MessageSquarePlus, PanelRight, Info, Pin,
   Clock, AlertCircle, Workflow, Pencil, ShoppingBag, MapPin, Video, ArrowLeft, Reply, Users, Star, Menu,
-  Archive, PinOff, Heart, Bell, LogOut, Forward
+  Archive, PinOff, Heart, Bell, LogOut, Forward, Sticker
 } from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
 import { useWhatsApp } from "@/components/ui/WhatsAppProvider";
@@ -122,6 +122,7 @@ function InboxContent() {
   const [quickReplyIndex, setQuickReplyIndex] = useState(0);
   const fileInputImageRef = useRef<HTMLInputElement>(null);
   const fileInputDocRef = useRef<HTMLInputElement>(null);
+  const fileInputStickerRef = useRef<HTMLInputElement>(null);
   const [newTagInput, setNewTagInput] = useState('');
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [departments, setDepartments] = useState<any[]>([]);
@@ -1445,6 +1446,15 @@ function InboxContent() {
         description: 'Anexar arquivo PDF, planilha ou proposta comercial',
         iconType: 'file',
         action: () => fileInputDocRef.current?.click()
+      },
+      {
+        id: 'action-figurinha',
+        category: 'action',
+        shortcut: '/figurinha',
+        title: 'Enviar Figurinha (Sticker)',
+        description: 'Enviar imagem como figurinha nativa do WhatsApp',
+        iconType: 'image',
+        action: () => fileInputStickerRef.current?.click()
       },
       {
         id: 'action-audio',
@@ -2885,6 +2895,48 @@ function InboxContent() {
     if (e.target.files && e.target.files[0]) {
       setSelectedFile(e.target.files[0]);
       setShowAttachments(false);
+    }
+  };
+
+  const handleStickerSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0] && activeChat) {
+      const file = e.target.files[0];
+      setShowAttachments(false);
+      const toastId = toast.loading('Enviando figurinha...');
+      try {
+        setIsUploadingMedia(true);
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('folder', 'chat');
+
+        const { data: uploadRes } = await api.post('/media/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+
+        if (uploadRes?.url) {
+          const payload: any = {
+            content: 'Figurinha',
+            isInternal: isInternalMode,
+            type: 'sticker',
+            mediaUrl: uploadRes.url,
+            ...(activeInstance?.id ? { instanceId: activeInstance.id } : {})
+          };
+          if (replyingToMessage) {
+            payload.quotedMessageId = replyingToMessage.id;
+            setReplyingToMessage(null);
+          }
+          const { data } = await api.post(`/conversations/${activeChat}/messages`, payload);
+          setMessages(prev => [...prev, data]);
+          toast.success('Figurinha enviada com sucesso!', { id: toastId });
+        } else {
+          toast.error('Não foi possível carregar a imagem da figurinha.', { id: toastId });
+        }
+      } catch (err: any) {
+        toast.error('Erro ao enviar figurinha para o WhatsApp.', { id: toastId });
+      } finally {
+        setIsUploadingMedia(false);
+        if (e.target) e.target.value = '';
+      }
     }
   };
 
@@ -4799,7 +4851,15 @@ function InboxContent() {
                   const prevDateLabel = prevMsg ? getWhatsAppDateLabel(prevMsg.createdAt) : null;
                   const showDateDivider = i === 0 || currentDateLabel !== prevDateLabel;
 
-                  // Classificação de Tipo para Remover Balão Externo ao Redor de Mídias (Áudio, Documento, Vídeo, Imagem, Localização)
+                  // Classificação de Tipo para Remover Balão Externo ao Redor de Mídias (Áudio, Documento, Vídeo, Imagem, Localização, Figurinha)
+                  const isStickerMsg = Boolean(
+                    msg.type === 'sticker' ||
+                    (!!msg.mediaUrl && /\.(webp)($|\?)/i.test(msg.mediaUrl) && (msg.content === 'Figurinha' || msg.content === 'Sticker' || msg.type === 'sticker'))
+                  );
+                  const isViewOnceMsg = Boolean(
+                    (msg.quotedMessage as any)?.isViewOnce ||
+                    msg.content?.includes('[Visualização única]')
+                  );
                   const isAudioMsg = Boolean(
                     msg.type === 'audio' ||
                     msg.type === 'voice' ||
@@ -4809,9 +4869,9 @@ function InboxContent() {
                   );
                   const isVideoMsg = Boolean(
                     msg.type === 'video' ||
-                    (msg.type !== 'image' && msg.type !== 'document' && !!msg.mediaUrl && /\.(mp4|mov|webm|mkv|avi)($|\?)/i.test(msg.mediaUrl))
+                    (msg.type !== 'image' && msg.type !== 'document' && !isStickerMsg && !!msg.mediaUrl && /\.(mp4|mov|webm|mkv|avi)($|\?)/i.test(msg.mediaUrl))
                   );
-                  const isImageMsg = Boolean(msg.mediaUrl && msg.type === 'image');
+                  const isImageMsg = Boolean(msg.mediaUrl && msg.type === 'image' && !isStickerMsg);
                   const isLocationMsg = Boolean(
                     msg.type === 'location' ||
                     (!!msg.mediaUrl && msg.mediaUrl.includes('maps.google.com')) ||
@@ -4825,7 +4885,8 @@ function InboxContent() {
                       msg.type !== 'audio' &&
                       msg.type !== 'video' &&
                       msg.type !== 'image' &&
-                      msg.type !== 'location')
+                      msg.type !== 'location' &&
+                      !isStickerMsg)
                   );
                   const isContactMsg = Boolean(
                     msg.type === 'contact' ||
@@ -4867,6 +4928,12 @@ function InboxContent() {
                   }
 
                   let cleanedTextContent = msg.content || '';
+                  if (cleanedTextContent.includes('[Visualização única]')) {
+                    cleanedTextContent = cleanedTextContent.replace(/\[Visualização única\]/g, '').trim();
+                  }
+                  if (isStickerMsg) {
+                    cleanedTextContent = '';
+                  }
                   if (isImageMsg) {
                     cleanedTextContent = cleanedTextContent.replace(/\n*📷 \[Análise da Imagem\]:[\s\S]*$/i, '').trim();
                     if (cleanedTextContent === '📷 Foto') cleanedTextContent = '';
@@ -4880,10 +4947,11 @@ function InboxContent() {
                     !isDocMsg &&
                     !isLocationMsg &&
                     !isContactMsg &&
+                    !isStickerMsg &&
                     !cleanedTextContent.startsWith('📍')
                   );
                   const isBorderlessMedia = Boolean(
-                    !msg.isInternal && (isAudioMsg || isDocMsg || isVideoMsg || isImageMsg || isLocationMsg || isContactMsg)
+                    !msg.isInternal && (isAudioMsg || isDocMsg || isVideoMsg || isImageMsg || isLocationMsg || isContactMsg || isStickerMsg)
                   );
 
                   const formattedMsgTime = new Date(msg.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -5110,9 +5178,37 @@ function InboxContent() {
                             </div>
                           )}
 
+                          {/* Renderização de Figurinha (Sticker WhatsApp nativo sem balão) */}
+                          {isStickerMsg && (
+                            <div className="relative group inline-block py-1">
+                              <img 
+                                src={getMediaUrl(msg.mediaUrl, 'image')} 
+                                alt="Figurinha" 
+                                className="w-36 h-36 sm:w-40 sm:h-40 object-contain drop-shadow-md select-none transition-transform hover:scale-105 duration-200"
+                                onError={(e) => {
+                                  const target = e.currentTarget;
+                                  target.style.display = 'none';
+                                  if (target.parentElement) {
+                                    target.parentElement.innerHTML = '<div class="flex items-center gap-2 p-2 rounded-xl bg-slate-100 dark:bg-[#111C35] text-slate-400 text-xs"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg><span>Figurinha indisponível</span></div>';
+                                  }
+                                }}
+                              />
+                              <span className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded-md bg-black/60 text-white text-[10px] inline-flex items-center gap-1 backdrop-blur-xs select-none shadow-xs">
+                                <span>{formattedMsgTime}</span>
+                                {statusTicksNode}
+                              </span>
+                            </div>
+                          )}
+
                           {/* Renderização de Imagens (Sem balão externo ao redor) */}
                           {isImageMsg && (
                             <div className="flex flex-col">
+                              {isViewOnceMsg && (
+                                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 mb-2 self-start shadow-xs select-none">
+                                  <Eye size={13} className="shrink-0" />
+                                  <span>Visualização única</span>
+                                </div>
+                              )}
                               {getMediaUrl(msg.mediaUrl, 'image') ? (
                                 <div 
                                   onClick={() => setLightboxImage({ url: getMediaUrl(msg.mediaUrl, 'image'), title: msg.content || 'Imagem' })}
@@ -5217,6 +5313,12 @@ function InboxContent() {
                           {/* Renderização de Vídeos (Sem balão externo ao redor) */}
                           {isVideoMsg && (
                             <div className="max-w-[320px] sm:max-w-[380px]">
+                              {isViewOnceMsg && (
+                                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 mb-2 self-start shadow-xs select-none">
+                                  <Eye size={13} className="shrink-0" />
+                                  <span>Visualização única</span>
+                                </div>
+                              )}
                               {msg.mediaUrl?.includes('lvdphjhftfjdifnzuazd.supabase.co') ? (
                                 <div className={`${mediaSurfaceClasses} flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-2xl text-xs shadow-sm`}>
                                   <div className="flex items-center gap-2.5 min-w-0">
@@ -5984,6 +6086,10 @@ function InboxContent() {
                                   <label className="flex items-center gap-3 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white rounded-xl cursor-pointer transition-colors">
                                     <FileText size={16} className="text-cyan-600 dark:text-cyan-400" /> Documento
                                     <input ref={fileInputDocRef} type="file" className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx" onChange={handleFileSelect} />
+                                  </label>
+                                  <label className="flex items-center gap-3 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white rounded-xl cursor-pointer transition-colors">
+                                    <Sticker size={16} className="text-emerald-500 dark:text-emerald-400" /> Figurinha
+                                    <input ref={fileInputStickerRef} type="file" className="hidden" accept="image/webp,image/png,image/jpeg" onChange={handleStickerSelect} />
                                   </label>
                                   <button 
                                     type="button"

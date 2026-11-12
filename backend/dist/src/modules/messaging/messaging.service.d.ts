@@ -24,6 +24,13 @@ export interface SendMediaPayload {
     instanceId?: string;
     quoted?: any;
 }
+export interface SendStickerPayload {
+    tenantId: string;
+    phone: string;
+    stickerUrl: string;
+    instanceId?: string;
+    quoted?: any;
+}
 export interface SendReactionPayload {
     tenantId: string;
     phone: string;
@@ -63,6 +70,8 @@ export declare class MessagingService {
     private sendMetaMedia;
     sendAudio(payload: SendAudioPayload): Promise<SendResult>;
     private sendEvolutionAudio;
+    sendSticker(payload: SendStickerPayload): Promise<SendResult>;
+    private sendEvolutionSticker;
     private sendMetaAudio;
     sendReaction(payload: SendReactionPayload): Promise<SendResult>;
 }

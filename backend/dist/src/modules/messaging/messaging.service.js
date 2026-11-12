@@ -599,6 +599,79 @@ let MessagingService = MessagingService_1 = class MessagingService {
             return { success: false, error: errorMsg };
         }
     }
+    async sendSticker(payload) {
+        const cleanPhone = this.sanitizePhone(payload.phone);
+        if (!cleanPhone) {
+            return { success: false, error: 'Telefone inválido' };
+        }
+        const conn = await this.resolveConnection(payload.tenantId, payload.instanceId, cleanPhone);
+        const serverHost = process.env.PUBLIC_BACKEND_URL || 'http://187.127.10.166:3001';
+        let fullStickerUrl = payload.stickerUrl;
+        let base64Sticker = null;
+        if (fullStickerUrl && (fullStickerUrl.startsWith('/api-backend') || fullStickerUrl.startsWith('/'))) {
+            try {
+                const cleanPath = fullStickerUrl.split('?')[0];
+                const basename = path.basename(cleanPath);
+                const candidatePaths = [
+                    path.join(process.cwd(), 'uploads', 'media', basename),
+                    path.join(process.cwd(), 'uploads', basename),
+                ];
+                for (const p of candidatePaths) {
+                    if (fs.existsSync(p)) {
+                        const buf = await fs.promises.readFile(p);
+                        base64Sticker = buf.toString('base64');
+                        break;
+                    }
+                }
+            }
+            catch (err) {
+                this.logger.warn(`Não foi possível carregar buffer local da figurinha: ${err.message}`);
+            }
+            fullStickerUrl = `${serverHost}${fullStickerUrl.replace('/api-backend', '')}`;
+        }
+        if (conn.preferredProvider === 'evolution') {
+            return this.sendEvolutionSticker(conn.evolution, cleanPhone, payload, fullStickerUrl, base64Sticker);
+        }
+        return { success: false, error: 'Provedor configurado não suporta envio de figurinhas.' };
+    }
+    async sendEvolutionSticker(evoConfig, cleanPhone, payload, fullStickerUrl, base64Sticker) {
+        const url = `${evoConfig.url}/message/sendSticker/${evoConfig.instanceName}`;
+        try {
+            const stickerData = base64Sticker || fullStickerUrl;
+            const reqBody = {
+                number: cleanPhone,
+                sticker: stickerData,
+                options: {
+                    delay: 1000,
+                    presence: 'composing',
+                },
+            };
+            if (payload.quoted) {
+                reqBody.quoted = payload.quoted;
+            }
+            const response = await axios_1.default.post(url, reqBody, {
+                headers: {
+                    apikey: evoConfig.apiKey,
+                    'Content-Type': 'application/json',
+                },
+                timeout: 25000,
+            });
+            const messageId = response.data?.key?.id || response.data?.messageId || response.data?.id || `evo_sticker_${Date.now()}`;
+            this.logger.log(`Figurinha enviada com sucesso via Evolution para ${cleanPhone}. ID: ${messageId}`);
+            return {
+                success: true,
+                messageId,
+                provider: 'evolution',
+                raw: response.data,
+            };
+        }
+        catch (err) {
+            const rawError = err.response?.data?.response?.message || err.response?.data?.message || err.message;
+            const errorMsg = typeof rawError === 'object' ? JSON.stringify(rawError) : String(rawError);
+            this.logger.error(`Erro ao enviar figurinha via Evolution API: ${errorMsg}`);
+            return { success: false, error: errorMsg };
+        }
+    }
     async sendMetaAudio(metaConfig, cleanPhone, payload) {
         if (!metaConfig.token || !metaConfig.phoneNumberId) {
             return { success: false, error: 'Credenciais Meta ausentes' };

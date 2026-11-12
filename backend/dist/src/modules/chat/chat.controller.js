@@ -49,6 +49,9 @@ let ChatController = class ChatController {
     async deleteMessage(tenantId, conversationId, messageId) {
         return this.chatService.deleteMessage(tenantId, conversationId, messageId);
     }
+    async editMessage(tenantId, conversationId, messageId, body) {
+        return this.chatService.editMessage(tenantId, conversationId, messageId, body.content);
+    }
     async getConversationByContact(tenantId, contactId) {
         return this.chatService.getConversationByContact(tenantId, contactId);
     }
@@ -237,6 +240,16 @@ __decorate([
     __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", Promise)
 ], ChatController.prototype, "deleteMessage", null);
+__decorate([
+    (0, common_1.Patch)(':id/messages/:messageId'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Param)('messageId')),
+    __param(3, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String, Object]),
+    __metadata("design:returntype", Promise)
+], ChatController.prototype, "editMessage", null);
 __decorate([
     (0, common_1.Get)('contact/:contactId'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),

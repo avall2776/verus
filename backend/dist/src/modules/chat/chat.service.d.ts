@@ -3,6 +3,7 @@ import { MessagingService } from '../messaging/messaging.service';
 import { WhatsappService } from '../whatsapp/whatsapp.service';
 import { AiService } from '../ai/ai.service';
 import { ChatGateway } from './chat.gateway';
+import { NotificationsService } from '../notifications/notifications.service';
 import { Queue } from 'bullmq';
 export declare class ChatService {
     private readonly prisma;
@@ -11,8 +12,9 @@ export declare class ChatService {
     private readonly aiService;
     private readonly chatGateway;
     private readonly scheduledQueue;
+    private readonly notificationsService?;
     private readonly logger;
-    constructor(prisma: PrismaService, messagingService: MessagingService, whatsappService: WhatsappService, aiService: AiService, chatGateway: ChatGateway, scheduledQueue: Queue);
+    constructor(prisma: PrismaService, messagingService: MessagingService, whatsappService: WhatsappService, aiService: AiService, chatGateway: ChatGateway, scheduledQueue: Queue, notificationsService?: NotificationsService);
     getConversationCounts(tenantId: string, userId: string, userRole: string, departmentId?: string): Promise<{
         waiting: number;
         mine: number;
@@ -838,6 +840,30 @@ export declare class ChatService {
     deleteMessage(tenantId: string, conversationId: string, messageId: string): Promise<{
         success: boolean;
         messageId: string;
+    }>;
+    editMessage(tenantId: string, conversationId: string, messageId: string, newContent: string): Promise<{
+        success: boolean;
+        message: {
+            isEdited: boolean;
+            id: string;
+            tenantId: string;
+            createdAt: Date;
+            contactId: string;
+            status: string;
+            providerMessageId: string | null;
+            content: string;
+            type: string;
+            mediaUrl: string | null;
+            audioTranscription: string | null;
+            quotedMessage: import("@prisma/client/runtime/library").JsonValue | null;
+            reactions: import("@prisma/client/runtime/library").JsonValue | null;
+            isInternal: boolean;
+            fromMe: boolean;
+            direction: string;
+            senderType: string;
+            scheduledAt: Date | null;
+            conversationId: string;
+        };
     }>;
     sendReaction(tenantId: string, conversationId: string, messageId: string, reaction: string, userId?: string, userName?: string): Promise<{
         id: string;

@@ -13,10 +13,21 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.NotificationsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../shared/database/prisma.service");
+const webpush = require("web-push");
 let NotificationsService = NotificationsService_1 = class NotificationsService {
     constructor(prisma) {
         this.prisma = prisma;
         this.logger = new common_1.Logger(NotificationsService_1.name);
+        const vapidPublic = process.env.VAPID_PUBLIC_KEY || 'BA-AedYrfNjMbMOUyMpH_kKkj-1LiTu64twLJfX0FZ5VeQwjdqg8qED2SgXdtzDcb7wYOjLFt-frLEJMgeXXgwg';
+        const vapidPrivate = process.env.VAPID_PRIVATE_KEY || 'A8JcINnmpDlxaGylo_kvPrnqs7QVH3FvREN4Gtg14gI';
+        const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:contato@avalmarketing.com.br';
+        try {
+            webpush.setVapidDetails(vapidSubject, vapidPublic, vapidPrivate);
+            this.logger.log('WebPush VAPID inicializado com sucesso.');
+        }
+        catch (e) {
+            this.logger.warn('Falha ao inicializar WebPush VAPID:', e);
+        }
     }
     async getNotifications(tenantId, userId) {
         try {
@@ -252,6 +263,103 @@ let NotificationsService = NotificationsService_1 = class NotificationsService {
             }
         });
         return { success: true, notificationId };
+    }
+    getVapidPublicKey() {
+        const publicKey = process.env.VAPID_PUBLIC_KEY || 'BA-AedYrfNjMbMOUyMpH_kKkj-1LiTu64twLJfX0FZ5VeQwjdqg8qED2SgXdtzDcb7wYOjLFt-frLEJMgeXXgwg';
+        return { publicKey };
+    }
+    async savePushSubscription(tenantId, userId, sub) {
+        if (!sub?.endpoint || !sub?.keys?.p256dh || !sub?.keys?.auth) {
+            return { success: false, message: 'Assinatura inválida' };
+        }
+        await this.prisma.pushSubscription.upsert({
+            where: { endpoint: sub.endpoint },
+            create: {
+                tenantId,
+                userId,
+                endpoint: sub.endpoint,
+                p256dh: sub.keys.p256dh,
+                auth: sub.keys.auth,
+                userAgent: sub.userAgent || null,
+            },
+            update: {
+                tenantId,
+                userId,
+                p256dh: sub.keys.p256dh,
+                auth: sub.keys.auth,
+                userAgent: sub.userAgent || null,
+                updatedAt: new Date(),
+            },
+        });
+        this.logger.log(`[WebPush] Assinatura salva com sucesso para o usuário ${userId}`);
+        return { success: true };
+    }
+    async removePushSubscription(endpoint) {
+        if (!endpoint)
+            return { success: false };
+        try {
+            await this.prisma.pushSubscription.delete({
+                where: { endpoint },
+            });
+        }
+        catch (e) { }
+        return { success: true };
+    }
+    async sendPushToUser(tenantId, userId, payload) {
+        try {
+            const subs = await this.prisma.pushSubscription.findMany({
+                where: { tenantId, userId },
+            });
+            if (!subs || subs.length === 0)
+                return;
+            const pushPayload = JSON.stringify({
+                title: payload.title,
+                body: payload.body,
+                url: payload.url || '/inbox',
+                tag: payload.tag || `push_${Date.now()}`,
+                icon: '/vallor/icon-192x192.png',
+                badge: '/vallor/badge-96x96.png',
+            });
+            await Promise.allSettled(subs.map(async (sub) => {
+                try {
+                    await webpush.sendNotification({
+                        endpoint: sub.endpoint,
+                        keys: {
+                            p256dh: sub.p256dh,
+                            auth: sub.auth,
+                        },
+                    }, pushPayload);
+                }
+                catch (err) {
+                    if (err.statusCode === 410 || err.statusCode === 404) {
+                        await this.prisma.pushSubscription.delete({ where: { id: sub.id } }).catch(() => { });
+                    }
+                }
+            }));
+        }
+        catch (err) {
+            this.logger.warn(`[WebPush] Erro ao disparar push para usuário ${userId}:`, err);
+        }
+    }
+    async sendPushToDepartment(tenantId, departmentId, payload) {
+        try {
+            const userDepts = await this.prisma.userDepartment.findMany({
+                where: { departmentId },
+                select: { userId: true },
+            });
+            const userIds = userDepts.map((ud) => ud.userId);
+            if (!userIds.length) {
+                const admins = await this.prisma.user.findMany({
+                    where: { tenantId, role: { in: ['ADMIN', 'SUPER_ADMIN'] } },
+                    select: { id: true },
+                });
+                userIds.push(...admins.map((a) => a.id));
+            }
+            await Promise.all(userIds.map((uId) => this.sendPushToUser(tenantId, uId, payload)));
+        }
+        catch (err) {
+            this.logger.warn(`[WebPush] Erro ao disparar push para departamento ${departmentId}:`, err);
+        }
     }
 };
 exports.NotificationsService = NotificationsService;

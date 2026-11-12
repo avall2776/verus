@@ -21,6 +21,26 @@ let NotificationsController = class NotificationsController {
     constructor(notificationsService) {
         this.notificationsService = notificationsService;
     }
+    getVapidPublicKey() {
+        return this.notificationsService.getVapidPublicKey();
+    }
+    async savePushSubscription(tenantId, req, body) {
+        const userId = req.user.id || req.user.userId;
+        return this.notificationsService.savePushSubscription(tenantId, userId, body);
+    }
+    async removePushSubscription(body) {
+        return this.notificationsService.removePushSubscription(body?.endpoint);
+    }
+    async testPush(tenantId, req) {
+        const userId = req.user.id || req.user.userId;
+        await this.notificationsService.sendPushToUser(tenantId, userId, {
+            title: 'Novo atendimento na fila · Atendimento',
+            body: 'Joao Batista aguarda atendimento na fila do setor Atendimento.',
+            url: '/inbox',
+            tag: `test_push_${Date.now()}`
+        });
+        return { success: true, message: 'Push de teste disparado via Google FCM' };
+    }
     async getNotifications(tenantId, req) {
         const userId = req.user.id || req.user.userId;
         return this.notificationsService.getNotifications(tenantId, userId);
@@ -35,6 +55,36 @@ let NotificationsController = class NotificationsController {
     }
 };
 exports.NotificationsController = NotificationsController;
+__decorate([
+    (0, common_1.Get)('vapid-public-key'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], NotificationsController.prototype, "getVapidPublicKey", null);
+__decorate([
+    (0, common_1.Post)('push-subscription'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Request)()),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", Promise)
+], NotificationsController.prototype, "savePushSubscription", null);
+__decorate([
+    (0, common_1.Delete)('push-subscription'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], NotificationsController.prototype, "removePushSubscription", null);
+__decorate([
+    (0, common_1.Post)('test-push'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], NotificationsController.prototype, "testPush", null);
 __decorate([
     (0, common_1.Get)(),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),

@@ -25,8 +25,9 @@ const messaging_service_1 = require("../../messaging/messaging.service");
 const automations_service_1 = require("../../automations/automations.service");
 const whatsapp_service_1 = require("../../whatsapp/whatsapp.service");
 const ai_service_1 = require("../../ai/ai.service");
+const notifications_service_1 = require("../../notifications/notifications.service");
 let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullmq_1.WorkerHost {
-    constructor(prisma, aiQueue, chatGateway, messagingService, automationsService, whatsappService, aiService) {
+    constructor(prisma, aiQueue, chatGateway, messagingService, automationsService, whatsappService, aiService, notificationsService) {
         super();
         this.prisma = prisma;
         this.aiQueue = aiQueue;
@@ -35,6 +36,7 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
         this.automationsService = automationsService;
         this.whatsappService = whatsappService;
         this.aiService = aiService;
+        this.notificationsService = notificationsService;
         this.logger = new common_1.Logger(WebhookProcessor_1.name);
     }
     async process(job) {
@@ -114,12 +116,15 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
         const isDocument = message.type === 'document' ||
             !!message.document ||
             evolutionMetadata?.mediaType === 'document';
+        const isSticker = message.type === 'sticker' ||
+            !!message.sticker ||
+            evolutionMetadata?.mediaType === 'sticker';
         let content = message.text?.body || '';
         const isContact = evolutionMetadata?.mediaType === 'contact' ||
             message.type === 'contact' ||
             content.includes('👤 Contato') ||
             content.includes('BEGIN:VCARD');
-        let msgType = isAudio ? 'audio' : isImage ? 'image' : isVideo ? 'video' : isLocation ? 'location' : isDocument ? 'document' : isContact ? 'contact' : (message.type || 'text');
+        let msgType = isAudio ? 'audio' : isImage ? 'image' : isVideo ? 'video' : isLocation ? 'location' : isDocument ? 'document' : isContact ? 'contact' : isSticker ? 'sticker' : (message.type || 'text');
         let mediaUrl = null;
         let audioTranscription = null;
         if (isAudio) {
@@ -208,12 +213,32 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
                 content = caption || filename || '📄 Documento';
             }
         }
+        else if (isSticker) {
+            msgType = 'sticker';
+            const stickerObj = message.sticker;
+            const mediaId = stickerObj?.id;
+            const directUrl = stickerObj?.link || stickerObj?.url || evolutionMetadata?.mediaUrl;
+            const mimeType = stickerObj?.mime_type || evolutionMetadata?.mediaMime || 'image/webp';
+            if (directUrl) {
+                mediaUrl = directUrl;
+            }
+            else if (mediaId) {
+                mediaUrl = await this.whatsappService.downloadAndSaveMedia(tenantId, mediaId, mimeType);
+            }
+            content = 'Figurinha';
+        }
         else if (isContact) {
             msgType = 'contact';
             content = content || evolutionMetadata?.mediaCaption || message.text?.body || '👤 Contato compartilhado';
         }
         else if (!content) {
             content = '[Mídia Recebida]';
+        }
+        const isViewOnceMsg = Boolean(evolutionMetadata?.isViewOnce);
+        if (isViewOnceMsg) {
+            if (!content.includes('[Visualização única]')) {
+                content = content ? `${content} [Visualização única]` : '[Visualização única]';
+            }
         }
         const isLid = remoteJid.includes('@lid') || remoteJid.replace(/\D/g, '').length > 13;
         let realPhone = (evolutionMetadata?.realPhone && evolutionMetadata.realPhone.length >= 10 && evolutionMetadata.realPhone.length <= 13)
@@ -606,6 +631,12 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
                 };
             }
         }
+        if (isViewOnceMsg) {
+            quotedMessageToSave = {
+                ...(quotedMessageToSave || {}),
+                isViewOnce: true,
+            };
+        }
         const savedMessage = await this.prisma.message.create({
             data: {
                 tenantId,
@@ -655,6 +686,27 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
         });
         if (fromMe) {
             return { status: 'success_outbound_synced', messageId: savedMessage.id };
+        }
+        if (this.notificationsService) {
+            const msgContent = savedMessage.content || (savedMessage.mediaUrl ? '📎 Arquivo/Mídia' : 'Nova mensagem recebida');
+            const cleanContent = msgContent.length > 75 ? `${msgContent.substring(0, 75)}...` : msgContent;
+            if (conversation.assignedTo) {
+                this.notificationsService.sendPushToUser(tenantId, conversation.assignedTo, {
+                    title: contact.name || 'Cliente',
+                    body: cleanContent,
+                    url: `/inbox?conversationId=${conversation.id}`,
+                    tag: `msg_${conversation.id}`
+                }).catch(() => { });
+            }
+            else if (conversation.departmentId) {
+                const deptName = conversation.department?.name || 'Atendimento';
+                this.notificationsService.sendPushToDepartment(tenantId, conversation.departmentId, {
+                    title: `Novo atendimento na fila · ${deptName}`,
+                    body: `${contact.name || 'Cliente'} aguarda atendimento: "${cleanContent}"`,
+                    url: `/inbox?conversationId=${conversation.id}`,
+                    tag: `msg_${conversation.id}`
+                }).catch(() => { });
+            }
         }
         const isHumanHandled = conversation.status === 'human_takeover' ||
             conversation.status === 'open' ||
@@ -778,9 +830,15 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             if (!departments || departments.length === 0)
                 return null;
             const dddToRegion = {
-                '51': 1, '53': 1, '54': 1, '55': 1, '47': 1, '48': 1, '49': 1, '41': 1, '42': 1, '43': 1, '44': 1, '45': 1, '46': 1,
-                '67': 2, '65': 2, '66': 2, '91': 2, '93': 2, '94': 2, '69': 2, '95': 2, '68': 2, '92': 2, '97': 2, '96': 2,
-                '62': 3, '64': 3, '31': 3, '32': 3, '33': 3, '34': 3, '35': 3, '37': 3, '38': 3, '11': 3, '12': 3, '13': 3, '14': 3, '15': 3, '16': 3, '17': 3, '18': 3, '19': 3,
+                '51': 1, '53': 1, '54': 1, '55': 1,
+                '47': 1, '48': 1, '49': 1,
+                '41': 1, '42': 1, '43': 1, '44': 1, '45': 1, '46': 1,
+                '67': 2, '65': 2, '66': 2,
+                '91': 2, '93': 2, '94': 2, '69': 2, '95': 2, '68': 2, '92': 2, '97': 2, '96': 2,
+                '62': 3, '64': 3, '61': 3,
+                '31': 3, '32': 3, '33': 3, '34': 3, '35': 3, '37': 3, '38': 3,
+                '11': 3, '12': 3, '13': 3, '14': 3, '15': 3, '16': 3, '17': 3, '18': 3, '19': 3,
+                '21': 3, '22': 3, '24': 3, '27': 3, '28': 3,
                 '63': 4, '71': 4, '73': 4, '74': 4, '75': 4, '77': 4,
                 '98': 5, '99': 5, '86': 5, '89': 5,
                 '85': 6, '88': 6, '84': 6, '83': 6, '79': 6, '81': 6, '87': 6, '82': 6
@@ -788,26 +846,29 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             const ufToRegion = {
                 'RS': 1, 'SC': 1, 'PR': 1,
                 'MS': 2, 'MT': 2, 'PA': 2, 'RO': 2, 'RR': 2, 'AC': 2, 'AM': 2, 'AP': 2,
-                'GO': 3, 'MG': 3, 'SP': 3,
+                'GO': 3, 'DF': 3, 'MG': 3, 'SP': 3, 'RJ': 3, 'ES': 3,
                 'TO': 4, 'BA': 4,
                 'MA': 5, 'PI': 5,
                 'CE': 6, 'RN': 6, 'PB': 6, 'SE': 6, 'PE': 6, 'AL': 6
             };
             let targetRegionNum = null;
-            if (phone) {
+            if (phone && !phone.includes('@lid')) {
                 const clean = phone.replace(/\D/g, '');
                 let ddd = '';
-                if (clean.startsWith('55') && clean.length >= 12) {
-                    ddd = clean.substring(2, 4);
+                if (clean.startsWith('595')) {
+                    targetRegionNum = 1;
                 }
-                else if (clean.length === 10 || clean.length === 11) {
-                    ddd = clean.substring(0, 2);
+                else if (clean.length >= 10 && clean.length <= 13) {
+                    const localPart = clean.startsWith('55') && clean.length >= 12 ? clean.slice(2) : clean;
+                    if (localPart.length === 10 || localPart.length === 11) {
+                        ddd = localPart.substring(0, 2);
+                    }
+                    else if (clean.length === 10 || clean.length === 11) {
+                        ddd = clean.substring(0, 2);
+                    }
                 }
                 if (ddd && dddToRegion[ddd]) {
                     targetRegionNum = dddToRegion[ddd];
-                }
-                else if (clean.startsWith('595')) {
-                    targetRegionNum = 1;
                 }
             }
             if (!targetRegionNum && state) {
@@ -837,12 +898,14 @@ exports.WebhookProcessor = WebhookProcessor;
 exports.WebhookProcessor = WebhookProcessor = WebhookProcessor_1 = __decorate([
     (0, bullmq_1.Processor)('webhook-ingress'),
     __param(1, (0, bullmq_1.InjectQueue)('ai-processing')),
+    __param(7, (0, common_1.Optional)()),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         bullmq_2.Queue,
         chat_gateway_1.ChatGateway,
         messaging_service_1.MessagingService,
         automations_service_1.AutomationsService,
         whatsapp_service_1.WhatsappService,
-        ai_service_1.AiService])
+        ai_service_1.AiService,
+        notifications_service_1.NotificationsService])
 ], WebhookProcessor);
 //# sourceMappingURL=webhook.processor.js.map

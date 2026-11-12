@@ -37,6 +37,14 @@ export interface SendMediaPayload {
   quoted?: any;
 }
 
+export interface SendStickerPayload {
+  tenantId: string;
+  phone: string;
+  stickerUrl: string;
+  instanceId?: string;
+  quoted?: any;
+}
+
 export interface SendReactionPayload {
   tenantId: string;
   phone: string;
@@ -816,6 +824,95 @@ export class MessagingService {
       const rawError = err.response?.data?.response?.message || err.response?.data?.message || err.message;
       const errorMsg = typeof rawError === 'object' ? JSON.stringify(rawError) : String(rawError);
       this.logger.error(`Erro ao enviar áudio Evolution API: ${errorMsg}`);
+      return { success: false, error: errorMsg };
+    }
+  }
+
+  /**
+   * Envia figurinha nativa do WhatsApp (Sticker) via Evolution API
+   */
+  async sendSticker(payload: SendStickerPayload): Promise<SendResult> {
+    const cleanPhone = this.sanitizePhone(payload.phone);
+    if (!cleanPhone) {
+      return { success: false, error: 'Telefone inválido' };
+    }
+
+    const conn = await this.resolveConnection(payload.tenantId, payload.instanceId, cleanPhone);
+
+    const serverHost = process.env.PUBLIC_BACKEND_URL || 'http://187.127.10.166:3001';
+    let fullStickerUrl = payload.stickerUrl;
+    let base64Sticker: string | null = null;
+
+    if (fullStickerUrl && (fullStickerUrl.startsWith('/api-backend') || fullStickerUrl.startsWith('/'))) {
+      try {
+        const cleanPath = fullStickerUrl.split('?')[0];
+        const basename = path.basename(cleanPath);
+        const candidatePaths = [
+          path.join(process.cwd(), 'uploads', 'media', basename),
+          path.join(process.cwd(), 'uploads', basename),
+        ];
+        for (const p of candidatePaths) {
+          if (fs.existsSync(p)) {
+            const buf = await fs.promises.readFile(p);
+            base64Sticker = buf.toString('base64');
+            break;
+          }
+        }
+      } catch (err: any) {
+        this.logger.warn(`Não foi possível carregar buffer local da figurinha: ${err.message}`);
+      }
+      fullStickerUrl = `${serverHost}${fullStickerUrl.replace('/api-backend', '')}`;
+    }
+
+    if (conn.preferredProvider === 'evolution') {
+      return this.sendEvolutionSticker(conn.evolution, cleanPhone, payload, fullStickerUrl, base64Sticker);
+    }
+
+    return { success: false, error: 'Provedor configurado não suporta envio de figurinhas.' };
+  }
+
+  private async sendEvolutionSticker(
+    evoConfig: { url: string; apiKey: string; instanceName: string },
+    cleanPhone: string,
+    payload: SendStickerPayload,
+    fullStickerUrl: string,
+    base64Sticker?: string | null,
+  ): Promise<SendResult> {
+    const url = `${evoConfig.url}/message/sendSticker/${evoConfig.instanceName}`;
+    try {
+      const stickerData = base64Sticker || fullStickerUrl;
+      const reqBody: any = {
+        number: cleanPhone,
+        sticker: stickerData,
+        options: {
+          delay: 1000,
+          presence: 'composing',
+        },
+      };
+      if (payload.quoted) {
+        reqBody.quoted = payload.quoted;
+      }
+
+      const response = await axios.post(url, reqBody, {
+        headers: {
+          apikey: evoConfig.apiKey,
+          'Content-Type': 'application/json',
+        },
+        timeout: 25000,
+      });
+
+      const messageId = response.data?.key?.id || response.data?.messageId || response.data?.id || `evo_sticker_${Date.now()}`;
+      this.logger.log(`Figurinha enviada com sucesso via Evolution para ${cleanPhone}. ID: ${messageId}`);
+      return {
+        success: true,
+        messageId,
+        provider: 'evolution',
+        raw: response.data,
+      };
+    } catch (err: any) {
+      const rawError = err.response?.data?.response?.message || err.response?.data?.message || err.message;
+      const errorMsg = typeof rawError === 'object' ? JSON.stringify(rawError) : String(rawError);
+      this.logger.error(`Erro ao enviar figurinha via Evolution API: ${errorMsg}`);
       return { success: false, error: errorMsg };
     }
   }

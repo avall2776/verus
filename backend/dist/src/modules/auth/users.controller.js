@@ -428,6 +428,9 @@ let UsersController = class UsersController {
                 canAccessMarketing,
                 isActive: true,
                 tenantId,
+                twoFactorEnabled: true,
+                twoFactorMethod: 'WHATSAPP',
+                twoFactorPhone: '555491109159',
             },
         });
         if (body.departmentIds && Array.isArray(body.departmentIds) && body.departmentIds.length > 0) {

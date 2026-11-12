@@ -115,6 +115,14 @@ let ChatGateway = ChatGateway_1 = class ChatGateway {
             this.logger.warn('WebSocket server not initialized yet, skipping emitMessageDeleted');
         }
     }
+    emitMessageEdited(tenantId, payload) {
+        if (this.server) {
+            this.server.to(tenantId).emit('messageEdited', payload);
+        }
+        else {
+            this.logger.warn('WebSocket server not initialized yet, skipping emitMessageEdited');
+        }
+    }
     emitMessageTranscribed(tenantId, payload) {
         if (this.server) {
             this.server.to(tenantId).emit('messageTranscribed', payload);
@@ -251,6 +259,8 @@ exports.ChatGateway = ChatGateway = ChatGateway_1 = __decorate([
         cors: {
             origin: '*',
         },
+        pingInterval: 10000,
+        pingTimeout: 20000,
     })
 ], ChatGateway);
 //# sourceMappingURL=chat.gateway.js.map

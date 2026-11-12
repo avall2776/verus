@@ -13,6 +13,12 @@ export declare class ChatGateway implements OnGatewayConnection, OnGatewayDiscon
         conversationId: string;
         messageId: string;
     }): void;
+    emitMessageEdited(tenantId: string, payload: {
+        conversationId: string;
+        messageId: string;
+        content: string;
+        isEdited?: boolean;
+    }): void;
     emitMessageTranscribed(tenantId: string, payload: {
         messageId: string;
         conversationId: string;
