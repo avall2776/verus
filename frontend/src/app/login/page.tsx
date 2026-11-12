@@ -14,135 +14,153 @@ const BackgroundParticles = () => {
 
   useEffect(() => {
     if (!mountRef.current) return;
+    if (typeof window === "undefined") return;
 
-    const scene = new THREE.Scene();
-    // Fundo azul escuro corporativo #0B1224
-    scene.fog = new THREE.FogExp2(0x0b1224, 0.022);
+    // Em telas mobile (< 768px), não executa Three.js para garantir fluidez total e evitar travamentos no iPhone/Android
+    if (window.innerWidth < 768) return;
 
-    const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 15, 35);
-    camera.lookAt(0, 0, 0);
-
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setClearColor(0x0b1224, 1);
-    mountRef.current.appendChild(renderer.domElement);
-
-    // Textura circular suave para as bolinhas do fundo
-    const createCircleTexture = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = 64;
-      canvas.height = 64;
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        ctx.beginPath();
-        ctx.arc(32, 32, 30, 0, Math.PI * 2);
-        ctx.fillStyle = "#ffffff";
-        ctx.fill();
-      }
-      return new THREE.CanvasTexture(canvas);
-    };
-
-    // Grid de Partículas (Onda com as bolinhas)
-    const SEPARATION = 3, AMOUNTX = 70, AMOUNTY = 70;
-    const numParticles = AMOUNTX * AMOUNTY;
-
-    const positions = new Float32Array(numParticles * 3);
-
-    let i = 0;
-    for (let ix = 0; ix < AMOUNTX; ix++) {
-      for (let iy = 0; iy < AMOUNTY; iy++) {
-        positions[i] = ix * SEPARATION - ((AMOUNTX * SEPARATION) / 2);
-        positions[i + 1] = 0;
-        positions[i + 2] = iy * SEPARATION - ((AMOUNTY * SEPARATION) / 2);
-        i += 3;
-      }
-    }
-
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-
-    // Cor corporativa sóbria em azul corporativo (sem tons neon berrantes)
-    const material = new THREE.PointsMaterial({
-      color: 0x3b82f6,
-      size: 0.26,
-      map: createCircleTexture(),
-      alphaTest: 0.4,
-      transparent: true,
-      opacity: 0.6,
-    });
-
-    const particles = new THREE.Points(geometry, material);
-    scene.add(particles);
-
-    let mouseX = 0;
-    let mouseY = 0;
-    let targetX = 0;
-    let targetY = 0;
-    const windowHalfX = window.innerWidth / 2;
-    const windowHalfY = window.innerHeight / 2;
-
-    const onPointerMove = (e: MouseEvent) => {
-      targetX = (e.clientX - windowHalfX) * 0.07;
-      targetY = (e.clientY - windowHalfY) * 0.07;
-    };
-    window.addEventListener("mousemove", onPointerMove);
-
-    const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    };
-    window.addEventListener("resize", handleResize);
-
-    let count = 0;
+    let scene: THREE.Scene;
+    let camera: THREE.PerspectiveCamera;
+    let renderer: THREE.WebGLRenderer;
+    let particles: THREE.Points;
+    let geometry: THREE.BufferGeometry;
+    let material: THREE.PointsMaterial;
     let animationFrameId: number;
 
-    const animate = () => {
-      animationFrameId = requestAnimationFrame(animate);
+    try {
+      scene = new THREE.Scene();
+      // Fundo azul escuro corporativo #0B1224
+      scene.fog = new THREE.FogExp2(0x0b1224, 0.022);
 
-      mouseX += (targetX - mouseX) * 0.05;
-      mouseY += (targetY - mouseY) * 0.05;
+      camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.set(0, 15, 35);
+      camera.lookAt(0, 0, 0);
 
-      camera.position.x += (mouseX - camera.position.x) * 0.05;
-      camera.position.y += (-mouseY + 12 - camera.position.y) * 0.04;
-      camera.lookAt(scene.position);
+      renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: "low-power" });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setClearColor(0x0b1224, 1);
+      mountRef.current.appendChild(renderer.domElement);
 
-      const posArray = particles.geometry.attributes.position.array as Float32Array;
+      // Textura circular suave para as bolinhas do fundo
+      const createCircleTexture = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = 64;
+        canvas.height = 64;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.beginPath();
+          ctx.arc(32, 32, 30, 0, Math.PI * 2);
+          ctx.fillStyle = "#ffffff";
+          ctx.fill();
+        }
+        return new THREE.CanvasTexture(canvas);
+      };
 
-      let pIdx = 0;
+      // Grid de Partículas (Onda com as bolinhas)
+      const SEPARATION = 3, AMOUNTX = 70, AMOUNTY = 70;
+      const numParticles = AMOUNTX * AMOUNTY;
+
+      const positions = new Float32Array(numParticles * 3);
+
+      let i = 0;
       for (let ix = 0; ix < AMOUNTX; ix++) {
         for (let iy = 0; iy < AMOUNTY; iy++) {
-          posArray[pIdx + 1] =
-            (Math.sin((ix + count) * 0.3) * 2) +
-            (Math.sin((iy + count) * 0.4) * 2);
-          pIdx += 3;
+          positions[i] = ix * SEPARATION - ((AMOUNTX * SEPARATION) / 2);
+          positions[i + 1] = 0;
+          positions[i + 2] = iy * SEPARATION - ((AMOUNTY * SEPARATION) / 2);
+          i += 3;
         }
       }
 
-      particles.geometry.attributes.position.needsUpdate = true;
-      count += 0.035;
+      geometry = new THREE.BufferGeometry();
+      geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
 
-      renderer.render(scene, camera);
-    };
+      // Cor corporativa sóbria em azul corporativo (sem tons neon berrantes)
+      material = new THREE.PointsMaterial({
+        color: 0x3b82f6,
+        size: 0.26,
+        map: createCircleTexture(),
+        alphaTest: 0.4,
+        transparent: true,
+        opacity: 0.6,
+      });
 
-    animate();
+      particles = new THREE.Points(geometry, material);
+      scene.add(particles);
 
-    return () => {
-      window.removeEventListener("mousemove", onPointerMove);
-      window.removeEventListener("resize", handleResize);
-      cancelAnimationFrame(animationFrameId);
-      if (mountRef.current && renderer.domElement) {
-        mountRef.current.removeChild(renderer.domElement);
-      }
-      geometry.dispose();
-      material.dispose();
-      renderer.dispose();
-    };
+      let mouseX = 0;
+      let mouseY = 0;
+      let targetX = 0;
+      let targetY = 0;
+      const windowHalfX = window.innerWidth / 2;
+      const windowHalfY = window.innerHeight / 2;
+
+      const onPointerMove = (e: MouseEvent) => {
+        targetX = (e.clientX - windowHalfX) * 0.07;
+        targetY = (e.clientY - windowHalfY) * 0.07;
+      };
+      window.addEventListener("mousemove", onPointerMove, { passive: true });
+
+      const handleResize = () => {
+        if (!camera || !renderer) return;
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      };
+      window.addEventListener("resize", handleResize, { passive: true });
+
+      let count = 0;
+
+      const animate = () => {
+        animationFrameId = requestAnimationFrame(animate);
+
+        mouseX += (targetX - mouseX) * 0.05;
+        mouseY += (targetY - mouseY) * 0.05;
+
+        camera.position.x += (mouseX - camera.position.x) * 0.05;
+        camera.position.y += (-mouseY + 12 - camera.position.y) * 0.04;
+        camera.lookAt(scene.position);
+
+        const posArray = particles.geometry.attributes.position.array as Float32Array;
+
+        let pIdx = 0;
+        for (let ix = 0; ix < AMOUNTX; ix++) {
+          for (let iy = 0; iy < AMOUNTY; iy++) {
+            posArray[pIdx + 1] =
+              (Math.sin((ix + count) * 0.3) * 2) +
+              (Math.sin((iy + count) * 0.4) * 2);
+            pIdx += 3;
+          }
+        }
+
+        particles.geometry.attributes.position.needsUpdate = true;
+        count += 0.035;
+
+        renderer.render(scene, camera);
+      };
+
+      animate();
+
+      return () => {
+        window.removeEventListener("mousemove", onPointerMove);
+        window.removeEventListener("resize", handleResize);
+        cancelAnimationFrame(animationFrameId);
+        if (mountRef.current && renderer?.domElement) {
+          try {
+            mountRef.current.removeChild(renderer.domElement);
+          } catch (e) {}
+        }
+        geometry?.dispose();
+        material?.dispose();
+        renderer?.dispose();
+      };
+    } catch (err) {
+      console.warn("ThreeJS background fallback:", err);
+    }
   }, []);
 
-  return <div ref={mountRef} className="fixed inset-0 z-0 pointer-events-none" />;
+  return <div ref={mountRef} className="fixed inset-0 z-0 pointer-events-none hidden md:block" />;
 };
 
 // ================= TELA DE LOGIN & PRELOADER DE 15 SEGUNDOS =================
@@ -311,9 +329,9 @@ export default function LoginPage() {
   return (
     <div
       id="versus-login-screen"
-      className="flex min-h-screen items-center justify-center relative overflow-hidden bg-[#0B1224] select-none transition-all duration-700 ease-in-out"
+      className="flex min-h-[100dvh] items-center justify-center relative overflow-y-auto sm:overflow-hidden bg-[#0B1224] transition-all duration-700 ease-in-out px-4 py-8 sm:p-0"
     >
-      {/* Background: Bolinhas do fundo com movimento em Three.js */}
+      {/* Background: Bolinhas do fundo com movimento em Three.js (Apenas Desktop para fluidez máxima no mobile) */}
       <BackgroundParticles />
 
       {/* Brilho volumétrico sutil e corporativo no fundo (sem tons neon berrantes) */}
@@ -325,16 +343,17 @@ export default function LoginPage() {
       {/* ========================================================== */}
       {cardState !== "booting" && (
         <div
-          className={`w-full max-w-[440px] p-6 relative z-10 transition-all duration-700 ease-out ${
+          className={`w-full max-w-[440px] relative z-10 transition-all duration-700 ease-out my-auto ${
             cardState === "evaporating"
               ? "opacity-0 scale-95 filter blur-md pointer-events-none"
               : "opacity-100 scale-100"
           }`}
         >
-          {/* Card de Vidro com transparência sutil e efeito fosco/embaçado (Glassmorphism) sobre as bolinhas */}
+          {/* Card de Vidro com transparência sutil e efeito fosco/embaçado sobre o fundo */}
           <div
-            className="bg-[#0B1224]/50 border border-slate-800/80 rounded-[20px] px-8 py-10 sm:px-10 sm:py-12 shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-2xl flex flex-col relative overflow-hidden group"
+            className="bg-[#0B1224]/85 sm:bg-[#0B1224]/50 border border-slate-800/80 rounded-[20px] px-6 py-8 sm:px-10 sm:py-12 shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-xl sm:backdrop-blur-2xl flex flex-col relative overflow-hidden group"
             onMouseMove={(e) => {
+              if (typeof window !== "undefined" && window.innerWidth < 768) return;
               const rect = e.currentTarget.getBoundingClientRect();
               e.currentTarget.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
               e.currentTarget.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);
@@ -342,13 +361,13 @@ export default function LoginPage() {
           >
             {/* Spotlight suave em azul corporativo discreto (sem tom neon) */}
             <div
-              className="pointer-events-none absolute -inset-px rounded-[20px] opacity-0 transition duration-500 group-hover:opacity-100"
+              className="pointer-events-none absolute -inset-px rounded-[20px] opacity-0 transition duration-500 group-hover:opacity-100 hidden sm:block"
               style={{
                 background: `radial-gradient(400px circle at var(--mouse-x, 0) var(--mouse-y, 0), rgba(59, 130, 246, 0.1), transparent 40%)`,
               }}
             />
 
-            <div className="mb-8 text-center flex flex-col items-center relative z-10">
+            <div className="mb-8 text-center flex flex-col items-center relative z-10 select-none">
               {/* Badge SEJA BEM-VINDO */}
               <div className="bg-slate-800/60 border border-slate-700/60 text-slate-300 text-[0.65rem] uppercase tracking-[0.2em] font-semibold py-1 px-4 rounded-full mb-5">
                 SEJA BEM-VINDO
@@ -370,7 +389,7 @@ export default function LoginPage() {
 
             {isVerifying2FA ? (
               <form onSubmit={handleVerify2FA} className="w-full flex flex-col gap-4 text-left relative z-10 animate-in fade-in zoom-in-95 duration-200">
-                <div className="flex flex-col items-center text-center gap-1 mb-1">
+                <div className="flex flex-col items-center text-center gap-1 mb-1 select-none">
                   <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 mb-1 shadow-[0_0_20px_rgba(59,130,246,0.2)]">
                     <ShieldCheck size={26} strokeWidth={2} />
                   </div>
@@ -394,19 +413,22 @@ export default function LoginPage() {
 
                 {/* Campo do Código OTP de 6 dígitos */}
                 <div className="flex flex-col gap-2">
-                  <label className="text-[0.7rem] font-semibold text-slate-300 uppercase tracking-widest text-center">
+                  <label htmlFor="twoFactorCode" className="text-[0.7rem] font-semibold text-slate-300 uppercase tracking-widest text-center select-none">
                     DIGITE O CÓDIGO DE 6 DÍGITOS
                   </label>
                   <input
+                    id="twoFactorCode"
+                    name="twoFactorCode"
                     type="text"
                     inputMode="numeric"
+                    pattern="[0-9]*"
                     autoComplete="one-time-code"
                     maxLength={6}
                     value={twoFactorCode}
                     onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, ""))}
                     placeholder="••••••"
                     autoFocus
-                    className="w-full bg-slate-950/80 border border-slate-800 text-white rounded-xl px-4 py-3 text-2xl font-mono tracking-[0.5em] text-center outline-none transition-all focus:border-blue-500 focus:shadow-[0_0_20px_rgba(59,130,246,0.3)] login-input-field"
+                    className="w-full bg-slate-950/80 border border-slate-800 text-white rounded-xl px-4 py-3 text-2xl font-mono tracking-[0.5em] text-center outline-none transition-all focus:border-blue-500 focus:shadow-[0_0_20px_rgba(59,130,246,0.3)] login-input-field select-text"
                     required
                   />
                 </div>
@@ -454,7 +476,7 @@ export default function LoginPage() {
                   )}
                 </button>
 
-                <div className="flex items-center justify-between pt-1 text-xs text-slate-400">
+                <div className="flex items-center justify-between pt-1 text-xs text-slate-400 select-none">
                   <button
                     type="button"
                     onClick={() => {
@@ -479,7 +501,7 @@ export default function LoginPage() {
               </form>
             ) : isSelectingTenant ? (
               <div className="w-full flex flex-col gap-4 text-left relative z-10">
-                <div className="text-center mb-1">
+                <div className="text-center mb-1 select-none">
                   <h4 className="text-white font-bold text-base">Selecione a Empresa</h4>
                   <p className="text-slate-400 text-xs mt-1 leading-relaxed">
                     Este e-mail está habilitado em múltiplas empresas. Escolha qual deseja acessar agora:
@@ -529,7 +551,7 @@ export default function LoginPage() {
                     setIsSelectingTenant(false);
                     setError("");
                   }}
-                  className="text-center text-xs text-slate-400 hover:text-white transition-colors mt-2 cursor-pointer"
+                  className="text-center text-xs text-slate-400 hover:text-white transition-colors mt-2 cursor-pointer select-none"
                 >
                   ← Voltar para digitar credenciais
                 </button>
@@ -543,28 +565,41 @@ export default function LoginPage() {
                 )}
 
                 <div className="flex flex-col gap-2">
-                  <label className="text-[0.75rem] font-semibold text-slate-300 uppercase tracking-wider">
+                  <label htmlFor="email" className="text-[0.75rem] font-semibold text-slate-300 uppercase tracking-wider select-none">
                     E-MAIL CORPORATIVO
                   </label>
                   <input
+                    id="email"
+                    name="email"
                     type="email"
+                    inputMode="email"
+                    autoComplete="username email"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-slate-950/60 border border-slate-800 text-white rounded-[10px] px-4 py-[0.85rem] text-[0.95rem] outline-none transition-all focus:border-blue-500 focus:shadow-[0_0_15px_rgba(59,130,246,0.25)] focus:bg-slate-950/90 login-input-field"
+                    className="w-full bg-slate-950/60 border border-slate-800 text-white rounded-[10px] px-4 py-[0.85rem] text-[16px] sm:text-[0.95rem] outline-none transition-all focus:border-blue-500 focus:shadow-[0_0_15px_rgba(59,130,246,0.25)] focus:bg-slate-950/90 login-input-field select-text"
                     required
                   />
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label className="text-[0.75rem] font-semibold text-slate-300 uppercase tracking-wider">
+                  <label htmlFor="password" className="text-[0.75rem] font-semibold text-slate-300 uppercase tracking-wider select-none">
                     CHAVE DE ACESSO / SENHA
                   </label>
                   <div className="relative">
                     <input
+                      id="password"
+                      name="password"
                       type={showPassword ? "text" : "password"}
+                      autoComplete="current-password"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full bg-slate-950/60 border border-slate-800 text-white rounded-[10px] pl-4 pr-12 py-[0.85rem] text-[0.95rem] outline-none transition-all focus:border-blue-500 focus:shadow-[0_0_15px_rgba(59,130,246,0.25)] focus:bg-slate-950/90 login-input-field"
+                      className="w-full bg-slate-950/60 border border-slate-800 text-white rounded-[10px] pl-4 pr-12 py-[0.85rem] text-[16px] sm:text-[0.95rem] outline-none transition-all focus:border-blue-500 focus:shadow-[0_0_15px_rgba(59,130,246,0.25)] focus:bg-slate-950/90 login-input-field select-text"
                       placeholder="••••••••••••"
                       required
                     />
@@ -598,7 +633,7 @@ export default function LoginPage() {
               </form>
             )}
 
-            <div className="flex justify-between items-center text-xs text-slate-500 mt-8 relative z-10">
+            <div className="flex justify-between items-center text-xs text-slate-500 mt-8 relative z-10 select-none">
               <span>Painel Restrito</span>
               <a href="#" className="hover:text-slate-300 transition-colors">
                 Recuperar Chave
@@ -608,12 +643,26 @@ export default function LoginPage() {
         </div>
       )}
 
-      {/* ISOLAÇÃO ABSOLUTA DA TELA DE LOGIN: IMPEDE QUALQUER COR VERDE DO TEMA WHATSAPP */}
+      {/* ISOLAÇÃO ABSOLUTA DA TELA DE LOGIN & BLINDAGEM MOBILE/IOS */}
       <style dangerouslySetInnerHTML={{ __html: `
         #versus-login-screen,
         html.theme-whatsapp #versus-login-screen,
         .theme-whatsapp #versus-login-screen {
           background-color: #0B1224 !important;
+        }
+        #versus-login-screen .login-input-field,
+        #versus-login-screen input {
+          -webkit-user-select: text !important;
+          user-select: text !important;
+          -webkit-touch-callout: default !important;
+          touch-action: manipulation !important;
+          font-size: 16px !important;
+        }
+        @media (min-width: 640px) {
+          #versus-login-screen .login-input-field:not([inputmode="numeric"]),
+          #versus-login-screen input:not([inputmode="numeric"]) {
+            font-size: 0.95rem !important;
+          }
         }
         #versus-login-screen .login-input-field:focus,
         html.theme-whatsapp #versus-login-screen .login-input-field:focus,
@@ -629,6 +678,7 @@ export default function LoginPage() {
           background-image: none !important;
           color: #ffffff !important;
           box-shadow: 0 4px 20px rgba(37, 99, 235, 0.4) !important;
+          touch-action: manipulation !important;
         }
         #versus-login-screen .login-submit-btn:hover,
         html.theme-whatsapp #versus-login-screen .login-submit-btn:hover,
