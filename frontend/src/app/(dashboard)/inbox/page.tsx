@@ -3985,24 +3985,32 @@ function InboxContent() {
                       })()}
                     </div>
 
-                    {/* Lado Direito: Badge Pill de Status (ex: Em atendimento) */}
-                    <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md border shrink-0 whitespace-nowrap leading-none ${
-                      (contact.status === 'open' || contact.status === 'human_takeover')
-                        ? 'border-emerald-300/80 bg-emerald-50/80 text-emerald-700 dark:border-emerald-700/60 dark:bg-emerald-950/40 dark:text-emerald-300'
-                        : contact.status === 'bot_active'
-                        ? 'border-cyan-300/80 bg-cyan-50/80 text-cyan-700 dark:border-cyan-700/60 dark:bg-cyan-950/40 dark:text-cyan-300'
-                        : contact.status === 'waiting'
-                        ? 'border-amber-300/80 bg-amber-50/80 text-amber-700 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-300'
-                        : 'border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-400'
-                    }`}>
-                      {contact.status === 'bot_active' 
-                        ? 'IA Ativa' 
-                        : contact.status === 'waiting' 
-                        ? 'Aguardando' 
-                        : (contact.status === 'resolved' || contact.status === 'closed') 
-                        ? 'Finalizado' 
-                        : 'Em atendimento'}
-                    </span>
+                    {/* Lado Direito: Badge Pill de Status (ex: Na Fila, Em atendimento, Finalizado) */}
+                    {(() => {
+                      const isWaitingInQueue = !contact.assignedTo && contact.status !== 'resolved' && contact.status !== 'closed';
+                      const isResolved = contact.status === 'resolved' || contact.status === 'closed';
+                      const isBot = contact.status === 'bot_active';
+                      
+                      let badgeText = 'Em atendimento';
+                      let badgeStyle = 'border-emerald-300/80 bg-emerald-50/80 text-emerald-700 dark:border-emerald-700/60 dark:bg-emerald-950/40 dark:text-emerald-300';
+
+                      if (isResolved) {
+                        badgeText = 'Finalizado';
+                        badgeStyle = 'border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-400';
+                      } else if (isBot) {
+                        badgeText = 'IA Ativa';
+                        badgeStyle = 'border-cyan-300/80 bg-cyan-50/80 text-cyan-700 dark:border-cyan-700/60 dark:bg-cyan-950/40 dark:text-cyan-300';
+                      } else if (isWaitingInQueue || contact.status === 'waiting') {
+                        badgeText = 'Na Fila';
+                        badgeStyle = 'border-amber-300/80 bg-amber-50/80 text-amber-700 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-300';
+                      }
+
+                      return (
+                        <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md border shrink-0 whitespace-nowrap leading-none ${badgeStyle}`}>
+                          {badgeText}
+                        </span>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
