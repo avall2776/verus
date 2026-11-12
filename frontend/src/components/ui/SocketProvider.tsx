@@ -354,29 +354,80 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (e) {}
   }, [isUnauthenticatedOrPublic]);
 
-  // Disparo de Desktop / Web Push Notifications
-  const dispatchDesktopNotification = useCallback((title: string, options: { body: string; tag?: string; url?: string; channel?: 'whatsapp' | 'instagram' | 'support' | 'system' }) => {
+  // Disparo de Desktop / Mobile OS Push Notifications via Service Worker
+  const dispatchDesktopNotification = useCallback(async (
+    title: string, 
+    options: { 
+      body: string; 
+      tag?: string; 
+      url?: string; 
+      channel?: 'whatsapp' | 'instagram' | 'support' | 'system';
+      icon?: string;
+      badge?: string;
+    }
+  ) => {
     try {
       if (isUnauthenticatedOrPublic()) return;
-      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-        const isMuted = getSoundSettings().masterMute || (options.channel ? isSoundChannelMuted(options.channel) : false);
-        const notif = new Notification(title, {
-          body: options.body,
-          icon: '/vallor/favicon.ico',
-          tag: options.tag || 'versus_notification',
-          silent: isMuted,
-        });
+      if (typeof window === 'undefined') return;
 
-        notif.onclick = () => {
-          window.focus();
-          if (options.url) {
-            router.push(options.url);
+      // Se a permissão não foi concedida ainda, tenta solicitar
+      if ('Notification' in window && Notification.permission === 'default') {
+        try {
+          await Notification.requestPermission();
+        } catch (e) {}
+      }
+
+      if ('Notification' in window && Notification.permission === 'granted') {
+        const isMuted = getSoundSettings().masterMute || (options.channel ? isSoundChannelMuted(options.channel) : false);
+        const iconUrl = options.icon || '/vallor/icon-192x192.png';
+        const badgeUrl = options.badge || '/vallor/icon-192x192.png';
+        const targetUrl = options.url 
+          ? (options.url.startsWith('/vallor') ? options.url : `/vallor${options.url.startsWith('/') ? '' : '/'}${options.url}`) 
+          : '/vallor/inbox';
+
+        const notificationOptions = {
+          body: options.body,
+          icon: iconUrl,
+          badge: badgeUrl,
+          tag: options.tag || `vallor_${Date.now()}`,
+          renotify: true,
+          silent: isMuted,
+          vibrate: isMuted ? undefined : [200, 100, 200],
+          data: {
+            url: targetUrl,
+            dateOfArrival: Date.now()
           }
-          notif.close();
         };
+
+        // PRIORIDADE 1: Service Worker (Obrigatório para Android / iOS PWA / Chrome Mobile)
+        if ('serviceWorker' in navigator) {
+          try {
+            const registration = await navigator.serviceWorker.ready;
+            if (registration && 'showNotification' in registration) {
+              await (registration as any).showNotification(title, notificationOptions);
+              return;
+            }
+          } catch (swErr) {
+            console.warn('[Notification] ServiceWorker showNotification falhou, tentando fallback window.Notification:', swErr);
+          }
+        }
+
+        // PRIORIDADE 2: Fallback padrão para Desktop tradicional
+        try {
+          const notif = new Notification(title, notificationOptions as any);
+          notif.onclick = () => {
+            window.focus();
+            if (options.url) {
+              router.push(options.url);
+            }
+            notif.close();
+          };
+        } catch (notifErr) {
+          console.warn('[Notification] Fallback new Notification falhou:', notifErr);
+        }
       }
     } catch (err) {
-      console.warn('[Desktop Notification] Erro ao disparar:', err);
+      console.warn('[Desktop/Mobile Notification] Erro ao disparar:', err);
     }
   }, [router, isUnauthenticatedOrPublic]);
 
@@ -575,8 +626,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       triggerTabBlink("🚨 [1] TRANSBORDO IA!");
 
       if (document.hidden || !document.hasFocus()) {
-        dispatchDesktopNotification(`🚨 Transbordo: ${data?.contactName || 'Lead Qualificado'}`, {
-          body: data?.reason || "A IA transferiu este lead para você no chat.",
+        const deptName = data?.department?.name || 'Comercial';
+        dispatchDesktopNotification(`Novo atendimento na fila · ${deptName}`, {
+          body: `${data?.contactName || 'Lead Qualificado'} aguarda atendimento na fila do setor ${deptName}: ${data?.reason || data?.summary || "Transferido pela IA."}`,
           tag: `handoff_${data?.conversationId || 'alert'}`,
           url: data?.conversationId ? `/inbox?conversationId=${data.conversationId}` : "/inbox",
           channel: 'system'
@@ -658,13 +710,25 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         }
 
         // -------------------------------------------------------------
-        // 3. NOTIFICAÇÃO DESKTOP / PUSH (Respeita modo foco)
+        // 3. NOTIFICAÇÃO DESKTOP / PUSH (Respeita modo foco e mobile)
         // -------------------------------------------------------------
         if (isVisualNotificationEnabled('whatsapp')) {
-          if (typeof document !== 'undefined' && (document.hidden || !document.hasFocus())) {
+          if (typeof document !== 'undefined' && (document.hidden || !document.hasFocus() || !isCurrentChatOpen)) {
             triggerTabBlink(`💬 [1] ${contactName}`);
-            dispatchDesktopNotification(`Vallor · ${contactName}`, {
-              body: content.length > 80 ? `${content.substring(0, 80)}...` : content || 'Enviou uma nova mensagem',
+
+            const isWaitingInQueue = msg.conversation?.status === 'waiting' || !msg.assignedTo;
+            const deptName = msg.department?.name || msg.conversation?.department?.name || 'Atendimento';
+
+            const notifTitle = isWaitingInQueue && (!msg.assignedTo || msg.isFirstMessage)
+              ? `Novo atendimento na fila · ${deptName}`
+              : contactName;
+
+            const notifBody = isWaitingInQueue && (!msg.assignedTo || msg.isFirstMessage)
+              ? `${contactName} aguarda atendimento na fila do setor ${deptName}`
+              : (content.length > 80 ? `${content.substring(0, 80)}...` : content || 'Enviou uma nova mensagem');
+
+            dispatchDesktopNotification(notifTitle, {
+              body: notifBody,
               tag: `msg_${convId || 'general'}`,
               url: convId ? `/inbox?conversationId=${convId}` : '/inbox',
               channel: channelType
@@ -844,12 +908,12 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       if (isVisualNotificationEnabled('transfers')) {
         if (typeof document !== 'undefined' && (document.hidden || !document.hasFocus())) {
           const pushTitle = isDirectToMe 
-            ? `Vallor · Atendimento Atribuído a Você` 
-            : `Vallor · Atendimento Transferido para ${departmentName}`;
+            ? `Novo atendimento atribuído · ${departmentName || 'Atendimento'}` 
+            : `Novo atendimento na fila · ${departmentName || 'Atendimento'}`;
           
           const pushBody = isDirectToMe
             ? `${contactName} foi atribuído diretamente a você por ${transferredBy}. Clique para assumir.`
-            : `${contactName} foi transferido para ${departmentName} por ${transferredBy}. Clique para assumir.`;
+            : `${contactName} aguarda atendimento na fila do setor ${departmentName || 'Atendimento'}. Clique para assumir.`;
 
           dispatchDesktopNotification(pushTitle, {
             body: pushBody,

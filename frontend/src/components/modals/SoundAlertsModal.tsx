@@ -203,6 +203,68 @@ export default function SoundAlertsModal({ isOpen, onClose }: SoundAlertsModalPr
     }, { push: () => {} });
   };
 
+  const handleTestMobileNotification = async () => {
+    if (typeof window === 'undefined') return;
+
+    if (!('Notification' in window)) {
+      toast.error("Este navegador não suporta notificações de sistema.");
+      return;
+    }
+
+    if (Notification.permission !== 'granted') {
+      try {
+        const perm = await Notification.requestPermission();
+        if (perm !== 'granted') {
+          toast.error("Permissão de notificação negada. Ative nas configurações do navegador/celular.");
+          return;
+        }
+      } catch (e) {
+        toast.error("Erro ao solicitar permissão de notificação.");
+        return;
+      }
+    }
+
+    toast.success("Enviando notificação de teste! Verifique a barra de notificações ou bloqueie a tela.");
+
+    try {
+      if ('vibrate' in navigator) {
+        navigator.vibrate([200, 100, 200]);
+      }
+    } catch (e) {}
+
+    const notifTitle = "Novo atendimento na fila · Atendimento";
+    const notifOptions = {
+      body: "Joao Batista aguarda atendimento na fila do setor Atendimento.",
+      icon: "/vallor/icon-192x192.png",
+      badge: "/vallor/icon-192x192.png",
+      tag: `test_queue_${Date.now()}`,
+      renotify: true,
+      vibrate: [200, 100, 200],
+      data: {
+        url: "/vallor/inbox",
+        dateOfArrival: Date.now()
+      }
+    };
+
+    if ('serviceWorker' in navigator) {
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        if (reg && 'showNotification' in reg) {
+          await (reg as any).showNotification(notifTitle, notifOptions);
+          return;
+        }
+      } catch (swErr) {
+        console.warn('[SW Notification]', swErr);
+      }
+    }
+
+    try {
+      new Notification(notifTitle, notifOptions as any);
+    } catch (e) {
+      console.warn('[Window Notification]', e);
+    }
+  };
+
   const handleSave = () => {
     try {
       saveSoundSettings(settings);
@@ -308,6 +370,42 @@ export default function SoundAlertsModal({ isOpen, onClose }: SoundAlertsModalPr
               >
                 <Play className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400" />
                 Testar Notificação na Tela
+              </button>
+            </div>
+          </div>
+
+          {/* Card: Notificações no Celular / Tela de Bloqueio (PWA) */}
+          <div className="p-4 rounded-xl border bg-indigo-50/50 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-900/60 shadow-xs">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border mt-0.5 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300 border-indigo-300 dark:border-indigo-700/50">
+                  <Smartphone className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">Notificações no Celular & Tela de Bloqueio</span>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full border bg-indigo-100 text-indigo-800 dark:bg-indigo-950/80 dark:text-indigo-300 border-indigo-300 dark:border-indigo-800">
+                      PWA Ativo
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
+                    Exibe notificações na barra de status e tela de bloqueio do celular com som e vibração quando chegam novos atendimentos na fila ou mensagens de clientes.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-2.5 mt-2.5 border-t border-indigo-200/80 dark:border-indigo-900/40 text-[11px]">
+              <span className="text-slate-500 dark:text-slate-400">
+                Toque no botão para disparar um teste real no seu aparelho:
+              </span>
+              <button
+                type="button"
+                onClick={handleTestMobileNotification}
+                className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 shadow-xs"
+              >
+                <Play className="w-2.5 h-2.5" />
+                Testar no Celular
               </button>
             </div>
           </div>
