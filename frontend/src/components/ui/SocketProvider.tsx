@@ -381,8 +381,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         const isMuted = getSoundSettings().masterMute || (options.channel ? isSoundChannelMuted(options.channel) : false);
         const origin = typeof window !== 'undefined' ? window.location.origin : '';
         const defaultIcon = origin ? `${origin}/vallor/icon-192x192.png` : '/vallor/icon-192x192.png';
+        const defaultBadge = origin ? `${origin}/vallor/badge-96x96.png` : '/vallor/badge-96x96.png';
         const iconUrl = options.icon ? (options.icon.startsWith('http') ? options.icon : `${origin}${options.icon.startsWith('/') ? '' : '/'}${options.icon}`) : defaultIcon;
-        const badgeUrl = options.badge ? (options.badge.startsWith('http') ? options.badge : `${origin}${options.badge.startsWith('/') ? '' : '/'}${options.badge}`) : defaultIcon;
+        const badgeUrl = options.badge ? (options.badge.startsWith('http') ? options.badge : `${origin}${options.badge.startsWith('/') ? '' : '/'}${options.badge}`) : defaultBadge;
         const targetUrl = options.url 
           ? (options.url.startsWith('/vallor') ? options.url : `/vallor${options.url.startsWith('/') ? '' : '/'}${options.url}`) 
           : '/vallor/inbox';

@@ -108,7 +108,7 @@ export default function NotificationsPopover() {
 
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
     const iconUrl = origin ? `${origin}/vallor/icon-192x192.png` : '/vallor/icon-192x192.png';
-    const badgeUrl = origin ? `${origin}/vallor/icon-192x192.png` : '/vallor/icon-192x192.png';
+    const badgeUrl = origin ? `${origin}/vallor/badge-96x96.png` : '/vallor/badge-96x96.png';
 
     const notifTitle = "Novo atendimento na fila · Atendimento";
     const notifOptions = {
@@ -471,16 +471,9 @@ export default function NotificationsPopover() {
                         : 'hover:bg-slate-800/40 opacity-80 hover:opacity-100'
                     }`}
                   >
-                    {/* Ícone Oficial do Vallor */}
-                    <div className="w-8 h-8 rounded-full bg-[#080d1a] border border-cyan-500/40 flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform shadow-sm overflow-hidden p-1">
-                      <img 
-                        src="/vallor/icon-192x192.png" 
-                        alt="Vallor" 
-                        className="w-full h-full object-contain"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = '/vallor/Favicon_vallor.svg';
-                        }}
-                      />
+                    {/* Ícone Temático */}
+                    <div className="w-8 h-8 rounded-xl bg-slate-800/90 border border-slate-700/70 flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform shadow-sm">
+                      {getIcon(item.type)}
                     </div>
 
                     {/* Conteúdo da Notificação */}

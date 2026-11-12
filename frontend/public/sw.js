@@ -1,5 +1,5 @@
 // Service Worker do Vallor Omnichannel (PWA)
-const CACHE_NAME = 'vallor-pwa-v3';
+const CACHE_NAME = 'vallor-pwa-v4';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -60,8 +60,9 @@ self.addEventListener('push', (event) => {
 
   const origin = self.location.origin || '';
   const defaultIcon = origin ? `${origin}/vallor/icon-192x192.png` : '/vallor/icon-192x192.png';
+  const defaultBadge = origin ? `${origin}/vallor/badge-96x96.png` : '/vallor/badge-96x96.png';
   const icon = data.icon ? (data.icon.startsWith('http') ? data.icon : `${origin}${data.icon.startsWith('/') ? '' : '/'}${data.icon}`) : defaultIcon;
-  const badge = data.badge ? (data.badge.startsWith('http') ? data.badge : `${origin}${data.badge.startsWith('/') ? '' : '/'}${data.badge}`) : defaultIcon;
+  const badge = data.badge ? (data.badge.startsWith('http') ? data.badge : `${origin}${data.badge.startsWith('/') ? '' : '/'}${data.badge}`) : defaultBadge;
 
   const title = data.title || 'Novo atendimento na fila · Atendimento';
   const options = {
