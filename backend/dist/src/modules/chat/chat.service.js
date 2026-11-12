@@ -89,7 +89,9 @@ let ChatService = ChatService_1 = class ChatService {
                 }
             }
             if (['resolved', 'closed'].includes(status)) {
-                resolved += count;
+                if (isMaster || g.assignedTo === userId) {
+                    resolved += count;
+                }
             }
         }
         return { waiting, mine, resolved, total: waiting + mine + resolved };
@@ -235,11 +237,6 @@ let ChatService = ChatService_1 = class ChatService {
                     whereClause.departmentId = { in: allowedDeptIds.length > 0 ? allowedDeptIds : ['__NONE__'] };
                 }
             }
-            else {
-                if (tab !== 'mine' && !isSearch) {
-                    whereClause.departmentId = { in: allowedDeptIds.length > 0 ? allowedDeptIds : ['__NONE__'] };
-                }
-            }
         }
         else {
             if (departmentId && departmentId !== 'all') {
@@ -287,7 +284,10 @@ let ChatService = ChatService_1 = class ChatService {
                     {
                         OR: [
                             { assignedTo: userId },
-                            { departmentId: { in: allowedDeptIds.length > 0 ? allowedDeptIds : ['__NONE__'] } }
+                            {
+                                assignedTo: null,
+                                departmentId: { in: allowedDeptIds.length > 0 ? allowedDeptIds : ['__NONE__'] }
+                            }
                         ]
                     }
                 ];
@@ -295,9 +295,15 @@ let ChatService = ChatService_1 = class ChatService {
         }
         else {
             if (tab === 'all' || tab === 'unread') {
+                if (!isMaster) {
+                    whereClause.assignedTo = userId;
+                }
             }
             else if (tab === 'resolved') {
                 whereClause.status = { in: ['resolved', 'closed'] };
+                if (!isMaster) {
+                    whereClause.assignedTo = userId;
+                }
             }
             else if (tab === 'mine') {
                 whereClause.status = { in: ['open', 'human_takeover', 'in_progress'] };
@@ -314,6 +320,9 @@ let ChatService = ChatService_1 = class ChatService {
                     { status: { in: ['waiting', 'bot_active'] } },
                     { assignedTo: null, status: { notIn: ['resolved', 'closed'] } }
                 ];
+                if (!isMaster) {
+                    whereClause.departmentId = { in: allowedDeptIds.length > 0 ? allowedDeptIds : ['__NONE__'] };
+                }
             }
         }
         const conversations = await this.prisma.conversation.findMany({

@@ -28,6 +28,16 @@ async function bootstrap() {
     crossOriginResourcePolicy: false,
     contentSecurityPolicy: false,
   }));
+
+  // Desativa cache local HTTP do navegador em respostas de API para evitar respostas obsoletas
+  // e falhas de escrita de cache do Chromium (net::ERR_CACHE_WRITE_FAILURE)
+  app.use((req: any, res: any, next: any) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
+    next();
+  });
   
   // Suporte a payloads maiores (propostas comerciais, logotipos corporativos e anexos)
   app.use(json({ limit: '25mb' }));

@@ -81,7 +81,9 @@ export class ChatService {
         }
       }
       if (['resolved', 'closed'].includes(status)) {
-        resolved += count;
+        if (isMaster || g.assignedTo === userId) {
+          resolved += count;
+        }
       }
     }
 
@@ -262,11 +264,6 @@ export class ChatService {
         } else {
           whereClause.departmentId = { in: allowedDeptIds.length > 0 ? allowedDeptIds : ['__NONE__'] };
         }
-      } else {
-        // Operador sem filtro específico: restringe estritamente às regiões/departamentos permitidos (nunca vaza outras regiões ou setor nulo)
-        if (tab !== 'mine' && !isSearch) {
-          whereClause.departmentId = { in: allowedDeptIds.length > 0 ? allowedDeptIds : ['__NONE__'] };
-        }
       }
     } else {
       if (departmentId && departmentId !== 'all') {
@@ -313,13 +310,16 @@ export class ChatService {
       }
       whereClause.OR = orConditions;
 
-      // Se for operador (AGENT), garante que a busca respeite o acesso aos seus setores ou contatos atribuídos
+      // SEGURANÇA: Se for operador (AGENT), ele só pode encontrar conversas atribuídas a ele OU leads não atendidos da fila dos seus setores
       if (!isMaster) {
         whereClause.AND = [
           {
             OR: [
               { assignedTo: userId },
-              { departmentId: { in: allowedDeptIds.length > 0 ? allowedDeptIds : ['__NONE__'] } }
+              {
+                assignedTo: null,
+                departmentId: { in: allowedDeptIds.length > 0 ? allowedDeptIds : ['__NONE__'] }
+              }
             ]
           }
         ];
@@ -327,25 +327,36 @@ export class ChatService {
     } else {
       // Navegação padrão pelas abas
       if (tab === 'all' || tab === 'unread') {
-        // Filtrado por departamento acima para operadores
+        // SEGURANÇA OPERACIONAL:
+        // Na aba 'Tudo' ou 'Não lidas', um operador (AGENT) NUNCA deve ver conversas de outros operadores.
+        // Ele deve ver apenas as conversas que pertencem a ele!
+        if (!isMaster) {
+          whereClause.assignedTo = userId;
+        }
       } else if (tab === 'resolved') {
         whereClause.status = { in: ['resolved', 'closed'] };
+        if (!isMaster) {
+          whereClause.assignedTo = userId;
+        }
       } else if (tab === 'mine') {
         whereClause.status = { in: ['open', 'human_takeover', 'in_progress'] };
         if (!isMaster) {
           whereClause.assignedTo = userId;
-          // Na aba "Meus", a conversa atribuída ao operador sempre aparece para ele
+          // Se não houver filtro de setor específico, mostra todas as conversas atribuídas a ele
           if (!departmentId || departmentId === 'all') {
             delete whereClause.departmentId;
             delete whereClause.OR;
           }
         }
       } else {
-        // tab === 'waiting' (Fila de espera compartilhada da região do operador ou leads sem atendente atribuído)
+        // tab === 'waiting' (Fila de espera compartilhada da região do operador - leads sem atendente atribuído)
         whereClause.OR = [
           { status: { in: ['waiting', 'bot_active'] } },
           { assignedTo: null, status: { notIn: ['resolved', 'closed'] } }
         ];
+        if (!isMaster) {
+          whereClause.departmentId = { in: allowedDeptIds.length > 0 ? allowedDeptIds : ['__NONE__'] };
+        }
       }
     }
 

@@ -1,5 +1,5 @@
 // Service Worker do Vallor Omnichannel (PWA)
-const CACHE_NAME = 'vallor-pwa-v4';
+const CACHE_NAME = 'vallor-pwa-v5';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -82,10 +82,15 @@ self.addEventListener('push', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Ignora requisições não-GET ou de WebSockets / SSE / API backend
+  // Ignora requisições não-GET ou de WebSockets / SSE / API backend / origens externas
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
-  if (url.pathname.startsWith('/api') || url.pathname.startsWith('/socket.io')) {
+  if (
+    url.origin !== self.location.origin ||
+    url.pathname.includes('/api') ||
+    url.pathname.includes('/api-backend') ||
+    url.pathname.includes('/socket.io')
+  ) {
     return;
   }
 

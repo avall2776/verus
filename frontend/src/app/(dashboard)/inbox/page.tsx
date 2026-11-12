@@ -3031,6 +3031,12 @@ function InboxContent() {
         return false;
       }
 
+      // REGRA CRÍTICA DE SEGURANÇA E PRIVACIDADE OPERACIONAL:
+      // Operador (AGENT) NUNCA pode ver conversas atribuídas a outros operadores em nenhuma circunstância!
+      if (!isMaster && currentUserId && c.assignedTo && c.assignedTo !== currentUserId) {
+        return false;
+      }
+
       if (activeFilterTab === 'unread' && !((c.unread || 0) > 0 || c.hasNewMessage)) return false;
       if (activeFilterTab === 'waiting' && !(c.status === 'waiting' || c.status === 'bot_active' || (!c.assignedTo && c.status !== 'resolved' && c.status !== 'closed'))) return false;
       if (activeFilterTab === 'mine') {
@@ -3042,6 +3048,10 @@ function InboxContent() {
         }
       }
       if (activeFilterTab === 'resolved' && !(c.status === 'resolved' || c.status === 'closed')) return false;
+      if (activeFilterTab === 'all' && !isMaster) {
+        // Na aba Tudo, o operador só visualiza atendimentos que pertencem a ele
+        if (currentUserId && c.assignedTo !== currentUserId) return false;
+      }
       if (onlyUnread && !((c.unread || 0) > 0 || c.hasNewMessage)) return false;
       if (selectedDepartmentFilter && selectedDepartmentFilter !== 'all') {
         if (c.departmentId !== selectedDepartmentFilter) return false;

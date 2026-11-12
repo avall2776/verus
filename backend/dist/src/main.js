@@ -23,6 +23,13 @@ async function bootstrap() {
         crossOriginResourcePolicy: false,
         contentSecurityPolicy: false,
     }));
+    app.use((req, res, next) => {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+        res.setHeader('Surrogate-Control', 'no-store');
+        next();
+    });
     app.use((0, express_1.json)({ limit: '25mb' }));
     app.use((0, express_1.urlencoded)({ limit: '25mb', extended: true }));
     app.useGlobalPipes(new common_1.ValidationPipe({
