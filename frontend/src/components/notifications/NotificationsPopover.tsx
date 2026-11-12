@@ -77,6 +77,68 @@ export default function NotificationsPopover() {
     }
   };
 
+  const handleTestMobileNotification = async () => {
+    if (typeof window === 'undefined') return;
+
+    if (!('Notification' in window)) {
+      toast.error("Este navegador não suporta notificações de sistema.");
+      return;
+    }
+
+    if (Notification.permission !== 'granted') {
+      try {
+        const perm = await Notification.requestPermission();
+        if (perm !== 'granted') {
+          toast.error("Permissão de notificação negada. Ative nas permissões do site.");
+          return;
+        }
+      } catch (e) {
+        toast.error("Erro ao solicitar permissão de notificação.");
+        return;
+      }
+    }
+
+    toast.success("Disparando notificação! Bloqueie a tela ou veja a barra de status do celular.");
+
+    try {
+      if ('vibrate' in navigator) {
+        navigator.vibrate([200, 100, 200]);
+      }
+    } catch (e) {}
+
+    const notifTitle = "Novo atendimento na fila · Atendimento";
+    const notifOptions = {
+      body: "Joao Batista aguarda atendimento na fila do setor Atendimento.",
+      icon: "/vallor/icon-192x192.png",
+      badge: "/vallor/icon-192x192.png",
+      tag: `test_queue_${Date.now()}`,
+      renotify: true,
+      vibrate: [200, 100, 200],
+      data: {
+        url: "/vallor/inbox",
+        dateOfArrival: Date.now()
+      }
+    };
+
+    if ('serviceWorker' in navigator) {
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        if (reg && 'showNotification' in reg) {
+          await (reg as any).showNotification(notifTitle, notifOptions);
+          return;
+        }
+      } catch (swErr) {
+        console.warn('[SW Notification]', swErr);
+      }
+    }
+
+    try {
+      new Notification(notifTitle, notifOptions as any);
+    } catch (e) {
+      console.warn('[Window Notification]', e);
+    }
+  };
+
   const popoverRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
@@ -340,26 +402,35 @@ export default function NotificationsPopover() {
           </div>
 
           {/* Barra de Toque de Notificação Corporativo */}
-          <div className="px-3.5 py-1.5 bg-slate-50 dark:bg-[#080d1a] border-b border-slate-800/80 flex items-center justify-between text-[11px]">
+          <div className="px-3 py-1.5 bg-slate-50 dark:bg-[#080d1a] border-b border-slate-800/80 flex items-center justify-between gap-1 text-[11px] flex-wrap">
             <div className="flex items-center gap-1.5 text-slate-300">
               <Volume2 size={13} className="text-cyan-400 shrink-0" />
               <span className="font-semibold text-slate-400">Som:</span>
               <select
                 value={selectedSound}
                 onChange={(e) => handleSoundChange(e.target.value as 'glass' | 'pop')}
-                className="bg-slate-900 border border-slate-700/80 rounded-lg px-2 py-0.5 text-xs text-white outline-none cursor-pointer hover:border-cyan-500/50 transition-colors"
+                className="bg-slate-900 border border-slate-700/80 rounded-lg px-1.5 py-0.5 text-xs text-white outline-none cursor-pointer hover:border-cyan-500/50 transition-colors"
               >
-                <option value="glass">Glass Chime (Apple/Slack)</option>
-                <option value="pop">Droplet Pop (WhatsApp)</option>
+                <option value="glass">Glass Chime</option>
+                <option value="pop">Droplet Pop</option>
               </select>
             </div>
-            <button
-              onClick={handleTestSound}
-              title="Ouvir toque selecionado"
-              className="text-cyan-400 hover:text-cyan-300 font-bold text-[10px] px-2 py-0.5 rounded bg-cyan-950/60 border border-cyan-800/60 hover:bg-cyan-900/60 transition-all cursor-pointer"
-            >
-              Testar
-            </button>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                onClick={handleTestSound}
+                title="Ouvir toque selecionado"
+                className="text-cyan-400 hover:text-cyan-300 font-bold text-[10px] px-2 py-0.5 rounded bg-cyan-950/60 border border-cyan-800/60 hover:bg-cyan-900/60 transition-all cursor-pointer"
+              >
+                Som
+              </button>
+              <button
+                onClick={handleTestMobileNotification}
+                title="Disparar notificação na tela de bloqueio e barra de status do celular"
+                className="text-white hover:text-white font-bold text-[10px] px-2.5 py-0.5 rounded bg-indigo-600 hover:bg-indigo-500 border border-indigo-500/60 transition-all cursor-pointer shadow-xs"
+              >
+                📱 Testar no Celular
+              </button>
+            </div>
           </div>
 
           {/* Lista de Notificações */}
