@@ -3962,7 +3962,7 @@ function InboxContent() {
                       {/* Atendente • Setor / Região */}
                       {(() => {
                         const operatorName = contact.assignedUser?.name
-                          || (contact.status === 'bot_active' ? `IA ${aiAgentName || 'Sofia'}` : (contact.assignedTo ? 'Atendente' : 'Comercial'));
+                          || (contact.status === 'bot_active' ? `IA ${aiAgentName || 'Sofia'}` : (contact.assignedTo ? 'Atendente' : 'Fila'));
                         
                         const departmentName = resolvedDept?.name
                           || contact.department?.name 
