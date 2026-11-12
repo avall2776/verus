@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { 
   Bell, BellOff, CheckCheck, MessageSquare, LifeBuoy, 
   Target, Sparkles, Check, ChevronRight, ExternalLink,
-  ShieldCheck, AlertCircle, RefreshCw, X, Volume2
+  ShieldCheck, AlertCircle, RefreshCw, X, Volume2, Smartphone
 } from "lucide-react";
 import api from "@/lib/api";
 import { useSocket } from "@/components/ui/SocketProvider";
@@ -106,11 +106,15 @@ export default function NotificationsPopover() {
       }
     } catch (e) {}
 
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const iconUrl = origin ? `${origin}/vallor/icon-192x192.png` : '/vallor/icon-192x192.png';
+    const badgeUrl = origin ? `${origin}/vallor/icon-192x192.png` : '/vallor/icon-192x192.png';
+
     const notifTitle = "Novo atendimento na fila · Atendimento";
     const notifOptions = {
       body: "Joao Batista aguarda atendimento na fila do setor Atendimento.",
-      icon: "/vallor/icon-192x192.png",
-      badge: "/vallor/icon-192x192.png",
+      icon: iconUrl,
+      badge: badgeUrl,
       tag: `test_queue_${Date.now()}`,
       renotify: true,
       vibrate: [200, 100, 200],
@@ -426,9 +430,10 @@ export default function NotificationsPopover() {
               <button
                 onClick={handleTestMobileNotification}
                 title="Disparar notificação na tela de bloqueio e barra de status do celular"
-                className="text-white hover:text-white font-bold text-[10px] px-2.5 py-0.5 rounded bg-indigo-600 hover:bg-indigo-500 border border-indigo-500/60 transition-all cursor-pointer shadow-xs"
+                className="text-white hover:text-white font-bold text-[10px] px-2.5 py-0.5 rounded bg-indigo-600 hover:bg-indigo-500 border border-indigo-500/60 transition-all cursor-pointer shadow-xs flex items-center gap-1"
               >
-                📱 Testar no Celular
+                <Smartphone size={11} className="text-indigo-200" />
+                <span>Testar no Celular</span>
               </button>
             </div>
           </div>
@@ -466,9 +471,16 @@ export default function NotificationsPopover() {
                         : 'hover:bg-slate-800/40 opacity-80 hover:opacity-100'
                     }`}
                   >
-                    {/* Ícone Temático */}
-                    <div className="w-8 h-8 rounded-xl bg-slate-800/90 border border-slate-700/70 flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform shadow-sm">
-                      {getIcon(item.type)}
+                    {/* Ícone Oficial do Vallor */}
+                    <div className="w-8 h-8 rounded-full bg-[#080d1a] border border-cyan-500/40 flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform shadow-sm overflow-hidden p-1">
+                      <img 
+                        src="/vallor/icon-192x192.png" 
+                        alt="Vallor" 
+                        className="w-full h-full object-contain"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/vallor/Favicon_vallor.svg';
+                        }}
+                      />
                     </div>
 
                     {/* Conteúdo da Notificação */}

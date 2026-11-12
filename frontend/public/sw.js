@@ -58,11 +58,16 @@ self.addEventListener('push', (event) => {
     }
   }
 
+  const origin = self.location.origin || '';
+  const defaultIcon = origin ? `${origin}/vallor/icon-192x192.png` : '/vallor/icon-192x192.png';
+  const icon = data.icon ? (data.icon.startsWith('http') ? data.icon : `${origin}${data.icon.startsWith('/') ? '' : '/'}${data.icon}`) : defaultIcon;
+  const badge = data.badge ? (data.badge.startsWith('http') ? data.badge : `${origin}${data.badge.startsWith('/') ? '' : '/'}${data.badge}`) : defaultIcon;
+
   const title = data.title || 'Novo atendimento na fila · Atendimento';
   const options = {
     body: data.body || 'Você recebeu uma nova mensagem ou atendimento na fila.',
-    icon: data.icon || '/vallor/icon-192x192.png',
-    badge: data.badge || '/vallor/icon-192x192.png',
+    icon,
+    badge,
     tag: data.tag || `vallor_${Date.now()}`,
     renotify: true,
     vibrate: [200, 100, 200],
