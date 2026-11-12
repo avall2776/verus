@@ -17,7 +17,10 @@ const common_1 = require("@nestjs/common");
 const platform_express_1 = require("@nestjs/platform-express");
 const path = require("path");
 const fs = require("fs");
+const child_process_1 = require("child_process");
+const util_1 = require("util");
 const storage_service_1 = require("../../shared/storage/storage.service");
+const execFileAsync = (0, util_1.promisify)(child_process_1.execFile);
 const google_drive_helper_1 = require("../../shared/helpers/google-drive.helper");
 let MediaController = class MediaController {
     constructor(storageService) {
@@ -76,24 +79,76 @@ let MediaController = class MediaController {
         res.setHeader('Content-Disposition', `inline; filename="${path.basename(filename)}"`);
         return res.sendFile(filePath);
     }
-    getAudioFile(filename, res) {
+    async getAudioFile(filename, req, res) {
         const safeFilename = path.basename(filename);
-        const candidatePaths = [
-            path.join(process.cwd(), 'uploads', 'audio', safeFilename),
-            path.join(process.cwd(), 'uploads', 'media', safeFilename),
-            path.join(process.cwd(), 'uploads', safeFilename),
+        const requestedExt = path.extname(safeFilename).toLowerCase();
+        const baseNameWithoutExt = path.basename(safeFilename, requestedExt);
+        const userAgent = (req.headers['user-agent'] || '').toLowerCase();
+        const isAppleOrSafari = userAgent.includes('iphone') || userAgent.includes('ipad') || userAgent.includes('ipod') || (userAgent.includes('safari') && !userAgent.includes('chrome'));
+        const searchDirs = [
+            path.join(process.cwd(), 'uploads', 'audio'),
+            path.join(process.cwd(), 'uploads', 'media'),
+            path.join(process.cwd(), 'uploads'),
         ];
-        let filePath = candidatePaths.find(p => fs.existsSync(p));
-        if (!filePath) {
-            const alternativePath = this.storageService.getLocalFilePath(filename);
-            if (alternativePath && fs.existsSync(alternativePath)) {
-                filePath = alternativePath;
+        let filePath;
+        for (const dir of searchDirs) {
+            const candidate = path.join(dir, safeFilename);
+            if (fs.existsSync(candidate)) {
+                filePath = candidate;
+                break;
             }
         }
         if (!filePath) {
+            const alt = this.storageService.getLocalFilePath(filename);
+            if (alt && fs.existsSync(alt))
+                filePath = alt;
+        }
+        const wantsMp3 = requestedExt === '.mp3' || isAppleOrSafari || req.query.format === 'mp3';
+        if (wantsMp3) {
+            const mp3Name = `${baseNameWithoutExt}.mp3`;
+            let mp3Path;
+            for (const dir of searchDirs) {
+                const candidate = path.join(dir, mp3Name);
+                if (fs.existsSync(candidate)) {
+                    mp3Path = candidate;
+                    break;
+                }
+            }
+            if (mp3Path) {
+                filePath = mp3Path;
+            }
+            else {
+                let sourcePath = filePath;
+                if (!sourcePath || !fs.existsSync(sourcePath)) {
+                    for (const ext of ['.ogg', '.opus', '.webm']) {
+                        for (const dir of searchDirs) {
+                            const candidate = path.join(dir, `${baseNameWithoutExt}${ext}`);
+                            if (fs.existsSync(candidate)) {
+                                sourcePath = candidate;
+                                break;
+                            }
+                        }
+                        if (sourcePath)
+                            break;
+                    }
+                }
+                if (sourcePath && fs.existsSync(sourcePath)) {
+                    const targetMp3Path = path.join(path.dirname(sourcePath), `${baseNameWithoutExt}.mp3`);
+                    try {
+                        await execFileAsync('ffmpeg', ['-y', '-i', sourcePath, '-c:a', 'libmp3lame', '-b:a', '64k', targetMp3Path]);
+                        if (fs.existsSync(targetMp3Path)) {
+                            filePath = targetMp3Path;
+                        }
+                    }
+                    catch (transcodeErr) {
+                    }
+                }
+            }
+        }
+        if (!filePath || !fs.existsSync(filePath)) {
             throw new common_1.NotFoundException('Arquivo de áudio não encontrado.');
         }
-        const ext = path.extname(safeFilename).toLowerCase();
+        const currentExt = path.extname(filePath).toLowerCase();
         const mimeTypes = {
             '.ogg': 'audio/ogg',
             '.opus': 'audio/ogg',
@@ -102,7 +157,7 @@ let MediaController = class MediaController {
             '.m4a': 'audio/mp4',
             '.wav': 'audio/wav',
         };
-        const contentType = mimeTypes[ext] || 'audio/ogg';
+        const contentType = mimeTypes[currentExt] || (currentExt === '.mp3' ? 'audio/mpeg' : 'audio/ogg');
         res.setHeader('Content-Type', contentType);
         res.setHeader('Accept-Ranges', 'bytes');
         res.setHeader('Access-Control-Allow-Origin', '*');
@@ -183,10 +238,11 @@ __decorate([
 __decorate([
     (0, common_1.Get)('audio/:filename'),
     __param(0, (0, common_1.Param)('filename')),
-    __param(1, (0, common_1.Res)()),
+    __param(1, (0, common_1.Req)()),
+    __param(2, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", Promise)
 ], MediaController.prototype, "getAudioFile", null);
 __decorate([
     (0, common_1.Get)('drive-stream/:driveId'),

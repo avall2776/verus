@@ -38,8 +38,8 @@ export declare class AgencyMarketingController {
         description: string | null;
         attachments: import("@prisma/client/runtime/library").JsonValue | null;
         priority: string;
-        checklist: import("@prisma/client/runtime/library").JsonValue | null;
         format: string;
+        checklist: import("@prisma/client/runtime/library").JsonValue | null;
         position: number;
         dueDate: Date | null;
         publishDate: Date | null;
@@ -71,8 +71,8 @@ export declare class AgencyMarketingController {
         description: string | null;
         attachments: import("@prisma/client/runtime/library").JsonValue | null;
         priority: string;
-        checklist: import("@prisma/client/runtime/library").JsonValue | null;
         format: string;
+        checklist: import("@prisma/client/runtime/library").JsonValue | null;
         position: number;
         dueDate: Date | null;
         publishDate: Date | null;
@@ -114,8 +114,8 @@ export declare class AgencyMarketingController {
         description: string | null;
         attachments: import("@prisma/client/runtime/library").JsonValue | null;
         priority: string;
-        checklist: import("@prisma/client/runtime/library").JsonValue | null;
         format: string;
+        checklist: import("@prisma/client/runtime/library").JsonValue | null;
         position: number;
         dueDate: Date | null;
         publishDate: Date | null;
@@ -211,8 +211,8 @@ export declare class AgencyMarketingController {
             description: string | null;
             attachments: import("@prisma/client/runtime/library").JsonValue | null;
             priority: string;
-            checklist: import("@prisma/client/runtime/library").JsonValue | null;
             format: string;
+            checklist: import("@prisma/client/runtime/library").JsonValue | null;
             position: number;
             dueDate: Date | null;
             publishDate: Date | null;
@@ -255,8 +255,8 @@ export declare class AgencyMarketingController {
             description: string | null;
             attachments: import("@prisma/client/runtime/library").JsonValue | null;
             priority: string;
-            checklist: import("@prisma/client/runtime/library").JsonValue | null;
             format: string;
+            checklist: import("@prisma/client/runtime/library").JsonValue | null;
             position: number;
             dueDate: Date | null;
             publishDate: Date | null;
@@ -406,8 +406,8 @@ export declare class AgencyMarketingController {
         description: string | null;
         attachments: import("@prisma/client/runtime/library").JsonValue | null;
         priority: string;
-        checklist: import("@prisma/client/runtime/library").JsonValue | null;
         format: string;
+        checklist: import("@prisma/client/runtime/library").JsonValue | null;
         position: number;
         dueDate: Date | null;
         publishDate: Date | null;

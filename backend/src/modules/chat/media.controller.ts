@@ -16,7 +16,11 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { Request, Response } from 'express';
 import * as path from 'path';
 import * as fs from 'fs';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
 import { StorageService } from '../../shared/storage/storage.service';
+
+const execFileAsync = promisify(execFile);
 import { downloadDriveFileBuffer } from '../../shared/helpers/google-drive.helper';
 
 @Controller('media')
@@ -104,30 +108,87 @@ export class MediaController {
 
   /**
    * Mantido para total retrocompatibilidade com áudios gerados pelo PTT
+   * Suporta entrega em .ogg ou conversão transparente on-the-fly para .mp3 com cache em disco
    */
   @Get('audio/:filename')
-  getAudioFile(@Param('filename') filename: string, @Res() res: Response) {
+  async getAudioFile(@Param('filename') filename: string, @Req() req: Request, @Res() res: Response) {
     const safeFilename = path.basename(filename);
-    const candidatePaths = [
-      path.join(process.cwd(), 'uploads', 'audio', safeFilename),
-      path.join(process.cwd(), 'uploads', 'media', safeFilename),
-      path.join(process.cwd(), 'uploads', safeFilename),
+    const requestedExt = path.extname(safeFilename).toLowerCase();
+    const baseNameWithoutExt = path.basename(safeFilename, requestedExt);
+
+    const userAgent = (req.headers['user-agent'] || '').toLowerCase();
+    const isAppleOrSafari = userAgent.includes('iphone') || userAgent.includes('ipad') || userAgent.includes('ipod') || (userAgent.includes('safari') && !userAgent.includes('chrome'));
+
+    const searchDirs = [
+      path.join(process.cwd(), 'uploads', 'audio'),
+      path.join(process.cwd(), 'uploads', 'media'),
+      path.join(process.cwd(), 'uploads'),
     ];
 
-    let filePath = candidatePaths.find(p => fs.existsSync(p));
-
-    if (!filePath) {
-      const alternativePath = this.storageService.getLocalFilePath(filename);
-      if (alternativePath && fs.existsSync(alternativePath)) {
-        filePath = alternativePath;
+    let filePath: string | undefined;
+    for (const dir of searchDirs) {
+      const candidate = path.join(dir, safeFilename);
+      if (fs.existsSync(candidate)) {
+        filePath = candidate;
+        break;
       }
     }
 
     if (!filePath) {
+      const alt = this.storageService.getLocalFilePath(filename);
+      if (alt && fs.existsSync(alt)) filePath = alt;
+    }
+
+    // Se o cliente pediu .mp3 (ou é iPhone/Safari pedindo .ogg), garante versão MP3 compatível com 100% dos dispositivos
+    const wantsMp3 = requestedExt === '.mp3' || isAppleOrSafari || req.query.format === 'mp3';
+    if (wantsMp3) {
+      const mp3Name = `${baseNameWithoutExt}.mp3`;
+      let mp3Path: string | undefined;
+      for (const dir of searchDirs) {
+        const candidate = path.join(dir, mp3Name);
+        if (fs.existsSync(candidate)) {
+          mp3Path = candidate;
+          break;
+        }
+      }
+
+      if (mp3Path) {
+        filePath = mp3Path;
+      } else {
+        // Encontra a fonte original (.ogg ou .opus ou .webm) para transcodificar
+        let sourcePath = filePath;
+        if (!sourcePath || !fs.existsSync(sourcePath)) {
+          for (const ext of ['.ogg', '.opus', '.webm']) {
+            for (const dir of searchDirs) {
+              const candidate = path.join(dir, `${baseNameWithoutExt}${ext}`);
+              if (fs.existsSync(candidate)) {
+                sourcePath = candidate;
+                break;
+              }
+            }
+            if (sourcePath) break;
+          }
+        }
+
+        if (sourcePath && fs.existsSync(sourcePath)) {
+          const targetMp3Path = path.join(path.dirname(sourcePath), `${baseNameWithoutExt}.mp3`);
+          try {
+            await execFileAsync('ffmpeg', ['-y', '-i', sourcePath, '-c:a', 'libmp3lame', '-b:a', '64k', targetMp3Path]);
+            if (fs.existsSync(targetMp3Path)) {
+              filePath = targetMp3Path;
+            }
+          } catch (transcodeErr: any) {
+            // Se falhar a transcodificação, mantém o filePath original
+          }
+        }
+      }
+    }
+
+    if (!filePath || !fs.existsSync(filePath)) {
       throw new NotFoundException('Arquivo de áudio não encontrado.');
     }
 
-    const ext = path.extname(safeFilename).toLowerCase();
+    const currentExt = path.extname(filePath).toLowerCase();
     const mimeTypes: Record<string, string> = {
       '.ogg': 'audio/ogg',
       '.opus': 'audio/ogg',
@@ -136,7 +197,7 @@ export class MediaController {
       '.m4a': 'audio/mp4',
       '.wav': 'audio/wav',
     };
-    const contentType = mimeTypes[ext] || 'audio/ogg';
+    const contentType = mimeTypes[currentExt] || (currentExt === '.mp3' ? 'audio/mpeg' : 'audio/ogg');
 
     res.setHeader('Content-Type', contentType);
     res.setHeader('Accept-Ranges', 'bytes');

@@ -32,8 +32,16 @@ export const VersusAudioPlayer: React.FC<VersusAudioPlayerProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isSeeking, setIsSeeking] = useState(false);
 
-  const isLeroBrokenUrl = !src || src.includes('lvdphjhftfjdifnzuazd.supabase.co');
+  const isLeroBrokenUrl = Boolean(src && src.includes('lvdphjhftfjdifnzuazd.supabase.co'));
   const [hasError, setHasError] = useState(isLeroBrokenUrl);
+
+  useEffect(() => {
+    const isBroken = Boolean(src && src.includes('lvdphjhftfjdifnzuazd.supabase.co'));
+    setHasError(isBroken);
+    if (!isBroken) {
+      setIsLoading(false);
+    }
+  }, [src]);
 
   // Formata segundos para MM:SS
   const formatTime = (seconds: number) => {
@@ -45,19 +53,19 @@ export const VersusAudioPlayer: React.FC<VersusAudioPlayerProps> = ({
 
   // Alterna Play / Pause
   const togglePlay = useCallback(() => {
-    if (!audioRef.current || hasError) return;
+    if (!audioRef.current || isLeroBrokenUrl) return;
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
       audioRef.current.play().then(() => {
         setIsPlaying(true);
+        setHasError(false);
       }).catch((err) => {
         console.warn('[Audio Player] Erro ao reproduzir:', err);
-        setHasError(true);
       });
     }
-  }, [isPlaying, hasError]);
+  }, [isPlaying, isLeroBrokenUrl]);
 
   // Alterna velocidade (1x -> 1.5x -> 2x -> 1x)
   const cyclePlaybackRate = useCallback(() => {
@@ -158,9 +166,11 @@ export const VersusAudioPlayer: React.FC<VersusAudioPlayerProps> = ({
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onEnded={handleEnded}
-        onError={() => {
+        onError={(e) => {
           setIsLoading(false);
-          setHasError(true);
+          if (isLeroBrokenUrl) {
+            setHasError(true);
+          }
         }}
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
@@ -169,7 +179,7 @@ export const VersusAudioPlayer: React.FC<VersusAudioPlayerProps> = ({
           setIsLoading(false);
           setHasError(false);
         }}
-        className="hidden"
+        style={{ position: 'absolute', width: 0, height: 0, opacity: 0, pointerEvents: 'none' }}
       />
 
       {/* Linha Principal de Controles */}
