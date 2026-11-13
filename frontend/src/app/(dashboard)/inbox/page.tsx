@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense, useRef, useMemo, useCallback } from "react";
+import React, { useState, useEffect, Suspense, useRef, useMemo, useCallback, useTransition } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { 
@@ -110,7 +110,7 @@ function InboxContent() {
   const [messages, setMessages] = useState<any[]>([]);
   const [inputText, setInputText] = useState("");
   const [draftText, setDraftText] = useState("");
-  const [, startTransition] = React.useTransition();
+  const [, startTransition] = useTransition();
   const [searchQuery, setSearchQuery] = useState("");
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'waiting' | 'mine' | 'resolved'>('waiting');

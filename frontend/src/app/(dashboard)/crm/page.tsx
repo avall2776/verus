@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo, useRef, Suspense } from "react";
+import React, { useEffect, useState, useMemo, useRef, Suspense, useCallback, memo, Fragment } from "react";
 import { createPortal } from "react-dom";
 import { 
   Search, Filter, MoreHorizontal, MessageCircle, Copy, FileText, 
@@ -583,7 +583,7 @@ function CrmContent() {
 
   const [dealAction, setDealAction] = useState<'task' | 'event' | 'chat' | null>(null);
 
-  const handleOpenDeal = React.useCallback(async (dealOrId: string | any, action: 'task' | 'event' | 'chat' | null = null) => {
+  const handleOpenDeal = useCallback(async (dealOrId: string | any, action: 'task' | 'event' | 'chat' | null = null) => {
     setDealAction(action);
     let target = typeof dealOrId === 'object' && dealOrId !== null ? dealOrId : null;
     const dealId = target ? target.id : dealOrId;
@@ -621,7 +621,7 @@ function CrmContent() {
     }
   }, [deals, loading]);
 
-  const handleCloseDealModal = React.useCallback(() => {
+  const handleCloseDealModal = useCallback(() => {
     setSelectedDeal(null);
     setDealAction(null);
     if (typeof window !== 'undefined') {
@@ -1744,7 +1744,7 @@ function CrmContent() {
               const borderTopClass = isWhatsApp ? 'border-t-[#00A884]' : neutralMode ? 'border-t-gray-600' : col.borderColor;
 
               return (
-                <React.Fragment key={col.id}>
+                <Fragment key={col.id}>
                   <div 
                     className={`flex flex-col h-full shrink-0 transition-all duration-300 ease-out`}
                     style={{ width: isCollapsed ? '60px' : `${columnWidths[col.id] || 300}px` }}
@@ -1873,7 +1873,7 @@ function CrmContent() {
                       className="w-1.5 hover:w-2 shrink-0 h-full rounded-full hover:bg-slate-700/50 cursor-col-resize transition-all self-stretch"
                     />
                   )}
-                </React.Fragment>
+                </Fragment>
               );
             })}
           </div>
@@ -2301,7 +2301,7 @@ function CrmContent() {
                     });
 
                     return (
-                      <React.Fragment key={`table-stage-${col.id}`}>
+                      <Fragment key={`table-stage-${col.id}`}>
                         {/* Linha Cabeçalho do Estágio com Montante Total Acumulado */}
                         <tr 
                           onClick={() => toggleTableStage(col.id)}
@@ -2518,7 +2518,7 @@ function CrmContent() {
                             </tr>
                           );
                         })}
-                      </React.Fragment>
+                      </Fragment>
                     );
                   })}
                 </tbody>
@@ -3994,7 +3994,7 @@ function CrmContent() {
 }
 
 // Componente Isolado do Card no Kanban (Memoizado com comparação cirúrgica para 0ms de lag)
-const DealCard = React.memo(function DealCard({ deal, index, col, onOpenDeal }: any) {
+const DealCard = memo(function DealCard({ deal, index, col, onOpenDeal }: any) {
   const router = useRouter();
   const { isWhatsApp } = useTheme();
   const [isExpanded, setIsExpanded] = useState(false);
