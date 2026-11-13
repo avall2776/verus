@@ -1,4 +1,34 @@
 const { Client } = require('ssh2');
+const os = require('os');
+const path = require('path');
+const fs = require('fs');
+
+function getSshConfig() {
+  const keyPath = path.join(os.homedir(), '.ssh', 'id_ed25519');
+  const config = {
+    host: '187.127.10.166',
+    port: 22,
+    username: 'root',
+    readyTimeout: 60000,
+    keepaliveInterval: 10000,
+  };
+
+  if (fs.existsSync(keyPath)) {
+    console.log(`Utilizando autenticação segura por Chave Privada SSH: ${keyPath}`);
+    config.privateKey = fs.readFileSync(keyPath, 'utf8');
+  } else if (process.env.VPS_PRIVATE_KEY) {
+    console.log('Utilizando chave privada da variável de ambiente VPS_PRIVATE_KEY');
+    config.privateKey = process.env.VPS_PRIVATE_KEY;
+  } else if (process.env.VPS_PASSWORD) {
+    console.log('Utilizando senha da variável de ambiente VPS_PASSWORD');
+    config.password = process.env.VPS_PASSWORD;
+  } else {
+    console.log('Chave privada não encontrada em ~/.ssh/id_ed25519. Usando fallback de senha.');
+    config.password = 'g@nY;+OWkSdi5.3D';
+  }
+
+  return config;
+}
 
 function runDeploy() {
   const conn = new Client();
@@ -34,14 +64,7 @@ function runDeploy() {
     });
   }).on('error', (err) => {
     console.error('Erro de conexão SSH:', err.message);
-  }).connect({
-    host: '187.127.10.166',
-    port: 22,
-    username: 'root',
-    password: 'g@nY;+OWkSdi5.3D',
-    readyTimeout: 60000,
-    keepaliveInterval: 10000
-  });
+  }).connect(getSshConfig());
 }
 
 runDeploy();
