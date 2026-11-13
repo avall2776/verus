@@ -429,19 +429,15 @@ function InboxContent() {
 
   const fetchRecentStoryViewers = useCallback(async () => {
     try {
-      const [phonesRes, postsRes, viewersRes] = await Promise.all([
+      const [phonesRes, postsRes] = await Promise.all([
         api.get('/crm/radar-stories/recent-viewers-phones').catch(() => ({ data: null })),
         api.get('/crm/radar-stories/active-posts').catch(() => ({ data: null })),
-        api.get('/crm/radar-stories/viewers').catch(() => ({ data: null })),
       ]);
       if (phonesRes.data?.phones && Array.isArray(phonesRes.data.phones)) {
         setRecentStoryViewers(new Set(phonesRes.data.phones.map((p: string) => p.replace(/\D/g, ''))));
       }
       if (Array.isArray(postsRes.data)) {
         setActiveLineStories(postsRes.data);
-      }
-      if (Array.isArray(viewersRes.data)) {
-        setStoryViewersList(viewersRes.data);
       }
     } catch (err) {
       // silencioso
@@ -1925,7 +1921,8 @@ function InboxContent() {
         };
       });
     },
-    staleTime: 4000,
+    staleTime: 30000,
+    placeholderData: (previousData: any) => previousData,
     refetchInterval: isConnected ? 30000 : 5000, // Sincronização em tempo real quando socket desconectado (fallback Vercel)
     retry: false,
     refetchOnWindowFocus: false, // Otimização de performance: evita requisição pesada ao alternar janelas

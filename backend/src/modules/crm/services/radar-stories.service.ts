@@ -1724,8 +1724,10 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
           postByTitle.get(String(view.storyTitle));
 
         const effectiveMediaType = matchedPost?.mediaType || (String(view.mediaUrl || '').includes('video') ? 'video' : 'image');
-        const resolvedMedia = matchedPost?.mediaUrl || (view.mediaUrl && !String(view.mediaUrl).includes('172.16.0.1') ? view.mediaUrl : undefined);
-        const resolvedThumb = matchedPost?.thumbnailUrl || (effectiveMediaType === 'image' ? resolvedMedia : undefined);
+        const rawResolvedMedia = matchedPost?.mediaUrl || (view.mediaUrl && !String(view.mediaUrl).includes('172.16.0.1') ? view.mediaUrl : undefined);
+        const resolvedMedia = rawResolvedMedia && rawResolvedMedia.length < 2000 ? rawResolvedMedia : undefined;
+        const rawResolvedThumb = matchedPost?.thumbnailUrl || (effectiveMediaType === 'image' ? rawResolvedMedia : undefined);
+        const resolvedThumb = rawResolvedThumb && rawResolvedThumb.length < 2000 ? rawResolvedThumb : undefined;
 
         list.push({
           id: view.id,
