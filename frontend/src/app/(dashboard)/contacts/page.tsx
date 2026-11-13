@@ -122,7 +122,13 @@ export default function ContactsPage() {
       api.get('/departments').catch(() => ({ data: [] })),
     ])
       .then(([res, deptRes]) => {
-        setContacts(res.data);
+        const raw = Array.isArray(res.data) ? res.data : [];
+        const safe = raw.map((c: any) => ({
+          ...c,
+          tags: Array.isArray(c?.tags) ? c.tags : [],
+          deals: Array.isArray(c?.deals) ? c.deals : [],
+        }));
+        setContacts(safe);
         if (Array.isArray(deptRes.data)) {
           setDepartments(deptRes.data);
         }
@@ -228,14 +234,15 @@ export default function ContactsPage() {
     let faturadosCount = 0;
 
     contacts.forEach(c => {
-      const isClient = c.isClient || c.statusCategory === 'won' || c.tags.includes('Cliente');
+      const cTags = Array.isArray(c?.tags) ? c.tags : [];
+      const isClient = c.isClient || c.statusCategory === 'won' || cTags.includes('Cliente');
       if (isClient) {
         clientsCount++;
         totalWonRevenue += Number(c.totalWonValue) || 0;
-      } else if (c.statusCategory === 'hot' || c.tags.includes('Quente')) {
+      } else if (c.statusCategory === 'hot' || cTags.includes('Quente')) {
         hotCount++;
         totalPipelineValue += Number(c.totalActivePipelineValue) || 0;
-      } else if (c.statusCategory === 'cold' || c.tags.includes('Frio')) {
+      } else if (c.statusCategory === 'cold' || cTags.includes('Frio')) {
         coldCount++;
       }
 
@@ -278,11 +285,12 @@ export default function ContactsPage() {
 
       // 2. Filtro de Status / Carteira
       if (statusFilter !== "all") {
+        const cTags = Array.isArray(contact?.tags) ? contact.tags : [];
         if (statusFilter === "won") {
-          const isClient = contact.isClient || contact.statusCategory === 'won' || contact.tags.includes('Cliente');
+          const isClient = contact.isClient || contact.statusCategory === 'won' || cTags.includes('Cliente');
           if (!isClient) return false;
         } else if (statusFilter === "hot") {
-          const isHot = !contact.isClient && (contact.statusCategory === 'hot' || contact.tags.includes('Quente'));
+          const isHot = !contact.isClient && (contact.statusCategory === 'hot' || cTags.includes('Quente'));
           if (!isHot) return false;
         } else if (statusFilter === "cold") {
           const isCold = !contact.isClient && contact.statusCategory === 'cold';
@@ -290,9 +298,9 @@ export default function ContactsPage() {
         } else if (statusFilter === "lost") {
           if (contact.statusCategory !== 'lost') return false;
         } else if (statusFilter === "collaborator") {
-          if (!contact.tags.some(t => t.toLowerCase() === 'colaborador')) return false;
+          if (!cTags.some(t => String(t || '').toLowerCase() === 'colaborador')) return false;
         } else if (statusFilter === "partner") {
-          if (!contact.tags.some(t => t.toLowerCase() === 'parceiro')) return false;
+          if (!cTags.some(t => String(t || '').toLowerCase() === 'parceiro')) return false;
         }
       }
 
@@ -342,16 +350,16 @@ export default function ContactsPage() {
   // Obter contatos para o público selecionado
   const getContactsForAudience = (type: MetaAudienceType) => {
     if (type === 'lookalike_vip') {
-      return contacts.filter(c => c.isClient || c.statusCategory === 'won' || c.tags.includes('Cliente'));
+      return contacts.filter(c => c.isClient || c.statusCategory === 'won' || (c.tags || []).includes('Cliente'));
     }
     if (type === 'remarketing_hot') {
-      return contacts.filter(c => !c.isClient && (c.statusCategory === 'hot' || c.tags.includes('Quente')));
+      return contacts.filter(c => !c.isClient && (c.statusCategory === 'hot' || (c.tags || []).includes('Quente')));
     }
     if (type === 'reactivation_cold') {
       return contacts.filter(c => !c.isClient && c.statusCategory === 'cold');
     }
     if (type === 'exclusion_clients') {
-      return contacts.filter(c => c.isClient || c.statusCategory === 'won' || c.tags.includes('Cliente'));
+      return contacts.filter(c => c.isClient || c.statusCategory === 'won' || (c.tags || []).includes('Cliente'));
     }
     return contacts;
   };
@@ -481,7 +489,7 @@ export default function ContactsPage() {
       const csvRows = [headers.join(";")];
 
       filteredContacts.forEach(c => {
-        const isClient = c.isClient || c.tags.includes('Cliente');
+        const isClient = c.isClient || (c.tags || []).includes('Cliente');
         const statusLabel = isClient 
           ? "Cliente (Comprou)" 
           : c.statusCategory === 'hot' 
@@ -533,12 +541,13 @@ export default function ContactsPage() {
   const handleAddTag = async () => {
     if (!selectedContact || !newTagInput.trim()) return;
     const tagToAdd = newTagInput.trim();
-    if (selectedContact.tags.includes(tagToAdd)) {
+    const currentTags = Array.isArray(selectedContact.tags) ? selectedContact.tags : [];
+    if (currentTags.includes(tagToAdd)) {
       toast.error("Esta tag já existe no contato.");
       return;
     }
 
-    const updatedTags = [...selectedContact.tags, tagToAdd];
+    const updatedTags = [...currentTags, tagToAdd];
     setSavingTags(true);
     try {
       await api.patch(`/contacts/${selectedContact.id}/tags`, { tags: updatedTags });
@@ -557,7 +566,8 @@ export default function ContactsPage() {
 
   const handleRemoveTag = async (tagToRemove: string) => {
     if (!selectedContact) return;
-    const updatedTags = selectedContact.tags.filter(t => t !== tagToRemove);
+    const currentTags = Array.isArray(selectedContact.tags) ? selectedContact.tags : [];
+    const updatedTags = currentTags.filter(t => t !== tagToRemove);
     setSavingTags(true);
     try {
       await api.patch(`/contacts/${selectedContact.id}/tags`, { tags: updatedTags });
@@ -981,10 +991,11 @@ export default function ContactsPage() {
                 </tr>
               ) : (
                 paginatedContacts.map((contact) => {
-                  const isClient = contact.isClient || contact.tags.includes('Cliente');
-                  const isHot = !isClient && (contact.statusCategory === 'hot' || contact.tags.includes('Quente'));
-                  const isCollaborator = contact.tags.some(t => t.toLowerCase() === 'colaborador');
-                  const isPartner = contact.tags.some(t => t.toLowerCase() === 'parceiro');
+                  const cTags = Array.isArray(contact.tags) ? contact.tags : [];
+                  const isClient = contact.isClient || cTags.includes('Cliente');
+                  const isHot = !isClient && (contact.statusCategory === 'hot' || cTags.includes('Quente'));
+                  const isCollaborator = cTags.some(t => (t || '').toLowerCase() === 'colaborador');
+                  const isPartner = cTags.some(t => (t || '').toLowerCase() === 'parceiro');
                   const isLost = contact.statusCategory === 'lost';
                   const displaySource = cleanSourceBrand(contact.source);
 
@@ -1477,7 +1488,7 @@ export default function ContactsPage() {
               <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between gap-3 sm:gap-4 bg-slate-50/50 dark:bg-slate-900/50">
                 <div className="flex items-start gap-3 flex-1 min-w-0">
                   <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-black text-base shrink-0 border mt-0.5 ${
-                    selectedContact.isClient || selectedContact.tags.includes('Cliente')
+                    selectedContact.isClient || (selectedContact.tags || []).includes('Cliente')
                       ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700"
                       : "bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700"
                   }`}>
@@ -1492,11 +1503,11 @@ export default function ContactsPage() {
                       <h2 className="text-sm sm:text-base font-black tracking-tight text-slate-900 dark:text-white leading-snug break-words">
                         {selectedContact.name}
                       </h2>
-                      {selectedContact.isClient || selectedContact.tags.includes('Cliente') ? (
+                      {selectedContact.isClient || (selectedContact.tags || []).includes('Cliente') ? (
                         <span className="self-start inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/40 whitespace-nowrap shrink-0">
                           <ShieldCheck size={11} /> CLIENTE CONFIRMADO
                         </span>
-                      ) : selectedContact.statusCategory === 'hot' || selectedContact.tags.includes('Quente') ? (
+                      ) : selectedContact.statusCategory === 'hot' || (selectedContact.tags || []).includes('Quente') ? (
                         <span className="self-start inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-500/40 whitespace-nowrap shrink-0">
                           <Zap size={11} /> EM NEGOCIAÇÃO
                         </span>
@@ -1525,7 +1536,7 @@ export default function ContactsPage() {
               {/* Corpo com Scroll */}
               <div className="p-4 sm:p-5 overflow-y-auto space-y-4 sm:space-y-5 flex-1">
                 {/* 1. Banner Inteligente de Status */}
-                {(selectedContact.isClient || selectedContact.tags.includes('Cliente')) ? (
+                {(selectedContact.isClient || (selectedContact.tags || []).includes('Cliente')) ? (
                   <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/60 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
@@ -1545,7 +1556,7 @@ export default function ContactsPage() {
                       </div>
                     ) : null}
                   </div>
-                ) : (selectedContact.statusCategory === 'hot' || selectedContact.tags.includes('Quente')) ? (
+                ) : (selectedContact.statusCategory === 'hot' || (selectedContact.tags || []).includes('Quente')) ? (
                   <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/60 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
@@ -1824,7 +1835,7 @@ E-MAIL: ${selectedContact.email || ''}`;
                   </h3>
                   
                   <div className="flex flex-wrap gap-1.5">
-                    {selectedContact.tags.map(t => (
+                    {(selectedContact.tags || []).map(t => (
                       <span 
                         key={t}
                         className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700"

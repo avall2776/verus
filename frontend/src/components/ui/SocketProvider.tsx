@@ -527,7 +527,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     // Conexão resiliente: detecta se está rodando na Vercel (onde WebSocket upgrade via rewrite falha)
     const isVercelHost = typeof window !== 'undefined' && 
-      (window.location.hostname.endsWith('vercel.app'));
+      (window.location.hostname.endsWith('vercel.app') || window.location.hostname.includes('avallmarketing.com.br') || window.location.hostname.includes('avalmarketing.com.br'));
     const isLocalhost = typeof window !== 'undefined' && 
       (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
     const directSocketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || (isLocalhost ? 'http://localhost:3001' : undefined);
@@ -535,7 +535,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     const socketInstance = io(directSocketUrl || undefined, {
       autoConnect: true,
       transports: isVercelHost && !directSocketUrl ? ['polling'] : ['websocket', 'polling'],
-      upgrade: true,
+      upgrade: !(isVercelHost && !directSocketUrl),
       reconnectionAttempts: Infinity,
       reconnectionDelay: 2000,
       reconnectionDelayMax: 5000,
