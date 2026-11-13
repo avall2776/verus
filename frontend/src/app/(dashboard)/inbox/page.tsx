@@ -109,6 +109,8 @@ function InboxContent() {
   });
   const [messages, setMessages] = useState<any[]>([]);
   const [inputText, setInputText] = useState("");
+  const [draftText, setDraftText] = useState("");
+  const [, startTransition] = React.useTransition();
   const [searchQuery, setSearchQuery] = useState("");
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'waiting' | 'mine' | 'resolved'>('waiting');
@@ -1055,15 +1057,17 @@ function InboxContent() {
 
   const handleInsertFormatting = (prefix: string, suffix: string = prefix) => {
     if (!textareaRef.current) {
+      setDraftText(prev => `${prev}${prefix}${suffix}`);
       setInputText(prev => `${prev}${prefix}${suffix}`);
       return;
     }
     const start = textareaRef.current.selectionStart || 0;
     const end = textareaRef.current.selectionEnd || 0;
-    const text = inputText;
+    const text = draftText || inputText;
     const selected = text.substring(start, end);
     const replacement = `${prefix}${selected || ''}${suffix}`;
     const newText = text.substring(0, start) + replacement + text.substring(end);
+    setDraftText(newText);
     setInputText(newText);
     setTimeout(() => {
       if (textareaRef.current) {
@@ -1076,13 +1080,15 @@ function InboxContent() {
 
   const handleInsertEmoji = (emoji: string) => {
     if (!textareaRef.current) {
+      setDraftText(prev => prev + emoji);
       setInputText(prev => prev + emoji);
       return;
     }
     const start = textareaRef.current.selectionStart || 0;
     const end = textareaRef.current.selectionEnd || 0;
-    const text = inputText;
+    const text = draftText || inputText;
     const newText = text.substring(0, start) + emoji + text.substring(end);
+    setDraftText(newText);
     setInputText(newText);
     setTimeout(() => {
       if (textareaRef.current) {
@@ -1491,6 +1497,7 @@ function InboxContent() {
       return;
     }
 
+    setDraftText('');
     setInputText('');
     setShowQuickReplies(false);
 
@@ -1555,6 +1562,7 @@ function InboxContent() {
     setQuickReplyIndex(0);
 
     if (item.action) {
+      setDraftText('');
       setInputText('');
       item.action();
     } else if (item.isMedia) {
@@ -1574,6 +1582,7 @@ function InboxContent() {
         });
 
         const initialText = item.content || item.title || '';
+        setDraftText(initialText);
         setInputText(initialText);
         setTimeout(() => {
           if (textareaRef.current) {
@@ -1585,6 +1594,7 @@ function InboxContent() {
         handleSendMediaSlashItem(item);
       }
     } else if (item.content) {
+      setDraftText(item.content);
       setInputText(item.content);
       setTimeout(() => {
         if (textareaRef.current) {
@@ -1944,10 +1954,9 @@ function InboxContent() {
       }
 
       setActiveChat(prev => {
-        if (!prev) return null;
-        if (conversationIdParam && prev === conversationIdParam) return prev;
-        const exists = initialContacts.some((c: any) => c.id === prev);
-        return exists ? prev : (conversationIdParam || contactIdParam ? prev : null);
+        // Se o operador já está com um chat aberto, NUNCA fecha sozinho em segundo plano
+        if (prev) return prev;
+        return conversationIdParam || contactIdParam || null;
       });
     }
   }, [initialContacts, conversationIdParam, contactIdParam, activeChat, urlLoadedContact]);
@@ -2205,8 +2214,7 @@ function InboxContent() {
         })
       );
 
-      // Revalida a lista e os contadores de forma consistente
-      refetchConversations();
+      // Atualiza os contadores sem disparar tempestade HTTP
       refetchCounts();
     };
 
@@ -2230,7 +2238,6 @@ function InboxContent() {
           })
         );
       }
-      refetchConversations();
       refetchCounts();
     };
 
@@ -2653,18 +2660,21 @@ function InboxContent() {
     // Se houver pacote de mídias pré-selecionado (modo preview do Lero)
     if (pendingMediaPackage) {
       const pkg = pendingMediaPackage;
-      const customCaption = inputText.trim();
+      const customCaption = (draftText || inputText).trim();
       setPendingMediaPackage(null);
+      setDraftText("");
       setInputText("");
       await handleSendMediaSlashItem(pkg.item, pkg.mediaList, customCaption);
       return;
     }
 
-    if (!inputText.trim() && !selectedFile) return;
+    const currentText = (draftText || inputText).trim();
+    if (!currentText && !selectedFile) return;
     
-    const content = inputText;
+    const content = draftText || inputText;
     const fileToUpload = selectedFile;
 
+    setDraftText("");
     setInputText(""); // limpa o input
     setShowAttachments(false);
     setSelectedFile(null);
@@ -3049,8 +3059,8 @@ function InboxContent() {
       }
       if (activeFilterTab === 'resolved' && !(c.status === 'resolved' || c.status === 'closed')) return false;
       if (activeFilterTab === 'all' && !isMaster) {
-        // Na aba Tudo, o operador só visualiza atendimentos que pertencem a ele
-        if (currentUserId && c.assignedTo !== currentUserId) return false;
+        // Na aba Tudo, o operador visualiza seus próprios atendimentos E os da fila sem operador (assignedTo: null)
+        if (currentUserId && c.assignedTo && c.assignedTo !== currentUserId) return false;
       }
       if (onlyUnread && !((c.unread || 0) > 0 || c.hasNewMessage)) return false;
       if (selectedDepartmentFilter && selectedDepartmentFilter !== 'all') {
@@ -6181,6 +6191,7 @@ function InboxContent() {
                                     type="button"
                                     onClick={() => {
                                       setShowAttachments(false);
+                                      setDraftText('/');
                                       setInputText('/');
                                       setShowQuickReplies(true);
                                       setTimeout(() => textareaRef.current?.focus(), 50);
@@ -6202,7 +6213,8 @@ function InboxContent() {
                                 setShowQuickReplies(prev => {
                                   const nextState = !prev;
                                   if (nextState) {
-                                    if (!inputText.startsWith('/')) {
+                                    if (!draftText.startsWith('/')) {
+                                      setDraftText('/');
                                       setInputText('/');
                                     }
                                     setQuickReplyFilter('');
@@ -6238,18 +6250,20 @@ function InboxContent() {
                                 ${isInternalMode ? 'text-amber-950 dark:text-amber-100 placeholder:text-amber-600/60 dark:placeholder:text-amber-500/50' : isWhatsApp ? 'text-[#E9EDEF] placeholder:text-[#8696A0]' : 'text-slate-900 dark:text-slate-100 placeholder:text-slate-400'}
                               `}
                               rows={1}
-                              value={inputText}
+                              value={draftText}
                               onChange={(e) => {
                                 const val = e.target.value;
-                                setInputText(val);
-                                
-                                if (val.startsWith('/')) {
-                                  setShowQuickReplies(true);
-                                  setQuickReplyFilter(val.substring(1));
-                                  setQuickReplyIndex(0);
-                                } else {
-                                  setShowQuickReplies(false);
-                                }
+                                setDraftText(val);
+                                startTransition(() => {
+                                  setInputText(val);
+                                  if (val.startsWith('/')) {
+                                    setShowQuickReplies(true);
+                                    setQuickReplyFilter(val.substring(1));
+                                    setQuickReplyIndex(0);
+                                  } else {
+                                    setShowQuickReplies(false);
+                                  }
+                                });
                               }}
                               onKeyDown={(e) => {
                                 if (showQuickReplies) {
@@ -6459,10 +6473,10 @@ function InboxContent() {
                             <button 
                               type="button"
                               onClick={handleSendMessage} 
-                              disabled={isUploadingMedia || (!inputText.trim() && !selectedFile && !pendingMediaPackage)}
+                              disabled={isUploadingMedia || (!(draftText || inputText).trim() && !selectedFile && !pendingMediaPackage)}
                               title={isUploadingMedia ? "Enviando..." : "Enviar mensagem"}
                               className={`p-2 sm:p-2.5 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-md disabled:opacity-40 disabled:cursor-not-allowed
-                                ${(inputText.trim() || selectedFile || pendingMediaPackage)
+                                ${((draftText || inputText).trim() || selectedFile || pendingMediaPackage)
                                   ? (isInternalMode 
                                       ? 'bg-amber-600 hover:bg-amber-500 text-white shadow-[0_0_12px_rgba(217,119,6,0.4)] active:scale-95' 
                                       : isWhatsApp
