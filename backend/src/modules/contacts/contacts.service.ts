@@ -18,6 +18,45 @@ export class ContactsService {
     tenantId: string,
     data: { name: string; phone?: string; email?: string; source?: string; tags?: string[] },
   ) {
+    if (data.phone) {
+      const clean = data.phone.replace(/\D/g, '');
+      if (clean.length >= 8) {
+        const variants = new Set<string>([clean, `+${clean}`]);
+        if (clean.startsWith('55') && clean.length === 13) {
+          const w9 = clean.slice(0, 4) + clean.slice(5);
+          variants.add(w9);
+          variants.add(`+${w9}`);
+        } else if (clean.startsWith('55') && clean.length === 12) {
+          const w9 = clean.slice(0, 4) + '9' + clean.slice(4);
+          variants.add(w9);
+          variants.add(`+${w9}`);
+        }
+        const existing = await this.prisma.contact.findFirst({
+          where: {
+            tenantId,
+            OR: Array.from(variants).map(p => ({ phone: p }))
+          },
+          orderBy: [
+            { conversations: { _count: 'desc' } },
+            { updatedAt: 'desc' }
+          ]
+        });
+
+        if (existing) {
+          const updated = await this.prisma.contact.update({
+            where: { id: existing.id },
+            data: {
+              ...(data.name && (!existing.name || existing.name.startsWith('WhatsApp')) ? { name: data.name.trim() } : {}),
+              ...(data.email && !existing.email ? { email: data.email.trim().toLowerCase() } : {}),
+              tags: Array.from(new Set([...(existing.tags || []), ...(data.tags || [])]))
+            }
+          });
+          this.contactsCache.delete(tenantId);
+          return updated;
+        }
+      }
+    }
+
     const contact = await this.prisma.contact.create({
       data: {
         tenantId,

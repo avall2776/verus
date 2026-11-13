@@ -2292,15 +2292,41 @@ export class ChatService {
           const realPhone = resolution.realPhone || (remoteJid.includes('@lid') ? null : remoteJid.replace(/\D/g, ''));
           const targetPhone = realPhone || remoteJid;
 
+          const phoneCandidates = new Set<string>();
+          const addVariants = (p: string | null | undefined) => {
+            if (!p || p.includes('@lid')) return;
+            const clean = p.replace(/\D/g, '');
+            if (clean.length >= 8) {
+              phoneCandidates.add(clean);
+              phoneCandidates.add(`+${clean}`);
+              if (clean.startsWith('55') && clean.length === 13) {
+                const without9 = clean.slice(0, 4) + clean.slice(5);
+                phoneCandidates.add(without9);
+                phoneCandidates.add(`+${without9}`);
+              } else if (clean.startsWith('55') && clean.length === 12) {
+                const with9 = clean.slice(0, 4) + '9' + clean.slice(4);
+                phoneCandidates.add(with9);
+                phoneCandidates.add(`+${with9}`);
+              }
+            }
+          };
+          addVariants(remoteJid);
+          addVariants(realPhone);
+          addVariants(targetPhone);
+
           let contact = await this.prisma.contact.findFirst({
             where: {
               tenantId,
               OR: [
                 ...(remoteJid.includes('@lid') ? [{ whatsappLid: remoteJid }, { phone: remoteJid }] : []),
-                { phone: targetPhone },
-                ...(realPhone ? [{ phone: realPhone }, { whatsappLid: realPhone }] : []),
+                ...Array.from(phoneCandidates).map(p => ({ phone: p })),
+                ...(realPhone ? [{ whatsappLid: realPhone }] : []),
               ],
             },
+            orderBy: [
+              { conversations: { _count: 'desc' } },
+              { updatedAt: 'desc' }
+            ]
           });
 
           // Fallback 1: Cruzamento por Foto de Perfil (Hash CDN da foto do WhatsApp)

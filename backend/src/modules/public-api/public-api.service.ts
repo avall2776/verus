@@ -41,6 +41,42 @@ export class PublicApiService {
   }
 
   /**
+   * Gera todas as variações de formato brasileiras (com +, sem +, com 9º dígito e sem 9º dígito)
+   */
+  private getPhoneVariants(phoneRaw?: string | null): string[] {
+    if (!phoneRaw) return [];
+    const clean = phoneRaw.replace(/\D/g, '');
+    if (clean.length < 8) return [phoneRaw];
+    const variants = new Set<string>();
+    variants.add(clean);
+    variants.add(`+${clean}`);
+    if (clean.startsWith('55') && clean.length === 13) {
+      const without9 = clean.slice(0, 4) + clean.slice(5);
+      variants.add(without9);
+      variants.add(`+${without9}`);
+    } else if (clean.startsWith('55') && clean.length === 12) {
+      const with9 = clean.slice(0, 4) + '9' + clean.slice(4);
+      variants.add(with9);
+      variants.add(`+${with9}`);
+    } else if (clean.length === 11) {
+      const with55 = `55${clean}`;
+      variants.add(with55);
+      variants.add(`+${with55}`);
+      const without9 = `55${clean.slice(0, 2)}${clean.slice(3)}`;
+      variants.add(without9);
+      variants.add(`+${without9}`);
+    } else if (clean.length === 10) {
+      const with55 = `55${clean}`;
+      variants.add(with55);
+      variants.add(`+${with55}`);
+      const with9 = `55${clean.slice(0, 2)}9${clean.slice(2)}`;
+      variants.add(with9);
+      variants.add(`+${with9}`);
+    }
+    return Array.from(variants);
+  }
+
+  /**
    * Identifica e resolve a Região/Departamento correto com base no DDD do telefone ou Estado (UF)
    */
   private async resolveDepartmentByPhone(tenantId: string, phone?: string | null, state?: string | null): Promise<string | null> {
@@ -147,12 +183,17 @@ export class PublicApiService {
     const source = dto.source || 'Meta Ads';
     const campaign = dto.campaign || dto.utm_campaign || null;
 
-    // 1. Localiza ou Cria o Contato no Tenant
+    // 1. Localiza ou Cria o Contato no Tenant (buscando por todas as variações brasileiras de 8/9 dígitos)
+    const phoneVariants = this.getPhoneVariants(dto.phone);
     let contact = await this.prisma.contact.findFirst({
       where: {
         tenantId,
-        phone: cleanPhone,
+        OR: phoneVariants.map(p => ({ phone: p })),
       },
+      orderBy: [
+        { conversations: { _count: 'desc' } },
+        { updatedAt: 'desc' }
+      ]
     });
 
     const tags = ['Lead', source];
@@ -465,11 +506,19 @@ export class PublicApiService {
       throw new BadRequestException('O campo "name" é obrigatório.');
     }
     const cleanPhone = data.phone ? this.normalizePhone(data.phone) : null;
+    const phoneVariants = this.getPhoneVariants(data.phone);
 
     let contact = null;
-    if (cleanPhone) {
+    if (phoneVariants.length > 0) {
       contact = await this.prisma.contact.findFirst({
-        where: { tenantId, phone: cleanPhone },
+        where: {
+          tenantId,
+          OR: phoneVariants.map(p => ({ phone: p }))
+        },
+        orderBy: [
+          { conversations: { _count: 'desc' } },
+          { updatedAt: 'desc' }
+        ]
       });
     }
 
@@ -517,7 +566,17 @@ export class PublicApiService {
     if (!contactId) {
       const phone = data.phone || data.contact?.phone;
       const cleanPhone = phone ? this.normalizePhone(phone) : null;
-      let contact = cleanPhone ? await this.prisma.contact.findFirst({ where: { tenantId, phone: cleanPhone } }) : null;
+      const phoneVariants = this.getPhoneVariants(phone);
+      let contact = phoneVariants.length > 0 ? await this.prisma.contact.findFirst({
+        where: {
+          tenantId,
+          OR: phoneVariants.map(p => ({ phone: p }))
+        },
+        orderBy: [
+          { conversations: { _count: 'desc' } },
+          { updatedAt: 'desc' }
+        ]
+      }) : null;
       if (!contact) {
         contact = await this.prisma.contact.create({
           data: {
