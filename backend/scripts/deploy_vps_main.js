@@ -14,7 +14,7 @@ if (fs.existsSync(keyPath)) {
 } else if (process.env.VPS_PRIVATE_KEY) {
   sshConfig.privateKey = process.env.VPS_PRIVATE_KEY;
 } else {
-  sshConfig.password = process.env.VPS_PASSWORD || 'g@nY;+OWkSdi5.3D';
+  throw new Error('Chave privada SSH nao encontrada em ~/.ssh/id_ed25519 nem em VPS_PRIVATE_KEY.');
 }
 
 const scriptCode = `

@@ -42,3 +42,4 @@ conn.on('ready', () => {
   username: 'root',
   password: process.env.VPS_PASSWORD || 'g@nY;+OWkSdi5.3D',
 });
+

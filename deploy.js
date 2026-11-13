@@ -19,12 +19,8 @@ function getSshConfig() {
   } else if (process.env.VPS_PRIVATE_KEY) {
     console.log('Utilizando chave privada da variável de ambiente VPS_PRIVATE_KEY');
     config.privateKey = process.env.VPS_PRIVATE_KEY;
-  } else if (process.env.VPS_PASSWORD) {
-    console.log('Utilizando senha da variável de ambiente VPS_PASSWORD');
-    config.password = process.env.VPS_PASSWORD;
   } else {
-    console.log('Chave privada não encontrada em ~/.ssh/id_ed25519. Usando fallback de senha.');
-    config.password = 'g@nY;+OWkSdi5.3D';
+    throw new Error('Chave privada SSH não encontrada em ~/.ssh/id_ed25519 nem em VPS_PRIVATE_KEY. Acesso por senha foi desativado por segurança.');
   }
 
   return config;

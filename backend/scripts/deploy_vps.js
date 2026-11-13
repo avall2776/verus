@@ -1,3 +1,6 @@
+const os = require('os');
+const path = require('path');
+const fs = require('fs');
 const { Client } = require('ssh2');
 
 const conn = new Client();
@@ -36,5 +39,5 @@ conn.on('ready', () => {
   host: '187.127.10.166',
   port: 22,
   username: 'root',
-  password: 'g@nY;+OWkSdi5.3D'
+  privateKey: fs.readFileSync(path.join(os.homedir(), '.ssh', 'id_ed25519'), 'utf8'),
 });
