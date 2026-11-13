@@ -341,6 +341,10 @@ export class WebhookProcessor extends WorkerHost {
           ...(realPhone ? [{ whatsappLid: realPhone }] : []),
         ],
       },
+      orderBy: [
+        { conversations: { _count: 'desc' } },
+        { updatedAt: 'desc' },
+      ],
     });
 
     // IMPORTANTE: Se a mensagem foi enviada pelo operador (isFromMe), o pushName recebido no webhook
@@ -456,6 +460,67 @@ export class WebhookProcessor extends WorkerHost {
     if (existingContact) {
       // Se encontrou, atualiza dados que faltavam ou novo whatsappLid emitido pelo WhatsApp
       const dataToUpdate: any = {};
+
+      // Auto-merge preventivo: se existirem contatos duplicados com o mesmo telefone ou LID no tenant, mescla
+      try {
+        const duplicateContacts = await this.prisma.contact.findMany({
+          where: {
+            tenantId,
+            id: { not: existingContact.id },
+            OR: [
+              ...phoneOrFilters,
+              ...(lidId && lidId.includes('@lid') ? [{ whatsappLid: lidId }] : []),
+              ...(existingContact.whatsappLid ? [{ whatsappLid: existingContact.whatsappLid }] : []),
+            ],
+          },
+          include: {
+            conversations: true,
+          },
+        });
+
+        for (const dup of duplicateContacts) {
+          this.logger.log(`🔗 [Auto-Merge Duplicidade] Mesclando contato duplicado [${dup.id} - ${dup.name}] no principal [${existingContact.id} - ${existingContact.name}]`);
+          const masterConv = await this.prisma.conversation.findUnique({
+            where: { tenantId_contactId: { tenantId, contactId: existingContact.id } },
+          });
+
+          for (const dupConv of dup.conversations) {
+            if (masterConv) {
+              await this.prisma.message.updateMany({
+                where: { conversationId: dupConv.id },
+                data: { conversationId: masterConv.id, contactId: existingContact.id },
+              });
+              await this.prisma.conversation.delete({ where: { id: dupConv.id } }).catch(() => {});
+            } else {
+              await this.prisma.conversation.update({
+                where: { id: dupConv.id },
+                data: { contactId: existingContact.id },
+              }).catch(() => {});
+            }
+          }
+
+          await this.prisma.message.updateMany({
+            where: { contactId: dup.id },
+            data: { contactId: existingContact.id },
+          });
+          await this.prisma.deal.updateMany({
+            where: { contactId: dup.id },
+            data: { contactId: existingContact.id },
+          });
+          await this.prisma.supportTicket.updateMany({
+            where: { contactId: dup.id },
+            data: { contactId: existingContact.id },
+          });
+
+          if (dup.whatsappLid && !existingContact.whatsappLid) {
+            dataToUpdate.whatsappLid = dup.whatsappLid;
+          }
+
+          await this.prisma.contact.delete({ where: { id: dup.id } }).catch(() => {});
+        }
+      } catch (mergeErr: any) {
+        this.logger.warn(`Erro no auto-merge de contatos duplicados: ${mergeErr.message}`);
+      }
       // Trava de segurança: apenas associa o whatsappLid se o contato ainda NÃO possuir LID gravado
       // e NUNCA sobrescreve o LID de um contato existente com LIDs de terceiros em mensagens outbound
       if (lidId && !existingContact.whatsappLid && !isFromMe) {

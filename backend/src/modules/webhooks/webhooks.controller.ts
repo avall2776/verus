@@ -1055,10 +1055,35 @@ export class WebhooksController {
           );
         };
 
-        if (phone && phone.length >= 10 && phone.length <= 13) {
+        const cleanPhone = phone.replace(/\D/g, '');
+        if (cleanPhone && cleanPhone.length >= 8) {
           try {
+            const phoneVariants = new Set<string>();
+            phoneVariants.add(cleanPhone);
+            phoneVariants.add(`+${cleanPhone}`);
+            if (cleanPhone.startsWith('55') && cleanPhone.length === 13) {
+              const without9 = cleanPhone.slice(0, 4) + cleanPhone.slice(5);
+              phoneVariants.add(without9);
+              phoneVariants.add(`+${without9}`);
+            } else if (cleanPhone.startsWith('55') && cleanPhone.length === 12) {
+              const with9 = cleanPhone.slice(0, 4) + '9' + cleanPhone.slice(4);
+              phoneVariants.add(with9);
+              phoneVariants.add(`+${with9}`);
+            }
+
+            const isLid = id.includes('@lid');
             const existing = await this.prisma.contact.findFirst({
-              where: { tenantId, phone }
+              where: {
+                tenantId,
+                OR: [
+                  ...Array.from(phoneVariants).map(p => ({ phone: p })),
+                  ...(isLid ? [{ whatsappLid: id }, { phone: id }] : [])
+                ]
+              },
+              orderBy: [
+                { conversations: { _count: 'desc' } },
+                { updatedAt: 'desc' }
+              ]
             });
 
             if (existing) {
@@ -1069,6 +1094,9 @@ export class WebhooksController {
               }
               if (profilePictureUrl && !existing.avatarUrl) {
                 dataToUpdate.avatarUrl = profilePictureUrl;
+              }
+              if (isLid && !existing.whatsappLid) {
+                dataToUpdate.whatsappLid = id;
               }
               if (Object.keys(dataToUpdate).length > 0) {
                 const updated = await this.prisma.contact.update({
@@ -1081,7 +1109,8 @@ export class WebhooksController {
               const created = await this.prisma.contact.create({
                 data: {
                   tenantId,
-                  phone: String(phone),
+                  phone: String(cleanPhone),
+                  whatsappLid: isLid ? id : null,
                   name: String(rawPushName),
                   avatarUrl: profilePictureUrl ? String(profilePictureUrl) : null,
                 } as any
