@@ -118,6 +118,9 @@ export class CrmService {
       const pA = a.metadata?.position !== undefined && a.metadata?.position !== null ? Number(a.metadata.position) : 999999;
       const pB = b.metadata?.position !== undefined && b.metadata?.position !== null ? Number(b.metadata.position) : 999999;
       if (pA !== pB) return pA - pB;
+      const tA = new Date(a.updatedAt || a.createdAt || 0).getTime();
+      const tB = new Date(b.updatedAt || b.createdAt || 0).getTime();
+      if (tA !== tB) return tB - tA;
       return String(a.id).localeCompare(String(b.id));
     });
 
@@ -192,7 +195,7 @@ export class CrmService {
     });
   }
 
-  async createDeal(tenantId: string, data: any) {
+  async createDeal(tenantId: string, data: any, currentUserId?: string) {
     this.clearDealsCache(tenantId);
     let contactId = data.contactId;
 
@@ -231,6 +234,46 @@ export class CrmService {
       contactId = defaultContact.id;
     }
 
+    // Impedir criação de dois deals abertos simultâneos para o mesmo contactId no mesmo funil
+    const closedStatuses = new Set(['won', 'lost', 'disqualified']);
+    const incomingStatus = String(data.status || 'new').trim().toLowerCase();
+    if (!closedStatuses.has(incomingStatus) && !data.allowDuplicate) {
+      const incomingFunnel = String(
+        data.metadata?.funnelId || data.metadata?.lero_funnel_name || 'default'
+      ).trim().toLowerCase();
+
+      const openDeals = await this.prisma.deal.findMany({
+        where: {
+          tenantId,
+          contactId,
+          status: { notIn: ['won', 'lost', 'disqualified'] },
+        },
+        select: { id: true, title: true, status: true, metadata: true },
+      });
+
+      const conflict = openDeals.find((d: any) => {
+        const meta = (d.metadata as Record<string, any>) || {};
+        const dealFunnel = String(meta.funnelId || meta.lero_funnel_name || 'default').trim().toLowerCase();
+        return dealFunnel === incomingFunnel || dealFunnel === 'default' || incomingFunnel === 'default';
+      });
+
+      if (conflict) {
+        throw new BadRequestException(
+          `Já existe uma oportunidade em aberto para este contato neste funil ("${conflict.title}").`
+        );
+      }
+    }
+
+    let resolvedAssignedTo = data.assignedTo || null;
+    if (!resolvedAssignedTo) {
+      const latestConv = await this.prisma.conversation.findFirst({
+        where: { tenantId, contactId, assignedTo: { not: null } },
+        orderBy: { updatedAt: 'desc' },
+        select: { assignedTo: true },
+      });
+      resolvedAssignedTo = latestConv?.assignedTo || currentUserId || null;
+    }
+
     return this.prisma.deal.create({
       data: {
         tenantId,
@@ -240,7 +283,7 @@ export class CrmService {
         status: data.status || "new",
         notes: data.notes || null,
         metadata: data.metadata || {},
-        assignedTo: data.assignedTo || null,
+        assignedTo: resolvedAssignedTo,
       },
       include: {
         contact: {
@@ -347,7 +390,8 @@ export class CrmService {
    */
   async moveContactToStage(
     tenantId: string,
-    dto: { contactId: string; stageId: string; title?: string; value?: number }
+    dto: { contactId: string; stageId: string; title?: string; value?: number },
+    currentUserId?: string
   ) {
     this.clearDealsCache(tenantId);
     const { contactId, stageId, title, value } = dto;
@@ -363,9 +407,15 @@ export class CrmService {
     }
 
     let deal = await this.prisma.deal.findFirst({
-      where: { tenantId, contactId },
+      where: { tenantId, contactId, status: { notIn: ['won', 'lost', 'disqualified'] } },
       orderBy: { updatedAt: 'desc' },
     });
+    if (!deal) {
+      deal = await this.prisma.deal.findFirst({
+        where: { tenantId, contactId },
+        orderBy: { updatedAt: 'desc' },
+      });
+    }
 
     const previousStage = deal?.status;
 
@@ -376,6 +426,7 @@ export class CrmService {
           status: stageId,
           ...(title ? { title } : {}),
           ...(value !== undefined ? { value: Number(value) } : {}),
+          ...(!deal.assignedTo && currentUserId ? { assignedTo: currentUserId } : {}),
           updatedAt: new Date(),
         },
         include: {
@@ -388,6 +439,11 @@ export class CrmService {
         },
       });
     } else {
+      const latestConv = await this.prisma.conversation.findFirst({
+        where: { tenantId, contactId, assignedTo: { not: null } },
+        orderBy: { updatedAt: 'desc' },
+        select: { assignedTo: true },
+      });
       deal = await this.prisma.deal.create({
         data: {
           tenantId,
@@ -395,6 +451,7 @@ export class CrmService {
           title: title || contact.name || 'Nova Oportunidade',
           status: stageId,
           value: value !== undefined ? Number(value) : 0,
+          assignedTo: latestConv?.assignedTo || currentUserId || null,
         },
         include: {
           contact: {

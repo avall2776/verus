@@ -692,7 +692,8 @@ function CrmContent() {
           status: data.status || selectedDeal?.status || "new",
           notes: data.notes || selectedDeal?.notes || "",
           metadata: data.metadata || selectedDeal?.metadata || {},
-          assignedTo: data.assignedTo || selectedDeal?.assignedTo || null,
+          assignedTo: data.assignedTo || selectedDeal?.assignedTo || currentUser?.id || null,
+          contactId: data.contactId || selectedDeal?.contactId || undefined,
         };
         await api.post('/deals', payload);
         toast.success("Oportunidade criada com sucesso!");
@@ -707,8 +708,9 @@ function CrmContent() {
       }
       await api.patch(`/deals/${dealId}`, data);
       toast.success("Atualizado!");
-    } catch (error) {
-      toast.error("Erro ao atualizar");
+    } catch (error: any) {
+      const msg = error?.response?.data?.message;
+      toast.error(Array.isArray(msg) ? msg[0] : (msg || "Erro ao atualizar"));
       fetchDeals();
       throw error;
     }
@@ -929,21 +931,31 @@ function CrmContent() {
   // Agrupamento O(N) memoizado dos cards por coluna para performance instantânea no Kanban
   const dealsByColumn = useMemo(() => {
     const map: Record<string, any[]> = {};
+    const validColIds = new Set<string>();
     for (const c of columns) {
       map[c.id] = [];
+      validColIds.add(c.id);
     }
+    const defaultColId = validColIds.has('new') ? 'new' : (columns[0]?.id || 'new');
+    const legacyStageAlias: Record<string, string> = {
+      contacted: validColIds.has('follow-up') ? 'follow-up' : (validColIds.has('qualified') ? 'qualified' : defaultColId),
+    };
+
     for (const deal of filteredDeals) {
-      const colId = deal.status || 'new';
-      if (!map[colId]) map[colId] = [];
-      map[colId].push(deal);
+      const rawStatus = String(deal.status || '').trim();
+      const mappedStatus = validColIds.has(rawStatus)
+        ? rawStatus
+        : (legacyStageAlias[rawStatus.toLowerCase()] || defaultColId);
+      if (!map[mappedStatus]) map[mappedStatus] = [];
+      map[mappedStatus].push(deal);
     }
     for (const colId in map) {
       map[colId].sort((a, b) => {
         const posA = a.metadata?.position !== undefined && a.metadata?.position !== null ? Number(a.metadata.position) : 999999;
         const posB = b.metadata?.position !== undefined && b.metadata?.position !== null ? Number(b.metadata.position) : 999999;
         if (posA !== posB) return posA - posB;
-        const timeB = a._parsedTime || (a._parsedTime = new Date(a.updatedAt || a.createdAt || 0).getTime());
-        const timeA = b._parsedTime || (b._parsedTime = new Date(b.updatedAt || b.createdAt || 0).getTime());
+        const timeA = a._parsedTime || (a._parsedTime = new Date(a.updatedAt || a.createdAt || 0).getTime());
+        const timeB = b._parsedTime || (b._parsedTime = new Date(b.updatedAt || b.createdAt || 0).getTime());
         return timeB - timeA;
       });
     }

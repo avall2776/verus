@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Param, Body, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Param, Body, Query, Req, UseGuards } from '@nestjs/common';
 import { CrmService } from './crm.service';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { PlanGuard } from '../../shared/guards/plan.guard';
@@ -51,17 +51,21 @@ export class CrmController {
   @Post()
   async createDeal(
     @CurrentTenant() tenantId: string,
-    @Body() dealData: any
+    @Body() dealData: any,
+    @Req() req: any
   ) {
-    return this.crmService.createDeal(tenantId, dealData);
+    const userId = req?.user?.id || req?.user?.sub;
+    return this.crmService.createDeal(tenantId, dealData, userId);
   }
 
   @Post('move-contact')
   async moveContact(
     @CurrentTenant() tenantId: string,
-    @Body() body: { contactId: string; stageId: string; title?: string; value?: number }
+    @Body() body: { contactId: string; stageId: string; title?: string; value?: number },
+    @Req() req: any
   ) {
-    return this.crmService.moveContactToStage(tenantId, body);
+    const userId = req?.user?.id || req?.user?.sub;
+    return this.crmService.moveContactToStage(tenantId, body, userId);
   }
 
   @Get('contact/:contactId')
