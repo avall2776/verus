@@ -472,7 +472,7 @@ export class GoalsService {
       const wonDeals = allUserDeals.filter((d) => {
         if (!this.isWon(d.status)) return false;
         const meta = (d.metadata as Record<string, any>) || {};
-        return inRange(meta.closedAt || d.updatedAt || d.createdAt);
+        return inRange(meta.closedAt || d.createdAt);
       });
       const totalRevenueWon = wonDeals.reduce((acc, d) => acc + Number(d.value || 0), 0);
       const totalDeals = periodDeals.length;
@@ -593,7 +593,7 @@ export class GoalsService {
     const wonDeals = allUserDeals.filter((d) => {
       if (!this.isWon(d.status)) return false;
       const meta = (d.metadata as Record<string, any>) || {};
-      return inRange(meta.closedAt || d.updatedAt || d.createdAt);
+      return inRange(meta.closedAt || d.createdAt);
     });
     const totalRevenueWon = wonDeals.reduce((acc, d) => acc + Number(d.value || 0), 0);
     const conversionRate = totalDeals > 0 ? Math.round((wonDeals.length / totalDeals) * 100) : 0;

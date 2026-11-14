@@ -274,6 +274,11 @@ export class CrmService {
       resolvedAssignedTo = latestConv?.assignedTo || currentUserId || null;
     }
 
+    const createMeta: Record<string, any> = { ...(data.metadata || {}) };
+    if (incomingStatus === 'won' && !createMeta.closedAt) {
+      createMeta.closedAt = new Date().toISOString();
+    }
+
     return this.prisma.deal.create({
       data: {
         tenantId,
@@ -282,7 +287,7 @@ export class CrmService {
         value: data.value ? Number(data.value) : 0,
         status: data.status || "new",
         notes: data.notes || null,
-        metadata: data.metadata || {},
+        metadata: createMeta,
         assignedTo: resolvedAssignedTo,
       },
       include: {
@@ -423,6 +428,12 @@ export class CrmService {
     const previousStage = deal?.status;
 
     if (deal) {
+      const existingMeta = (deal.metadata as Record<string, any>) || {};
+      const nextMeta =
+        stageId === 'won' && !existingMeta.closedAt
+          ? { ...existingMeta, closedAt: new Date().toISOString() }
+          : undefined;
+
       deal = await this.prisma.deal.update({
         where: { id: deal.id },
         data: {
@@ -430,6 +441,7 @@ export class CrmService {
           ...(title ? { title } : {}),
           ...(value !== undefined ? { value: Number(value) } : {}),
           ...(!deal.assignedTo && currentUserId ? { assignedTo: currentUserId } : {}),
+          ...(nextMeta ? { metadata: nextMeta } : {}),
           updatedAt: new Date(),
         },
         include: {
@@ -455,6 +467,7 @@ export class CrmService {
           status: stageId,
           value: value !== undefined ? Number(value) : 0,
           assignedTo: latestConv?.assignedTo || currentUserId || null,
+          ...(stageId === 'won' ? { metadata: { closedAt: new Date().toISOString() } } : {}),
         },
         include: {
           contact: {
