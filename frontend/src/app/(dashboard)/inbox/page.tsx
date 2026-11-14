@@ -59,6 +59,49 @@ function getTagColor(tag: string) {
   return TAG_COLOR_PALETTES[index];
 }
 
+function renderHighlightedText(
+  text: string,
+  query: string,
+  isWhatsApp: boolean,
+  snippetAroundMatch = false
+): React.ReactNode {
+  if (!text) return text;
+  const trimmed = query.trim();
+  if (!trimmed) return text;
+
+  const lowerQuery = trimmed.toLowerCase();
+  let displayText = text;
+  if (snippetAroundMatch) {
+    const matchIndex = displayText.toLowerCase().indexOf(lowerQuery);
+    if (matchIndex > 32) {
+      displayText = `...${displayText.slice(matchIndex - 22)}`;
+    }
+  }
+
+  const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(`(${escaped})`, 'gi');
+  const parts = displayText.split(regex);
+
+  if (parts.length <= 1) return displayText;
+
+  return parts.map((part, idx) =>
+    part.toLowerCase() === lowerQuery ? (
+      <mark
+        key={idx}
+        className={
+          isWhatsApp
+            ? 'bg-[#00A884]/25 text-[#00E6B4] underline decoration-[#00E6B4] decoration-2 underline-offset-2 rounded-[3px] px-0.5 font-semibold'
+            : 'bg-amber-200/80 dark:bg-amber-400/25 text-slate-950 dark:text-amber-200 underline decoration-amber-600 dark:decoration-amber-400 decoration-2 underline-offset-2 rounded-[3px] px-0.5 font-semibold'
+        }
+      >
+        {part}
+      </mark>
+    ) : (
+      <React.Fragment key={idx}>{part}</React.Fragment>
+    )
+  );
+}
+
 const DEFAULT_CRM_STAGES = [
   { id: "seed", title: "Leads Seed", color: "text-gray-400", bgLight: "bg-gray-500/15", dotColor: "bg-gray-400", borderLight: "border-gray-500/40" },
   { id: "new", title: "Novo Contato", color: "text-blue-400", bgLight: "bg-blue-500/15", dotColor: "bg-blue-400", borderLight: "border-blue-500/40" },
@@ -3849,7 +3892,11 @@ function InboxContent() {
                               : 'font-semibold text-slate-900 dark:text-slate-200'
                             )
                       }`}>
-                        {formatContactDisplayName(contact.name, contact.phone)}
+                        {renderHighlightedText(
+                          formatContactDisplayName(contact.name, contact.phone),
+                          searchQuery,
+                          isWhatsApp
+                        )}
                       </h3>
 
                       {/* Tag do Contato no Estilo Lero */}
@@ -3899,7 +3946,12 @@ function InboxContent() {
                         <p className={`text-xs truncate ${
                           contact.unread > 0 ? 'text-slate-800 dark:text-slate-200 font-medium' : 'text-slate-500 dark:text-slate-400'
                         }`}>
-                          {contact.lastMessage || contact.lastMsg || 'Nenhuma mensagem recente'}
+                          {renderHighlightedText(
+                            contact.lastMessage || contact.lastMsg || 'Nenhuma mensagem recente',
+                            searchQuery,
+                            isWhatsApp,
+                            true
+                          )}
                         </p>
                       )}
                     </div>
