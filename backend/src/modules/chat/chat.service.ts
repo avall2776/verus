@@ -281,7 +281,6 @@ export class ChatService {
         { contact: { name: { contains: cleanSearch, mode: 'insensitive' } } },
         { contact: { phone: { contains: cleanDigits || cleanSearch } } },
         { contact: { whatsappLid: { contains: cleanSearch } } },
-        { contact: { notes: { contains: cleanSearch, mode: 'insensitive' } } },
         {
           contact: {
             deals: {
