@@ -799,7 +799,9 @@ function CrmContent() {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
   };
 
-  // Usuário atual para filtro "Minhas"
+  // Usuário atual para filtro "Minhas" e filtro individual por atendente (Admin/Gestor)
+  const [crmUsers, setCrmUsers] = useState<Array<{ id: string; name: string; email?: string }>>([]);
+  const [selectedAssigneeFilter, setSelectedAssigneeFilter] = useState<string>("all");
   const [currentUser, setCurrentUser] = useState<any>(() => {
     if (typeof window === 'undefined') return null;
     try {
@@ -828,6 +830,26 @@ function CrmContent() {
       window.removeEventListener('storage', handleUserUpdated);
     };
   }, []);
+
+  const isManagerOrAdmin = useMemo(() => {
+    if (!currentUser) return false;
+    const role = String(currentUser.role || '').toUpperCase();
+    return Boolean(
+      currentUser.isSuperAdmin === true ||
+      role === 'ADMIN' ||
+      role === 'SUPER_ADMIN' ||
+      role === 'SUPERADMIN'
+    );
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (!isManagerOrAdmin) return;
+    api.get('/deals/users')
+      .then(({ data }) => {
+        if (Array.isArray(data)) setCrmUsers(data);
+      })
+      .catch(() => {});
+  }, [isManagerOrAdmin]);
 
   // Filtragem reativa dos negócios
   const filteredDeals = useMemo(() => {
@@ -885,6 +907,25 @@ function CrmContent() {
         return hasCompany;
       }
 
+      // 2.5 Filtro Individual por Atendente (para Gestor / Admin)
+      if (selectedAssigneeFilter === 'unassigned') {
+        const hasAssignee = Boolean(
+          deal.assignee?.id ||
+          deal.assignedToId ||
+          (typeof deal.assignedTo === 'string' && deal.assignedTo.trim()) ||
+          deal.assignedTo?.id
+        );
+        if (hasAssignee) return false;
+      } else if (selectedAssigneeFilter !== 'all') {
+        const matchesSelected = Boolean(
+          deal.assignedTo === selectedAssigneeFilter ||
+          deal.assignedToId === selectedAssigneeFilter ||
+          deal.assignee?.id === selectedAssigneeFilter ||
+          deal.assignedTo?.id === selectedAssigneeFilter
+        );
+        if (!matchesSelected) return false;
+      }
+
       // 3. Filtro Avançado por Estágio (se selecionado na tabela)
       if (selectedStageFilter !== 'all') {
         if (deal.status !== selectedStageFilter) return false;
@@ -926,7 +967,7 @@ function CrmContent() {
 
       return true;
     });
-  }, [deals, searchQuery, activeTab, currentUser, selectedStageFilter, activeDateRange, dateFilterType]);
+  }, [deals, searchQuery, activeTab, currentUser, selectedAssigneeFilter, selectedStageFilter, activeDateRange, dateFilterType]);
 
   // Agrupamento O(N) memoizado dos cards por coluna para performance instantânea no Kanban
   const dealsByColumn = useMemo(() => {
@@ -966,10 +1007,11 @@ function CrmContent() {
     let count = 0;
     if (searchQuery.trim()) count++;
     if (activeTab !== 'all') count++;
+    if (selectedAssigneeFilter !== 'all') count++;
     if (selectedStageFilter !== 'all') count++;
     if (datePreset !== 'all') count++;
     return count;
-  }, [searchQuery, activeTab, selectedStageFilter, datePreset]);
+  }, [searchQuery, activeTab, selectedAssigneeFilter, selectedStageFilter, datePreset]);
 
   const handleResizeStart = (e: React.MouseEvent, colId: string) => {
     e.preventDefault();
@@ -1679,7 +1721,10 @@ function CrmContent() {
                 key={tab.id}
                 id={`crm-tab-${tab.id}-btn`}
                 type="button"
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  if (tab.id === 'mine') setSelectedAssigneeFilter('all');
+                }}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold transition-all whitespace-nowrap ${
                   activeTab === tab.id 
                     ? 'bg-blue-600 text-white shadow font-bold' 
@@ -1691,6 +1736,41 @@ function CrmContent() {
               </button>
             ))}
           </div>
+
+          {/* Seletor Individual de Atendente (visível para Gestor / Admin) */}
+          {isManagerOrAdmin && (
+            <div className="relative shrink-0">
+              <select
+                id="crm-assignee-filter-select"
+                value={selectedAssigneeFilter}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setSelectedAssigneeFilter(val);
+                  if (val !== 'all' && activeTab === 'mine') {
+                    setActiveTab('all');
+                  }
+                }}
+                title="Visualizar Kanban individual por atendente"
+                className={`px-2.5 py-1 rounded-lg border text-xs font-semibold transition-all cursor-pointer outline-none ${
+                  selectedAssigneeFilter !== 'all'
+                    ? 'bg-blue-600/15 border-blue-500/60 text-blue-600 dark:text-blue-400 font-bold'
+                    : 'bg-white dark:bg-[#070D1B] border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700'
+                }`}
+              >
+                <option value="all" className="bg-white dark:bg-[#0B1224] text-slate-800 dark:text-slate-200">
+                  Atendente: Todos
+                </option>
+                <option value="unassigned" className="bg-white dark:bg-[#0B1224] text-slate-800 dark:text-slate-200">
+                  Sem responsável
+                </option>
+                {crmUsers.map((u) => (
+                  <option key={u.id} value={u.id} className="bg-white dark:bg-[#0B1224] text-slate-800 dark:text-slate-200">
+                    {u.name || u.email}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 shrink-0 hidden sm:block"></div>
 
@@ -1934,6 +2014,7 @@ function CrmContent() {
                             onClick={() => { 
                               setSearchQuery(""); 
                               setActiveTab("all"); 
+                              setSelectedAssigneeFilter("all");
                               setSelectedStageFilter("all"); 
                               setDatePreset("all");
                               setCustomStartDate("");
