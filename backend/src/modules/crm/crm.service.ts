@@ -115,8 +115,8 @@ export class CrmService {
     });
 
     deals.sort((a: any, b: any) => {
-      const pA = a.metadata?.position !== undefined && a.metadata?.position !== null ? Number(a.metadata.position) : 999999;
-      const pB = b.metadata?.position !== undefined && b.metadata?.position !== null ? Number(b.metadata.position) : 999999;
+      const pA = a.metadata?.position !== undefined && a.metadata?.position !== null ? Number(a.metadata.position) : -1;
+      const pB = b.metadata?.position !== undefined && b.metadata?.position !== null ? Number(b.metadata.position) : -1;
       if (pA !== pB) return pA - pB;
       const tA = new Date(a.updatedAt || a.createdAt || 0).getTime();
       const tB = new Date(b.updatedAt || b.createdAt || 0).getTime();
@@ -320,12 +320,15 @@ export class CrmService {
 
     // Mesclar lossReason e lossComment no metadata de forma transparente e segura
     const existingMeta = (deal.metadata as Record<string, any>) || {};
-    const mergedMetadata = {
+    const mergedMetadata: Record<string, any> = {
       ...existingMeta,
       ...(rest.metadata || {}),
       ...(lossReason ? { lossReason } : {}),
       ...(lossComment ? { lossComment } : {}),
     };
+    if (rest.status === 'won' && deal.status !== 'won' && !mergedMetadata.closedAt) {
+      mergedMetadata.closedAt = new Date().toISOString();
+    }
 
     // Montar payload estritamente compatível com o Prisma Deal
     const safeData: any = {};

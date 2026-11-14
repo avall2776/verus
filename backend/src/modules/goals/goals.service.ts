@@ -445,30 +445,37 @@ export class GoalsService {
       },
     });
 
-    const dealWhere: Prisma.DealWhereInput = { tenantId };
-    if (startDate && endDate) {
-      dealWhere.createdAt = {
-        gte: startDate,
-        lte: endDate,
-      };
-    }
-
     const deals = await this.prisma.deal.findMany({
-      where: dealWhere,
+      where: { tenantId },
       select: {
         id: true,
         assignedTo: true,
         status: true,
         value: true,
         createdAt: true,
+        updatedAt: true,
+        metadata: true,
       },
     });
 
+    const inRange = (rawDate: any) => {
+      if (!startDate || !endDate) return true;
+      if (!rawDate) return false;
+      const d = new Date(rawDate);
+      if (isNaN(d.getTime())) return false;
+      return d >= startDate && d <= endDate;
+    };
+
     const userStats = commercialUsers.map((u) => {
-      const userDeals = deals.filter((d) => d.assignedTo === u.id);
-      const wonDeals = userDeals.filter((d) => this.isWon(d.status));
+      const allUserDeals = deals.filter((d) => d.assignedTo === u.id);
+      const periodDeals = allUserDeals.filter((d) => inRange(d.createdAt));
+      const wonDeals = allUserDeals.filter((d) => {
+        if (!this.isWon(d.status)) return false;
+        const meta = (d.metadata as Record<string, any>) || {};
+        return inRange(meta.closedAt || d.updatedAt || d.createdAt);
+      });
       const totalRevenueWon = wonDeals.reduce((acc, d) => acc + Number(d.value || 0), 0);
-      const totalDeals = userDeals.length;
+      const totalDeals = periodDeals.length;
       const conversionRate = totalDeals > 0 ? Math.round((wonDeals.length / totalDeals) * 100) : 0;
       const avgTicket = wonDeals.length > 0 ? Math.round(totalRevenueWon / wonDeals.length) : 0;
 
@@ -561,26 +568,33 @@ export class GoalsService {
 
     const { startDate, endDate } = this.getPeriodDateRange(period, monthStr, yearStr);
 
-    const dealWhere: Prisma.DealWhereInput = { tenantId, assignedTo: userId };
-    if (startDate && endDate) {
-      dealWhere.createdAt = {
-        gte: startDate,
-        lte: endDate,
-      };
-    }
-
-    // 1. Busca os negócios do período para calcular KPIs consolidados do consultor
+    // 1. Busca os negócios do consultor para calcular KPIs do período (vendas ganhas por data de fechamento)
     const allUserDeals = await this.prisma.deal.findMany({
-      where: dealWhere,
+      where: { tenantId, assignedTo: userId },
       select: {
         id: true,
         status: true,
         value: true,
+        createdAt: true,
+        updatedAt: true,
+        metadata: true,
       },
     });
 
-    const totalDeals = allUserDeals.length;
-    const wonDeals = allUserDeals.filter((d) => this.isWon(d.status));
+    const inRange = (rawDate: any) => {
+      if (!startDate || !endDate) return true;
+      if (!rawDate) return false;
+      const d = new Date(rawDate);
+      if (isNaN(d.getTime())) return false;
+      return d >= startDate && d <= endDate;
+    };
+
+    const totalDeals = allUserDeals.filter((d) => inRange(d.createdAt)).length;
+    const wonDeals = allUserDeals.filter((d) => {
+      if (!this.isWon(d.status)) return false;
+      const meta = (d.metadata as Record<string, any>) || {};
+      return inRange(meta.closedAt || d.updatedAt || d.createdAt);
+    });
     const totalRevenueWon = wonDeals.reduce((acc, d) => acc + Number(d.value || 0), 0);
     const conversionRate = totalDeals > 0 ? Math.round((wonDeals.length / totalDeals) * 100) : 0;
     const avgTicket = wonDeals.length > 0 ? Math.round(totalRevenueWon / wonDeals.length) : 0;

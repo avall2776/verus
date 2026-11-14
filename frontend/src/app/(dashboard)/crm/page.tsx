@@ -951,8 +951,8 @@ function CrmContent() {
     }
     for (const colId in map) {
       map[colId].sort((a, b) => {
-        const posA = a.metadata?.position !== undefined && a.metadata?.position !== null ? Number(a.metadata.position) : 999999;
-        const posB = b.metadata?.position !== undefined && b.metadata?.position !== null ? Number(b.metadata.position) : 999999;
+        const posA = a.metadata?.position !== undefined && a.metadata?.position !== null ? Number(a.metadata.position) : -1;
+        const posB = b.metadata?.position !== undefined && b.metadata?.position !== null ? Number(b.metadata.position) : -1;
         if (posA !== posB) return posA - posB;
         const timeA = a._parsedTime || (a._parsedTime = new Date(a.updatedAt || a.createdAt || 0).getTime());
         const timeB = b._parsedTime || (b._parsedTime = new Date(b.updatedAt || b.createdAt || 0).getTime());
