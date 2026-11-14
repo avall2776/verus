@@ -281,7 +281,29 @@ export class ChatService {
         { contact: { name: { contains: cleanSearch, mode: 'insensitive' } } },
         { contact: { phone: { contains: cleanDigits || cleanSearch } } },
         { contact: { whatsappLid: { contains: cleanSearch } } },
+        { contact: { notes: { contains: cleanSearch, mode: 'insensitive' } } },
+        {
+          contact: {
+            deals: {
+              some: {
+                OR: [
+                  { title: { contains: cleanSearch, mode: 'insensitive' } },
+                  { notes: { contains: cleanSearch, mode: 'insensitive' } },
+                ],
+              },
+            },
+          },
+        },
       ];
+      if (cleanSearch.length >= 3) {
+        orConditions.push({
+          messages: {
+            some: {
+              content: { contains: cleanSearch, mode: 'insensitive' },
+            },
+          },
+        });
+      }
       if (cleanDigits.length >= 4) {
         orConditions.push({ contact: { phone: { contains: cleanDigits } } });
         if (cleanDigits.startsWith('55') && cleanDigits.length > 6) {
@@ -422,9 +444,31 @@ export class ChatService {
       userMap = new Map(users.map(u => [u.id, u]));
     }
 
+    // Quando é uma busca com >= 3 caracteres, anexa o trecho da mensagem que deu match
+    let matchedMsgMap = new Map<string, string>();
+    if (isSearch && cleanSearch.length >= 3 && conversations.length > 0) {
+      const matchedMsgs = await this.prisma.message.findMany({
+        where: {
+          conversationId: { in: conversations.map(c => c.id) },
+          content: { contains: cleanSearch, mode: 'insensitive' },
+        },
+        orderBy: { createdAt: 'desc' },
+        distinct: ['conversationId'],
+        select: {
+          conversationId: true,
+          content: true,
+        },
+      });
+      matchedMsgMap = new Map(matchedMsgs.map(m => [m.conversationId, m.content]));
+    }
+
     // Sanitiza e formata avatarUrl de forma ultra rápida em memória sem travar requisições
     for (const conv of conversations) {
       (conv as any).assignedUser = conv.assignedTo ? userMap.get(conv.assignedTo) || null : null;
+      (conv as any).matchedMessage = matchedMsgMap.get(conv.id) || null;
+      if (isSearch) {
+        (conv as any).searchMatched = true;
+      }
       if (conv.contact) {
         const av = conv.contact.avatarUrl;
         if (!av || av === 'null' || av === 'undefined' || av.includes('unsplash.com')) {

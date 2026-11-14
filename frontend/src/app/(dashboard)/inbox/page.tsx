@@ -1892,7 +1892,7 @@ function InboxContent() {
       }
       return data.map((conv: any) => {
         const lastMessageObj = conv.messages && conv.messages.length > 0 ? conv.messages[0] : null;
-        const lastMsg = lastMessageObj ? lastMessageObj.content : 'Nova conversa';
+        const lastMsg = conv.matchedMessage || (lastMessageObj ? lastMessageObj.content : 'Nova conversa');
         const rawAvatar = conv.contact?.avatarUrl;
         const cleanAvatar = sanitizeAvatarUrl(rawAvatar);
         return {
@@ -1905,6 +1905,8 @@ function InboxContent() {
           tags: conv.contact?.tags || [],
           lastMsg: lastMsg,
           lastMessage: lastMsg,
+          matchedMessage: conv.matchedMessage || null,
+          searchMatched: Boolean(conv.searchMatched),
           lastMessageType: lastMessageObj?.type || 'text',
           lastMessageDirection: lastMessageObj?.direction || null,
           time: lastMessageObj ? formatCardTimestamp(lastMessageObj.createdAt) : '',
@@ -3019,6 +3021,7 @@ function InboxContent() {
 
       // Quando estiver pesquisando, ignora filtros de aba para exibir o resultado global encontrado
       if (searchQuery.trim()) {
+        if (c.searchMatched) return true;
         const q = searchQuery.toLowerCase();
         const phoneDigits = searchQuery.replace(/\D/g, "");
         const last8 = phoneDigits.length >= 8 ? phoneDigits.slice(-8) : "";
@@ -3029,7 +3032,8 @@ function InboxContent() {
             (phoneDigits.length >= 4 && c.phone.replace(/\D/g, "").includes(phoneDigits)) ||
             (last8 && c.phone.replace(/\D/g, "").includes(last8))
           )) ||
-          (c.lastMsg && c.lastMsg.toLowerCase().includes(q))
+          (c.lastMsg && c.lastMsg.toLowerCase().includes(q)) ||
+          (c.matchedMessage && c.matchedMessage.toLowerCase().includes(q))
         );
       }
 
